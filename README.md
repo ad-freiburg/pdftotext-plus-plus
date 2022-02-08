@@ -1,8 +1,7 @@
-<!-- PROJECT LOGO -->
 <br/>
 <div align="center">
   <a href="https://github.com/pdftotext-plus-plus/pdftotext-plus-plus">
-    <img src="resources/logo.png" alt="logo" width="80" height="80">
+    <img src="logo.png" alt="logo" width="80" height="80">
   </a>
 
   <h3 align="center">pdftotext++</h3>
@@ -22,11 +21,13 @@
   <br/>
 </div>
 
-## What's wrong with the classic pdftotext?
+<!-- =========================================================================================== -->
+
+## What's wrong with the classic *pdftotext* ?
 
 Absolutely nothing.
 
-## What are the main features?
+## What are the main features of *pdftotext++* ?
 
 * Translation of ligatures and characters with diacritic marks.
 * Word Boundary Detection.
