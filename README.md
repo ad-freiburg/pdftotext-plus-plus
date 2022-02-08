@@ -40,4 +40,11 @@ Absolutely nothing.
 
 ## How can I use it?
 
-Describe how to use pdftotext++
+We recommend to use the provided Docker setup. The usage is as follows:
+
+```bash
+git clone https://github.com/pdftotext-plus-plus/pdftotext-plus-plus.git
+cd pdftotext-plus-plus.git
+docker build -t pdftotext-plus-plus .
+docker run --rm -v <path-to-pdf>:/file.pdf pdftotext-plus-plus /file.pdf
+```
