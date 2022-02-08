@@ -8,7 +8,7 @@
   <h3 align="center">pdftotext++</h3>
 
   <p align="center">
-    An extension of <a href="https://github.com/pdftotext-plus-plus/pdftotext-plus-plus">Poppler's pdftotext</a> that converts PDF files to more <br/>accurate plain text and has many other features you always missed.
+    An extension of <a href="https://github.com/pdftotext-plus-plus/pdftotext-plus-plus">Poppler's pdftotext</a> that converts PDF files to more <br/>accurate plain text and provides many other features you always missed.
     <br/>
     <a href="https://pdftotext.cs.uni-freiburg.de"><strong>Explore the docs »</strong></a>
     <br/>
