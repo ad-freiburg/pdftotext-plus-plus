@@ -32,7 +32,6 @@ static bool printVersion = false;
 static bool printHelp = false;
 static bool addControlCharacters = false;
 static bool addSemanticRoles = false;
-static bool excludePunctuationMarks = false;
 static bool excludeSubSuperscripts = false;
 static bool ignoreEmbeddedFontFiles = false;
 static char serializeCharactersFilePath[256] = "";
@@ -55,8 +54,6 @@ static const ArgDesc argDesc[] = {
       "page break with \"^L\" (\"form feed\")." },
   { "--add-semantic-roles", argFlag, &addSemanticRoles, 0,
       "Prepend each text block with its semantic role." },
-  { "--exclude-punctuation-marks", argFlag, &excludePunctuationMarks, 0,
-      "Don't print punctuation marks." },
   { "--exclude-sub-super-scripts", argFlag, &excludeSubSuperscripts, 0,
       "Don't print sub- and superscripts." },
   { "--ignore-embedded-font-files", argFlag, &ignoreEmbeddedFontFiles, 0,
@@ -191,8 +188,7 @@ int main(int argc, char *argv[]) {
   // Write the extracted text to the output file.
   if (!outputFilePathStr.empty()) {
     auto start = high_resolution_clock::now();
-    TextSerializer serializer(&doc, addControlCharacters, addSemanticRoles,
-      excludePunctuationMarks, excludeSubSuperscripts);
+    TextSerializer serializer(&doc, addControlCharacters, addSemanticRoles, excludeSubSuperscripts);
     serializer.serialize(outputFilePathStr);
     auto end = high_resolution_clock::now();
     Timing timingLoading("Serialize text", duration_cast<milliseconds>(end - start).count());

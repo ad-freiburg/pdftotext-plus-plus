@@ -48,9 +48,9 @@ void TextBlockDetector::detect() {
 
         if (prevTextLine) {
           // The line distance is larger than the most freq. line distance.
-          double distance = std::max(0.0, currTextLine->maxY - prevTextLine->maxY);
-          distance = static_cast<double>(static_cast<int>(distance * 10.)) / 10.;
-          if (distance > 1.1 * _doc->mostFreqLineDistance) {
+          double prevDistance = std::max(0.0, currTextLine->maxY - prevTextLine->maxY);
+          prevDistance = static_cast<double>(static_cast<int>(prevDistance * 10.)) / 10.;
+          if (prevDistance > 1.1 * _doc->mostFreqLineDistance) {
             introducesNewTextBlock = true;
           }
 
@@ -73,10 +73,12 @@ void TextBlockDetector::detect() {
 
 
           if (nextTextLine) {
+            double nextDistance = std::max(0.0, nextTextLine->maxY - currTextLine->maxY);
             // Line is intended?
             double xOffsetCurrLine = currTextLine->minX - prevTextLine->minX;
             double xOffsetNextLine = nextTextLine->minX - prevTextLine->minX;
-            if (equal(xOffsetCurrLine, _doc->mostFreqLineIndent) && equal(xOffsetNextLine, 0)) {
+
+            if (equal(xOffsetCurrLine, _doc->mostFreqLineIndent) && equal(xOffsetNextLine, 0) && equal(prevDistance, nextDistance)) {
               introducesNewTextBlock = true;
             }
           }

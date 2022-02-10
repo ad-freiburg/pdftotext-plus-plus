@@ -26,11 +26,10 @@ namespace fs = std::filesystem;
 
 // _________________________________________________________________________________________________
 TextSerializer::TextSerializer(PdfDocument* doc, bool addControlCharacters,
-    bool addSemanticRoles, bool excludePunctuationMarks, bool excludeSubSuperscripts) {
+    bool addSemanticRoles, bool excludeSubSuperscripts) {
   _doc = doc;
   _addControlCharacters = addControlCharacters;
   _addSemanticRoles = addSemanticRoles;
-  _excludePunctuationMarks = excludePunctuationMarks;
   _excludeSubSuperscripts = excludeSubSuperscripts;
 }
 
@@ -91,49 +90,26 @@ void TextSerializer::serializeToStream(std::ostream& outStream) {
 
       for (auto* line : block->lines) {
         for (auto* word : line->words) {
-          if (prevWord && !prevWord->isSecondPartOfHyphenatedWord) {
+          if (word->isSecondPartOfHyphenatedWord) {
+            continue;
+          }
+
+          if (prevWord) {
             outStream << " ";
           }
 
-          // Check if there are symbols left to the words (punctuation marks, sub- & superscripts).
-          std::vector<PdfWord*> leftWords;
-          if (!_excludeSubSuperscripts) {
-            if (word->leftSuperscript) { leftWords.push_back(word->leftSuperscript); }
-            if (word->leftSubscript) { leftWords.push_back(word->leftSubscript); }
-          }
-          if (!_excludePunctuationMarks) {
-            if (word->leftPunctuation) { leftWords.push_back(word->leftPunctuation); }
-          }
-          sort(leftWords.begin(), leftWords.end(), [](const PdfWord* w1, const PdfWord* w2) {
-            return w1->minX < w2->minX;
-          });
-          for (const auto* leftWord : leftWords) {
-            outStream << leftWord->text;
-          }
-
           if (word->isFirstPartOfHyphenatedWord) {
+            // TODO: Hyphenated words should be also processed glyph-wise.
             outStream << word->isFirstPartOfHyphenatedWord->text;
-          } else if (word->isSecondPartOfHyphenatedWord) {
-            // Do nothing.
           } else {
-            outStream << word->text;
+            for (auto* glyph : word->glyphs) {
+              if (_excludeSubSuperscripts && (glyph->isSubscript || glyph->isSuperscript)) {
+                continue;
+              }
+              outStream << glyph->text;
+            }
           }
 
-          // Check if there are symbols right to the words (punctuation marks, sub- & superscripts).
-          std::vector<PdfWord*> rightWords;
-          if (!_excludeSubSuperscripts) {
-            if (word->rightSuperscript) { rightWords.push_back(word->rightSuperscript); }
-            if (word->rightSubscript) { rightWords.push_back(word->rightSubscript); }
-          }
-          if (!_excludePunctuationMarks) {
-            if (word->rightPunctuation) { rightWords.push_back(word->rightPunctuation); }
-          }
-          sort(rightWords.begin(), rightWords.end(), [](const PdfWord* w1, const PdfWord* w2) {
-            return w1->minX < w2->minX;
-          });
-          for (const auto* rightWord : rightWords) {
-            outStream << rightWord->text;
-          }
           prevWord = word;
         }
       }

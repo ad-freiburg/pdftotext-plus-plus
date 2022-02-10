@@ -156,6 +156,7 @@ void TextLineDetector::createTextLine(const std::vector<PdfWord*>& words,
   // font information.
   std::unordered_map<std::string, int> fontNameFreqs;
   std::unordered_map<double, int> fontSizeFreqs;
+  std::unordered_map<double, int> baseFreqs;
   for (const auto* word : words) {
     // Update the x.y-coordinates.
     line->minX = std::min(line->minX, word->minX);
@@ -163,9 +164,12 @@ void TextLineDetector::createTextLine(const std::vector<PdfWord*>& words,
     line->maxX = std::max(line->maxX, word->maxX);
     line->maxY = std::max(line->maxY, word->maxY);
 
-    // Count the font names and font sizes, for computing the most frequent font name / font size.
-    fontNameFreqs[word->fontName]++;
-    fontSizeFreqs[word->fontSize]++;
+    // Compute the most frequent font name, font size and base among the glyphs.
+    for (const auto* glyph : word->glyphs) {
+      fontNameFreqs[glyph->fontName]++;
+      fontSizeFreqs[glyph->fontSize]++;
+      baseFreqs[glyph->base]++;
+    }
   }
 
   // Compute and set the most frequent font name.
@@ -183,6 +187,15 @@ void TextLineDetector::createTextLine(const std::vector<PdfWord*>& words,
     if (pair.second > mostFreqFontSizeCount) {
       line->fontSize = pair.first;
       mostFreqFontSizeCount = pair.second;
+    }
+  }
+
+  // Compute and set the most baseline.
+  int mostFreqBaseCount = 0;
+  for (const auto& pair : baseFreqs) {
+    if (pair.second > mostFreqBaseCount) {
+      line->base = pair.first;
+      mostFreqBaseCount = pair.second;
     }
   }
 

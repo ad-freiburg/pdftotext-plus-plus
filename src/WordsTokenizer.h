@@ -48,9 +48,7 @@ class WordsTokenizer {
    * @param words
    *   The vector to which the created word should be appended.
    */
-  void tokenizeWord(const std::vector<PdfGlyph*>& glyphs, std::vector<PdfWord*>* words) const;
-
-  PdfWord* createWord(const std::vector<PdfGlyph*>& glyphs) const;
+  void createWord(const std::vector<PdfGlyph*>& glyphs, std::vector<PdfWord*>* words) const;
 
   /** The document to process. */
   PdfDocument* _doc;

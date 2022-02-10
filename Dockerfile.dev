@@ -29,6 +29,12 @@ WORKDIR /protocol_buffers/protobuf-${PB_VERSION}
 RUN ./configure
 RUN make
 RUN make install
+WORKDIR /opt/include
+RUN cp -r /usr/local/include/google .
+WORKDIR /opt/lib
+RUN cp -r /usr/local/lib/libprotobuf.so.20.0.2 .
+RUN ln -s /usr/local/lib/libprotobuf.so.20.0.2 libprotobuf.so.20
+RUN ln -s /usr/local/lib/libprotobuf.so.20.0.2 libprotobuf.so
 RUN ldconfig
 
 # Install bazel (a build system required to build Tensorflow from source), as described on the
@@ -174,10 +180,11 @@ WORKDIR /gtest/googletest-release-${GT_VERSION}/googletest/bld
 RUN cmake ..
 RUN make
 WORKDIR /opt/include
-RUN cp -a -r /gtest/googletest-release-${GT_VERSION}/googletest/include/gtest/* .
+RUN cp -a -r /gtest/googletest-release-${GT_VERSION}/googletest/include/gtest .
 WORKDIR /opt/lib
 RUN cp -a /gtest/googletest-release-${GT_VERSION}/googletest/bld/lib/*.a .
 RUN ldconfig
+
 
 # ==================================================================================================
 # Build pdftotext.
@@ -191,6 +198,8 @@ COPY --from=utf8proc-builder /opt/include/ /usr/local/include/
 COPY --from=utf8proc-builder /opt/lib/ /usr/local/lib/
 COPY --from=poppler-builder /opt/include/ /usr/local/include/
 COPY --from=poppler-builder /opt/lib/ /usr/local/lib/
+COPY --from=gtest-builder /opt/include/ /usr/local/include/
+COPY --from=gtest-builder /opt/lib/ /usr/local/lib/
 RUN ldconfig
 
 CMD ["/bin/bash"]

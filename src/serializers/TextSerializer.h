@@ -29,7 +29,7 @@ class TextSerializer {
    *   The document to process.
    */
   TextSerializer(PdfDocument* doc, bool addControlCharacters, bool addSemanticRoles,
-      bool excludePunctuationMarks, bool excludeSubSuperscripts);
+    bool excludeSubSuperscripts);
 
   /** The deconstructor. */
   ~TextSerializer();
@@ -56,7 +56,7 @@ class TextSerializer {
 
   /**
    * Whether or not to prepend each emphasized text block with "^A" (start of heading) and mark
-   * each punctuation mark with "^L" (form feed).
+   * each page break with "^L" (form feed).
    */
   bool _addControlCharacters;
 
@@ -64,9 +64,6 @@ class TextSerializer {
    * Whether or not to prepend each emphasized text block with its semantic role.
    */
   bool _addSemanticRoles;
-
-  /** Whether or not punctuation marks should be serialized. **/
-  bool _excludePunctuationMarks;
 
   /** Whether or not sub- and superscripts should be serialized. **/
   bool _excludeSubSuperscripts;

@@ -20,6 +20,7 @@
 #include "./PdfDocumentStatisticsCalculator.h"
 #include "./PdfToTextPlusPlus.h"
 #include "./ReadingOrderDetector.h"
+#include "./SubSuperScriptsDetector.h"
 #include "./TextBlockDetector.h"
 #include "./TextLineDetector.h"
 #include "./WordsDehyphenator.h"
@@ -123,6 +124,13 @@ int PdfToTextPlusPlus::process(const std::string& pdfFilePath, PdfDocument* doc,
   end = high_resolution_clock::now();
   timeComputeStatistics += duration_cast<milliseconds>(end - start).count();
 
+  // Detect sub- and superscripts.
+  start = high_resolution_clock::now();
+  SubSuperScriptsDetector scriptsDetector(doc);
+  scriptsDetector.detect();
+  end = high_resolution_clock::now();
+  auto timeDetectSubSuperScripts = duration_cast<milliseconds>(end - start).count();
+
   // Detect the text blocks.
   start = high_resolution_clock::now();
   TextBlockDetector textBlockDetector(doc);
@@ -166,6 +174,9 @@ int PdfToTextPlusPlus::process(const std::string& pdfFilePath, PdfDocument* doc,
 
     Timing timingDetectTextLines("Detect text lines", timeDetectTextLines);
     timings->push_back(timingDetectTextLines);
+
+    Timing timingDetectSubSuperScripts("Detect sub- and superscripts", timeDetectSubSuperScripts);
+    timings->push_back(timingDetectSubSuperScripts);
 
     Timing timingDetectTextBlocks("Detect text blocks", timeDetectTextBlocks);
     timings->push_back(timingDetectTextBlocks);

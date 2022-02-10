@@ -175,7 +175,7 @@ class PdfGlyph : public PdfElement {
   int rotation = -1;
 
   /**
-   * The baseline of the character.
+   * The baseline of the glyph.
    */
   double base;
 
@@ -185,6 +185,9 @@ class PdfGlyph : public PdfElement {
   PdfGlyph* isDiacriticMarkOfBaseGlyph = nullptr;
   PdfGlyph* isBaseGlyphOfDiacriticMark = nullptr;
   std::string textWithDiacriticMark;
+
+  bool isSubscript = false;
+  bool isSuperscript = false;
 
   /**
    * This method returns a string representation of this glyph for debugging purposes.
@@ -342,6 +345,11 @@ class PdfTextLine : public PdfElement {
    * 3: the glyph is rotated by 270 degress (clock-wise).
    */
   int rotation = -1;
+
+  /**
+   * The baseline of the glyph.
+   */
+  double base;
 
   /** The words of this line. */
   std::vector<PdfWord*> words;

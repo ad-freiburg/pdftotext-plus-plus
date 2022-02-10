@@ -68,7 +68,7 @@ void WordsTokenizer::tokenize() const {
       // Assume a word boundary between the two glyphs when the writing modes and/or rotations of
       // both glyphs differ.
       if (prevGlyph->wMode != currGlyph->wMode || prevGlyph->rotation != currGlyph->rotation) {
-        tokenizeWord(currentWordGlyphs, &page->words);
+        createWord(currentWordGlyphs, &page->words);
         currentWordGlyphs.clear();
         currentWordGlyphs.push_back(currGlyph);
         continue;
@@ -115,7 +115,7 @@ void WordsTokenizer::tokenize() const {
       // glpyh is too large, or if they do not overlap vertically.
       if (hDistance > minWordBreakSpace * prevGlyph->fontSize
             || vOverlap < 0.1 * prevGlyph->fontSize) {
-        tokenizeWord(currentWordGlyphs, &page->words);
+        createWord(currentWordGlyphs, &page->words);
         currentWordGlyphs.clear();
         currentWordGlyphs.push_back(currGlyph);
         continue;
@@ -125,128 +125,16 @@ void WordsTokenizer::tokenize() const {
     }
 
     // Dont forget to create the last word of the page.
-    tokenizeWord(currentWordGlyphs, &page->words);
+    createWord(currentWordGlyphs, &page->words);
   }
 }
 
-// _________________________________________________________________________________________________
-void WordsTokenizer::tokenizeWord(const std::vector<PdfGlyph*>& glyphs,
-    std::vector<PdfWord*>* words) const {
-  // Do nothing if no glyphs are given.
-  if (glyphs.size() == 0) {
-    return;
-  }
 
-  // Compute the most frequent base line among the glyphs.
-  std::unordered_map<double, int> baseFreqs;
-  for (const auto* glyph : glyphs) {
-    baseFreqs[glyph->base]++;
-  }
-
-  double mostFreqBase = 0;
-  int mostFreqBaseCount = 0;
-  for (const auto& pair : baseFreqs) {
-    if (pair.second > mostFreqBaseCount) {
-      mostFreqBase = pair.first;
-      mostFreqBaseCount = pair.second;
-    }
-  }
-
-  // Identify symbols in front of the word which are adjacent but not an actual part of the word,
-  // for example: punctuation marks or sub- and superscripts.
-  size_t startIndex = 0;
-  std::vector<PdfGlyph*> leftSuperscriptGlyphs;
-  std::vector<PdfGlyph*> leftSubscriptGlyphs;
-  std::vector<PdfGlyph*> leftPunctuationGlyphs;
-
-  while (startIndex < glyphs.size()) {
-    PdfGlyph* glyph = glyphs[startIndex];
-
-    // Identify superscripts.
-    if (glyph->base < mostFreqBase) {
-      leftSuperscriptGlyphs.push_back(glyph);
-      startIndex++;
-      continue;
-    }
-
-    // Identify subscripts.
-    if (glyph->base > mostFreqBase) {
-      leftSubscriptGlyphs.push_back(glyph);
-      startIndex++;
-      continue;
-    }
-
-    // Identify punctuation marks.
-    if (isPunct(glyph->text)) {
-      leftPunctuationGlyphs.push_back(glyph);
-      startIndex++;
-      continue;
-    }
-
-    break;
-  }
-
-  // Identify symbols behind the word which are adjacent but not an actual part of the word,
-  // for example: punctuation marks or sub- and superscripts.
-  size_t endIndex = glyphs.size();
-  std::vector<PdfGlyph*> rightSuperscriptGlyphs;
-  std::vector<PdfGlyph*> rightSubscriptGlyphs;
-  std::vector<PdfGlyph*> rightPunctuationGlyphs;
-
-  while (endIndex > startIndex) {
-    PdfGlyph* glyph = glyphs[endIndex - 1];
-
-    // std::cout << glyph->toString() << std::endl;
-    // std::cout << glyph->base << " " << mostFreqBase << " " << (glyph->base < mostFreqBase) << std::endl;
-
-    // Identify superscripts.
-    if (glyph->base < mostFreqBase) {
-      rightSuperscriptGlyphs.push_back(glyph);
-      endIndex--;
-      continue;
-    }
-
-    // Identify subscripts.
-    if (glyph->base > mostFreqBase) {
-      rightSubscriptGlyphs.push_back(glyph);
-      endIndex--;
-      continue;
-    }
-
-    // Identify punctuation marks.
-    if (isPunct(glyph->text)) {
-      rightPunctuationGlyphs.push_back(glyph);
-      endIndex--;
-      continue;
-    }
-
-    break;
-  }
-
-  std::vector<PdfGlyph*> wordGlyphs(glyphs.begin() + startIndex, glyphs.begin() + endIndex);
-
-  PdfWord* word = createWord(wordGlyphs);
-
-  if (word) {
-    word->leftSubscript = createWord(leftSubscriptGlyphs);
-    word->leftSuperscript = createWord(leftSuperscriptGlyphs);
-    word->leftPunctuation = createWord(leftPunctuationGlyphs);
-
-    word->rightSubscript = createWord(rightSubscriptGlyphs);
-    word->rightSuperscript = createWord(rightSuperscriptGlyphs);
-    word->rightPunctuation = createWord(rightPunctuationGlyphs);
-
-    words->push_back(word);
-  }
-}
 
 // _________________________________________________________________________________________________
 
-PdfWord* WordsTokenizer::createWord(const std::vector<PdfGlyph*>& glyphs) const {
-  if (glyphs.empty()) {
-    return NULL;
-  }
-
+void WordsTokenizer::createWord(const std::vector<PdfGlyph*>& glyphs, std::vector<PdfWord*>* words)
+    const {
   PdfWord* word = new PdfWord();
   word->id = createRandomString(8, "w-");
 
@@ -309,5 +197,5 @@ PdfWord* WordsTokenizer::createWord(const std::vector<PdfGlyph*>& glyphs) const 
   // Set the rank.
   word->rank = glyphs[0]->rank;
 
-  return word;
+  words->push_back(word);
 }

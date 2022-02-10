@@ -299,6 +299,7 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
         break;
     }
   }
+
   // ===============================================================================================
 
   // TODO(korzen):
@@ -331,6 +332,13 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
       glyph->maxX = maxX;
       glyph->maxY = maxY;
     }
+  }
+
+  double realWidth = glyph->maxX - glyph->minX;
+  double realHeight = glyph->maxX - glyph->minX;
+  if (realWidth == 0 || realHeight == 0) {
+    delete glyph;
+    return;
   }
 
   // ----------------------------------
