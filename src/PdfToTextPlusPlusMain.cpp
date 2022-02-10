@@ -281,14 +281,14 @@ int main(int argc, char *argv[]) {
   int64_t timeTotal = 0;
   for (const auto& timing : timings) { timeTotal += timing.time; }
 
-  std::cout << "\033[1m" << "Finished in " << timeTotal << " ms." << "\033[22m" << std::endl;
+  std::cerr << "\033[1m" << "Finished in " << timeTotal << " ms." << "\033[22m" << std::endl;
 
   for (const auto& timing : timings) {
     std::string prefix = " * " + timing.description + ":";
-    std::cout << std::left << std::setw(25) << prefix;
-    std::cout << std::right << std::setw(4) << timing.time << " ms ";
-    std::cout << "(" << ((timing.time / static_cast<double>(timeTotal)) * 100) << "%)";
-    std::cout << std::endl;
+    std::cerr << std::left << std::setw(25) << prefix;
+    std::cerr << std::right << std::setw(4) << timing.time << " ms ";
+    std::cerr << "(" << ((timing.time / static_cast<double>(timeTotal)) * 100) << "%)";
+    std::cerr << std::endl;
   }
 
   return status;
