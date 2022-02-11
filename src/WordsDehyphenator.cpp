@@ -32,9 +32,10 @@ void WordsDehyphenator::dehyphenate() {
         if (prevLine) {
           PdfWord* prevLineLastWord = prevLine->words[prevLine->words.size() - 1];
           std::string prevLineLastWordText = prevLineLastWord->text;
-          if (prevLineLastWordText.empty()) {
+          if (prevLineLastWordText.length() < 2) {
             continue;
           }
+
           char prevLineLastChar = prevLineLastWordText[prevLineLastWordText.length() - 1];
 
           bool isHyphenated = prevLineLastChar == '-';  // TODO: Consider also other hyphens.

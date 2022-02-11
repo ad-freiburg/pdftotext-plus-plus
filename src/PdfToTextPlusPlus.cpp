@@ -175,7 +175,7 @@ int PdfToTextPlusPlus::process(const std::string& pdfFilePath, PdfDocument* doc,
     Timing timingDetectTextLines("Detect text lines", timeDetectTextLines);
     timings->push_back(timingDetectTextLines);
 
-    Timing timingDetectSubSuperScripts("Detect sub- and superscripts", timeDetectSubSuperScripts);
+    Timing timingDetectSubSuperScripts("Detect scripts", timeDetectSubSuperScripts);
     timings->push_back(timingDetectSubSuperScripts);
 
     Timing timingDetectTextBlocks("Detect text blocks", timeDetectTextBlocks);

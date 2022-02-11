@@ -124,10 +124,15 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
     }
   }
 
-  // Ignore the glyph if it represents a whitespace.
+  // Ignore the glyph if it represents a whitespace. We want to consider the "non-breaking space"
+  // character (\u00a0) as a whitespace, but std::isspace does not. So we have to check the glyph
+  // for a non-breaking space manually. To do so, convert the text to a wide character, as the
+  // non-breaking space is a 2-byte character.
+  std::wstring wText = _wStringConverter.from_bytes(text);
+
   bool isWhitespace = true;
-  for (char& ch : text) {
-    if (!std::isspace(ch)) {
+  for (wchar_t& ch : wText) {
+    if (!std::iswspace(ch) && ch != 0x00a0) {
       isWhitespace = false;
       break;
     }
@@ -332,13 +337,6 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
       glyph->maxX = maxX;
       glyph->maxY = maxY;
     }
-  }
-
-  double realWidth = glyph->maxX - glyph->minX;
-  double realHeight = glyph->maxX - glyph->minX;
-  if (realWidth == 0 || realHeight == 0) {
-    delete glyph;
-    return;
   }
 
   // ----------------------------------

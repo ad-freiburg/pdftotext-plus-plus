@@ -121,4 +121,5 @@ void TextSerializer::serializeToStream(std::ostream& outStream) {
       outStream << std::endl << std::string(1, 0x0C);
     }
   }
+  outStream << std::endl;
 }

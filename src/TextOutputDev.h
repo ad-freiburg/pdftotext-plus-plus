@@ -9,6 +9,8 @@
 #ifndef TextOutputDev_H_
 #define TextOutputDev_H_
 
+#include <codecvt>
+#include <locale>  // std::wstring_convert
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -213,6 +215,8 @@ class TextOutputDev : public OutputDev {
   bool _parseEmbeddedFontFiles;
   /** A mapping of common glyph names to the text the respective glyphs actual represent.*/
   std::unordered_map<std::string, std::string> _glyphMap;
+
+  std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> _wStringConverter;
 };
 
 #endif  // TextOutputDev_H_

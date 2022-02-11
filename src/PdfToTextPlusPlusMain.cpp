@@ -13,6 +13,7 @@
 #include <poppler/GlobalParams.h>
 
 #include "./utils/parseargs.h"
+#include "./utils/Utils.h"
 #include "PdfToTextPlusPlus.h"
 
 #include "./serializers/CharactersJsonlSerializer.h"
@@ -283,7 +284,7 @@ int main(int argc, char *argv[]) {
     std::string prefix = " * " + timing.description + ":";
     std::cerr << std::left << std::setw(25) << prefix;
     std::cerr << std::right << std::setw(4) << timing.time << " ms ";
-    std::cerr << "(" << ((timing.time / static_cast<double>(timeTotal)) * 100) << "%)";
+    std::cerr << "(" << round(timing.time / static_cast<double>(timeTotal) * 100, 1) << "%)";
     std::cerr << std::endl;
   }
 

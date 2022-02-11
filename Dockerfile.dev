@@ -187,7 +187,7 @@ RUN ldconfig
 
 
 # ==================================================================================================
-# Build pdftotext.
+# Build pdftotext++.
 
 FROM base as runtime
 
