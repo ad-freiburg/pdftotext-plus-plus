@@ -189,6 +189,8 @@ RUN ldconfig
 
 FROM base as runtime
 
+RUN apt-get install -y python3-dev
+
 WORKDIR /pdftotext
 COPY --from=tensorflow-builder /opt/include/ /usr/local/include/
 COPY --from=tensorflow-builder /opt/lib/ /usr/local/lib/
