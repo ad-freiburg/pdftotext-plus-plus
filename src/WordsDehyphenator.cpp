@@ -32,24 +32,23 @@ void WordsDehyphenator::dehyphenate() {
         if (prevLine) {
           PdfWord* prevLineLastWord = prevLine->words[prevLine->words.size() - 1];
           std::string prevLineLastWordText = prevLineLastWord->text;
-          if (prevLineLastWordText.length() < 2) {
-            continue;
-          }
 
-          char prevLineLastChar = prevLineLastWordText[prevLineLastWordText.length() - 1];
+          if (prevLineLastWordText.length() > 1) {
+            char prevLineLastChar = prevLineLastWordText[prevLineLastWordText.length() - 1];
 
-          bool isHyphenated = prevLineLastChar == '-';  // TODO: Consider also other hyphens.
+            bool isHyphenated = prevLineLastChar == '-';  // TODO: Consider also other hyphens.
 
-          PdfWord* currLineFirstWord = line->words[0];
-          std::string currLineFirstWordText = currLineFirstWord->text;
+            PdfWord* currLineFirstWord = line->words[0];
+            std::string currLineFirstWordText = currLineFirstWord->text;
 
-          if (isHyphenated) {
-            PdfWord* dehyphenatedWord = new PdfWord();
-            dehyphenatedWord->text = prevLineLastWordText.substr(0, prevLineLastWordText.length() - 1);
-            dehyphenatedWord->text += currLineFirstWordText;
+            if (isHyphenated) {
+              PdfWord* dehyphenatedWord = new PdfWord();
+              dehyphenatedWord->text = prevLineLastWordText.substr(0, prevLineLastWordText.length() - 1);
+              dehyphenatedWord->text += currLineFirstWordText;
 
-            prevLineLastWord->isFirstPartOfHyphenatedWord = dehyphenatedWord;
-            currLineFirstWord->isSecondPartOfHyphenatedWord = dehyphenatedWord;
+              prevLineLastWord->isFirstPartOfHyphenatedWord = dehyphenatedWord;
+              currLineFirstWord->isSecondPartOfHyphenatedWord = dehyphenatedWord;
+            }
           }
         }
 
