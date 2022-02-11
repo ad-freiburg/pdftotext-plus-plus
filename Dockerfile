@@ -28,6 +28,12 @@ WORKDIR /protocol_buffers/protobuf-${PB_VERSION}
 RUN ./configure
 RUN make
 RUN make install
+WORKDIR /opt/include
+RUN cp -r /usr/local/include/google .
+WORKDIR /opt/lib
+RUN cp -r /usr/local/lib/libprotobuf.so.20.0.2 .
+RUN ln -s /usr/local/lib/libprotobuf.so.20.0.2 libprotobuf.so.20
+RUN ln -s /usr/local/lib/libprotobuf.so.20.0.2 libprotobuf.so
 RUN ldconfig
 
 # Install bazel (a build system required to build Tensorflow from source), as described on the
