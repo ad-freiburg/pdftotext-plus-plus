@@ -168,17 +168,21 @@ RUN cp /usr/lib/x86_64-linux-gnu/libplds4.so .
 # ==================================================================================================
 # Build gtest.
 
-# ARG GT_VERSION=1.10.0
-# RUN apt-get update -y && apt-get install -y cmake g++ unzip wget
-# WORKDIR /gtest
-# RUN wget -q https://github.com/google/googletest/archive/release-${GT_VERSION}.zip
-# RUN unzip -qq release-${GT_VERSION}.zip
-# WORKDIR /gtest/googletest-release-${GT_VERSION}/googletest/bld
-# RUN cmake ..
-# RUN make
-# RUN cp -a -r ../include/gtest /usr/local/include/.
-# RUN cp -a ./lib/*.a /usr/local/lib
-# RUN ldconfig
+FROM base as gtest-builder
+
+ARG GT_VERSION=1.10.0
+RUN apt-get install unzip
+WORKDIR /gtest
+RUN wget -q https://github.com/google/googletest/archive/release-${GT_VERSION}.zip
+RUN unzip -qq release-${GT_VERSION}.zip
+WORKDIR /gtest/googletest-release-${GT_VERSION}/googletest/bld
+RUN cmake ..
+RUN make
+WORKDIR /opt/include
+RUN cp -a -r /gtest/googletest-release-${GT_VERSION}/googletest/include/gtest .
+WORKDIR /opt/lib
+RUN cp -a /gtest/googletest-release-${GT_VERSION}/googletest/bld/lib/*.a .
+RUN ldconfig
 
 # ==================================================================================================
 # Build pdftotext++.
@@ -192,6 +196,8 @@ COPY --from=utf8proc-builder /opt/include/ /usr/local/include/
 COPY --from=utf8proc-builder /opt/lib/ /usr/local/lib/
 COPY --from=poppler-builder /opt/include/ /usr/local/include/
 COPY --from=poppler-builder /opt/lib/ /usr/local/lib/
+COPY --from=gtest-builder /opt/include/ /usr/local/include/
+COPY --from=gtest-builder /opt/lib/ /usr/local/lib/
 RUN ldconfig
 
 COPY src src
