@@ -35,6 +35,7 @@ static bool addControlCharacters = false;
 static bool addSemanticRoles = false;
 static bool excludeSubSuperscripts = false;
 static bool ignoreEmbeddedFontFiles = false;
+static bool disableWordsDehyphenation = false;
 static char serializeCharactersFilePath[256] = "";
 static char serializeWordsFilePath[256] = "";
 static char serializeTextBlocksFilePath[256] = "";
@@ -60,6 +61,8 @@ static const ArgDesc argDesc[] = {
   { "--ignore-embedded-font-files", argFlag, &ignoreEmbeddedFontFiles, 0,
       "Don't parse the embedded font files for more accurate font information. This will usually "
       "result in a faster extraction process but also in less accurate extraction results." },
+  { "--disable-words-dehyphenation", argFlag, &disableWordsDehyphenation, 0,
+      "Don't dephyphenate hyphenated words." },
   { "--serialize-characters", argString, &serializeCharactersFilePath,
       sizeof(serializeCharactersFilePath), "Write the extracted characters together with their "
       "layout information in JSONL format to the specified path." },
@@ -159,7 +162,7 @@ int main(int argc, char *argv[]) {
   // ------------
   // Compute the extraction result.
 
-  PdfToTextPlusPlus pdfToTextPlusPlus(!ignoreEmbeddedFontFiles);
+  PdfToTextPlusPlus pdfToTextPlusPlus(!ignoreEmbeddedFontFiles, disableWordsDehyphenation);
   PdfDocument doc;
   std::vector<Timing> timings;
 

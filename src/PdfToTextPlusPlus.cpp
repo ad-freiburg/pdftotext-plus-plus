@@ -35,8 +35,9 @@ static double resolution = 72.0;
 
 
 // _________________________________________________________________________________________________
-PdfToTextPlusPlus::PdfToTextPlusPlus(bool parseEmbeddedFontFiles) {
+PdfToTextPlusPlus::PdfToTextPlusPlus(bool parseEmbeddedFontFiles, bool disableWordsDehyphenation) {
   _parseEmbeddedFontFiles = parseEmbeddedFontFiles;
+  _disableWordsDehyphenation = disableWordsDehyphenation;
 }
 
 // _________________________________________________________________________________________________
@@ -146,11 +147,14 @@ int PdfToTextPlusPlus::process(const std::string& pdfFilePath, PdfDocument* doc,
   auto timeDetectReadingOrder = duration_cast<milliseconds>(end - start).count();
 
   // Dehyphenate words.
-  start = high_resolution_clock::now();
-  WordsDehyphenator wordsDehyphenator(doc);
-  wordsDehyphenator.dehyphenate();
-  end = high_resolution_clock::now();
-  auto timeDehyphenateWords = duration_cast<milliseconds>(end - start).count();
+  auto timeDehyphenateWords = 0;
+  if (!_disableWordsDehyphenation) {
+    start = high_resolution_clock::now();
+    WordsDehyphenator wordsDehyphenator(doc);
+    wordsDehyphenator.dehyphenate();
+    end = high_resolution_clock::now();
+    timeDehyphenateWords = duration_cast<milliseconds>(end - start).count();
+  }
 
   // Output the timings.
   if (timings) {
