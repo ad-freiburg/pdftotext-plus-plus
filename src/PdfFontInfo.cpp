@@ -723,7 +723,7 @@ void Type1FontFileParser::parseCharString(const std::string& charString,
           break;
         case 13:  // sbx wx hsbw
           if (args->size() >= 2) {
-            int wx = args->back();
+            // int wx = args->back();
             args->pop_back();
             int sbx = args->back();
             args->pop_back();

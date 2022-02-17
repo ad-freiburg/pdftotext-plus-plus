@@ -83,7 +83,7 @@ void TextLineDetector::detect() {
       double currTextLineMaxY = words[0]->maxY;
 
       for (size_t i = 1; i < words.size(); i++) {
-        PdfWord* prevWord = words.at(i - 1);
+        // PdfWord* prevWord = words.at(i - 1);
         PdfWord* currWord = words.at(i);
 
         // double maxMinX = std::max(currWord->minX, prevWord->minX);

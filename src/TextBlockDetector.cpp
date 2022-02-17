@@ -76,7 +76,7 @@ bool TextBlockDetector::startsNewTextBlock(const PdfPageSegment* segment,
     return true;
   }
 
-  double fontSize = round(line->fontSize, 1);
+  // double fontSize = round(line->fontSize, 1);
   std::string fontFace = line->fontName + std::to_string(line->fontSize);
   double linePitch = std::max(0.0, round(line->minY - prevLine->maxY, 1));
   double expectedLinePitch;
