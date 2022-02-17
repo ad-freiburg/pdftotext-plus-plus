@@ -77,15 +77,15 @@ void TextSerializer::serializeToStream(std::ostream& outStream) {
       }
 
       // Prefix each emphasized block with "^A" (start of heading).
-      if (_addControlCharacters && block->isEmphasized) {
-        outStream << std::string(1, 0x01);
-      }
-
-      // Prefix each emphasized block with "^A" (start of heading).
       if (_addSemanticRoles) {
         std::string role = block->role;
         std::transform(role.begin(), role.end(), role.begin(), ::toupper);
-        outStream << "[" << role << "]";
+        outStream << "[" << role << "] ";
+      }
+
+      // Prefix each emphasized block with "^A" (start of heading).
+      if (_addControlCharacters && block->isEmphasized) {
+        outStream << std::string(1, 0x01);
       }
 
       for (auto* line : block->lines) {
