@@ -250,7 +250,7 @@ int main(int argc, char *argv[]) {
       visualizer.visualizeTextLines(doc, blue);
     }
     if (visualizeTextBlocks) {
-      visualizer.visualizeTextBlocks(doc, blue);
+      visualizer.visualizeTextBlocks(doc, red);
     }
     if (visualizePageSegments) {
       visualizer.visualizePageSegments(doc, blue);

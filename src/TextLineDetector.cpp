@@ -141,7 +141,7 @@ void TextLineDetector::detect() {
 }
 
 // _________________________________________________________________________________________________
-void TextLineDetector::createTextLine(const std::vector<PdfWord*>& words,
+void TextLineDetector::createTextLine(const std::vector<PdfWord*>& words, 
     std::vector<PdfTextLine*>* lines) {
   // Do nothing if no words are given.
   if (words.size() == 0) {
@@ -219,10 +219,10 @@ void TextLineDetector::createTextLine(const std::vector<PdfWord*>& words,
       line->text += " ";
     }
   }
-
+  
   lines->push_back(line);
 }
-
+ 
 // =================================================================================================
 
 

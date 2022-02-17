@@ -358,7 +358,7 @@ void PageSegmentator::chooseYCuts(const std::vector<PdfElement*>& elements,
       }
     }
 
-    if (lineDist > ratio * _doc->mostFreqLineDistance) {
+    if (lineDist > ratio * _doc->mostFreqEstimatedLineDistance) {
       cutIndices->push_back(i);
       continue;
     }

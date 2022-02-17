@@ -51,77 +51,117 @@ void WordsTokenizer::tokenize() const {
     }
 
     std::vector<PdfGlyph*> currentWordGlyphs;
-    currentWordGlyphs.push_back(page->glyphs[0]);
+    double currentWordMinX = std::numeric_limits<double>::max();
+    double currentWordMinY = std::numeric_limits<double>::max();
+    double currentWordMaxX = std::numeric_limits<double>::min();
+    double currentWordMaxY = std::numeric_limits<double>::min();
+    double maxWordFontSize = std::numeric_limits<double>::min();
 
     // Consider (previous glyph, current glyph) pairs. For each pair, analyze the spacing, font
     // size and writing mode of both glyphs and decide whether or not there is a word boundary
     // between the two glyphs.
-    for (size_t i = 1; i < page->glyphs.size(); i++) {
-      PdfGlyph* prevGlyph = page->glyphs.at(i - 1);
-      PdfGlyph* currGlyph = page->glyphs.at(i);
-
+    PdfGlyph* prevGlyph = nullptr;
+    for (auto* glyph : page->glyphs) {
       // Ignore diacritic marks, as they were already merged with their base characters.
-      if (currGlyph->isDiacriticMarkOfBaseGlyph) {
+      if (glyph->isDiacriticMarkOfBaseGlyph) {
         continue;
       }
 
-      // Assume a word boundary between the two glyphs when the writing modes and/or rotations of
-      // both glyphs differ.
-      if (prevGlyph->wMode != currGlyph->wMode || prevGlyph->rotation != currGlyph->rotation) {
-        createWord(currentWordGlyphs, &page->words);
-        currentWordGlyphs.clear();
-        currentWordGlyphs.push_back(currGlyph);
-        continue;
+      if (prevGlyph) {
+        // Assume a word boundary between the two glyphs when the writing modes and/or rotations of
+        // both glyphs differ.
+        if (prevGlyph->wMode != glyph->wMode || prevGlyph->rotation != glyph->rotation) {
+          createWord(currentWordGlyphs, &page->words);
+          currentWordGlyphs.clear();
+          currentWordGlyphs.push_back(glyph);
+          currentWordMinX = glyph->minX;
+          currentWordMinY = glyph->minY;
+          currentWordMaxX = glyph->maxX;
+          currentWordMaxY = glyph->maxY;
+          maxWordFontSize = glyph->fontSize;
+          prevGlyph = glyph;
+          continue;
+        }
+
+        double hDistanceLeft = 0;
+        double hDistanceRight = 0;
+        double vOverlap = 0;
+        double minMaxX = std::min(currentWordMaxX, glyph->maxX);
+        double maxMinX = std::max(currentWordMinX, glyph->minX);
+        double minMaxY = std::min(currentWordMaxY, glyph->maxY);
+        double maxMinY = std::max(currentWordMinY, glyph->minY);
+        double wordHeight = 0;
+        double glyphHeight = 0;
+
+        switch (glyph->rotation) {
+          case 0:
+            {
+              hDistanceLeft = glyph->minX - currentWordMaxX;
+              hDistanceRight = currentWordMinX - glyph->maxX;
+              vOverlap = std::max(.0, minMaxY - maxMinY);
+              wordHeight = currentWordMaxY - currentWordMinY;
+              glyphHeight = glyph->maxY - glyph->minY;
+              break;
+            }
+          case 1:
+            {
+              hDistanceLeft = glyph->minY - currentWordMaxY;
+              hDistanceRight = currentWordMinY - glyph->maxY;
+              vOverlap = std::max(.0, minMaxX - maxMinX);
+              break;
+            }
+          case 2:
+            {
+              hDistanceLeft = currentWordMinX - glyph->maxX;
+              hDistanceRight = glyph->minX - currentWordMaxX;
+              vOverlap = std::max(.0, minMaxY - maxMinY);
+              break;
+            }
+          case 3:
+            {
+              hDistanceLeft = currentWordMinY - glyph->maxY;
+              hDistanceRight = glyph->minY - currentWordMaxY;
+              vOverlap = std::max(.0, minMaxX - maxMinX);
+              break;
+            }
+        }
+
+        double glyphOverlapRatio = glyphHeight > 0 ? vOverlap / glyphHeight : 0;
+        double wordOverlapRatio = wordHeight > 0 ? vOverlap / wordHeight : 0;
+
+        bool startsNewWord = false;
+
+        if (glyphOverlapRatio < 0.5 && wordOverlapRatio < 0.5) {
+          startsNewWord = true;
+        } else if (hDistanceLeft > minWordBreakSpace * maxWordFontSize) {
+          startsNewWord = true;
+        } else if (hDistanceRight > minWordBreakSpace * maxWordFontSize) {
+          startsNewWord = true;
+        }
+
+        // Assume a word boundary between the two glyphs if the horizontal distance between the
+        // glyphs is too large, or if they do not overlap vertically.
+        if (startsNewWord) {
+          createWord(currentWordGlyphs, &page->words);
+          currentWordGlyphs.clear();
+          currentWordGlyphs.push_back(glyph);
+          currentWordMinX = glyph->minX;
+          currentWordMinY = glyph->minY;
+          currentWordMaxX = glyph->maxX;
+          currentWordMaxY = glyph->maxY;
+          maxWordFontSize = glyph->fontSize;
+          prevGlyph = glyph;
+          continue;
+        }
       }
 
-      double hDistance = 0;
-      double vOverlap = 0;
-      switch (currGlyph->rotation) {
-        case 0:
-          {
-            hDistance = fabs(currGlyph->minX - prevGlyph->maxX);
-            double minMaxY = std::min(prevGlyph->maxY, currGlyph->maxY);
-            double maxMinY = std::max(prevGlyph->minY, currGlyph->minY);
-            vOverlap = std::max(.0, minMaxY - maxMinY);
-            break;
-          }
-        case 1:
-          {
-            hDistance = fabs(currGlyph->minY - prevGlyph->maxY);
-            double minMaxX = std::min(prevGlyph->maxX, currGlyph->maxX);
-            double maxMinX = std::max(prevGlyph->minX, currGlyph->minX);
-            vOverlap = std::max(.0, minMaxX - maxMinX);
-            break;
-          }
-        case 2:
-          {
-            hDistance = fabs(prevGlyph->minX - currGlyph->maxX);
-            double minMaxY = std::min(prevGlyph->maxY, currGlyph->maxY);
-            double maxMinY = std::max(prevGlyph->minY, currGlyph->minY);
-            vOverlap = std::max(.0, minMaxY - maxMinY);
-            break;
-          }
-        case 3:
-          {
-            hDistance = fabs(prevGlyph->minY - currGlyph->maxY);
-            double minMaxX = std::min(prevGlyph->maxX, currGlyph->maxX);
-            double maxMinX = std::max(prevGlyph->minX, currGlyph->minX);
-            vOverlap = std::max(.0, minMaxX - maxMinX);
-            break;
-          }
-      }
-
-      // Assume a word boundary between the two glyphs if the horizontal distance between the
-      // glpyh is too large, or if they do not overlap vertically.
-      if (hDistance > minWordBreakSpace * prevGlyph->fontSize
-            || vOverlap < 0.1 * prevGlyph->fontSize) {
-        createWord(currentWordGlyphs, &page->words);
-        currentWordGlyphs.clear();
-        currentWordGlyphs.push_back(currGlyph);
-        continue;
-      }
-
-      currentWordGlyphs.push_back(currGlyph);
+      currentWordGlyphs.push_back(glyph);
+      currentWordMinX = std::min(currentWordMinX, glyph->minX);
+      currentWordMinY = std::min(currentWordMinY, glyph->minY);
+      currentWordMaxX = std::max(currentWordMaxX, glyph->maxX);
+      currentWordMaxY = std::max(currentWordMaxY, glyph->maxY);
+      maxWordFontSize = std::max(maxWordFontSize, glyph->fontSize);
+      prevGlyph = glyph;
     }
 
     // Dont forget to create the last word of the page.

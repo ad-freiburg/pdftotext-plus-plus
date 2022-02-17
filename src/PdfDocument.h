@@ -439,6 +439,9 @@ class PdfPageSegment : public PdfElement {
   /** The text lines of this segment. */
   std::vector<PdfTextLine*> lines;
 
+  /** A boolen flag that indicates whether or not the segment is justified. */
+  bool isJustified;
+
   /**
    * This method returns a string representation of this segment for debugging purposes.
    *
@@ -526,7 +529,9 @@ class PdfDocument {
   std::string mostFreqFontName;
 
   /** The most frequent line distance in this document. */
-  double mostFreqLineDistance = 0;
+  double mostFreqEstimatedLineDistance = 0;
+
+  double mostFreqLineGap = 0;
 
   /** The most frequent word height in this document. */
   double mostFreqWordHeight = 0;

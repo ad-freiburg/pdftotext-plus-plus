@@ -355,6 +355,10 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
 
   glyph->rank = _numGlyphs++;
 
+  if (glyph->pageNum == 1) {
+    std::cout << glyph->toString() << std::endl;
+  }
+  
   _page->glyphs.push_back(glyph);
 }
 
@@ -467,8 +471,9 @@ void TextOutputDev::drawImage(GfxState* state, int width, int height) {
 
   // Check if the clip box spans the whole page by checking if the width or height of the clip box
   // is smaller than the width/height of the page, allowing a small threshold.
-  double xOverlapRatio = clipBoxWidth < _page->width;
-  double yOverlapRatio = clipBoxHeight < _page->height;
+  double xOverlapRatio = clipBoxWidth / _page->width; // TODO: Compute the real overlap ratio.
+  double yOverlapRatio = clipBoxHeight / _page->height;
+  // std::cout << "IMAGE " << xOverlapRatio << " " << yOverlapRatio;
   if (xOverlapRatio < 0.9 || yOverlapRatio < 0.9) {
     PdfNonText* nonText = new PdfNonText();
     nonText->id = createRandomString(8, "nt-");
@@ -477,6 +482,8 @@ void TextOutputDev::drawImage(GfxState* state, int width, int height) {
     nonText->minY = clipMinY;
     nonText->maxX = clipMaxX;
     nonText->maxY = clipMaxY;
+
+    std::cout << nonText->toString() << std::endl;
 
     _page->nonTexts.push_back(nonText);
     return;

@@ -67,6 +67,7 @@ std::string PdfGlyph::toString() const {
      << "maxY=" << maxY << "; "
      << "fontName=" << fontName << "; "
      << "fontSize=" << fontSize << "; "
+     << "wMode=" << wMode << "; "
      << "rotation=" << rotation << "; "
      << "unicodes=[";
   for (size_t i = 0; i < unicodes.size(); i++) {
@@ -126,6 +127,8 @@ std::string PdfWord::toString() const {
      << "minY=" << minY << "; "
      << "maxX=" << maxX << "; "
      << "maxY=" << maxY << "; "
+     << "wMode=" << wMode << "; "
+     << "rotation=" << rotation << "; "
      << "fontName=" << fontName << "; "
      << "fontSize=" << fontSize << "; "
      << "text=\"" << text << "\")";
@@ -150,6 +153,8 @@ std::string PdfTextLine::toString() const {
      << "minY=" << minY << "; "
      << "maxX=" << maxX << "; "
      << "maxY=" << maxY << "; "
+     << "wMode=" << wMode << "; "
+     << "rotation=" << rotation << "; "
      << "fontName=" << fontName << "; "
      << "fontSize=" << fontSize << "; "
      << "text=\"" << text << "\")";

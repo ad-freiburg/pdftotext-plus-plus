@@ -9,6 +9,8 @@
 #include <cmath>  // fabs
 #include <iostream>  // std::cout
 
+#include "./utils/Utils.h"
+
 #include "./PdfDocument.h"
 #include "./PdfDocumentStatisticsCalculator.h"
 
@@ -151,13 +153,15 @@ void PdfDocumentStatisticsCalculator::computeWordStatistics() const {
       mostFreqLineDistanceCount = pair.second;
     }
   }
-  _doc->mostFreqLineDistance = mostFreqLineDistance;
+  _doc->mostFreqEstimatedLineDistance = mostFreqLineDistance;
 }
 
 // _________________________________________________________________________________________________
 void PdfDocumentStatisticsCalculator::computeLineStatistics() const {
   // A mapping of line indentation frequencies, for computing the most freq. line indentation.
   std::unordered_map<double, int> lineIndentFreqs;
+  // A mapping of line gaps to their frequencies, for computing the most freq. line gap.
+  std::unordered_map<double, int> lineGapFreqs;
 
   for (const auto* page : _doc->pages) {
     for (const auto* segment : page->segments) {
@@ -193,6 +197,10 @@ void PdfDocumentStatisticsCalculator::computeLineStatistics() const {
           continue;
         }
 
+        // Compute the vertical gap between the current line and the previous line.
+        double gap = std::max(0.0, round(currLine->minY - prevLine->maxY, 1));
+        lineGapFreqs[gap]++;
+
         // Check if the line is indented compared to the previous line and next line.
         double xOffsetCurrLine = currLine->minX - prevLine->minX;
         double xOffsetNextLine = nextLine->minX - prevLine->minX;
@@ -211,6 +219,17 @@ void PdfDocumentStatisticsCalculator::computeLineStatistics() const {
       }
     }
   }
+
+  // Compute the most frequent line gap.
+  double mostFreqLineGap = 0;
+  int mostFreqLineGapCount = 0;
+  for (const auto& pair : lineGapFreqs) {
+    if (pair.second > mostFreqLineGapCount) {
+      mostFreqLineGap = pair.first;
+      mostFreqLineGapCount = pair.second;
+    }
+  }
+  _doc->mostFreqLineGap = mostFreqLineGap;
 
   // Compute the most frequent line indentation.
   double mostFreqLineIndent = 0;

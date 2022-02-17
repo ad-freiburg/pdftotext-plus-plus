@@ -34,66 +34,148 @@ void TextBlockDetector::detect() {
     return;
   }
 
+  computeMostFrequentLinePitch();
+  computeMostFrequentLinePitchPerPage();
+  computeMostFrequentLinePitchPerFontFace();
+
   for (auto* page : _doc->pages) {
+    std::vector<PdfTextLine*> currentTextBlockLines;
+    PdfTextLine* prevLine = nullptr;
     for (auto* segment : page->segments) {
-      std::vector<PdfTextLine*> currentTextBlockLines;
-      for (size_t i = 0; i < segment->lines.size(); i++) {
-        PdfTextLine* prevTextLine = i > 0 ? segment->lines.at(i - 1) : nullptr;
-        PdfTextLine* currTextLine = segment->lines.at(i);
-        PdfTextLine* nextTextLine = i < segment->lines.size() - 1
-            ? segment->lines.at(i + 1) : nullptr;
-
-        // The line introduces a new text block if ...
-        bool introducesNewTextBlock = false;
-
-        if (prevTextLine) {
-          // The line distance is larger than the most freq. line distance.
-          double prevDistance = std::max(0.0, currTextLine->maxY - prevTextLine->maxY);
-          prevDistance = static_cast<double>(static_cast<int>(prevDistance * 10.)) / 10.;
-          if (prevDistance > 1.1 * _doc->mostFreqLineDistance) {
-            introducesNewTextBlock = true;
-          }
-
-          // ... its font size is different to the fontsize of the previous line.
-          if (fabs(currTextLine->fontSize - prevTextLine->fontSize) > 0.5) {
-            introducesNewTextBlock = true;
-          }
-
-          // ... its font weight is larger than the most frequent font weight.
-          double prevFontWeight = _doc->fontInfos[prevTextLine->fontName]->weight;
-          double currFontWeight = _doc->fontInfos[currTextLine->fontName]->weight;
-          if (equalOrLarger(currTextLine->fontSize, prevTextLine->fontSize)
-              && currFontWeight - prevFontWeight > 100) {
-            introducesNewTextBlock = true;
-          }
-          // if (equalOrLarger(prevTextLine->fontSize, currTextLine->fontSize)
-          //      && prevFontWeight -currFontWeight > 100) {
-          //   introducesNewTextBlock = true;
-          // }
-
-
-          if (nextTextLine) {
-            double nextDistance = std::max(0.0, nextTextLine->maxY - currTextLine->maxY);
-            // Line is intended?
-            double xOffsetCurrLine = currTextLine->minX - prevTextLine->minX;
-            double xOffsetNextLine = nextTextLine->minX - prevTextLine->minX;
-
-            if (equal(xOffsetCurrLine, _doc->mostFreqLineIndent) && equal(xOffsetNextLine, 0) && equal(prevDistance, nextDistance)) {
-              introducesNewTextBlock = true;
-            }
-          }
-        }
-
-        if (introducesNewTextBlock) {
+      for (auto* line : segment->lines) {
+        if (startsNewTextBlock(segment, prevLine, line)) {
           createTextBlock(currentTextBlockLines, &page->blocks);
           currentTextBlockLines.clear();
         }
-        currentTextBlockLines.push_back(currTextLine);
+        currentTextBlockLines.push_back(line);
+        prevLine = line;
       }
-      // Dont forget to create the last block of the segment.
-      createTextBlock(currentTextBlockLines, &page->blocks);
     }
+    // Don't forget to process the remaining text lines.
+    createTextBlock(currentTextBlockLines, &page->blocks);
   }
+}
+
+// _________________________________________________________________________________________________
+bool TextBlockDetector::startsNewTextBlock(const PdfPageSegment* segment, 
+    const PdfTextLine* prevLine, const PdfTextLine* line) {
+  if (!prevLine) {
+    return true;
+  }
+
+  std::cout << " " << line->toString() << std::endl;
+
+  // Column break
+  if (larger(line->minX, prevLine->maxX) && smaller(line->maxY, prevLine->maxY, -2 * prevLine->getHeight())) {
+    std::cout << "A" << std::endl;
+    return true;
+  }
+   
+  if (!equal(prevLine->fontSize, line->fontSize, 1)) {
+    std::cout << "B" << std::endl;
+    return true;
+  }
+
+  double fontSize = round(line->fontSize, 1);
+  std::string fontFace = line->fontName + std::to_string(line->fontSize);
+  double linePitch = std::max(0.0, round(line->minY - prevLine->maxY, 1));
+  double expectedLinePitch;
+  if (_mostFreqLinePitchPerFontFace.count(fontFace) > 0) {
+    expectedLinePitch = _mostFreqLinePitchPerFontFace.at(fontFace);
+  } else if (_mostFreqLinePitchPerPage.count(line->pageNum) > 0) {
+    expectedLinePitch = _mostFreqLinePitchPerPage.at(line->pageNum);
+  } else {
+    expectedLinePitch = _mostFreqLinePitch;
+  }
+
+  std::cout << "C " << linePitch << " " << expectedLinePitch << std::endl;
+  if (larger(linePitch, expectedLinePitch, std::max(1.0, 0.25 * expectedLinePitch))) {
+    return true;
+  }
+
+  // Indented?
+  if (larger(line->minX, prevLine->minX, 2 * _doc->avgGlyphWidth)) {
+    return true;
+  }
+
+  // Formulas
+  double prevHeight = prevLine->getHeight();
+  double height = line->getHeight();
+  if (larger(height, prevHeight, 0.5 * prevHeight) && larger(line->minX, prevLine->minX, 5)) {
+    return true;
+  }
+  if (larger(prevHeight, height, 0.5 * height) && larger(prevLine->minX, line->minX, 5)) {
+    return true;
+  }
+  
+  return false;
+
+  // if (prevTextLine) {
+  //         double 
+          
+  //         double gap = std::max(0.0, round(currTextLine->minY - prevTextLine->maxY, 1));
+
+  //         // The line distance is larger than the most freq. line distance.
+  //         double prevDistance = std::max(0.0, currTextLine->maxY - prevTextLine->maxY);
+  //         prevDistance = static_cast<double>(static_cast<int>(prevDistance * 10.)) / 10.;
+  //         // if (prevDistance > 1.1 * _doc->mostFreqEstimatedLineDistance) {
+  //         //   std::cout << "A " << prevDistance << " " << _doc->mostFreqEstimatedLineDistance << std::endl;
+  //         //   introducesNewTextBlock = true;
+  //         // }
+  //         std::cout << gap << " " << _doc->mostFreqLineGap << " " << currTextLine->toString() << std::endl;
+  //         if (gap > _doc->mostFreqLineGap + 0.1) {
+  //           introducesNewTextBlock = true;
+  //         }
+
+  //         // ... its font size is different to the fontsize of the previous line.
+  //         if (fabs(currTextLine->fontSize - prevTextLine->fontSize) > 0.5) {
+  //           std::cout << "B" << std::endl;
+  //           introducesNewTextBlock = true;
+  //         }
+
+  //         // ... its font weight is larger than the most frequent font weight.
+  //         double prevFontWeight = _doc->fontInfos[prevTextLine->fontName]->weight;
+  //         double currFontWeight = _doc->fontInfos[currTextLine->fontName]->weight;
+  //         if (equalOrLarger(currTextLine->fontSize, prevTextLine->fontSize)
+  //             && currFontWeight - prevFontWeight > 100) {
+  //           std::cout << "C" << std::endl;
+  //           introducesNewTextBlock = true;
+  //         }
+  //         // if (equalOrLarger(prevTextLine->fontSize, currTextLine->fontSize)
+  //         //      && prevFontWeight -currFontWeight > 100) {
+  //         //   introducesNewTextBlock = true;
+  //         // }
+
+
+  //         if (nextTextLine) {
+  //           double nextGap = std::max(0.0, round(nextTextLine->minY - currTextLine->maxY, 1));
+  //           // Line is intended?
+  //           double xOffsetCurrLine = currTextLine->minX - prevTextLine->minX;
+  //           double xOffsetNextLine = nextTextLine->minX - prevTextLine->minX;
+
+  //           if (xOffsetCurrLine > 0) {
+  //             std::cout << xOffsetCurrLine << " " << _doc->mostFreqLineIndent << std::endl;
+  //             std::cout << xOffsetNextLine << " " << std::endl;
+  //             std::cout << gap << " " << nextGap << std::endl;
+
+  //             if (equal(xOffsetCurrLine, _doc->mostFreqLineIndent) && equal(xOffsetNextLine, 0) && equal(gap, nextGap)) {
+  //               std::cout << "D" << std::endl;
+  //               introducesNewTextBlock = true;
+  //             }
+  //           }
+  //         }
+  //       }
+
+  //       if (introducesNewTextBlock) {
+  //         createTextBlock(currentTextBlockLines, &page->blocks);
+  //         currentTextBlockLines.clear();
+  //       }
+  //       currentTextBlockLines.push_back(currTextLine);
+  //     }
+  //     // Dont forget to create the last block of the segment.
+  //     createTextBlock(currentTextBlockLines, &page->blocks);
+  //   }
+  // }
 }
 
 // _________________________________________________________________________________________________
@@ -222,6 +304,137 @@ bool TextBlockDetector::computeIsTextBlockEmphasized(const std::vector<PdfTextLi
   }
 
   return true;
+}
+
+// ______________________________________________________________________________________________
+void TextBlockDetector::computeMostFrequentLinePitch() {
+  std::unordered_map<double, int> linePitchCounts;
+
+  for (auto* page : _doc->pages) {
+    PdfTextLine* prevLine = nullptr;
+    for (auto* segment : page->segments) {
+      for (auto* line : segment->lines) {
+        if (prevLine) {
+          if (prevLine->pageNum != line->pageNum) {
+            continue;
+          }
+
+          if (prevLine->wMode != 0 || line->wMode != 0) {
+            continue;
+          }
+
+          if (prevLine->rotation != 0 || line->rotation != 0) {
+            continue;
+          }
+
+          double linePitch = std::max(0.0, round(line->minY - prevLine->maxY, 1));
+          linePitchCounts[linePitch]++;
+        }
+        prevLine = line;
+      }
+    }
+  }
+  
+  int mostFreqLinePitchCount = 0;
+  for (const auto& pair : linePitchCounts) {
+    if (pair.second > mostFreqLinePitchCount) {
+      _mostFreqLinePitch = pair.first;
+      mostFreqLinePitchCount = pair.second;
+    }
+  }
+}
+
+// ______________________________________________________________________________________________
+void TextBlockDetector::computeMostFrequentLinePitchPerPage() {
+  for (auto* page : _doc->pages) {
+    PdfTextLine* prevLine = nullptr;
+    std::unordered_map<double, int> linePitchCountsOfPage;
+
+    for (auto* segment : page->segments) {
+      for (auto* line : segment->lines) {
+        if (prevLine) {
+          if (prevLine->pageNum != line->pageNum) {
+            continue;
+          }
+            
+          if (prevLine->wMode != 0 || line->wMode != 0) {
+            continue;
+          }
+
+          if (prevLine->rotation != 0 || line->rotation != 0) {
+            continue;
+          }
+
+          double linePitch = std::max(0.0, round(line->minY - prevLine->maxY, 1));
+          linePitchCountsOfPage[linePitch]++;
+        }
+        prevLine = line;
+      }
+    }
+
+    double mostFreqLinePitch = 0;
+    int mostFreqLinePitchCount = 0;
+    for (const auto& pair : linePitchCountsOfPage) {
+      if (pair.second > mostFreqLinePitchCount and pair.second > 1) {
+        mostFreqLinePitch = pair.first;
+        mostFreqLinePitchCount = pair.second;
+      }
+    }
+
+    _mostFreqLinePitchPerPage[page->pageNum] = mostFreqLinePitch;
+  }
+}
+
+// ______________________________________________________________________________________________
+void TextBlockDetector::computeMostFrequentLinePitchPerFontFace() {
+  std::unordered_map<std::string, std::unordered_map<double, int>> linePitchCountsPerFontFace;
+
+  for (auto* page : _doc->pages) {
+    PdfTextLine* prevLine = nullptr;
+    for (auto* segment : page->segments) {
+      for (auto* line : segment->lines) {
+        if (prevLine) {
+          if (prevLine->pageNum != line->pageNum) {
+            continue;
+          }
+
+          if (prevLine->wMode != 0 || line->wMode != 0) {
+            continue;
+          }
+
+          if (prevLine->rotation != 0 || line->rotation != 0) {
+            continue;
+          }
+
+          if (prevLine->fontName != line->fontName) {
+            continue;
+          }
+
+          double fontSize = round(line->fontSize, 1);
+          std::string fontFace = line->fontName + std::to_string(fontSize);
+          double linePitch = std::max(0.0, round(line->minY - prevLine->maxY, 1));
+
+          linePitchCountsPerFontFace[fontFace][linePitch]++;
+        }
+        prevLine = line;
+      }
+    }
+  }
+
+  std::unordered_map<std::string, int> mostFreqLinePitchCountPerFontFace;
+  for (const auto& stringMapPair : linePitchCountsPerFontFace) {
+    const std::string& fontFace = stringMapPair.first;
+    const std::unordered_map<double, int>& linePitchFreqs = stringMapPair.second;
+    for (const auto& doubleIntPair : linePitchFreqs) {
+      double linePitch = doubleIntPair.first;
+      double count = doubleIntPair.second;
+      int mostFreqCount = mostFreqLinePitchCountPerFontFace.count(fontFace) > 0 ? mostFreqLinePitchCountPerFontFace.at(fontFace) : 0; 
+      if (count > mostFreqCount && count > 1) {
+        _mostFreqLinePitchPerFontFace[fontFace] = linePitch;
+        mostFreqLinePitchCountPerFontFace[fontFace] = count;
+      }
+    }
+  }
 }
 
 // =================================================================================================
