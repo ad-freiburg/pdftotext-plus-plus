@@ -189,7 +189,7 @@ RUN ldconfig
 
 FROM base as runtime
 
-RUN apt-get install -y python3-dev
+RUN apt-get install -y fontconfig python3-dev
 
 WORKDIR /pdftotext
 COPY --from=tensorflow-builder /opt/include/ /usr/local/include/
@@ -205,6 +205,8 @@ RUN ldconfig
 COPY src src
 COPY Makefile.Docker Makefile
 RUN make install
+
+RUN ls -l /etc/fonts/fonts.conf
 
 ENTRYPOINT ["pdftotext++"]
 
