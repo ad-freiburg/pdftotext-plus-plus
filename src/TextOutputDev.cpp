@@ -355,9 +355,9 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
 
   glyph->rank = _numGlyphs++;
 
-  if (glyph->pageNum == 1) {
-    std::cout << glyph->toString() << std::endl;
-  }
+  // if (glyph->pageNum == 1) {
+  //   std::cout << glyph->toString() << std::endl;
+  // }
   
   _page->glyphs.push_back(glyph);
 }
@@ -483,7 +483,7 @@ void TextOutputDev::drawImage(GfxState* state, int width, int height) {
     nonText->maxX = clipMaxX;
     nonText->maxY = clipMaxY;
 
-    std::cout << nonText->toString() << std::endl;
+    // std::cout << nonText->toString() << std::endl;
 
     _page->nonTexts.push_back(nonText);
     return;

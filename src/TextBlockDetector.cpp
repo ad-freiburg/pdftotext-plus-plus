@@ -63,16 +63,16 @@ bool TextBlockDetector::startsNewTextBlock(const PdfPageSegment* segment,
     return true;
   }
 
-  std::cout << " " << line->toString() << std::endl;
+  // std::cout << " " << line->toString() << std::endl;
 
   // Column break
   if (larger(line->minX, prevLine->maxX) && smaller(line->maxY, prevLine->maxY, -2 * prevLine->getHeight())) {
-    std::cout << "A" << std::endl;
+    // std::cout << "A" << std::endl;
     return true;
   }
    
   if (!equal(prevLine->fontSize, line->fontSize, 1)) {
-    std::cout << "B" << std::endl;
+    // std::cout << "B" << std::endl;
     return true;
   }
 
@@ -88,7 +88,7 @@ bool TextBlockDetector::startsNewTextBlock(const PdfPageSegment* segment,
     expectedLinePitch = _mostFreqLinePitch;
   }
 
-  std::cout << "C " << linePitch << " " << expectedLinePitch << std::endl;
+  // std::cout << "C " << linePitch << " " << expectedLinePitch << std::endl;
   if (larger(linePitch, expectedLinePitch, std::max(1.0, 0.25 * expectedLinePitch))) {
     return true;
   }
