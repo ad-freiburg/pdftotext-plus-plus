@@ -1,9 +1,12 @@
 PROJECT_NAME = pdftotext-plus-plus
 
 DOCKER_CMD = docker
+DOCKER_FILE=./Dockerfiles/Dockerfile.ubuntu:$(shell lsb_release -r -s)
+DOCKER_IMAGE = pdftotext-plus-plus-ubuntu:$(shell lsb_release -r -s)
 
 INPUT_DIR = /local/data/pdftotext++/evaluation/benchmarks/arxiv-debug
 OUTPUT_DIR = /local/data/pdftotext++/evaluation/extraction-results/arxiv-debug
+
 INSTALL_DIR = /usr/local
 
 # ==================================================================================================
@@ -93,12 +96,14 @@ dataset: build-docker
 build-docker:
 	@echo "\033[34;1mBuilding the Docker image ...\033[0m"
 
-	$(DOCKER_CMD) build -t $(PROJECT_NAME) .
+	$(DOCKER_CMD) build -f $(DOCKER_FILE) -t $(DOCKER_IMAGE) .
 
 # ==================================================================================================
 
 install: build-docker
-	docker create -it --name $(PROJECT_NAME) $(PROJECT_NAME) bash
-	docker cp $(PROJECT_NAME):/usr/local/lib $(INSTALL_DIR)/
-	docker cp $(PROJECT_NAME):/usr/local/bin $(INSTALL_DIR)/
-	docker rm $(PROJECT_NAME)
+	@echo "\033[34;1mInstalling pdftotext++ ...\033[0m"
+
+	$(DOCKER_CMD) create -it --name $(PROJECT_NAME) $(DOCKER_IMAGE) bash
+	$(DOCKER_CMD) cp $(PROJECT_NAME):/usr/local/lib $(INSTALL_DIR)/
+	$(DOCKER_CMD) cp $(PROJECT_NAME):/usr/local/bin $(INSTALL_DIR)/
+	$(DOCKER_CMD) rm $(PROJECT_NAME)

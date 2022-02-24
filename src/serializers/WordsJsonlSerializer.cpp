@@ -6,17 +6,14 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include <filesystem>   // NOLINT(build/include)  (cpplint suggests to use
-                        // "#include 'serializers/WordsJsonlSerializer.h'", ignore this)
+#include <cstdlib>  // system()
 #include <fstream>
 #include <iostream>
 #include <string>
 
+#include "./WordsJsonlSerializer.h"
 #include "../PdfDocument.h"
 #include "../utils/Utils.h"
-#include "./WordsJsonlSerializer.h"
-
-namespace fs = std::filesystem;
 
 // _________________________________________________________________________________________________
 WordsJsonlSerializer::WordsJsonlSerializer(PdfDocument* doc) {
@@ -27,22 +24,23 @@ WordsJsonlSerializer::WordsJsonlSerializer(PdfDocument* doc) {
 WordsJsonlSerializer::~WordsJsonlSerializer() = default;
 
 // _________________________________________________________________________________________________
-void WordsJsonlSerializer::serialize(const std::string& targetFilePathStr) {
-  fs::path targetFilePath = targetFilePathStr;
-  fs::path parentDirPath = targetFilePath.parent_path();
+void WordsJsonlSerializer::serialize(const std::string& targetFilePath) {
+  // Compute the path to the parent directory of the target file.
+  std::string parentDirPath = ".";
+  size_t posLastSlash = targetFilePath.find_last_of("/");
+  if (posLastSlash != std::string::npos) {
+    parentDirPath = targetFilePath.substr(0, posLastSlash);
+  }
 
   // Try to create all intermediate directories if the parent directory does not exist.
-  if (!fs::exists(parentDirPath)) {
-    bool created = fs::create_directories(parentDirPath);
-    if (!created) {
-      std::cerr << "Could not create directory '" << parentDirPath << "'." << std::endl;
-      return;
-    }
+  if (system(("mkdir -p " + parentDirPath).c_str())) {
+    std::cerr << "Could not create directory '" << parentDirPath << "'." << std::endl;
+    return;
   }
 
   std::ofstream outFile(targetFilePath);
   if (!outFile.is_open()) {
-    std::cerr << "Could not open file '" << targetFilePathStr << "'." << std::endl;
+    std::cerr << "Could not open file '" << targetFilePath << "'." << std::endl;
     return;
   }
 
