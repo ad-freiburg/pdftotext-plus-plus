@@ -50,10 +50,8 @@ class SemanticRolesPredictor {
    *    The format is as follows: one byte pair per line, each written as <byte-pair>TAB<int>.
    *  - 'vocab_roles.tsv'; a TSV file providing the encoding of the semantic roles. The format is
    *    as follows: one semantic role per line, each written as <role>TAB<int>.
-   *
-   * @return 0 if the model and vocabularies were loaded successfully, and an int > 0 otherwise.
    */
-  int readModel();
+  void readModel();
 
   /**
    * Creates a tensor for the "layout" input from text blocks of the given document.

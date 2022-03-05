@@ -9,6 +9,7 @@
 #include <iomanip>  // setw, setprecision
 #include <iostream>
 #include <locale>  // imbue
+#include <stdexcept>
 
 #include <poppler/GlobalParams.h>
 
@@ -49,6 +50,7 @@ static bool visualizeReadingOrder = false;
 static bool visualizeBlockDetectionCuts = false;
 static bool visualizeReadingOrderCuts = false;
 static char visualizeFilePath[256] = "";
+static bool printRunningTimes = false;
 
 static const ArgDesc argDesc[] = {
   { "--add-control-characters", argFlag, &addControlCharacters, 0,
@@ -99,6 +101,8 @@ static const ArgDesc argDesc[] = {
       "Add annotations that visualizes the XY-cuts made to detect the text blocks." },
   { "--visualize-reading-order-cuts", argFlag, &visualizeReadingOrderCuts, 0,
       "Add annotations that visualizes the XY-cuts made to detect the reading order." },
+  { "--print-running-times", argFlag, &printRunningTimes, 0,
+      "Print the running times of the different modules at the end." },
   { "-v", argFlag, &printVersion, 0,
       "Print the copyright and version information." },
   { "-h", argFlag, &printHelp, 0,
@@ -159,35 +163,50 @@ int main(int argc, char *argv[]) {
   // Get the specified path to the input PDF file.
   std::string pdfFilePathStr(argv[1]);
 
-  // ------------
-  // Compute the extraction result.
-
-  PdfToTextPlusPlus pdfToTextPlusPlus(!ignoreEmbeddedFontFiles, disableWordsDehyphenation);
-  PdfDocument doc;
-  std::vector<Timing> timings;
-
-  int status = pdfToTextPlusPlus.process(pdfFilePathStr, &doc, &timings);
-
-  // ------------
-  // Process the extraction result.
-
   // Get the specified path to the output file.
   std::string outputFilePathStr;
   if (argc > 2) {
     outputFilePathStr = std::string(argv[2]);
-  } else {
-    // The path is *not* explicitly specified by the user. Compose the path from the PDF file path.
-    const char* p = pdfFilePathStr.c_str() + pdfFilePathStr.length() - 4;
-
-    // If the PDF path is "file.pdf" or "file.PDF", define the output file path as "file.txt".
-    // If the PDF path is "file.xxx", define the output file path as "file.xxx.txt".
-    if (!strcmp(p, ".pdf") || !strcmp(p, ".PDF")) {
-      outputFilePathStr = std::string(pdfFilePathStr.c_str(), pdfFilePathStr.length() - 4);
-    } else {
-      outputFilePathStr = pdfFilePathStr;
-    }
-    outputFilePathStr.append(".txt");
   }
+
+  // Print the help message if none of the serialization paths is given.
+  if (outputFilePathStr.empty() && serializeCharactersFilePath[0] == '\0' &&
+      serializeWordsFilePath[0] == '\0' && serializeTextBlocksFilePath[0] == '\0') {
+    printHelpInfo();
+    return 99;
+  }
+
+  TextUnit targetTextUnit;
+  if (serializeCharactersFilePath[0] != '\0') {
+    targetTextUnit = TextUnit::CHARACTERS;
+  }
+  if (serializeWordsFilePath[0] != '\0') {
+    targetTextUnit = TextUnit::WORDS;
+  }
+  if (serializeTextBlocksFilePath[0] != '\0') {
+    targetTextUnit = TextUnit::TEXT_BLOCKS;
+  }
+  if (!outputFilePathStr.empty()) {
+    targetTextUnit = TextUnit::PARAGRAPHS;
+  }
+
+  // ------------
+  // Compute the extraction result.
+
+  PdfToTextPlusPlus pdfToTextPlusPlus(!ignoreEmbeddedFontFiles, disableWordsDehyphenation,
+      targetTextUnit);
+  PdfDocument doc;
+  std::vector<Timing> timings;
+
+  try {
+    pdfToTextPlusPlus.process(pdfFilePathStr, &doc, &timings);
+  } catch (const std::invalid_argument& ia) {
+    std::cerr << "An error occurred: " << ia.what() << '\n';
+    return 1;
+  }
+
+  // ------------
+  // Process the extraction result.
 
   // Write the extracted text to the output file.
   if (!outputFilePathStr.empty()) {
@@ -273,23 +292,25 @@ int main(int argc, char *argv[]) {
     timings.push_back(timingVisualizing);
   }
 
-  // Print the timings.
-  std::cout.imbue(std::locale(""));  // Print the values with thousands separator.
-  std::cout << std::fixed;           // Print the values with a precision of one decimal point.
-  std::cout << std::setprecision(1);
+  if (printRunningTimes) {
+    // Print the timings.
+    std::cout.imbue(std::locale(""));  // Print the values with thousands separator.
+    std::cout << std::fixed;           // Print the values with a precision of one decimal point.
+    std::cout << std::setprecision(1);
 
-  int64_t timeTotal = 0;
-  for (const auto& timing : timings) { timeTotal += timing.time; }
+    int64_t timeTotal = 0;
+    for (const auto& timing : timings) { timeTotal += timing.time; }
 
-  std::cerr << "\033[1m" << "Finished in " << timeTotal << " ms." << "\033[22m" << std::endl;
+    std::cerr << "\033[1m" << "Finished in " << timeTotal << " ms." << "\033[22m" << std::endl;
 
-  for (const auto& timing : timings) {
-    std::string prefix = " * " + timing.description + ":";
-    std::cerr << std::left << std::setw(25) << prefix;
-    std::cerr << std::right << std::setw(4) << timing.time << " ms ";
-    std::cerr << "(" << round(timing.time / static_cast<double>(timeTotal) * 100, 1) << "%)";
-    std::cerr << std::endl;
+    for (const auto& timing : timings) {
+      std::string prefix = " * " + timing.description + ":";
+      std::cerr << std::left << std::setw(25) << prefix;
+      std::cerr << std::right << std::setw(4) << timing.time << " ms ";
+      std::cerr << "(" << round(timing.time / static_cast<double>(timeTotal) * 100, 1) << "%)";
+      std::cerr << std::endl;
+    }
   }
 
-  return status;
+  return 0;
 }

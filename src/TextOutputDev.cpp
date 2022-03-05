@@ -355,10 +355,22 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
 
   glyph->rank = _numGlyphs++;
 
-  // if (glyph->pageNum == 1) {
-  //   std::cout << glyph->toString() << std::endl;
-  // }
-  
+  // ----------------------------------
+  // Set the opacity.
+
+  glyph->opacity = state->getStrokeOpacity();
+
+  // ----------------------------------
+  // Set the color.
+
+  GfxRGB rgb;
+  state->getStrokeRGB(&rgb);
+  glyph->color[0] = colToDbl(rgb.r);
+  glyph->color[1] = colToDbl(rgb.g);
+  glyph->color[2] = colToDbl(rgb.b);
+
+  std::cout << glyph->toString() << std::endl;
+
   _page->glyphs.push_back(glyph);
 }
 

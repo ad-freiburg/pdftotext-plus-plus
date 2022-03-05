@@ -10,6 +10,7 @@
 #include <fstream>
 #include <iostream>
 #include <limits>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
@@ -35,7 +36,7 @@ SemanticRolesPredictor::SemanticRolesPredictor() {
 SemanticRolesPredictor::~SemanticRolesPredictor() = default;
 
 // _________________________________________________________________________________________________
-int SemanticRolesPredictor::readModel() {
+void SemanticRolesPredictor::readModel() {
   // Disable the annoying log output of Tensorflow.
   char flag[] = "TF_CPP_MIN_LOG_LEVEL=3";
   putenv(flag);
@@ -45,7 +46,7 @@ int SemanticRolesPredictor::readModel() {
   RunOptions runOptions;
   auto status = LoadSavedModel(sessionOptions, runOptions, _modelDirPath, { "serve" }, &_bundle);
   if (!status.ok()) {
-    return 1;
+    throw std::invalid_argument("Could not load model \"" + _modelDirPath + "\"");
   }
 
   // -----------
@@ -55,7 +56,7 @@ int SemanticRolesPredictor::readModel() {
 
   // Abort if the file can't be read.
   if (!bpeVocabFile.is_open()) {
-    return 2;
+    throw std::invalid_argument("Could not load vocab file \"" + _bpeVocabFilePath + "\"");
   }
 
   // Tell the wifstream that the file is encoded in UTF-8 and contains multi-byte characters.
@@ -83,7 +84,7 @@ int SemanticRolesPredictor::readModel() {
 
   std::ifstream vocabFile(_rolesVocabFilePath);
   if (!vocabFile.is_open()) {
-    return 3;
+    throw std::invalid_argument("Could not load vocab file \"" + _rolesVocabFilePath + "\"");
   }
   std::string line;
   while (true) {
@@ -101,8 +102,6 @@ int SemanticRolesPredictor::readModel() {
 
   bpeVocabFile.close();
   // No need to delete codecvt.
-
-  return 0;
 }
 
 // _________________________________________________________________________________________________

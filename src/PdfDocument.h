@@ -81,6 +81,11 @@ class Cut {
 // =================================================================================================
 
 /**
+ * The different text unit.
+ */
+enum TextUnit { CHARACTERS = 1, WORDS = 2, TEXT_LINES = 3, TEXT_BLOCKS = 4, PARAGRAPHS = 5 };
+
+/**
  * This class represents an abstract class for all visible elements in a PDF, for example: glyphs,
  * words, text blocks, figures and shapes.
  */
@@ -156,6 +161,12 @@ class PdfGlyph : public PdfElement {
 
   /** The font name of this glyph. */
   std::string fontName;
+
+  /** The RGB stroking color of this glyph. */
+  double color[3];
+
+  /** The opacity of this glyph. */
+  double opacity;
 
   /**
    * The writing mode of this glyph, given as an integer 0 or 1.

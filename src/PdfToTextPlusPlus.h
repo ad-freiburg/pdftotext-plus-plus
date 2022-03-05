@@ -30,7 +30,8 @@ class PdfToTextPlusPlus {
    *   bounding boxes of the glyphs. Setting this flag to true results in a faster extraction
    *   process but less accurate extraction results.
    */
-  explicit PdfToTextPlusPlus(bool parseEmbeddedFontFiles, bool disableWordsDehyphenation);
+  explicit PdfToTextPlusPlus(bool parseEmbeddedFontFiles, bool disableWordsDehyphenation,
+    TextUnit targetTextUnit);
 
   /** The deconstructor */
   ~PdfToTextPlusPlus();
@@ -53,6 +54,8 @@ class PdfToTextPlusPlus {
   bool _parseEmbeddedFontFiles;
 
   bool _disableWordsDehyphenation;
+
+  TextUnit _targetTextUnit;
 };
 
 #endif  // PDFTOTEXTPLUSPLUS_H_

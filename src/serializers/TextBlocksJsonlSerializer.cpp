@@ -25,27 +25,31 @@ TextBlocksJsonlSerializer::~TextBlocksJsonlSerializer() = default;
 
 // _________________________________________________________________________________________________
 void TextBlocksJsonlSerializer::serialize(const std::string& targetFilePath) {
-  // Compute the path to the parent directory of the target file.
-  std::string parentDirPath = ".";
-  size_t posLastSlash = targetFilePath.find_last_of("/");
-  if (posLastSlash != std::string::npos) {
-    parentDirPath = targetFilePath.substr(0, posLastSlash);
-  }
+  if (targetFilePath.size() == 1 && targetFilePath[0] == '-') {
+    serializeToStream(std::cout);
+  } else {
+    // Compute the path to the parent directory of the target file.
+    std::string parentDirPath = ".";
+    size_t posLastSlash = targetFilePath.find_last_of("/");
+    if (posLastSlash != std::string::npos) {
+      parentDirPath = targetFilePath.substr(0, posLastSlash);
+    }
 
-  // Try to create all intermediate directories if the parent directory does not exist.
-  if (system(("mkdir -p " + parentDirPath).c_str())) {
-    std::cerr << "Could not create directory '" << parentDirPath << "'." << std::endl;
-    return;
-  }
+    // Try to create all intermediate directories if the parent directory does not exist.
+    if (system(("mkdir -p " + parentDirPath).c_str())) {
+      std::cerr << "Could not create directory '" << parentDirPath << "'." << std::endl;
+      return;
+    }
 
-  std::ofstream outFile(targetFilePath);
-  if (!outFile.is_open()) {
-    std::cerr << "Could not open file '" << targetFilePath << "'." << std::endl;
-    return;
-  }
+    std::ofstream outFile(targetFilePath);
+    if (!outFile.is_open()) {
+      std::cerr << "Could not open file '" << targetFilePath << "'." << std::endl;
+      return;
+    }
 
-  serializeToStream(outFile);
-  outFile.close();
+    serializeToStream(outFile);
+    outFile.close();
+  }
 }
 
 // _________________________________________________________________________________________________

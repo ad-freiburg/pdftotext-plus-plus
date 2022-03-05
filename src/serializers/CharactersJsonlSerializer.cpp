@@ -25,27 +25,31 @@ CharactersJsonlSerializer::~CharactersJsonlSerializer() = default;
 
 // _________________________________________________________________________________________________
 void CharactersJsonlSerializer::serialize(const std::string& targetFilePath) {
-  // Compute the path to the parent directory of the target file.
-  std::string parentDirPath = ".";
-  size_t posLastSlash = targetFilePath.find_last_of("/");
-  if (posLastSlash != std::string::npos) {
-    parentDirPath = targetFilePath.substr(0, posLastSlash);
-  }
+  if (targetFilePath.size() == 1 && targetFilePath[0] == '-') {
+    serializeToStream(std::cout);
+  } else {
+    // Compute the path to the parent directory of the target file.
+    std::string parentDirPath = ".";
+    size_t posLastSlash = targetFilePath.find_last_of("/");
+    if (posLastSlash != std::string::npos) {
+      parentDirPath = targetFilePath.substr(0, posLastSlash);
+    }
 
-  // Try to create all intermediate directories if the parent directory does not exist.
-  if (system(("mkdir -p " + parentDirPath).c_str())) {
-    std::cerr << "Could not create directory '" << parentDirPath << "'." << std::endl;
-    return;
-  }
+    // Try to create all intermediate directories if the parent directory does not exist.
+    if (system(("mkdir -p " + parentDirPath).c_str())) {
+      std::cerr << "Could not create directory '" << parentDirPath << "'." << std::endl;
+      return;
+    }
 
-  std::ofstream outFile(targetFilePath);
-  if (!outFile.is_open()) {
-    std::cerr << "Could not open file '" << targetFilePath << "'." << std::endl;
-    return;
-  }
+    std::ofstream outFile(targetFilePath);
+    if (!outFile.is_open()) {
+      std::cerr << "Could not open file '" << targetFilePath << "'." << std::endl;
+      return;
+    }
 
-  serializeToStream(outFile);
-  outFile.close();
+    serializeToStream(outFile);
+    outFile.close();
+  }
 }
 
 // _________________________________________________________________________________________________
@@ -56,20 +60,31 @@ void CharactersJsonlSerializer::serializeToStream(std::ostream& outStream) {
     for (const auto* block : page->blocks) {
       for (const auto* line : block->lines) {
         for (const auto* word : line->words) {
-          for (const auto* glyph : word->glyphs) {
+          for (const auto* g : word->glyphs) {
+            if (g->isDiacriticMarkOfBaseGlyph) {
+              continue;
+            }
+
+            const PdfFontInfo* fontInfo = _doc->fontInfos.at(g->fontName);
+            std::string text = g->isBaseGlyphOfDiacriticMark ? g->textWithDiacriticMark : g->text;
+
             outStream << "{"
-              << "\"id\": \"" << glyph->id << "\", "
+              << "\"id\": \"" << g->id << "\", "
               << "\"rank\": " << rank++ << ", "
-              << "\"page\": " << glyph->pageNum << ", "
-              << "\"minX\": " << glyph->minX << ", "
-              << "\"minY\": " << glyph->minY << ", "
-              << "\"maxX\": " << glyph->maxX << ", "
-              << "\"maxY\": " << glyph->maxY << ", "
-              << "\"font\": \"" << glyph->fontName << "\", "
-              << "\"fontSize\": " << glyph->fontSize << ", "
-              << "\"text\": \"" << escapeJson(glyph->text) << "\", "
+              << "\"page\": " << g->pageNum << ", "
+              << "\"minX\": " << g->minX << ", "
+              << "\"minY\": " << g->minY << ", "
+              << "\"maxX\": " << g->maxX << ", "
+              << "\"maxY\": " << g->maxY << ", "
+              << "\"font\": \"" << g->fontName << "\", "
+              << "\"fontSize\": " << g->fontSize << ", "
+              << "\"weight\": " << fontInfo->weight << ", "
+              << "\"italic\": " << (fontInfo->isItalic ? "true" : "false") << ", "
+              << "\"color\": [" << g->color[0] << "," << g->color[1] << "," << g->color[2] << "],"
+              << "\"opacity\": " << g->opacity << ", "
+              << "\"text\": \"" << escapeJson(text) << "\", "
               << "\"word\": \"" << word->id << "\", "
-              << "\"origin\": \"pdftotei\""
+              << "\"origin\": \"pdftotext++\""
               << "}"
               << std::endl;
           }

@@ -67,6 +67,8 @@ std::string PdfGlyph::toString() const {
      << "maxY=" << maxY << "; "
      << "fontName=" << fontName << "; "
      << "fontSize=" << fontSize << "; "
+     << "color=(" << color[0] << ", " << color[1] << ", " << color[2] << "); "
+     << "opacity=" << opacity << "; "
      << "wMode=" << wMode << "; "
      << "rotation=" << rotation << "; "
      << "unicodes=[";
