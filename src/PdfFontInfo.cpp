@@ -83,6 +83,7 @@ PdfFontInfo* PdfFontInfo::create(const GfxState* state, XRef* xref, bool parseEm
   fontInfo->isFixedWidth = fontFlags & fontFixedWidth;
   fontInfo->isSerif = fontFlags & fontSerif;
   fontInfo->isSymbolic = fontFlags & fontSymbolic;
+  fontInfo->isType3 = gfxFont->getType() == fontType3;
 
   // Compute whether or not the font is an italic font. This is surprisingly difficult, for the
   // following reasons:

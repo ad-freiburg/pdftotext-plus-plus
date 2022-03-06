@@ -42,8 +42,9 @@ void DiacriticMarksCombiner::combine() {
       //  - "Spacing Modifier Letters" (that is: into the range 02B0 - 02FF),
       //  - "Combining Diacritical Marks" (that is: into the range 0300 - 036F).
       bool isDiacriticMark = false;
+      unsigned int unicode = 0;
       if (currGlyph->unicodes.size() == 1) {
-        unsigned int unicode = currGlyph->unicodes[0];
+        unicode = currGlyph->unicodes[0];
 
         if (combiningMap.count(unicode)) {
           unicode = combiningMap.at(unicode);
@@ -55,11 +56,9 @@ void DiacriticMarksCombiner::combine() {
         if (unicode >= 0x0300 && unicode <= 0x036f) {
           isDiacriticMark = true;
         }
+      }
 
-        if (!isDiacriticMark) {
-          continue;
-        }
-
+      if (isDiacriticMark) {
         // Merge the diacritic mark either with the previous glyph or the next glyph, depending on
         // with which of the two glyphs the diacritic mark has the largest horizontal overlap.
         double prevOverlapX = 0;

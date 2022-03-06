@@ -69,7 +69,7 @@ int PdfToTextPlusPlus::process(const std::string& pdfFilePath, PdfDocument* doc,
 
   PdfDocumentStatisticsCalculator statistician(doc);
 
-  if (_targetTextUnit >= TextUnit::CHARACTERS) {
+  if (_targetTextUnit >= TextUnit::GLYPHS) {
     // Extract the contents of the PDF pages.
     start = high_resolution_clock::now();
     pdfDoc->displayPages(
@@ -92,7 +92,7 @@ int PdfToTextPlusPlus::process(const std::string& pdfFilePath, PdfDocument* doc,
     end = high_resolution_clock::now();
     auto timeComputeStatistics = duration_cast<milliseconds>(end - start).count();
 
-    // Combine diacritic marks with their base characters.
+    // Combine diacritic marks with their base glyphs.
     start = high_resolution_clock::now();
     DiacriticMarksCombiner dmCombiner(doc);
     dmCombiner.combine();

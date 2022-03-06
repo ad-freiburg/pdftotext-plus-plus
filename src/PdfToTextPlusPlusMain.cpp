@@ -17,7 +17,7 @@
 #include "./utils/Utils.h"
 #include "PdfToTextPlusPlus.h"
 
-#include "./serializers/CharactersJsonlSerializer.h"
+#include "./serializers/GlyphsJsonlSerializer.h"
 #include "./serializers/TextBlocksJsonlSerializer.h"
 #include "./serializers/TextSerializer.h"
 #include "./serializers/WordsJsonlSerializer.h"
@@ -37,10 +37,10 @@ static bool addSemanticRoles = false;
 static bool excludeSubSuperscripts = false;
 static bool ignoreEmbeddedFontFiles = false;
 static bool disableWordsDehyphenation = false;
-static char serializeCharactersFilePath[256] = "";
+static char serializeGlyphsFilePath[256] = "";
 static char serializeWordsFilePath[256] = "";
 static char serializeTextBlocksFilePath[256] = "";
-static bool visualizeCharacters = false;
+static bool visualizeGlyphs = false;
 static bool visualizeWords = false;
 static bool visualizeTextLines = false;
 static bool visualizeTextBlocks = false;
@@ -65,8 +65,8 @@ static const ArgDesc argDesc[] = {
       "result in a faster extraction process but also in less accurate extraction results." },
   { "--disable-words-dehyphenation", argFlag, &disableWordsDehyphenation, 0,
       "Don't dephyphenate hyphenated words." },
-  { "--serialize-characters", argString, &serializeCharactersFilePath,
-      sizeof(serializeCharactersFilePath), "Write the extracted characters together with their "
+  { "--serialize-glyphs", argString, &serializeGlyphsFilePath,
+      sizeof(serializeGlyphsFilePath), "Write the extracted glyphs together with their "
       "layout information in JSONL format to the specified path." },
   { "--serialize-words", argString, &serializeWordsFilePath, sizeof(serializeWordsFilePath),
       "Write the extracted words with their layout information in JSONL format to the specified "
@@ -80,8 +80,8 @@ static const ArgDesc argDesc[] = {
       "path. Which annotations will be added to this visualization can be controlled via the "
       "--visualize-* flags; see the respective help messages of these flags below for more "
       "details." },
-  { "--visualize-characters", argFlag, &visualizeCharacters, 0,
-      "Draw the bounding boxes of the extracted characters to the visualization." },
+  { "--visualize-glyphs", argFlag, &visualizeGlyphs, 0,
+      "Draw the bounding boxes of the extracted glyphs to the visualization." },
   { "--visualize-words", argFlag, &visualizeWords, 0,
       "Draw the bounding boxes of the extracted words to the visualization." },
   { "--visualize-text-lines", argFlag, &visualizeTextLines, 0,
@@ -170,15 +170,15 @@ int main(int argc, char *argv[]) {
   }
 
   // Print the help message if none of the serialization paths is given.
-  if (outputFilePathStr.empty() && serializeCharactersFilePath[0] == '\0' &&
+  if (outputFilePathStr.empty() && serializeGlyphsFilePath[0] == '\0' &&
       serializeWordsFilePath[0] == '\0' && serializeTextBlocksFilePath[0] == '\0') {
     printHelpInfo();
     return 99;
   }
 
   TextUnit targetTextUnit;
-  if (serializeCharactersFilePath[0] != '\0') {
-    targetTextUnit = TextUnit::CHARACTERS;
+  if (serializeGlyphsFilePath[0] != '\0') {
+    targetTextUnit = TextUnit::GLYPHS;
   }
   if (serializeWordsFilePath[0] != '\0') {
     targetTextUnit = TextUnit::WORDS;
@@ -218,16 +218,16 @@ int main(int argc, char *argv[]) {
     timings.push_back(timingLoading);
   }
 
-  // Write the extracted characters to the specified file if required.
-  const std::string serializeCharactersFilePathStr(serializeCharactersFilePath);
-  if (!serializeCharactersFilePathStr.empty()) {
+  // Write the extracted glyphs to the specified file if required.
+  const std::string serializeGlyphsFilePathStr(serializeGlyphsFilePath);
+  if (!serializeGlyphsFilePathStr.empty()) {
     auto start = high_resolution_clock::now();
-    CharactersJsonlSerializer serializer(&doc);
-    serializer.serialize(serializeCharactersFilePathStr);
+    GlyphsJsonlSerializer serializer(&doc);
+    serializer.serialize(serializeGlyphsFilePathStr);
     auto end = high_resolution_clock::now();
-    Timing timingSerializeCharacters("Serialize characters",
+    Timing timingSerializeGlyphs("Serialize glyphs",
         duration_cast<milliseconds>(end - start).count());
-    timings.push_back(timingSerializeCharacters);
+    timings.push_back(timingSerializeGlyphs);
   }
 
   // Write the extracted words to the specified file if required.
@@ -259,7 +259,7 @@ int main(int argc, char *argv[]) {
   if (!visualizeFilePathStr.empty()) {
     auto start = high_resolution_clock::now();
     PdfDocumentVisualizer visualizer(pdfFilePathStr);
-    if (visualizeCharacters) {
+    if (visualizeGlyphs) {
       visualizer.visualizeGlyphs(doc, blue);
     }
     if (visualizeNonTextElements) {

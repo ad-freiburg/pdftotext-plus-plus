@@ -28,15 +28,14 @@ using tensorflow::TensorShape;
 
 
 // _________________________________________________________________________________________________
-SemanticRolesPredictor::SemanticRolesPredictor() {
-  readModel();
-}
+SemanticRolesPredictor::SemanticRolesPredictor() = default;
 
 // _________________________________________________________________________________________________
 SemanticRolesPredictor::~SemanticRolesPredictor() = default;
 
 // _________________________________________________________________________________________________
 void SemanticRolesPredictor::readModel() {
+  std::cout << "READ MODEL" << std::endl;
   // Disable the annoying log output of Tensorflow.
   char flag[] = "TF_CPP_MIN_LOG_LEVEL=3";
   putenv(flag);
@@ -106,6 +105,10 @@ void SemanticRolesPredictor::readModel() {
 
 // _________________________________________________________________________________________________
 void SemanticRolesPredictor::predict(PdfDocument* doc) {
+  if (!_modelOk) {
+    readModel();
+  }
+
   tensorflow::Tensor layoutTensor = createLayoutInputTensor(doc);
   tensorflow::Tensor wordsTensor = createWordsInputTensor(doc);
 

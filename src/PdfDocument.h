@@ -83,7 +83,7 @@ class Cut {
 /**
  * The different text unit.
  */
-enum TextUnit { CHARACTERS = 1, WORDS = 2, TEXT_LINES = 3, TEXT_BLOCKS = 4, PARAGRAPHS = 5 };
+enum TextUnit { GLYPHS = 1, WORDS = 2, TEXT_LINES = 3, TEXT_BLOCKS = 4, PARAGRAPHS = 5 };
 
 /**
  * This class represents an abstract class for all visible elements in a PDF, for example: glyphs,

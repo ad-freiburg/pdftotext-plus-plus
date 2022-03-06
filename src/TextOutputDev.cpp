@@ -105,10 +105,13 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   // ----------------------------------
   // Compute and set the text of the glyph.
 
+  PdfGlyph* glyph = new PdfGlyph();
+
   std::string text;
 
-  if (glyphMap.count(charName)) {
-    text = glyphMap.at(charName);
+  if (uLen == 1 && glyphMap.count(charName)) {
+    glyph->unicodes.push_back(glyphMap.at(charName).first);
+    text = glyphMap.at(charName).second;
   } else if (u) {
     const UnicodeMap* uMap;
     char buf[8];
@@ -121,6 +124,10 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
         n = uMap->mapUnicode(u[i], buf, sizeof(buf));
         text.append(buf, n);
       }
+    }
+
+    for (int i = 0; i < uLen; ++i) {
+      glyph->unicodes.push_back(u[i]);
     }
   }
 
@@ -142,17 +149,10 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
     return;
   }
 
-  PdfGlyph* glyph = new PdfGlyph();
+
   glyph->id = createRandomString(8, "g-");
   glyph->charName = charName;
   glyph->text = text;
-
-  // ----------------------------------
-  // Set the unicode codepoints of the glyph.
-
-  for (int i = 0; i < uLen; i++) {
-    glyph->unicodes.push_back(u[i]);
-  }
 
   // ----------------------------------
   // Set the page number of the glyph.
@@ -368,8 +368,6 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   glyph->color[0] = colToDbl(rgb.r);
   glyph->color[1] = colToDbl(rgb.g);
   glyph->color[2] = colToDbl(rgb.b);
-
-  std::cout << glyph->toString() << std::endl;
 
   _page->glyphs.push_back(glyph);
 }

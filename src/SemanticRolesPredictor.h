@@ -95,6 +95,9 @@ class SemanticRolesPredictor {
   std::string _bpeVocabFilePath = _modelDirPath + "/bpe-vocab.tsv";
   /** The name of the roles vocabulary file within the model dir. */
   std::string _rolesVocabFilePath = _modelDirPath + "/roles-vocab.tsv";
+
+  /** Whether or not the model was already loaded. */
+  bool _modelOk = false;
 };
 
 #endif  // SEMANTICROLESPREDICTOR_H_

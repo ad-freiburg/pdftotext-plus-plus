@@ -97,6 +97,7 @@ class PdfFontInfo {
    */
   bool isItalic;
 
+
   /**
    * This method returns the font weight, that is: one of the values [100, 200, ..., 900] which
    * describes the boldness of the font's glyphs. Here is the meaning of the different values:
@@ -114,6 +115,11 @@ class PdfFontInfo {
    * @return The font weight.
    */
   int weight = 400;
+
+  /**
+   * The boolean flag indicating whether or not the font is a type-3 font.
+   */
+  bool isType3;
 
   /** The font matrix. */
   double fontMatrix[6];
