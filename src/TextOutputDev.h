@@ -125,7 +125,7 @@ class TextOutputDev : public OutputDev {
   /**
    * This method handles the event "stroke a path" by gathering all information required
    * by pdftotext++ about the path (for example, the position) and storing this information
-   * in form of a `PdfNonText` to `page->nonTexts`, where `page` denotes the current `PdfPage`.
+   * in form of a `PdfShape` to `page->shapes`, where `page` denotes the current `PdfPage`.
    *
    * @param state
    *   The current graphics state.
@@ -135,7 +135,7 @@ class TextOutputDev : public OutputDev {
   /**
    * This method handles the event "fill a path" by gathering all information required
    * by pdftotext++ about the path (for example, the position) and storing this information
-   * in form of a `PdfNonText` to `page->nonTexts`, where `page` denotes the current `PdfPage`.
+   * in form of a `PdfShape` to `page->shapes`, where `page` denotes the current `PdfPage`.
    *
    * @param state
    *   The current graphics state.
@@ -179,7 +179,7 @@ class TextOutputDev : public OutputDev {
    * `drawImage()`, `drawMaskedImage()`, and `drawSoftMaskedImage()` methods in the exact same way
    * (it is internally invoked by each of the mentioned methods). It gathers all information
    * required by pdftotext++ about the image (for example, the position) and stores this
-   * information in form of a `PdfNonText` to `page->nonTexts`, where `page` denotes the current
+   * information in form of a `PdfFigure` to `page->figures`, where `page` denotes the current
    * `PdfPage`.
    */
   void drawImage(GfxState* state, int width, int height);

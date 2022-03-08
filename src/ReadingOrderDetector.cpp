@@ -62,11 +62,12 @@ void ReadingOrderDetector::detectReadingOrder() {
   // side of the cut. Whenever the page elements are divided by an y-cut, order all text blocks
   // above the cut before the text blocks below the cut.
   for (auto* page : _doc->pages) {
-    // Create a vector containing the page elements (= the text blocks and non-text elements).
+    // Create a vector containing the page elements (= the text blocks, figures and shapes).
     std::vector<PdfElement*> pageElements;
-    pageElements.reserve(page->blocks.size() + page->nonTexts.size());
+    pageElements.reserve(page->blocks.size() + page->figures.size() + page->shapes.size());
     for (auto* block : page->blocks) { pageElements.push_back(block); }
-    for (auto* nonText : page->nonTexts) { pageElements.push_back(nonText); }
+    for (auto* figure : page->figures) { pageElements.push_back(figure); }
+    for (auto* shape : page->shapes) { pageElements.push_back(shape); }
 
     // Compute the coordinates of the bounding box around the page elements.
     _pageElementsMinX = std::numeric_limits<double>::max();
@@ -193,7 +194,7 @@ void ReadingOrderDetector::choosePrimaryXCuts(const std::vector<PdfElement*>& el
     // xxxxx  yyyyyy
     double pageElementsMid = _pageElementsMinY + (_pageElementsMaxY - _pageElementsMinY) / 2.0;
 
-    const PdfNonText* nonTextLeft = dynamic_cast<const PdfNonText*>(elementLeft);
+    const PdfNonTextElement* nonTextLeft = dynamic_cast<const PdfNonTextElement*>(elementLeft);
     if (nonTextLeft != nullptr) {
       double minY = nonTextLeft->minY;
       double maxY = nonTextLeft->maxY;
@@ -205,7 +206,7 @@ void ReadingOrderDetector::choosePrimaryXCuts(const std::vector<PdfElement*>& el
         continue;
       }
     }
-    const PdfNonText* nonTextRight = dynamic_cast<const PdfNonText*>(elementRight);
+    const PdfNonTextElement* nonTextRight = dynamic_cast<const PdfNonTextElement*>(elementRight);
     if (nonTextRight != nullptr) {
       double minY = nonTextRight->minY;
       double maxY = nonTextRight->maxY;
@@ -284,7 +285,7 @@ void ReadingOrderDetector::choosePrimaryYCuts(const std::vector<PdfElement*>& el
     // xxxxx  yyyyyy
     // xxxxx  yyyyyy
     double pageElementsMid = _pageElementsMinX + (_pageElementsMaxX - _pageElementsMinX) / 2.0;
-    const PdfNonText* nonTextAbove = dynamic_cast<const PdfNonText*>(elementAbove);
+    const PdfNonTextElement* nonTextAbove = dynamic_cast<const PdfNonTextElement*>(elementAbove);
     if (nonTextAbove != nullptr) {
       double minX = nonTextAbove->minX;
       double maxX = nonTextAbove->maxX;
@@ -296,7 +297,7 @@ void ReadingOrderDetector::choosePrimaryYCuts(const std::vector<PdfElement*>& el
         continue;
       }
     }
-    const PdfNonText* nonTextBelow = dynamic_cast<const PdfNonText*>(elementBelow);
+    const PdfNonTextElement* nonTextBelow = dynamic_cast<const PdfNonTextElement*>(elementBelow);
     if (nonTextBelow != nullptr) {
       double minX = nonTextBelow->minX;
       double maxX = nonTextBelow->maxX;

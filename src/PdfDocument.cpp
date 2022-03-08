@@ -83,18 +83,60 @@ std::string PdfGlyph::toString() const {
 }
 
 // =================================================================================================
-// PdfNonText
+// PdfNonTextElement
 
 // _________________________________________________________________________________________________
-PdfNonText::PdfNonText() = default;
+PdfNonTextElement::PdfNonTextElement() = default;
 
 // _________________________________________________________________________________________________
-PdfNonText::~PdfNonText() = default;
+PdfNonTextElement::~PdfNonTextElement() = default;
 
 // _________________________________________________________________________________________________
-std::string PdfNonText::toString() const {
+std::string PdfNonTextElement::toString() const {
   std::stringstream ss;
-  ss << "PdfNonText("
+  ss << "PdfNonTextElement("
+     << "page=" << pageNum << "; "
+     << "minX=" << minX << "; "
+     << "minY=" << minY << "; "
+     << "maxX=" << maxX << "; "
+     << "maxY=" << maxY << ")";
+  return ss.str();
+}
+
+// =================================================================================================
+// PdfFigure
+
+// _________________________________________________________________________________________________
+PdfFigure::PdfFigure() = default;
+
+// _________________________________________________________________________________________________
+PdfFigure::~PdfFigure() = default;
+
+// _________________________________________________________________________________________________
+std::string PdfFigure::toString() const {
+  std::stringstream ss;
+  ss << "PdfFigure("
+     << "page=" << pageNum << "; "
+     << "minX=" << minX << "; "
+     << "minY=" << minY << "; "
+     << "maxX=" << maxX << "; "
+     << "maxY=" << maxY << ")";
+  return ss.str();
+}
+
+// =================================================================================================
+// PdfShape
+
+// _________________________________________________________________________________________________
+PdfShape::PdfShape() = default;
+
+// _________________________________________________________________________________________________
+PdfShape::~PdfShape() = default;
+
+// _________________________________________________________________________________________________
+std::string PdfShape::toString() const {
+  std::stringstream ss;
+  ss << "PdfShape("
      << "page=" << pageNum << "; "
      << "minX=" << minX << "; "
      << "minY=" << minY << "; "
@@ -236,9 +278,13 @@ PdfPage::~PdfPage() {
   for (const auto* segment : segments) {
     delete segment;
   }
-  // Delete the non-text elements.
-  for (const auto* nonText : nonTexts) {
-    delete nonText;
+  // Delete the figures.
+  for (const auto* figure : figures) {
+    delete figure;
+  }
+  // Delete the shapes.
+  for (const auto* shape : shapes) {
+    delete shape;
   }
   // Delete the text block detection cuts.
   for (const auto* cut : blockDetectionCuts) {

@@ -213,13 +213,13 @@ class PdfGlyph : public PdfElement {
 /**
  * This class represents any non-text element in a PDF document, for example: a figure or a shape.
  */
-class PdfNonText : public PdfElement {
+class PdfNonTextElement : public PdfElement {
  public:
-  /** This constructor creates and initalizes a new `PdfNonText` object. */
-  PdfNonText();
+  /** This constructor creates and initalizes a new `PdfNonTextElement` object. */
+  PdfNonTextElement();
 
   /** The deconstructor. */
-  ~PdfNonText();
+  ~PdfNonTextElement();
 
   /**
    * This method returns a string representation of this element for debugging purposes.
@@ -316,6 +316,52 @@ class PdfWord : public PdfElement {
 
   /** The position of this glyph in the extraction sequence. */
   int rank = -1;
+};
+
+// =================================================================================================
+
+/**
+ * This class represents a single figure in a PDF document.
+ */
+class PdfFigure : public PdfNonTextElement {
+ public:
+  /** This constructor creates and initalizes a new `PdfFigure`. */
+  PdfFigure();
+
+  /** The constructor creates a copy of the given figure. */
+  PdfFigure(const PdfFigure& figure);
+
+  /** The deconstructor. */
+  ~PdfFigure();
+
+  /**
+   * This method returns a string representation of this figure for debugging purposes.
+   *
+   * @return A string representation of this figure.
+   */
+  std::string toString() const override;
+};
+
+/**
+ * This class represents a single shape in a PDF document.
+ */
+class PdfShape : public PdfNonTextElement {
+ public:
+  /** This constructor creates and initalizes a new `PdfShape`. */
+  PdfShape();
+
+  /** The constructor creates a copy of the given shape. */
+  PdfShape(const PdfShape& shape);
+
+  /** The deconstructor. */
+  ~PdfShape();
+
+  /**
+   * This method returns a string representation of this shape for debugging purposes.
+   *
+   * @return A string representation of this shape.
+   */
+  std::string toString() const override;
 };
 
 // =================================================================================================
@@ -495,14 +541,17 @@ class PdfPage {
   /** The segments of this page. */
   std::vector<PdfPageSegment*> segments;
 
-  /** The non-text elements of this page, for example: figures and shapes. */
-  std::vector<PdfNonText*> nonTexts;
-
   /** The XY-cuts made to detect the text blocks. */
   std::vector<Cut*> blockDetectionCuts;
 
   /** The XY-cuts made to detect the reading order of the text blocks. */
   std::vector<Cut*> readingOrderCuts;
+
+  /** The figures of this page. */
+  std::vector<PdfFigure*> figures;
+
+  /** The shapes of this page. */
+  std::vector<PdfShape*> shapes;
 };
 
 // =================================================================================================

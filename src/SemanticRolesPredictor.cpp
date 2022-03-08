@@ -35,7 +35,6 @@ SemanticRolesPredictor::~SemanticRolesPredictor() = default;
 
 // _________________________________________________________________________________________________
 void SemanticRolesPredictor::readModel() {
-  std::cout << "READ MODEL" << std::endl;
   // Disable the annoying log output of Tensorflow.
   char flag[] = "TF_CPP_MIN_LOG_LEVEL=3";
   putenv(flag);

@@ -84,13 +84,25 @@ class PdfDocumentVisualizer {
    * TODO This method visualizes the extracted non-text elements by drawing their bounding boxes to
    * the visualization.
    */
-  void visualizeNonTextElements(const PdfDocument& doc, const ColorScheme& cs);
+  void visualizeFigures(const PdfDocument& doc, const ColorScheme& cs);
 
   /**
    * TODO This method visualizes the extracted non-text elements by drawing their bounding boxes to
    * the visualization.
    */
-  void visualizeNonTextElements(const std::vector<PdfNonText*>& elements, const ColorScheme& cs);
+  void visualizeFigures(const std::vector<PdfFigure*>& figures, const ColorScheme& cs);
+
+  /**
+   * TODO This method visualizes the extracted non-text elements by drawing their bounding boxes to
+   * the visualization.
+   */
+  void visualizeShapes(const PdfDocument& doc, const ColorScheme& cs);
+
+  /**
+   * TODO This method visualizes the extracted non-text elements by drawing their bounding boxes to
+   * the visualization.
+   */
+  void visualizeShapes(const std::vector<PdfShape*>& shapes, const ColorScheme& cs);
 
   /**
    * TODO This method visualizes the extracted words by drawing their bounding boxes to the
@@ -190,15 +202,19 @@ class PdfDocumentVisualizer {
    * TODO(korzen): This method draws the bounding boxes of the non-text elements (e.g., figures and
    * shapes) stored in `_doc` to the visualization.
    */
-  void drawGlyphBoundingBoxes(const std::vector<PdfGlyph*>& glyphs,
-      const ColorScheme& cs);
+  void drawGlyphBoundingBoxes(const std::vector<PdfGlyph*>& glyphs, const ColorScheme& cs);
 
   /**
    * TODO(korzen): This method draws the bounding boxes of the non-text elements (e.g., figures and
    * shapes) stored in `_doc` to the visualization.
    */
-  void drawNonTextElementBoundingBoxes(const std::vector<PdfNonText*>& elements,
-      const ColorScheme& cs);
+  void drawFigureBoundingBoxes(const std::vector<PdfFigure*>& figures, const ColorScheme& cs);
+
+  /**
+   * TODO(korzen): This method draws the bounding boxes of the non-text elements (e.g., figures and
+   * shapes) stored in `_doc` to the visualization.
+   */
+  void drawShapeBoundingBoxes(const std::vector<PdfShape*>& shapes, const ColorScheme& cs);
 
   /**
    * TODO(korzen):  This method draws the bounding boxes of the words stored in `_doc` to the
@@ -210,8 +226,7 @@ class PdfDocumentVisualizer {
    * TODO(korzen): This method draws the bounding boxes of the non-text elements (e.g., figures and
    * shapes) stored in `_doc` to the visualization.
    */
-  void drawTextLineBoundingBoxes(const std::vector<PdfTextLine*>& lines,
-      const ColorScheme& cs);
+  void drawTextLineBoundingBoxes(const std::vector<PdfTextLine*>& lines, const ColorScheme& cs);
 
   /**
    * TODO This method draws the bounding boxes of the text blocks stored in `_doc` to the

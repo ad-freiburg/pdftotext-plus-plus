@@ -394,23 +394,23 @@ void TextOutputDev::stroke(GfxState* state) {
   double xOverlapRatio = clipBoxWidth / _page->width;
   double yOverlapRatio = clipBoxHeight / _page->height;
   if (xOverlapRatio < 0.9 || yOverlapRatio < 0.9) {
-    PdfNonText* nonText = new PdfNonText();
-    nonText->id = createRandomString(8, "nt-");
-    nonText->pageNum = _page->pageNum;
-    nonText->minX = clipMinX;
-    nonText->minY = clipMinY;
-    nonText->maxX = clipMaxX;
-    nonText->maxY = clipMaxY;
+    PdfShape* shape = new PdfShape();
+    shape->id = createRandomString(8, "shape-");
+    shape->pageNum = _page->pageNum;
+    shape->minX = clipMinX;
+    shape->minY = clipMinY;
+    shape->maxX = clipMaxX;
+    shape->maxY = clipMaxY;
 
-    _page->nonTexts.push_back(nonText);
+    _page->shapes.push_back(shape);
     return;
   }
 
   // The clip box is equal to the bounding box of the page. Instead of the clip box, include the
   // actual path as a non-text element.
-  PdfNonText* nonText = new PdfNonText();
-  nonText->id = createRandomString(8, "nt-");
-  nonText->pageNum = _page->pageNum;
+  PdfShape* shape = new PdfShape();
+  shape->id = createRandomString(8, "shape-");
+  shape->pageNum = _page->pageNum;
 
   // Iterate through each subpath and each point to compute the bounding box of the path.
   double x, y;
@@ -420,14 +420,14 @@ void TextOutputDev::stroke(GfxState* state) {
 
     for (int j = 0; j < subpath->getNumPoints(); j++) {
       state->transform(subpath->getX(j), subpath->getY(j), &x, &y);
-      nonText->minX = std::min(nonText->minX, x);
-      nonText->minY = std::min(nonText->minY, y);
-      nonText->maxX = std::max(nonText->maxX, x);
-      nonText->maxY = std::max(nonText->maxY, y);
+      shape->minX = std::min(shape->minX, x);
+      shape->minY = std::min(shape->minY, y);
+      shape->maxX = std::max(shape->maxX, x);
+      shape->maxY = std::max(shape->maxY, y);
     }
   }
 
-  _page->nonTexts.push_back(nonText);
+  _page->shapes.push_back(shape);
 }
 
 // _________________________________________________________________________________________________
@@ -485,17 +485,15 @@ void TextOutputDev::drawImage(GfxState* state, int width, int height) {
   double yOverlapRatio = clipBoxHeight / _page->height;
   // std::cout << "IMAGE " << xOverlapRatio << " " << yOverlapRatio;
   if (xOverlapRatio < 0.9 || yOverlapRatio < 0.9) {
-    PdfNonText* nonText = new PdfNonText();
-    nonText->id = createRandomString(8, "nt-");
-    nonText->pageNum = _page->pageNum;
-    nonText->minX = clipMinX;
-    nonText->minY = clipMinY;
-    nonText->maxX = clipMaxX;
-    nonText->maxY = clipMaxY;
+    PdfFigure* figure = new PdfFigure();
+    figure->id = createRandomString(8, "fig-");
+    figure->pageNum = _page->pageNum;
+    figure->minX = clipMinX;
+    figure->minY = clipMinY;
+    figure->maxX = clipMaxX;
+    figure->maxY = clipMaxY;
 
-    // std::cout << nonText->toString() << std::endl;
-
-    _page->nonTexts.push_back(nonText);
+    _page->figures.push_back(figure);
     return;
   }
 
@@ -503,15 +501,15 @@ void TextOutputDev::drawImage(GfxState* state, int width, int height) {
   // actual image as a non-text element. Compute the bounding box from the ctm.
   const double* ctm = state->getCTM();
 
-  PdfNonText* nonText = new PdfNonText();
-  nonText->id = createRandomString(8, "nt-");
-  nonText->pageNum = _page->pageNum;
-  nonText->minX = ctm[4];  // ctm[4] = translateX
-  nonText->minY = ctm[5];  // ctm[5] = translateY
-  nonText->maxX = nonText->minX + ctm[0];  // ctm[0] = scaleX
-  nonText->maxY = nonText->minY + ctm[3];  // ctm[3] = scaleY
+  PdfFigure* figure = new PdfFigure();
+  figure->id = createRandomString(8, "fig-");
+  figure->pageNum = _page->pageNum;
+  figure->minX = ctm[4];  // ctm[4] = translateX
+  figure->minY = ctm[5];  // ctm[5] = translateY
+  figure->maxX = figure->minX + ctm[0];  // ctm[0] = scaleX
+  figure->maxY = figure->minY + ctm[3];  // ctm[3] = scaleY
 
-  _page->nonTexts.push_back(nonText);
+  _page->figures.push_back(figure);
 }
 
 // _________________________________________________________________________________________________

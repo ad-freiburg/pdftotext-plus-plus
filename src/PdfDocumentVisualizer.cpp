@@ -93,17 +93,29 @@ void PdfDocumentVisualizer::visualizeGlyphs(const std::vector<PdfGlyph*>& glyphs
 }
 
 // _________________________________________________________________________________________________
-void PdfDocumentVisualizer::visualizeNonTextElements(const PdfDocument& doc,
-    const ColorScheme& cs) {
+void PdfDocumentVisualizer::visualizeFigures(const PdfDocument& doc, const ColorScheme& cs) {
   for (const auto* page : doc.pages) {
-    drawNonTextElementBoundingBoxes(page->nonTexts, cs);
+    drawFigureBoundingBoxes(page->figures, cs);
   }
 }
 
 // _________________________________________________________________________________________________
-void PdfDocumentVisualizer::visualizeNonTextElements(const std::vector<PdfNonText*>& elements,
+void PdfDocumentVisualizer::visualizeFigures(const std::vector<PdfFigure*>& figures,
     const ColorScheme& cs) {
-  drawNonTextElementBoundingBoxes(elements, cs);
+  drawFigureBoundingBoxes(figures, cs);
+}
+
+// _________________________________________________________________________________________________
+void PdfDocumentVisualizer::visualizeShapes(const PdfDocument& doc, const ColorScheme& cs) {
+  for (const auto* page : doc.pages) {
+    drawShapeBoundingBoxes(page->shapes, cs);
+  }
+}
+
+// _________________________________________________________________________________________________
+void PdfDocumentVisualizer::visualizeShapes(const std::vector<PdfShape*>& shapes,
+    const ColorScheme& cs) {
+  drawShapeBoundingBoxes(shapes, cs);
 }
 
 // _________________________________________________________________________________________________
@@ -226,10 +238,18 @@ void PdfDocumentVisualizer::drawGlyphBoundingBoxes(const std::vector<PdfGlyph*>&
 }
 
 // _________________________________________________________________________________________________
-void PdfDocumentVisualizer::drawNonTextElementBoundingBoxes(
-    const std::vector<PdfNonText*>& elements, const ColorScheme& cs) {
-  for (const auto* element : elements) {
-    drawBoundingBox(element, cs);
+void PdfDocumentVisualizer::drawFigureBoundingBoxes(const std::vector<PdfFigure*>& figures,
+    const ColorScheme& cs) {
+  for (const auto* figure : figures) {
+    drawBoundingBox(figure, cs);
+  }
+}
+
+// _________________________________________________________________________________________________
+void PdfDocumentVisualizer::drawShapeBoundingBoxes(const std::vector<PdfShape*>& shapes,
+    const ColorScheme& cs) {
+  for (const auto* shape : shapes) {
+    drawBoundingBox(shape, cs);
   }
 }
 

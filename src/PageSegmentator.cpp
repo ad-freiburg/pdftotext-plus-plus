@@ -56,11 +56,12 @@ void PageSegmentator::segmentPage(PdfPage* page, std::vector<PdfPageSegment*>* s
   auto chooseYCutsBind = std::bind(&PageSegmentator::chooseYCuts, this,
       std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
 
-  // Create a list with all page elements (glyphs, figures, shapes).
+  // Create a list with all words, figures, shapes.
   std::vector<PdfElement*> pageElements;
-  pageElements.reserve(page->words.size() + page->nonTexts.size());
+  pageElements.reserve(page->words.size() + page->figures.size() + page->shapes.size());
   for (auto* word : page->words) { pageElements.push_back(word); }
-  for (auto* nonText : page->nonTexts) { pageElements.push_back(nonText); }
+  for (auto* figure : page->figures) { pageElements.push_back(figure); }
+  for (auto* shape : page->shapes) { pageElements.push_back(shape); }
 
   // Compute the coordinates of the bounding box around the page elements.
   _pageElementsMinX = std::numeric_limits<double>::max();
@@ -203,8 +204,8 @@ void PageSegmentator::chooseXCuts(const std::vector<PdfElement*>& elements,
     // The gap is a valid x-cut if the left and/or right element is a non-text element (e.g., a
     // line or a figure) with a "sufficient" height. The height requirement exists to no split the
     // elements between vertical lines (e.g., fraction bars of math formulas).
-    const PdfNonText* nonTextLeft = dynamic_cast<const PdfNonText*>(elementLeft);
-    const PdfNonText* nonTextRight = dynamic_cast<const PdfNonText*>(elementRight);
+    const PdfNonTextElement* nonTextLeft = dynamic_cast<const PdfNonTextElement*>(elementLeft);
+    const PdfNonTextElement* nonTextRight = dynamic_cast<const PdfNonTextElement*>(elementRight);
     if (nonTextLeft && nonTextLeft->getHeight() > 2 * _doc->avgGlyphHeight) {
       cutIndices->push_back(i);
       continue;
@@ -278,7 +279,7 @@ void PageSegmentator::choosePrimaryYCuts(const std::vector<PdfElement*>& element
     // xxxxx  yyyyyy
     // xxxxx  yyyyyy
     double pageElementsMid = _pageElementsMinX + (_pageElementsMaxX - _pageElementsMinX) / 2.0;
-    const PdfNonText* nonTextAbove = dynamic_cast<const PdfNonText*>(elementAbove);
+    const PdfNonTextElement* nonTextAbove = dynamic_cast<const PdfNonTextElement*>(elementAbove);
     if (nonTextAbove != nullptr) {
       double minX = nonTextAbove->minX;
       double maxX = nonTextAbove->maxX;
@@ -292,7 +293,7 @@ void PageSegmentator::choosePrimaryYCuts(const std::vector<PdfElement*>& element
     }
 
 
-    const PdfNonText* nonTextBelow = dynamic_cast<const PdfNonText*>(elementBelow);
+    const PdfNonTextElement* nonTextBelow = dynamic_cast<const PdfNonTextElement*>(elementBelow);
     if (nonTextBelow != nullptr) {
       double minX = nonTextBelow->minX;
       double maxX = nonTextBelow->maxX;
@@ -328,8 +329,8 @@ void PageSegmentator::chooseYCuts(const std::vector<PdfElement*>& elements,
     // line or a figure) with a "sufficient" width. The width requirement exists to no split the
     // elements between underlined words, in which case the underlining is stored as a non-text
     // element (a horizontal line).
-    const PdfNonText* nonTextAbove = dynamic_cast<const PdfNonText*>(elementAbove);
-    const PdfNonText* nonTextBelow = dynamic_cast<const PdfNonText*>(elementBelow);
+    const PdfNonTextElement* nonTextAbove = dynamic_cast<const PdfNonTextElement*>(elementAbove);
+    const PdfNonTextElement* nonTextBelow = dynamic_cast<const PdfNonTextElement*>(elementBelow);
     if (nonTextAbove && nonTextAbove->getWidth() > 5 * _doc->avgGlyphWidth) {
       cutIndices->push_back(i);
       continue;

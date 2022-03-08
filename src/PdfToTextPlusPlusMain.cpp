@@ -17,10 +17,8 @@
 #include "./utils/Utils.h"
 #include "PdfToTextPlusPlus.h"
 
-#include "./serializers/GlyphsJsonlSerializer.h"
-#include "./serializers/TextBlocksJsonlSerializer.h"
+#include "./serializers/JsonlSerializer.h"
 #include "./serializers/TextSerializer.h"
-#include "./serializers/WordsJsonlSerializer.h"
 #include "./PdfDocumentVisualizer.h"
 
 using std::chrono::high_resolution_clock;
@@ -37,15 +35,19 @@ static bool addSemanticRoles = false;
 static bool excludeSubSuperscripts = false;
 static bool ignoreEmbeddedFontFiles = false;
 static bool disableWordsDehyphenation = false;
-static char serializeGlyphsFilePath[256] = "";
-static char serializeWordsFilePath[256] = "";
-static char serializeTextBlocksFilePath[256] = "";
+static bool serializePages = false;
+static bool serializeGlyphs = false;
+static bool serializeFigures = false;
+static bool serializeShapes = false;
+static bool serializeWords = false;
+static bool serializeBlocks = false;
 static bool visualizeGlyphs = false;
 static bool visualizeWords = false;
 static bool visualizeTextLines = false;
 static bool visualizeTextBlocks = false;
 static bool visualizePageSegments = false;
-static bool visualizeNonTextElements = false;
+static bool visualizeFigures = false;
+static bool visualizeShapes = false;
 static bool visualizeReadingOrder = false;
 static bool visualizeBlockDetectionCuts = false;
 static bool visualizeReadingOrderCuts = false;
@@ -65,15 +67,12 @@ static const ArgDesc argDesc[] = {
       "result in a faster extraction process but also in less accurate extraction results." },
   { "--disable-words-dehyphenation", argFlag, &disableWordsDehyphenation, 0,
       "Don't dephyphenate hyphenated words." },
-  { "--serialize-glyphs", argString, &serializeGlyphsFilePath,
-      sizeof(serializeGlyphsFilePath), "Write the extracted glyphs together with their "
-      "layout information in JSONL format to the specified path." },
-  { "--serialize-words", argString, &serializeWordsFilePath, sizeof(serializeWordsFilePath),
-      "Write the extracted words with their layout information in JSONL format to the specified "
-      "path." },
-  { "--serialize-text-blocks", argString, &serializeTextBlocksFilePath,
-      sizeof(serializeTextBlocksFilePath), "Write the extracted text blocks together with their "
-      "layout information in JSONL format to the specified path." },
+  { "--serialize-pages", argFlag, &serializePages, 0, "Whether to serialize the pages." },
+  { "--serialize-glyphs", argFlag, &serializeGlyphs, 0, "Whether to serialize the glyphs." },
+  { "--serialize-figures", argFlag, &serializeFigures, 0, "Whether to serialize the figures." },
+  { "--serialize-shapes", argFlag, &serializeShapes, 0, "Whether to serialize the shapes." },
+  { "--serialize-words", argFlag, &serializeWords, 0, "Whether to serialize the words." },
+  { "--serialize-text-blocks", argFlag, &serializeBlocks, 0, "Whether to serialize the blocks." },
   { "--visualization-path", argString, &visualizeFilePath, sizeof(visualizeFilePath),
       "Create a visualization of the extraction result (that is: a copy of the input PDF file, "
       "with different annotations added for debugging purposes) and write it to the specified "
@@ -91,9 +90,10 @@ static const ArgDesc argDesc[] = {
       "visualization." },
   { "--visualize-segments", argFlag, &visualizePageSegments, 0,
       "Draw the bounding boxes of the detected segments to the visualization." },
-  { "--visualize-non-text-elements", argFlag, &visualizeNonTextElements, 0,
-      "Draw the bounding boxes of the extracted non-text elements (i.e., figures and shapes) to "
-      "the visualization." },
+  { "--visualize-figures", argFlag, &visualizeFigures, 0,
+      "Draw the bounding boxes of the extracted figures to the visualization." },
+  { "--visualize-shapes", argFlag, &visualizeShapes, 0,
+      "Draw the bounding boxes of the extracted shapes to the visualization." },
   { "--visualize-reading-order", argFlag, &visualizeReadingOrder, 0,
       "Add annotations that visualizes the detected reading order of the text blocks to the "
       "visualization." },
@@ -170,31 +170,30 @@ int main(int argc, char *argv[]) {
   }
 
   // Print the help message if none of the serialization paths is given.
-  if (outputFilePathStr.empty() && serializeGlyphsFilePath[0] == '\0' &&
-      serializeWordsFilePath[0] == '\0' && serializeTextBlocksFilePath[0] == '\0') {
+  if (outputFilePathStr.empty()) {
     printHelpInfo();
     return 99;
   }
 
-  TextUnit targetTextUnit;
-  if (serializeGlyphsFilePath[0] != '\0') {
+  TextUnit targetTextUnit = TextUnit::PARAGRAPHS;
+  if (serializePages || serializeGlyphs || serializeFigures || serializeShapes) {
     targetTextUnit = TextUnit::GLYPHS;
   }
-  if (serializeWordsFilePath[0] != '\0') {
+  if (serializeWords) {
     targetTextUnit = TextUnit::WORDS;
   }
-  if (serializeTextBlocksFilePath[0] != '\0') {
+  if (serializeBlocks) {
     targetTextUnit = TextUnit::TEXT_BLOCKS;
-  }
-  if (!outputFilePathStr.empty()) {
-    targetTextUnit = TextUnit::PARAGRAPHS;
   }
 
   // ------------
   // Compute the extraction result.
 
-  PdfToTextPlusPlus pdfToTextPlusPlus(!ignoreEmbeddedFontFiles, disableWordsDehyphenation,
-      targetTextUnit);
+  PdfToTextPlusPlus pdfToTextPlusPlus(
+    !ignoreEmbeddedFontFiles,
+    disableWordsDehyphenation,
+    targetTextUnit
+  );
   PdfDocument doc;
   std::vector<Timing> timings;
 
@@ -208,51 +207,31 @@ int main(int argc, char *argv[]) {
   // ------------
   // Process the extraction result.
 
-  // Write the extracted text to the output file.
-  if (!outputFilePathStr.empty()) {
-    auto start = high_resolution_clock::now();
-    TextSerializer serializer(&doc, addControlCharacters, addSemanticRoles, excludeSubSuperscripts);
+  // Create the serialization.
+  auto start = high_resolution_clock::now();
+  if (serializePages || serializeGlyphs || serializeFigures || serializeShapes || serializeWords
+      || serializeBlocks) {
+    JsonlSerializer serializer(&doc,
+      serializePages,
+      serializeGlyphs,
+      serializeFigures,
+      serializeShapes,
+      serializeWords,
+      serializeBlocks
+    );
     serializer.serialize(outputFilePathStr);
-    auto end = high_resolution_clock::now();
-    Timing timingLoading("Serialize text", duration_cast<milliseconds>(end - start).count());
-    timings.push_back(timingLoading);
+  } else {
+    // Write the extracted text to the output file.
+    TextSerializer serializer(&doc,
+      addControlCharacters,
+      addSemanticRoles,
+      excludeSubSuperscripts
+    );
+    serializer.serialize(outputFilePathStr);
   }
-
-  // Write the extracted glyphs to the specified file if required.
-  const std::string serializeGlyphsFilePathStr(serializeGlyphsFilePath);
-  if (!serializeGlyphsFilePathStr.empty()) {
-    auto start = high_resolution_clock::now();
-    GlyphsJsonlSerializer serializer(&doc);
-    serializer.serialize(serializeGlyphsFilePathStr);
-    auto end = high_resolution_clock::now();
-    Timing timingSerializeGlyphs("Serialize glyphs",
-        duration_cast<milliseconds>(end - start).count());
-    timings.push_back(timingSerializeGlyphs);
-  }
-
-  // Write the extracted words to the specified file if required.
-  const std::string serializeWordsFilePathStr(serializeWordsFilePath);
-  if (!serializeWordsFilePathStr.empty()) {
-    auto start = high_resolution_clock::now();
-    WordsJsonlSerializer serializer(&doc);
-    serializer.serialize(serializeWordsFilePathStr);
-    auto end = high_resolution_clock::now();
-    Timing timingSerializeWords("Serialize words",
-        duration_cast<milliseconds>(end - start).count());
-    timings.push_back(timingSerializeWords);
-  }
-
-  // Write the extracted text blocks to the specified file if required.
-  const std::string serializeTextBlocksFilePathStr(serializeTextBlocksFilePath);
-  if (!serializeTextBlocksFilePathStr.empty()) {
-    auto start = high_resolution_clock::now();
-    TextBlocksJsonlSerializer serializer(&doc);
-    serializer.serialize(serializeTextBlocksFilePathStr);
-    auto end = high_resolution_clock::now();
-    Timing timingSerializeWords("Serialize text blocks",
-        duration_cast<milliseconds>(end - start).count());
-    timings.push_back(timingSerializeWords);
-  }
+  auto end = high_resolution_clock::now();
+  Timing timingSerializeGlyphs("Serialize", duration_cast<milliseconds>(end - start).count());
+  timings.push_back(timingSerializeGlyphs);
 
   // Create the visualization.
   const std::string visualizeFilePathStr(visualizeFilePath);
@@ -262,8 +241,11 @@ int main(int argc, char *argv[]) {
     if (visualizeGlyphs) {
       visualizer.visualizeGlyphs(doc, blue);
     }
-    if (visualizeNonTextElements) {
-      visualizer.visualizeNonTextElements(doc, blue);
+    if (visualizeFigures) {
+      visualizer.visualizeFigures(doc, blue);
+    }
+    if (visualizeShapes) {
+      visualizer.visualizeShapes(doc, blue);
     }
     if (visualizeWords) {
       visualizer.visualizeWords(doc, blue);

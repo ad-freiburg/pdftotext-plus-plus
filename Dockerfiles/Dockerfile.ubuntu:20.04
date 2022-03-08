@@ -133,7 +133,7 @@ RUN cp -r /usr/local/lib/libutf8proc.a .
 FROM base as poppler-builder
 
 ARG POP_VERSION=22.01.0
-RUN apt-get install -y libboost-all-dev libfontconfig1-dev libfreetype6-dev libnss3-dev libopenjp2-7-dev libtiff5-dev
+RUN apt-get update && apt-get install -y libboost-all-dev libfontconfig1-dev libfreetype6-dev libnss3-dev libopenjp2-7-dev libtiff5-dev
 WORKDIR /poppler
 RUN git config --global advice.detachedHead false
 RUN git clone --depth 1 --branch poppler-${POP_VERSION} https://github.com/freedesktop/poppler.git .
