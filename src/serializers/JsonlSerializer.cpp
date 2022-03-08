@@ -136,6 +136,7 @@ void JsonlSerializer::serializeFigures(const std::vector<PdfFigure*>& figs, std:
   for (const auto* f : figs) {
     stream << "{"
       << "\"type\": \"figure\", "
+      << "\"id\": \"" << f->id << "\", "
       << "\"page\": " << f->pageNum << ", "
       << "\"minX\": " << f->minX << ", "
       << "\"minY\": " << f->minY << ", "
@@ -152,6 +153,7 @@ void JsonlSerializer::serializeShapes(const std::vector<PdfShape*>& shapes, std:
   for (const auto* s : shapes) {
     stream << "{"
       << "\"type\": \"shape\", "
+      << "\"id\": \"" << s->id << "\", "
       << "\"page\": " << s->pageNum << ", "
       << "\"minX\": " << s->minX << ", "
       << "\"minY\": " << s->minY << ", "

@@ -373,6 +373,17 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
 }
 
 // _________________________________________________________________________________________________
+void TextOutputDev::clip(GfxState* state) {
+  // Whenever the clipping box is changed, assume that it contains an image.
+  // TODO: Verify that this is a valid assumption.
+  // We do this assumption, because images can be also included via the "Do" (= "draw object")
+  // operator, with subtype "form". Poppler does not provide a special handler for forms, but
+  // calls this method to adapt the clipping box. If our assumption is wrong, we need to patch
+  // the code of Poppler for creating an approprtiate handler method.
+  drawImage(state);
+}
+
+// _________________________________________________________________________________________________
 void TextOutputDev::stroke(GfxState* state) {
   // Get the current clip box (= a rectangle defining the visible part of the path; a path not
   // falling into this rectangle is not visible to the reader of the PDF). Note that multiple
@@ -440,31 +451,31 @@ void TextOutputDev::fill(GfxState* state) {
 // _________________________________________________________________________________________________
 void TextOutputDev::drawImageMask(GfxState* state, Object* ref, Stream* str, int width, int height,
     bool invert, bool interpolate, bool inlineImg) {
-  drawImage(state, width, height);
+  // drawImage(state);
 }
 
 // _________________________________________________________________________________________________
 void TextOutputDev::drawImage(GfxState* state, Object* ref, Stream* str, int width, int height,
       GfxImageColorMap* colorMap, bool interpolate, const int* maskColors, bool inlineImg) {
-  drawImage(state, width, height);
+  // drawImage(state);
 }
 
 // _________________________________________________________________________________________________
 void TextOutputDev::drawMaskedImage(GfxState* state, Object* ref, Stream* str, int width, int height,
     GfxImageColorMap* colorMap, bool interpolate, Stream* maskStr, int maskWidth, int maskHeight,
     bool maskInvert, bool maskInterpolate) {
-  drawImage(state, width, height);
+  // drawImage(state);
 }
 
 // _________________________________________________________________________________________________
 void TextOutputDev::drawSoftMaskedImage(GfxState* state, Object* ref, Stream* str, int width,
     int height, GfxImageColorMap* colorMap, bool interpolate, Stream* maskStr, int maskWidth,
     int maskHeight, GfxImageColorMap* maskColorMap, bool maskInterpolate) {
-  drawImage(state, width, height);
+  // drawImage(state);
 }
 
 // _________________________________________________________________________________________________
-void TextOutputDev::drawImage(GfxState* state, int width, int height) {
+void TextOutputDev::drawImage(GfxState* state) {
   // Get the current clip box (= a rectangle defining the visible part of the image; parts of the
   // image not falling into this rectangle are not visible to the reader of the PDF).
   double clipMinX, clipMinY, clipMaxX, clipMaxY;

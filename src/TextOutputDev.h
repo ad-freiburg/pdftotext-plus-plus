@@ -122,6 +122,8 @@ class TextOutputDev : public OutputDev {
   void drawChar(GfxState* state, double x, double y, double dx, double dy, double originX,
       double originY, CharCode c, int nBytes, const Unicode* u, int uLen) override;
 
+  void clip(GfxState* state) override;
+
   /**
    * This method handles the event "stroke a path" by gathering all information required
    * by pdftotext++ about the path (for example, the position) and storing this information
@@ -182,7 +184,7 @@ class TextOutputDev : public OutputDev {
    * information in form of a `PdfFigure` to `page->figures`, where `page` denotes the current
    * `PdfPage`.
    */
-  void drawImage(GfxState* state, int width, int height);
+  void drawImage(GfxState* state);
 
   /** This method handles the event "end of the current page". */
   void endPage() override;
