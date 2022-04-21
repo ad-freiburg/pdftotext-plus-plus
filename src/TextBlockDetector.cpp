@@ -813,18 +813,52 @@ void TextBlockDetector::computeLineMargins() {
 
   for (auto* page : _doc->pages) {
     for (auto* block : page->blocks) {
-      for (auto* line : block->lines) {
-        line->leftMargin = round(line->position->getRotLeftX() - block->position->getRotLeftX(), 1);
-        line->rightMargin = round(block->position->getRotRightX() - line->position->getRotRightX(), 1);
+      for (size_t i = 0; i < block->lines.size(); i++) {
+        PdfTextLine* prevLine = i > 0 ? block->lines.at(i - 1) : nullptr;
+        PdfTextLine* currLine = block->lines.at(i);
+        PdfTextLine* nextLine = i < block->lines.size() - 1 ? block->lines.at(i + 1) : nullptr;
 
-        std::cout << line->toString() << " " << line->leftMargin << std::endl;
+        currLine->leftMargin = round(currLine->position->getRotLeftX() - block->position->getRotLeftX());
+        currLine->rightMargin = round(block->position->getRotRightX() - currLine->position->getRotRightX());
 
-        // We are only interested in left margins > 0.
-        if (smaller(line->leftMargin, _doc->avgGlyphWidth)) {
+        double prevLineLeftMargin = 0.0;
+        if (prevLine) {
+          prevLineLeftMargin = prevLine->leftMargin;
+        }
+
+        double nextLineLeftMargin = 0.0;
+        if (nextLine) {
+          nextLineLeftMargin = round(nextLine->position->getRotLeftX() - block->position->getRotLeftX());
+        }
+
+        if (!equal(prevLineLeftMargin, 0, _doc->avgGlyphWidth)) {
           continue;
         }
 
-        leftMarginFreqs[line->leftMargin]++;
+        if (!equal(nextLineLeftMargin, 0, _doc->avgGlyphWidth)) {
+          continue;
+        }
+
+        // We are only interested in left margins > 0.
+        if (smaller(currLine->leftMargin, _doc->avgGlyphWidth)) {
+          continue;
+        }
+
+        // Make sure that the indent is measured only for lines from body text paragraphs.
+        // Reason: Lines from the bibliography could have other indents.
+        if (prevLine && !equal(prevLine->fontSize, _doc->mostFreqFontSize, 1)) {
+          continue;
+        }
+        if (currLine && !equal(currLine->fontSize, _doc->mostFreqFontSize, 1)) {
+          continue;
+        }
+        if (nextLine && !equal(nextLine->fontSize, _doc->mostFreqFontSize, 1)) {
+          continue;
+        }
+
+        std::cout << "YYY " << currLine->leftMargin << " " << currLine->toString() << std::endl;
+
+        leftMarginFreqs[currLine->leftMargin]++;
       }
     }
   }
