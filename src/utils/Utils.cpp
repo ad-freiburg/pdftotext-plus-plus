@@ -11,9 +11,10 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <iostream>
 
 #include "./Utils.h"
-
+#include "../PdfDocument.h"
 
 // _________________________________________________________________________________________________
 void splitIntoWords(const std::wstring& text, std::vector<std::wstring>* words) {
@@ -104,17 +105,82 @@ bool larger(double d1, double d2, double delta) {
 
 // _________________________________________________________________________________________________
 bool equalOrLarger(double d1, double d2, double delta) {
-  return d1 - d2 >= -delta;
+  return equal(d1, d2, delta) || larger(d1, d2, delta);
 }
 
 // _________________________________________________________________________________________________
 bool smaller(double d1, double d2, double delta) {
-  return d1 - d2 < delta;
+  return d1 - d2 < -1 * delta;
 }
 
 // _________________________________________________________________________________________________
 bool equalOrSmaller(double d1, double d2, double delta) {
-  return d1 - d2 <= delta;
+  return equal(d1, d2, delta) || smaller(d1, d2, delta);
+}
+
+// _________________________________________________________________________________________________
+bool contains(const PdfElement* element1, const PdfElement* element2, double delta) {
+  if (smaller(element2->position->rightX, element1->position->leftX, delta)) {
+    return false;
+  }
+  if (smaller(element2->position->upperY, element1->position->upperY, delta)) {
+    return false;
+  }
+  if (larger(element2->position->leftX, element1->position->rightX, delta)) {
+    return false;
+  }
+  if (larger(element2->position->lowerY, element1->position->lowerY, delta)) {
+    return false;
+  }
+  return true;
+}
+
+// _________________________________________________________________________________________________
+double computeMaximumXOverlapRatio(const PdfElement* element1, const PdfElement* element2) {
+  double minRightX = std::min(element1->position->rightX, element2->position->rightX);
+  double maxLeftX = std::max(element1->position->leftX, element2->position->leftX);
+  double overlapLength = std::max(0.0, minRightX - maxLeftX);
+  double width1 = element1->position->getWidth();
+  double width2 = element2->position->getWidth();
+  double overlapRatio1 = width1 > 0 ? overlapLength / width1 : 0;
+  double overlapRatio2 = width2 > 0 ? overlapLength / width2 : 0;
+
+  return std::max(overlapRatio1, overlapRatio2);
+}
+
+// _________________________________________________________________________________________________
+double computeMaximumYOverlapRatio(const PdfElement* element1, const PdfElement* element2) {
+  double minLowerY = std::min(element1->position->lowerY, element2->position->lowerY);
+  double maxUpperY = std::max(element1->position->upperY, element2->position->upperY);
+  double overlapLength = std::max(0.0, minLowerY - maxUpperY);
+  double height1 = element1->position->getHeight();
+  double height2 = element2->position->getHeight();
+  double overlapRatio1 = height1 > 0 ? overlapLength / height1 : 0;
+  double overlapRatio2 = height2 > 0 ? overlapLength / height2 : 0;
+
+  return std::max(overlapRatio1, overlapRatio2);
+}
+
+// _________________________________________________________________________________________________
+double computeHorizontalGap(const PdfElement* element1, const PdfElement* element2) {
+  if (element1->position->rightX < element2->position->leftX) {
+    return element2->position->leftX - element1->position->rightX;
+  }
+  if (element1->position->leftX > element2->position->rightX) {
+    return element1->position->leftX - element2->position->rightX;
+  }
+  return 0.0;
+}
+
+// _________________________________________________________________________________________________
+double computeVerticalGap(const PdfElement* element1, const PdfElement* element2) {
+  if (element1->position->upperY > element2->position->lowerY) {
+    return element1->position->upperY - element2->position->lowerY;
+  }
+  if (element1->position->lowerY < element2->position->upperY) {
+    return element2->position->upperY - element1->position->lowerY;
+  }
+  return 0.0;
 }
 
 // =================================================================================================

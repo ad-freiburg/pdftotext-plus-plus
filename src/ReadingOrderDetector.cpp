@@ -75,10 +75,10 @@ void ReadingOrderDetector::detectReadingOrder() {
     _pageElementsMaxX = std::numeric_limits<double>::min();
     _pageElementsMaxY = std::numeric_limits<double>::min();
     for (const auto* element : pageElements) {
-      _pageElementsMinX = std::min(_pageElementsMinX, element->minX);
-      _pageElementsMinY = std::min(_pageElementsMinY, element->minY);
-      _pageElementsMaxX = std::max(_pageElementsMaxX, element->maxX);
-      _pageElementsMaxY = std::max(_pageElementsMaxY, element->maxY);
+      _pageElementsMinX = std::min(_pageElementsMinX, element->position->leftX);
+      _pageElementsMinY = std::min(_pageElementsMinY, element->position->upperY);
+      _pageElementsMaxX = std::max(_pageElementsMaxX, element->position->rightX);
+      _pageElementsMaxY = std::max(_pageElementsMaxY, element->position->lowerY);
     }
 
     std::vector<std::vector<PdfElement*>> groups;
@@ -102,7 +102,7 @@ void ReadingOrderDetector::detectReadingOrder() {
     std::vector<PdfTextBlock*> blocksSorted;
     for (auto& group : groups) {
       std::sort(group.begin(), group.end(), [](const PdfElement* e1, const PdfElement* e2) {
-        return e1->minY < e2->minY;
+        return e1->position->upperY < e2->position->upperY;
       });
 
       for (auto* element : group) {
@@ -152,7 +152,7 @@ void ReadingOrderDetector::choosePrimaryXCuts(const std::vector<PdfElement*>& el
 
     const PdfTextBlock* blockLeft = dynamic_cast<const PdfTextBlock*>(elementLeft);
     if (blockLeft) {
-      if (blockLeft->wMode != 0 || blockLeft->rotation != 0) {
+      if (blockLeft->position->wMode != 0 || blockLeft->position->rotation != 0) {
         cutIndices->push_back(i);
         continue;
       }
@@ -160,7 +160,7 @@ void ReadingOrderDetector::choosePrimaryXCuts(const std::vector<PdfElement*>& el
 
     const PdfTextBlock* blockRight = dynamic_cast<const PdfTextBlock*>(elementRight);
     if (blockRight) {
-      if (blockRight->wMode != 0 || blockRight->rotation != 0) {
+      if (blockRight->position->wMode != 0 || blockRight->position->rotation != 0) {
         cutIndices->push_back(i);
         continue;
       }
@@ -169,14 +169,14 @@ void ReadingOrderDetector::choosePrimaryXCuts(const std::vector<PdfElement*>& el
     if (blockLeft && blockRight) {
       // Consider the gap to be a primary x-cut when the rotations of the element to the left and
       // to the right of the cut differ.
-      if (blockLeft->wMode != blockRight->wMode) {
+      if (blockLeft->position->wMode != blockRight->position->wMode) {
         cutIndices->push_back(i);
         continue;
       }
 
       // Consider the gap to be a primary x-cut when the writing modes of the element to the left
       // and to the right of the cut differ.
-      if (blockLeft->rotation != blockRight->rotation) {
+      if (blockLeft->position->rotation != blockRight->position->rotation) {
         cutIndices->push_back(i);
       }
     }
@@ -196,24 +196,24 @@ void ReadingOrderDetector::choosePrimaryXCuts(const std::vector<PdfElement*>& el
 
     const PdfNonTextElement* nonTextLeft = dynamic_cast<const PdfNonTextElement*>(elementLeft);
     if (nonTextLeft != nullptr) {
-      double minY = nonTextLeft->minY;
-      double maxY = nonTextLeft->maxY;
-      double height = nonTextLeft->getHeight();
+      double upperY = nonTextLeft->position->upperY;
+      double lowerY = nonTextLeft->position->lowerY;
+      double height = nonTextLeft->position->getHeight();
       // The element must exceed a certain width; one end point must start in the left half of the
       // bounding box around the page elements; and the other end point in the right half.
-      if (height > 10 * _doc->avgGlyphHeight && minY < pageElementsMid && maxY > pageElementsMid) {
+      if (height > 10 * _doc->avgGlyphHeight && upperY < pageElementsMid && lowerY > pageElementsMid) {
         cutIndices->push_back(i);
         continue;
       }
     }
     const PdfNonTextElement* nonTextRight = dynamic_cast<const PdfNonTextElement*>(elementRight);
     if (nonTextRight != nullptr) {
-      double minY = nonTextRight->minY;
-      double maxY = nonTextRight->maxY;
-      double height = nonTextRight->getHeight();
+      double upperY = nonTextRight->position->upperY;
+      double lowerY = nonTextRight->position->lowerY;
+      double height = nonTextRight->position->getHeight();
       // The element must exceed a certain width; one end point must start in the left half of the
       // bounding box around the page elements; and the other end point in the right half.
-      if (height > 10 * _doc->avgGlyphHeight && minY < pageElementsMid && maxY > pageElementsMid) {
+      if (height > 10 * _doc->avgGlyphHeight && upperY < pageElementsMid && lowerY > pageElementsMid) {
         cutIndices->push_back(i);
         continue;
       }
@@ -287,24 +287,24 @@ void ReadingOrderDetector::choosePrimaryYCuts(const std::vector<PdfElement*>& el
     double pageElementsMid = _pageElementsMinX + (_pageElementsMaxX - _pageElementsMinX) / 2.0;
     const PdfNonTextElement* nonTextAbove = dynamic_cast<const PdfNonTextElement*>(elementAbove);
     if (nonTextAbove != nullptr) {
-      double minX = nonTextAbove->minX;
-      double maxX = nonTextAbove->maxX;
-      double width = nonTextAbove->getWidth();
+      double leftX = nonTextAbove->position->leftX;
+      double rightX = nonTextAbove->position->rightX;
+      double width = nonTextAbove->position->getWidth();
       // The element must exceed a certain width; one end point must start in the left half of the
       // bounding box around the page elements; and the other end point in the right half.
-      if (width > 10 * _doc->avgGlyphWidth && minX < pageElementsMid && maxX > pageElementsMid) {
+      if (width > 10 * _doc->avgGlyphWidth && leftX < pageElementsMid && rightX > pageElementsMid) {
         cutIndices->push_back(i);
         continue;
       }
     }
     const PdfNonTextElement* nonTextBelow = dynamic_cast<const PdfNonTextElement*>(elementBelow);
     if (nonTextBelow != nullptr) {
-      double minX = nonTextBelow->minX;
-      double maxX = nonTextBelow->maxX;
-      double width = nonTextBelow->getWidth();
+      double leftX = nonTextBelow->position->leftX;
+      double rightX = nonTextBelow->position->rightX;
+      double width = nonTextBelow->position->getWidth();
       // The element must exceed a certain width; one end point must start in the left half of the
       // bounding box around the page elements; and the other end point in the right half.
-      if (width > 10 * _doc->avgGlyphWidth && minX < pageElementsMid && maxX > pageElementsMid) {
+      if (width > 10 * _doc->avgGlyphWidth && leftX < pageElementsMid && rightX > pageElementsMid) {
         cutIndices->push_back(i);
         continue;
       }

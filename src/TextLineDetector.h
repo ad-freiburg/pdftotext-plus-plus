@@ -23,9 +23,11 @@ class TextLineDetector {
   void detect();
 
  private:
-  void createTextLine(const std::vector<PdfWord*>& words, std::vector<PdfTextLine*>* lines);
+  void tokenize();
+  void computeTextLineProperties(PdfTextLine* line);
 
   PdfDocument* _doc;
+  int _numTextLines = 0;
 };
 
 #endif  // TEXTLINEDETECTOR_H_

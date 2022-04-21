@@ -12,6 +12,8 @@
 #include <string>
 #include <vector>
 
+#include "../PdfDocument.h"
+
 const std::string punctAlphabet = "?!\"',.:;`“”()[]{}";
 
 /**
@@ -103,6 +105,14 @@ bool equalOrLarger(double d1, double d2, double delta = 0.5);
 bool smaller(double d1, double d2, double delta = 0.5);
 
 bool equalOrSmaller(double d1, double d2, double delta = 0.5);
+
+bool contains(const PdfElement* element1, const PdfElement* element2, double delta = 0.5);
+
+double computeMaximumXOverlapRatio(const PdfElement* element1, const PdfElement* element2);
+double computeMaximumYOverlapRatio(const PdfElement* element1, const PdfElement* element2);
+
+double computeHorizontalGap(const PdfElement* element1, const PdfElement* element2);
+double computeVerticalGap(const PdfElement* element1, const PdfElement* element2);
 
 // =================================================================================================
 

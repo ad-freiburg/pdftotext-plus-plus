@@ -31,7 +31,7 @@ class PdfToTextPlusPlus {
    *   process but less accurate extraction results.
    */
   explicit PdfToTextPlusPlus(bool parseEmbeddedFontFiles, bool disableWordsDehyphenation,
-    TextUnit targetTextUnit);
+    bool parseMode);
 
   /** The deconstructor */
   ~PdfToTextPlusPlus();
@@ -55,7 +55,7 @@ class PdfToTextPlusPlus {
 
   bool _disableWordsDehyphenation;
 
-  TextUnit _targetTextUnit;
+  bool _parseMode;
 };
 
 #endif  // PDFTOTEXTPLUSPLUS_H_

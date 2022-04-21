@@ -157,7 +157,7 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   // ----------------------------------
   // Set the page number of the glyph.
 
-  glyph->pageNum = _page->pageNum;
+  glyph->position->pageNum = _page->pageNum;
 
   // ----------------------------------
   // Compute and set the rotation of the glyph (this code is adopted from Poppler).
@@ -177,19 +177,19 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
     m[3] = m2[3];
   }
   if (fabs(m[0] * m[3]) > fabs(m[1] * m[2])) {
-    glyph->rotation = (m[0] > 0 || m[3] < 0) ? 0 : 2;
+    glyph->position->rotation = (m[0] > 0 || m[3] < 0) ? 0 : 2;
   } else {
-    glyph->rotation = (m[2] > 0) ? 1 : 3;
+    glyph->position->rotation = (m[2] > 0) ? 1 : 3;
   }
   // In vertical writing mode, the lines are effectively rotated by 90 degrees.
   if (gfxFont && gfxFont->getWMode()) {
-    glyph->rotation = (glyph->rotation + 1) & 3;
+    glyph->position->rotation = (glyph->position->rotation + 1) & 3;
   }
 
   // ----------------------------------
   // Set the writing mode of the glyph.
 
-  glyph->wMode = gfxFont->getWMode();
+  glyph->position->wMode = gfxFont->getWMode();
 
   // ----------------------------------
   // Compute the x,y-coordinates of the bounding box around the glyph.
@@ -244,62 +244,64 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   // Compute the descent, that is: the maximum extent of the font below the base line.
   double descent = _fontInfo ? _fontInfo->descent * transformedFontSize : 0;
 
+  glyph->position->leftX = x0 - transformedFontSize;
+  glyph->position->upperY = y0 - transformedFontSize;
+  glyph->position->rightX = x0;
+  glyph->position->lowerY = y0;
+
   int wMode = gfxFont->getWMode();
   if (wMode) {  // vertical writing mode
-    switch (glyph->rotation) {
+    switch (glyph->position->rotation) {
       case 0:
-        glyph->minX = x0 - transformedFontSize;
-        glyph->minY = y0 - transformedFontSize;
-        glyph->maxX = x0;
-        glyph->maxY = y0;
+
         break;
       case 1:
-        glyph->minX = x0;
-        glyph->minY = y0 - transformedFontSize;
-        glyph->maxX = x0 + transformedFontSize;
-        glyph->maxY = y0;
+        glyph->position->leftX = x0;
+        glyph->position->upperY = y0 - transformedFontSize;
+        glyph->position->rightX = x0 + transformedFontSize;
+        glyph->position->lowerY = y0;
         break;
       case 2:
-        glyph->minX = x0;
-        glyph->minY = y0;
-        glyph->maxX = x0 + transformedFontSize;
-        glyph->maxY = y0 + transformedFontSize;
+        glyph->position->leftX = x0;
+        glyph->position->upperY = y0;
+        glyph->position->rightX = x0 + transformedFontSize;
+        glyph->position->lowerY = y0 + transformedFontSize;
         break;
       case 3:
-        glyph->minX = x0 - transformedFontSize;
-        glyph->minY = y0;
-        glyph->maxX = x0;
-        glyph->maxY = y0 + transformedFontSize;
+        glyph->position->leftX = x0 - transformedFontSize;
+        glyph->position->upperY = y0;
+        glyph->position->rightX = x0;
+        glyph->position->lowerY = y0 + transformedFontSize;
         break;
     }
   } else {  // horizontal writing mode
-    switch (glyph->rotation) {
+    switch (glyph->position->rotation) {
       case 0:
-        glyph->minX = x0;
-        glyph->minY = y0 - ascent;
-        glyph->maxX = x0 + (x1 - x0);
-        glyph->maxY = y0 - descent;
+        glyph->position->leftX = x0;
+        glyph->position->upperY = y0 - ascent;
+        glyph->position->rightX = x0 + (x1 - x0);
+        glyph->position->lowerY = y0 - descent;
         glyph->base = y0;
         break;
       case 1:
-        glyph->minX = x0 + descent;
-        glyph->minY = y0;
-        glyph->maxX = x0 + ascent;
-        glyph->maxY = y0 + (y1 - y0);
+        glyph->position->leftX = x0 + descent;
+        glyph->position->upperY = y0;
+        glyph->position->rightX = x0 + ascent;
+        glyph->position->lowerY = y0 + (y1 - y0);
         glyph->base = x0;
         break;
       case 2:
-        glyph->minX = x0;
-        glyph->minY = y0 + descent;
-        glyph->maxX = x0 + (x1 - x0);
-        glyph->maxY = y0 + ascent;
+        glyph->position->leftX = x0;
+        glyph->position->upperY = y0 + descent;
+        glyph->position->rightX = x0 + (x1 - x0);
+        glyph->position->lowerY = y0 + ascent;
         glyph->base = y0;
         break;
       case 3:
-        glyph->minX = x0 - ascent;
-        glyph->minY = y0 + (y1 - y0);
-        glyph->maxX = x0 - descent;
-        glyph->maxY = y0;
+        glyph->position->leftX = x0 - ascent;
+        glyph->position->upperY = y0 + (y1 - y0);
+        glyph->position->rightX = x0 - descent;
+        glyph->position->lowerY = y0;
         glyph->base = x0;
         break;
     }
@@ -310,32 +312,33 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   // TODO(korzen):
   if (_fontInfo && _fontInfo->glyphBoundingBoxes.count(glyph->charName)) {
     auto boundingBox = _fontInfo->glyphBoundingBoxes[glyph->charName];
-    double minX = std::get<0>(boundingBox);
-    double minY = std::get<1>(boundingBox);
-    double maxX = std::get<2>(boundingBox);
-    double maxY = std::get<3>(boundingBox);
+    double leftX = std::get<0>(boundingBox);
+    double upperY = std::get<1>(boundingBox);
+    double rightX = std::get<2>(boundingBox);
+    double lowerY = std::get<3>(boundingBox);
 
     double* fm = _fontInfo->fontMatrix;
-    double minX2 = minX * fm[0] + minY * fm[2] + fm[4];
-    double minY2 = minX * fm[1] + minY * fm[3] + fm[5];
-    double maxX2 = maxX * fm[0] + maxY * fm[2] + fm[4];
-    double maxY2 = maxX * fm[1] + maxY * fm[3] + fm[5];
+    double leftX2 = leftX * fm[0] + upperY * fm[2] + fm[4];
+    double upperY2 = leftX * fm[1] + upperY * fm[3] + fm[5];
+    double rightX2 = rightX * fm[0] + lowerY * fm[2] + fm[4];
+    double lowerY2 = rightX * fm[1] + lowerY * fm[3] + fm[5];
 
-    double minX3 = minX2 * trm[0] + minY2 * trm[2] + trm[4];
-    double minY3 = minX2 * trm[1] + minY2 * trm[3] + trm[5];
-    double maxX3 = maxX2 * trm[0] + maxY2 * trm[2] + trm[4];
-    double maxY3 = maxX2 * trm[1] + maxY2 * trm[3] + trm[5];
+    double leftX3 = leftX2 * trm[0] + upperY2 * trm[2] + trm[4];
+    double upperY3 = leftX2 * trm[1] + upperY2 * trm[3] + trm[5];
+    double rightX3 = rightX2 * trm[0] + lowerY2 * trm[2] + trm[4];
+    double lowerY3 = rightX2 * trm[1] + lowerY2 * trm[3] + trm[5];
 
-    minX = std::min(minX3, maxX3);
-    minY = std::min(minY3, maxY3);
-    maxX = std::max(minX3, maxX3);
-    maxY = std::max(minY3, maxY3);
+    leftX = std::min(leftX3, rightX3);
+    upperY = std::min(upperY3, lowerY3);
+    rightX = std::max(leftX3, rightX3);
+    lowerY = std::max(upperY3, lowerY3);
 
-    if (minY < glyph->minY || maxY > glyph->maxY) {
-      glyph->minX = minX;
-      glyph->minY = minY;
-      glyph->maxX = maxX;
-      glyph->maxY = maxY;
+    if (upperY < glyph->position->upperY || lowerY > glyph->position->lowerY) {
+      glyph->position->leftX = leftX;
+      glyph->position->upperY = upperY;
+      glyph->position->rightX = rightX;
+      glyph->position->lowerY = lowerY;
+      glyph->base = lowerY;
     }
   }
 
@@ -353,7 +356,7 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   // ----------------------------------
   // Set the extraction rank.
 
-  glyph->rank = _numGlyphs++;
+  glyph->rank = _numElements++;
 
   // ----------------------------------
   // Set the opacity.
@@ -407,11 +410,12 @@ void TextOutputDev::stroke(GfxState* state) {
   if (xOverlapRatio < 0.9 || yOverlapRatio < 0.9) {
     PdfShape* shape = new PdfShape();
     shape->id = createRandomString(8, "shape-");
-    shape->pageNum = _page->pageNum;
-    shape->minX = clipMinX;
-    shape->minY = clipMinY;
-    shape->maxX = clipMaxX;
-    shape->maxY = clipMaxY;
+    shape->position->pageNum = _page->pageNum;
+    shape->position->leftX = clipMinX;
+    shape->position->upperY = clipMinY;
+    shape->position->rightX = clipMaxX;
+    shape->position->lowerY = clipMaxY;
+    shape->rank = _numElements++;
 
     _page->shapes.push_back(shape);
     return;
@@ -421,7 +425,8 @@ void TextOutputDev::stroke(GfxState* state) {
   // actual path as a non-text element.
   PdfShape* shape = new PdfShape();
   shape->id = createRandomString(8, "shape-");
-  shape->pageNum = _page->pageNum;
+  shape->position->pageNum = _page->pageNum;
+  shape->rank = _numElements++;
 
   // Iterate through each subpath and each point to compute the bounding box of the path.
   double x, y;
@@ -431,10 +436,10 @@ void TextOutputDev::stroke(GfxState* state) {
 
     for (int j = 0; j < subpath->getNumPoints(); j++) {
       state->transform(subpath->getX(j), subpath->getY(j), &x, &y);
-      shape->minX = std::min(shape->minX, x);
-      shape->minY = std::min(shape->minY, y);
-      shape->maxX = std::max(shape->maxX, x);
-      shape->maxY = std::max(shape->maxY, y);
+      shape->position->leftX = std::min(shape->position->leftX, x);
+      shape->position->upperY = std::min(shape->position->upperY, y);
+      shape->position->rightX = std::max(shape->position->rightX, x);
+      shape->position->lowerY = std::max(shape->position->lowerY, y);
     }
   }
 
@@ -494,15 +499,23 @@ void TextOutputDev::drawImage(GfxState* state) {
   // is smaller than the width/height of the page, allowing a small threshold.
   double xOverlapRatio = clipBoxWidth / _page->width; // TODO: Compute the real overlap ratio.
   double yOverlapRatio = clipBoxHeight / _page->height;
-  // std::cout << "IMAGE " << xOverlapRatio << " " << yOverlapRatio;
   if (xOverlapRatio < 0.9 || yOverlapRatio < 0.9) {
     PdfFigure* figure = new PdfFigure();
     figure->id = createRandomString(8, "fig-");
-    figure->pageNum = _page->pageNum;
-    figure->minX = clipMinX;
-    figure->minY = clipMinY;
-    figure->maxX = clipMaxX;
-    figure->maxY = clipMaxY;
+    figure->position->pageNum = _page->pageNum;
+    figure->position->leftX = clipMinX;
+    figure->position->upperY = clipMinY;
+    figure->position->rightX = clipMaxX;
+    figure->position->lowerY = clipMaxY;
+    figure->rank = _numElements++;
+
+    // Ignore the figure if it is fully contained in the previous figure.
+    if (_page->figures.size() > 0) {
+      PdfFigure* prevFigure = _page->figures.at(_page->figures.size() - 1);
+      if (contains(prevFigure, figure)) {
+        return;
+      }
+    }
 
     _page->figures.push_back(figure);
     return;
@@ -514,11 +527,20 @@ void TextOutputDev::drawImage(GfxState* state) {
 
   PdfFigure* figure = new PdfFigure();
   figure->id = createRandomString(8, "fig-");
-  figure->pageNum = _page->pageNum;
-  figure->minX = ctm[4];  // ctm[4] = translateX
-  figure->minY = ctm[5];  // ctm[5] = translateY
-  figure->maxX = figure->minX + ctm[0];  // ctm[0] = scaleX
-  figure->maxY = figure->minY + ctm[3];  // ctm[3] = scaleY
+  figure->position->pageNum = _page->pageNum;
+  figure->position->leftX = ctm[4];  // ctm[4] = translateX
+  figure->position->upperY = ctm[5];  // ctm[5] = translateY
+  figure->position->rightX = figure->position->leftX + ctm[0];  // ctm[0] = scaleX
+  figure->position->lowerY = figure->position->upperY + ctm[3];  // ctm[3] = scaleY
+  figure->rank = _numElements++;
+
+  // Ignore the figure if it is fully contained in the previous figure.
+  if (_page->figures.size() > 0) {
+    PdfFigure* prevFigure = _page->figures.at(_page->figures.size() - 1);
+    if (contains(prevFigure, figure)) {
+      return;
+    }
+  }
 
   _page->figures.push_back(figure);
 }

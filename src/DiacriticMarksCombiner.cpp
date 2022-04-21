@@ -63,15 +63,15 @@ void DiacriticMarksCombiner::combine() {
         // with which of the two glyphs the diacritic mark has the largest horizontal overlap.
         double prevOverlapX = 0;
         if (prevGlyph) {
-          double prevMinMaxX = std::min(prevGlyph->maxX, currGlyph->maxX);
-          double prevMaxMinX = std::max(prevGlyph->minX, currGlyph->minX);
+          double prevMinMaxX = std::min(prevGlyph->position->rightX, currGlyph->position->rightX);
+          double prevMaxMinX = std::max(prevGlyph->position->leftX, currGlyph->position->leftX);
           prevOverlapX = std::max(0.0, prevMinMaxX - prevMaxMinX);
         }
 
         double nextOverlapX = 0;
         if (nextGlyph) {
-          double nextMinMaxX = std::min(nextGlyph->maxX, currGlyph->maxX);
-          double nextMaxMinX = std::max(nextGlyph->minX, currGlyph->minX);
+          double nextMinMaxX = std::min(nextGlyph->position->rightX, currGlyph->position->rightX);
+          double nextMaxMinX = std::max(nextGlyph->position->leftX, currGlyph->position->leftX);
           nextOverlapX = std::max(0.0, nextMinMaxX - nextMaxMinX);
         }
 
@@ -108,10 +108,10 @@ void DiacriticMarksCombiner::combine() {
         baseGlyph->isBaseGlyphOfDiacriticMark = diacriticMark;
         baseGlyph->textWithDiacriticMark = reinterpret_cast<char*>(output);
 
-        baseGlyph->minX = std::min(baseGlyph->minX, diacriticMark->minX);
-        baseGlyph->minY = std::min(baseGlyph->minY, diacriticMark->minY);
-        baseGlyph->maxX = std::max(baseGlyph->maxX, diacriticMark->maxX);
-        baseGlyph->maxY = std::max(baseGlyph->maxY, diacriticMark->maxY);
+        baseGlyph->position->leftX = std::min(baseGlyph->position->leftX, diacriticMark->position->leftX);
+        baseGlyph->position->upperY = std::min(baseGlyph->position->upperY, diacriticMark->position->upperY);
+        baseGlyph->position->rightX = std::max(baseGlyph->position->rightX, diacriticMark->position->rightX);
+        baseGlyph->position->lowerY = std::max(baseGlyph->position->lowerY, diacriticMark->position->lowerY);
       }
     }
   }

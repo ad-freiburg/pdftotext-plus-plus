@@ -42,8 +42,8 @@ void PdfDocumentStatisticsCalculator::computeGlyphStatistics() const {
       fontSizeFreqs[glyph->fontSize]++;
       fontNameFreqs[glyph->fontName]++;
 
-      sumWidths += glyph->getWidth();
-      sumHeights += glyph->getHeight();
+      sumWidths += glyph->position->getWidth();
+      sumHeights += glyph->position->getHeight();
       numGlyphs++;
     }
   }
@@ -98,14 +98,14 @@ void PdfDocumentStatisticsCalculator::computeWordStatistics() const {
 
       if (prevWord) {
         // Compute the vertical overlap between `prevWord` and `currWord`.
-        double minMaxY = std::min(prevWord->maxY, currWord->maxY);
-        double maxMinY = std::max(prevWord->minY, currWord->minY);
+        double minMaxY = std::min(prevWord->position->lowerY, currWord->position->lowerY);
+        double maxMinY = std::max(prevWord->position->upperY, currWord->position->upperY);
         double verticalOverlap = std::max(0.0, minMaxY - maxMinY);
 
         // Ignore all word pairs that overlap vertically (that are in the same text line). In some
         // PDFs, two words can slightly overlap even when they are from different text lines, so
         // allow a small tolerance.
-        double minHeight = std::min(prevWord->getHeight(), currWord->getHeight());
+        double minHeight = std::min(prevWord->position->getHeight(), currWord->position->getHeight());
         if (verticalOverlap > 0.2 * minHeight) {
           continue;
         }
@@ -118,17 +118,17 @@ void PdfDocumentStatisticsCalculator::computeWordStatistics() const {
 
         // Compute the vertical distance between the base lines of the two words with a precision
         // of one decimal. Add the distance to `lineDistanceFreqs`. Note that the y-coordinates
-        // of the base lines of the words are given by the maxX values, since the origin of the
+        // of the base lines of the words are given by the rightX values, since the origin of the
         // coordinate system is the upper left of the page.
-        double distance = std::max(0.0, currWord->maxY - prevWord->maxY);
+        double distance = std::max(0.0, currWord->position->lowerY - prevWord->position->lowerY);
         distance = static_cast<double>(static_cast<int>(distance * 10.)) / 10.;
 
         lineDistanceFreqs[distance]++;
       }
 
       // Count the word heights, for computing the most frequent word height.
-      if (currWord->getHeight() >= 1) {
-        wordHeightFreqs[currWord->getHeight()]++;
+      if (currWord->position->getHeight() >= 1) {
+        wordHeightFreqs[currWord->position->getHeight()]++;
       }
     }
   }
@@ -170,15 +170,15 @@ void PdfDocumentStatisticsCalculator::computeLineStatistics() const {
         PdfTextLine* currLine = segment->lines.at(i);
         PdfTextLine* nextLine = i < segment->lines.size() - 1 ? segment->lines.at(i + 1) : nullptr;
 
-        if (!prevLine || prevLine->wMode != 0 || prevLine->rotation != 0) {
+        if (!prevLine || prevLine->position->wMode != 0 || prevLine->position->rotation != 0) {
           continue;
         }
 
-        if (!currLine || currLine->wMode != 0 || currLine->rotation != 0) {
+        if (!currLine || currLine->position->wMode != 0 || currLine->position->rotation != 0) {
           continue;
         }
 
-        if (!nextLine || nextLine->wMode != 0 || nextLine->rotation != 0) {
+        if (!nextLine || nextLine->position->wMode != 0 || nextLine->position->rotation != 0) {
           continue;
         }
 
@@ -198,12 +198,12 @@ void PdfDocumentStatisticsCalculator::computeLineStatistics() const {
         }
 
         // Compute the vertical gap between the current line and the previous line.
-        double gap = std::max(0.0, round(currLine->minY - prevLine->maxY, 1));
+        double gap = std::max(0.0, round(currLine->position->upperY - prevLine->position->lowerY, 1));
         lineGapFreqs[gap]++;
 
         // Check if the line is indented compared to the previous line and next line.
-        double xOffsetCurrLine = currLine->minX - prevLine->minX;
-        double xOffsetNextLine = nextLine->minX - prevLine->minX;
+        double xOffsetCurrLine = currLine->position->leftX - prevLine->position->leftX;
+        double xOffsetNextLine = nextLine->position->leftX - prevLine->position->leftX;
 
         if (xOffsetCurrLine < _doc->avgGlyphWidth) {
           continue;

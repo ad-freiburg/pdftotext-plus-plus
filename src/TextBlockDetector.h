@@ -23,8 +23,9 @@ class TextBlockDetector {
   void detect();
 
  private:
-  bool startsNewTextBlock(const PdfPageSegment* segment, const PdfTextLine* prevLine, 
-      const PdfTextLine* line);
+  bool startsNewTextBlock(const PdfTextLine* prevLine, const PdfTextLine* line,
+      const PdfTextLine* nextLine);
+  bool startsNewTextBlock2(const PdfTextLine* prevLine, const PdfTextLine* line);
 
   void createTextBlock(const std::vector<PdfTextLine*>& lines, std::vector<PdfTextBlock*>* blocks);
 
@@ -34,7 +35,21 @@ class TextBlockDetector {
 
   void computeMostFrequentLinePitchPerPage();
 
-  void computeMostFrequentLinePitchPerFontFace();
+  void computeMostFrequentLinePitchPerFontSize();
+
+  void computeTextLineIndentHierarchies();
+
+  void computeTextLineAlignments(const std::vector<PdfTextBlock*>& blocks);
+
+  bool isFirstLineOfItem(const PdfTextLine* line) const;
+  bool isContinuationLineOfItem(const PdfTextLine* line) const;
+  bool isFirstLineOfFootnote(const PdfTextLine* line) const;
+  bool isContinuationLineOfFootnote(const PdfTextLine* line) const;
+
+  bool isIndented(const PdfTextLine* line) const;
+  bool isPartOfFigure(const PdfTextLine* line) const;
+
+  bool isDisplayFormula(const PdfTextLine* line) const;
 
   PdfDocument* _doc;
 
@@ -44,9 +59,9 @@ class TextBlockDetector {
   // A mapping of a page number to the most freq. line pitch in the respective page.
   std::unordered_map<int, double> _mostFreqLinePitchPerPage;
 
-  // A mapping of a font face (= font name + font size) to the most freq. line pitch among the 
-  // text lines with the respective font face.
-  std::unordered_map<std::string, double> _mostFreqLinePitchPerFontFace;
+  // A mapping of a font size to the most freq. line pitch among the text lines with the respective
+  // font size.
+  std::unordered_map<double, double> _mostFreqLinePitchPerFontSize;
 };
 
 #endif  // TEXTBLOCKDETECTOR_H_

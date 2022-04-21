@@ -20,7 +20,7 @@
  * This class writes the elements extracted from a PDF to a specified file. The file will
  * contain one line per element, each in the following JSON format:
  *
- * { "id": "14c3x", "rank": 12, "page": 2, "minX": 12.4, "minY": 42.1, "maxX": 64.1,
+ * { "id": "14c3x", "rank": 12, "page": 2, "leftX": 12.4, "minY": 42.1, "rightX": 64.1,
  *   "font": "Arial", "fontSize": 12, "text": "Hello ...", "word" "p2322" }
  *
  *  The property "word" provides the id of the parent word of a glyph.

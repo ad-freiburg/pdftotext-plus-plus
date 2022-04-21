@@ -64,7 +64,7 @@ PdfWord::PdfWord(const PdfWord& word) {
   text = word.text;
   fontSize = word.fontSize;
   fontName = word.fontName;
-  wMode = word.wMode;
-  rotation = word.rotation;
+  position->wMode = word.position->wMode;
+  position->rotation = word.position->rotation;
   glyphs = word.glyphs;
 }

@@ -125,7 +125,7 @@ class PdfFontInfo {
   double fontMatrix[6];
 
   /**
-   * A mapping of glyph names to bounding boxes (each given by its minX, minY, maxX, maxY
+   * A mapping of glyph names to bounding boxes (each given by its leftX, upperY, rightX, lowerY
    * coordinates in glyph space).
    */
   std::unordered_map<std::string, std::tuple<double, double, double, double>> glyphBoundingBoxes;
@@ -189,7 +189,7 @@ class Type1FontFileParser {
 
   void parseCharString(const std::string& charString,
     const std::unordered_map<int, std::string>& subrs, int* curX, int* curY,
-    int* minX, int* minY, int* maxX, int* maxY, std::vector<int>* args,
+    int* leftX, int* upperY, int* rightX, int* lowerY, std::vector<int>* args,
     std::vector<int>* interpreterStack) const;
 
   /** TODO(korzen) */

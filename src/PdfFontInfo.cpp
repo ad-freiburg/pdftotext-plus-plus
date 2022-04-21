@@ -435,24 +435,24 @@ void Type1FontFileParser::parseEncryptedPart(Object* strObj, int length,
     std::string decryptedCharString;
     decrypt(charstring.c_str(), nnumBytes, 4330, lenIV, &decryptedCharString);
 
-    int minX = std::numeric_limits<int>::max();
-    int minY = std::numeric_limits<int>::max();
-    int maxX = std::numeric_limits<int>::min();
-    int maxY = std::numeric_limits<int>::min();
+    int leftX = std::numeric_limits<int>::max();
+    int upperY = std::numeric_limits<int>::max();
+    int rightX = std::numeric_limits<int>::min();
+    int lowerY = std::numeric_limits<int>::min();
     int curX = 0;
     int curY = 0;
     std::vector<int> args;
     std::vector<int> interpreterStack;
-    parseCharString(decryptedCharString, subrsMap, &curX, &curY, &minX, &minY, &maxX, &maxY, &args,
+    parseCharString(decryptedCharString, subrsMap, &curX, &curY, &leftX, &upperY, &rightX, &lowerY, &args,
         &interpreterStack);
-    fontInfo->glyphBoundingBoxes[charName] = std::make_tuple(minX, minY, maxX, maxY);
+    fontInfo->glyphBoundingBoxes[charName] = std::make_tuple(leftX, upperY, rightX, lowerY);
   }
 }
 
 // _________________________________________________________________________________________________
 void Type1FontFileParser::parseCharString(const std::string& charString,
     const std::unordered_map<int, std::string>& subrs, int* curX, int* curY,
-    int* minX, int* minY, int* maxX, int* maxY,
+    int* leftX, int* upperY, int* rightX, int* lowerY,
     std::vector<int>* args, std::vector<int>* interpreterStack) const {
 
   // for (size_t t = 0; t < charString.size(); t++) {
@@ -479,8 +479,8 @@ void Type1FontFileParser::parseCharString(const std::string& charString,
             //   int y = args->back();
             //   args->pop_back();
 
-            //   *minY = std::min(*minY, std::min(y, y + dy));
-            //   *maxY = std::max(*maxY, std::max(y, y + dy));
+            //   *upperY = std::min(*upperY, std::min(y, y + dy));
+            //   *lowerY = std::max(*lowerY, std::max(y, y + dy));
             args->pop_back();
             args->pop_back();
           }
@@ -492,8 +492,8 @@ void Type1FontFileParser::parseCharString(const std::string& charString,
             //   int x = args->back();
             //   args->pop_back();
 
-            //   *minX = std::min(*minX, std::min(x, x + dx));
-            //   *maxX = std::max(*maxX, std::max(x, x + dx));
+            //   *leftX = std::min(*leftX, std::min(x, x + dx));
+            //   *rightX = std::max(*rightX, std::max(x, x + dx));
             args->pop_back();
             args->pop_back();
           }
@@ -504,8 +504,8 @@ void Type1FontFileParser::parseCharString(const std::string& charString,
             args->pop_back();
 
             *curY += dy;
-            *minY = std::min(*minY, *curY);
-            *maxY = std::max(*maxY, *curY);
+            *upperY = std::min(*upperY, *curY);
+            *lowerY = std::max(*lowerY, *curY);
           }
           break;
         case 5:  // dx dy rlineto
@@ -517,10 +517,10 @@ void Type1FontFileParser::parseCharString(const std::string& charString,
 
             *curX += dx;
             *curY += dy;
-            *minX = std::min(*minX, *curX);
-            *maxX = std::max(*maxX, *curX);
-            *minY = std::min(*minY, *curY);
-            *maxY = std::max(*maxY, *curY);
+            *leftX = std::min(*leftX, *curX);
+            *rightX = std::max(*rightX, *curX);
+            *upperY = std::min(*upperY, *curY);
+            *lowerY = std::max(*lowerY, *curY);
           }
           break;
         case 6:  // dx hlineto
@@ -529,8 +529,8 @@ void Type1FontFileParser::parseCharString(const std::string& charString,
             args->pop_back();
 
             *curX += dx;
-            *minX = std::min(*minX, *curX);
-            *maxX = std::max(*maxX, *curX);
+            *leftX = std::min(*leftX, *curX);
+            *rightX = std::max(*rightX, *curX);
           }
           break;
         case 7:  // dy vlineto
@@ -539,8 +539,8 @@ void Type1FontFileParser::parseCharString(const std::string& charString,
             args->pop_back();
 
             *curY += dy;
-            *minY = std::min(*minY, *curY);
-            *maxY = std::max(*maxY, *curY);
+            *upperY = std::min(*upperY, *curY);
+            *lowerY = std::max(*lowerY, *curY);
           }
           break;
         case 8:  // dx1 dy1 dx2 dy2 dx3 dy3 rrcurveto
@@ -567,10 +567,10 @@ void Type1FontFileParser::parseCharString(const std::string& charString,
 
             *curX = x3;
             *curY = y3;
-            *minX = std::min(*minX, std::min(x1, std::min(x2, x3)));
-            *maxX = std::max(*maxX, std::max(x1, std::max(x2, x3)));
-            *minY = std::min(*minY, std::min(y1, std::min(y2, y3)));
-            *maxY = std::max(*maxY, std::max(y1, std::max(y2, y3)));
+            *leftX = std::min(*leftX, std::min(x1, std::min(x2, x3)));
+            *rightX = std::max(*rightX, std::max(x1, std::max(x2, x3)));
+            *upperY = std::min(*upperY, std::min(y1, std::min(y2, y3)));
+            *lowerY = std::max(*lowerY, std::max(y1, std::max(y2, y3)));
           }
           break;
         case 10:  // subr# callsubr
@@ -582,7 +582,7 @@ void Type1FontFileParser::parseCharString(const std::string& charString,
               break;
             }
 
-            parseCharString(subrs.at(index), subrs, curX, curY, minX, minY, maxX, maxY, args,
+            parseCharString(subrs.at(index), subrs, curX, curY, leftX, upperY, rightX, lowerY, args,
                 interpreterStack);
           }
           break;
@@ -635,10 +635,10 @@ void Type1FontFileParser::parseCharString(const std::string& charString,
 
                   *curX = sbx;
                   *curY = sby;
-                  *minX = std::min(*minX, *curX);
-                  *maxX = std::max(*maxX, *curX);
-                  *minY = std::min(*minY, *curY);
-                  *maxY = std::max(*maxY, *curY);
+                  *leftX = std::min(*leftX, *curX);
+                  *rightX = std::max(*rightX, *curX);
+                  *upperY = std::min(*upperY, *curY);
+                  *lowerY = std::max(*lowerY, *curY);
                 }
                 break;
               case 12:  // num1 num2 div
@@ -713,10 +713,10 @@ void Type1FontFileParser::parseCharString(const std::string& charString,
 
                   *curX = x;
                   *curY = y;
-                  *minX = std::min(*minX, *curX);
-                  *maxX = std::max(*maxX, *curX);
-                  *minY = std::min(*minY, *curY);
-                  *maxY = std::max(*maxY, *curY);
+                  *leftX = std::min(*leftX, *curX);
+                  *rightX = std::max(*rightX, *curX);
+                  *upperY = std::min(*upperY, *curY);
+                  *lowerY = std::max(*lowerY, *curY);
                 }
                 break;
             }
@@ -731,10 +731,10 @@ void Type1FontFileParser::parseCharString(const std::string& charString,
 
             *curX = sbx;
             *curY = 0;
-            *minX = std::min(*minX, *curX);
-            *maxX = std::max(*maxX, *curX);
-            *minY = std::min(*minY, *curY);
-            *maxY = std::max(*maxY, *curY);
+            *leftX = std::min(*leftX, *curX);
+            *rightX = std::max(*rightX, *curX);
+            *upperY = std::min(*upperY, *curY);
+            *lowerY = std::max(*lowerY, *curY);
           }
           break;
         case 21:  // dx dy rmoveto
@@ -746,10 +746,10 @@ void Type1FontFileParser::parseCharString(const std::string& charString,
 
             *curX += dx;
             *curY += dy;
-            *minX = std::min(*minX, *curX);
-            *maxX = std::max(*maxX, *curX);
-            *minY = std::min(*minY, *curY);
-            *maxY = std::max(*maxY, *curY);
+            *leftX = std::min(*leftX, *curX);
+            *rightX = std::max(*rightX, *curX);
+            *upperY = std::min(*upperY, *curY);
+            *lowerY = std::max(*lowerY, *curY);
           }
           break;
         case 22:  // dx hmoveto
@@ -758,8 +758,8 @@ void Type1FontFileParser::parseCharString(const std::string& charString,
             args->pop_back();
 
             *curX += dx;
-            *minX = std::min(*minX, *curX);
-            *maxX = std::max(*maxX, *curX);
+            *leftX = std::min(*leftX, *curX);
+            *rightX = std::max(*rightX, *curX);
           }
           break;
         case 30:  // dy1 dx2 dy2 dx3 vhcurveto
@@ -782,10 +782,10 @@ void Type1FontFileParser::parseCharString(const std::string& charString,
 
             *curX = x3;
             *curY = y3;
-            *minX = std::min(*minX, std::min(x1, std::min(x2, x3)));
-            *maxX = std::max(*maxX, std::max(x1, std::max(x2, x3)));
-            *minY = std::min(*minY, std::min(y1, std::min(y2, y3)));
-            *maxY = std::max(*maxY, std::max(y1, std::max(y2, y3)));
+            *leftX = std::min(*leftX, std::min(x1, std::min(x2, x3)));
+            *rightX = std::max(*rightX, std::max(x1, std::max(x2, x3)));
+            *upperY = std::min(*upperY, std::min(y1, std::min(y2, y3)));
+            *lowerY = std::max(*lowerY, std::max(y1, std::max(y2, y3)));
           }
           break;
         case 31:  // dx1 dx2 dy2 dy3 hvcurveto
@@ -808,10 +808,10 @@ void Type1FontFileParser::parseCharString(const std::string& charString,
 
             *curX = x3;
             *curY = y3;
-            *minX = std::min(*minX, std::min(x1, std::min(x2, x3)));
-            *maxX = std::max(*maxX, std::max(x1, std::max(x2, x3)));
-            *minY = std::min(*minY, std::min(y1, std::min(y2, y3)));
-            *maxY = std::max(*maxY, std::max(y1, std::max(y2, y3)));
+            *leftX = std::min(*leftX, std::min(x1, std::min(x2, x3)));
+            *rightX = std::max(*rightX, std::max(x1, std::max(x2, x3)));
+            *upperY = std::min(*upperY, std::min(y1, std::min(y2, y3)));
+            *lowerY = std::max(*lowerY, std::max(y1, std::max(y2, y3)));
           }
           break;
         case 0:  // error

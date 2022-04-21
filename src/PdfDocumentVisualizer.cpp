@@ -287,19 +287,19 @@ void PdfDocumentVisualizer::drawPageSegmentBoundingBoxes(
 
 // _________________________________________________________________________________________________
 void PdfDocumentVisualizer::drawBoundingBox(const PdfElement* element, const ColorScheme& cs) {
-  Page* pdfPage = _pdfDoc->getPage(element->pageNum);
-  Gfx* gfx = _gfxs[element->pageNum];
+  Page* pdfPage = _pdfDoc->getPage(element->position->pageNum);
+  Gfx* gfx = _gfxs[element->position->pageNum];
 
   // Define the coordinates of the bounding box to draw.
-  double minX = element->minX;
-  double minY = pdfPage->getMediaHeight() - element->maxY;  // make it relative to the lower left.
-  double maxX = element->maxX;
-  double maxY = pdfPage->getMediaHeight() - element->minY;  // make it relative to the lower left.
+  double leftX = element->position->leftX;
+  double upperY = pdfPage->getMediaHeight() - element->position->lowerY;  // make it relative to the lower left.
+  double rightX = element->position->rightX;
+  double lowerY = pdfPage->getMediaHeight() - element->position->upperY;  // make it relative to the lower left.
   // Vertical/horizontal lines can have a width/height of zero, in which case they are not
   // visible in the visualization. So ensure a minimal width/height of 1.
-  if (fabs(minX - maxX) < 1) { maxX += 1; }
-  if (fabs(minY - maxY) < 1) { maxY += 1; }
-  PDFRectangle rect(minX, minY, maxX, maxY);
+  if (fabs(leftX - rightX) < 1) { rightX += 1; }
+  if (fabs(upperY - lowerY) < 1) { lowerY += 1; }
+  PDFRectangle rect(leftX, upperY, rightX, lowerY);
 
   // Create the bounding box.
   AnnotGeometry* annot = new AnnotGeometry(_pdfDoc.get(), &rect, Annot::AnnotSubtype::typeSquare);
@@ -318,13 +318,13 @@ void PdfDocumentVisualizer::drawTextBlockSemanticRoles(const std::vector<PdfText
     const ColorScheme& cs) {
   // Iterate through the text blocks and draw the semantic role of each.
   for (const auto* block : blocks) {
-    Page* pdfPage = _pdfDoc->getPage(block->pageNum);
-    Gfx* gfx = _gfxs[block->pageNum];
+    Page* pdfPage = _pdfDoc->getPage(block->position->pageNum);
+    Gfx* gfx = _gfxs[block->position->pageNum];
 
     // Define the position of the semantic role.
-    double minX = block->minX;
-    double maxY = pdfPage->getMediaHeight() - block->minY;  // make it relative to the lower left.
-    PDFRectangle rect(minX, maxY, minX + 100, maxY + 7);
+    double leftX = block->position->leftX;
+    double lowerY = pdfPage->getMediaHeight() - block->position->upperY;  // make it relative to the lower left.
+    PDFRectangle rect(leftX, lowerY, leftX + 100, lowerY + 7);
 
     // Define the font appearance of the semantic role.
     const DefaultAppearance appearance(&semanticRoleAppearance);
@@ -355,17 +355,17 @@ void PdfDocumentVisualizer::drawReadingOrder(const std::vector<PdfTextBlock*>& b
     PdfTextBlock* prevBlock = blocks[i - 1];
     PdfTextBlock* block = blocks[i];
 
-    Page* pdfPage = _pdfDoc->getPage(block->pageNum);
-    Gfx* gfx = _gfxs[block->pageNum];
+    Page* pdfPage = _pdfDoc->getPage(block->position->pageNum);
+    Gfx* gfx = _gfxs[block->position->pageNum];
 
     // Compute the coordinates of the midpoints of the previous and current text block.
-    double prevMinY = pdfPage->getMediaHeight() - prevBlock->maxY;
-    double prevMaxY = pdfPage->getMediaHeight() - prevBlock->minY;
-    double prevMidX = prevBlock->minX + ((prevBlock->maxX - prevBlock->minX) / 2.0);
+    double prevMinY = pdfPage->getMediaHeight() - prevBlock->position->lowerY;
+    double prevMaxY = pdfPage->getMediaHeight() - prevBlock->position->upperY;
+    double prevMidX = prevBlock->position->leftX + ((prevBlock->position->rightX - prevBlock->position->leftX) / 2.0);
     double prevMidY = prevMinY + ((prevMaxY - prevMinY) / 2.0);
-    double currMinY = pdfPage->getMediaHeight() - block->maxY;
-    double currMaxY = pdfPage->getMediaHeight() - block->minY;
-    double currMidX = block->minX + ((block->maxX - block->minX) / 2.0);
+    double currMinY = pdfPage->getMediaHeight() - block->position->lowerY;
+    double currMaxY = pdfPage->getMediaHeight() - block->position->upperY;
+    double currMidX = block->position->leftX + ((block->position->rightX - block->position->leftX) / 2.0);
     double currMidY = currMinY + ((currMaxY - currMinY) / 2.0);
 
     // Define the position of the reading order line.

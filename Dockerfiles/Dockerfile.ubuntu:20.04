@@ -207,6 +207,8 @@ COPY Makefile.Docker Makefile
 RUN make install
 
 ENTRYPOINT ["pdftotext++"]
+# RUN apt-get update && apt-get install -y gdb
+# CMD ["/bin/bash"]
 
 # ==================================================================================================
 # USEFUL COMMANDS

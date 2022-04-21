@@ -28,24 +28,128 @@ Cut::Cut(const CutDir dirA, int pageNumA, double x1A, double y1A, double x2A, do
 }
 
 // =================================================================================================
+// PdfPosition
+
+// _________________________________________________________________________________________________
+double PdfPosition::getWidth() const {
+  return rightX - leftX;
+};
+
+// _________________________________________________________________________________________________
+double PdfPosition::getHeight() const {
+  return lowerY - upperY;
+};
+
+// _________________________________________________________________________________________________
+double PdfPosition::getRotLeftX() const {
+  switch (rotation) {
+    case 0:
+    default:
+      return leftX;
+    case 1:
+      return upperY;
+    case 2:
+      return rightX;
+    case 3:
+      return lowerY;
+  }
+};
+
+// _________________________________________________________________________________________________
+double PdfPosition::getRotUpperY() const {
+  switch (rotation) {
+    case 0:
+    default:
+      return upperY;
+    case 1:
+      return rightX;
+    case 2:
+      return lowerY;
+    case 3:
+      return leftX;
+  }
+};
+
+// _________________________________________________________________________________________________
+double PdfPosition::getRotRightX() const {
+  switch (rotation) {
+    case 0:
+    default:
+      return rightX;
+    case 1:
+      return lowerY;
+    case 2:
+      return leftX;
+    case 3:
+      return upperY;
+  }
+};
+
+// _________________________________________________________________________________________________
+double PdfPosition::getRotLowerY() const {
+  switch (rotation) {
+    case 0:
+    default:
+      return lowerY;
+    case 1:
+      return leftX;
+    case 2:
+      return upperY;
+    case 3:
+      return rightX;
+  }
+};
+
+// _________________________________________________________________________________________________
+double PdfPosition::getRotWidth() const {
+  switch (rotation) {
+    case 0:
+    case 1:
+    default:
+      return getRotRightX() - getRotLeftX();
+    case 2:
+    case 3:
+      return getRotLeftX() - getRotRightX();
+  }
+};
+
+// _________________________________________________________________________________________________
+double PdfPosition::getRotHeight() const {
+  switch (rotation) {
+    case 0:
+    case 3:
+    default:
+      return getRotLowerY() - getRotUpperY();
+    case 1:
+    case 2:
+      return getRotUpperY() - getRotLowerY();
+  }
+};
+
+// _________________________________________________________________________________________________
+std::string PdfPosition::toString() const {
+  std::stringstream ss;
+  ss << "PdfPosition("
+     << "page=" << pageNum << "; "
+     << "leftX=" << leftX << "; "
+     << "upperY=" << upperY << "; "
+     << "rightX=" << rightX << "; "
+     << "lowerY=" << lowerY << ")";
+  return ss.str();
+}
+
+// =================================================================================================
 // PdfElement
 
 // _________________________________________________________________________________________________
-PdfElement::PdfElement() = default;
+PdfElement::PdfElement() {
+  position = new PdfPosition();
+};
 
 // _________________________________________________________________________________________________
-PdfElement::~PdfElement() = default;
-
-// _________________________________________________________________________________________________
-double PdfElement::getWidth() const {
-  return maxX - minX;
-}
-
-// _________________________________________________________________________________________________
-double PdfElement::getHeight() const {
-  return maxY - minY;
-}
-
+PdfElement::~PdfElement() {
+  delete position;
+};
 
 // =================================================================================================
 // PdfGlyph
@@ -60,17 +164,11 @@ PdfGlyph::~PdfGlyph() = default;
 std::string PdfGlyph::toString() const {
   std::stringstream ss;
   ss << "PdfGlyph("
-     << "page=" << pageNum << "; "
-     << "minX=" << minX << "; "
-     << "minY=" << minY << "; "
-     << "maxX=" << maxX << "; "
-     << "maxY=" << maxY << "; "
+     << "pos=" << position->toString() << "; "
      << "fontName=" << fontName << "; "
      << "fontSize=" << fontSize << "; "
      << "color=(" << color[0] << ", " << color[1] << ", " << color[2] << "); "
      << "opacity=" << opacity << "; "
-     << "wMode=" << wMode << "; "
-     << "rotation=" << rotation << "; "
      << "unicodes=[";
   for (size_t i = 0; i < unicodes.size(); i++) {
     ss << unicodes[i];
@@ -94,12 +192,7 @@ PdfNonTextElement::~PdfNonTextElement() = default;
 // _________________________________________________________________________________________________
 std::string PdfNonTextElement::toString() const {
   std::stringstream ss;
-  ss << "PdfNonTextElement("
-     << "page=" << pageNum << "; "
-     << "minX=" << minX << "; "
-     << "minY=" << minY << "; "
-     << "maxX=" << maxX << "; "
-     << "maxY=" << maxY << ")";
+  ss << "PdfNonTextElement(pos=" << position->toString() << ")";
   return ss.str();
 }
 
@@ -115,12 +208,7 @@ PdfFigure::~PdfFigure() = default;
 // _________________________________________________________________________________________________
 std::string PdfFigure::toString() const {
   std::stringstream ss;
-  ss << "PdfFigure("
-     << "page=" << pageNum << "; "
-     << "minX=" << minX << "; "
-     << "minY=" << minY << "; "
-     << "maxX=" << maxX << "; "
-     << "maxY=" << maxY << ")";
+  ss << "PdfFigure(pos=" << position->toString() << ")";
   return ss.str();
 }
 
@@ -136,12 +224,7 @@ PdfShape::~PdfShape() = default;
 // _________________________________________________________________________________________________
 std::string PdfShape::toString() const {
   std::stringstream ss;
-  ss << "PdfShape("
-     << "page=" << pageNum << "; "
-     << "minX=" << minX << "; "
-     << "minY=" << minY << "; "
-     << "maxX=" << maxX << "; "
-     << "maxY=" << maxY << ")";
+  ss << "PdfShape(pos=" << position->toString() << ")";
   return ss.str();
 }
 
@@ -153,12 +236,6 @@ PdfWord::PdfWord() = default;
 
 // _________________________________________________________________________________________________
 PdfWord::~PdfWord() {
-  if (leftSubscript != nullptr) { delete leftSubscript; }
-  if (leftSuperscript != nullptr) { delete leftSuperscript; }
-  if (leftPunctuation != nullptr) { delete leftPunctuation; }
-  if (rightSubscript != nullptr) { delete rightSubscript; }
-  if (rightSuperscript != nullptr) { delete rightSuperscript; }
-  if (rightPunctuation != nullptr) { delete rightPunctuation; }
   if (isFirstPartOfHyphenatedWord != nullptr) { delete isFirstPartOfHyphenatedWord; }
 }
 
@@ -166,13 +243,7 @@ PdfWord::~PdfWord() {
 std::string PdfWord::toString() const {
   std::stringstream ss;
   ss << "PdfWord("
-     << "page=" << pageNum << "; "
-     << "minX=" << minX << "; "
-     << "minY=" << minY << "; "
-     << "maxX=" << maxX << "; "
-     << "maxY=" << maxY << "; "
-     << "wMode=" << wMode << "; "
-     << "rotation=" << rotation << "; "
+     << "pos=" << position->toString() << "; "
      << "fontName=" << fontName << "; "
      << "fontSize=" << fontSize << "; "
      << "text=\"" << text << "\")";
@@ -192,16 +263,12 @@ PdfTextLine::~PdfTextLine() = default;
 std::string PdfTextLine::toString() const {
   std::stringstream ss;
   ss << "PdfTextLine("
-     << "page=" << pageNum << "; "
-     << "minX=" << minX << "; "
-     << "minY=" << minY << "; "
-     << "maxX=" << maxX << "; "
-     << "maxY=" << maxY << "; "
-     << "wMode=" << wMode << "; "
-     << "rotation=" << rotation << "; "
+     << "text=\"" << text << "\"; "
+     << "pos=" << position->toString() << "; "
+     << "indent=" << indent << "; "
      << "fontName=" << fontName << "; "
-     << "fontSize=" << fontSize << "; "
-     << "text=\"" << text << "\")";
+     << "fontSize=" << fontSize << ")";
+
   return ss.str();
 }
 
@@ -218,11 +285,7 @@ PdfTextBlock::~PdfTextBlock() = default;
 std::string PdfTextBlock::toString() const {
   std::stringstream ss;
   ss << "PdfTextBlock("
-     << "page=" << pageNum << "; "
-     << "minX=" << minX << "; "
-     << "minY=" << minY << "; "
-     << "maxX=" << maxX << "; "
-     << "maxY=" << maxY << "; "
+     << "pos=" << position->toString() << "; "
      << "role=" << role << "; "
      << "text=\"" << text << "\")";
   return ss.str();
@@ -246,11 +309,7 @@ PdfPageSegment::~PdfPageSegment() {
 std::string PdfPageSegment::toString() const {
   std::stringstream ss;
   ss << "PdfPageSegment("
-     << "page=" << pageNum << "; "
-     << "minX=" << minX << "; "
-     << "minY=" << minY << "; "
-     << "maxX=" << maxX << "; "
-     << "maxY=" << maxY << ")";
+     << "pos=" << position->toString() << "; ";
   return ss.str();
 }
 

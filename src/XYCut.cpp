@@ -80,10 +80,10 @@ bool xCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc chooseC
     return false;
   }
 
-  // Sort the elements by their minX-values.
+  // Sort the elements by their leftX-values.
   std::vector<PdfElement*> sElements = elements;
   std::sort(sElements.begin(), sElements.end(), [](const PdfElement* e1, const PdfElement* e2) {
-    return e1->minX < e2->minX;
+    return e1->position->leftX < e2->position->leftX;
   });
 
   PdfElement* elementLargestMaxX = sElements[0];
@@ -94,14 +94,14 @@ bool xCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc chooseC
   for (size_t pos = 1; pos < sElements.size(); pos++) {
     PdfElement* element = sElements[pos];
 
-    double gapWidth = element->minX - elementLargestMaxX->maxX;
+    double gapWidth = element->position->leftX - elementLargestMaxX->position->rightX;
 
     if (gapWidth > GAP_MIN_WIDTH) {
       gapPositions.push_back(pos);
       gapStartElements.push_back(elementLargestMaxX);
     }
 
-    if (element->maxX > elementLargestMaxX->maxX) {
+    if (element->position->rightX > elementLargestMaxX->position->rightX) {
       elementLargestMaxX = element;
     }
   }
@@ -112,8 +112,8 @@ bool xCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc chooseC
   double elementsMinY = std::numeric_limits<double>::max();
   double elementsMaxY = std::numeric_limits<double>::min();
   for (const auto* element : sElements) {
-    elementsMinY = std::min(elementsMinY, element->minY);
-    elementsMaxY = std::max(elementsMaxY, element->maxY);
+    elementsMinY = std::min(elementsMinY, element->position->upperY);
+    elementsMaxY = std::max(elementsMaxY, element->position->lowerY);
   }
 
   size_t prevCutPos = 0;
@@ -127,8 +127,8 @@ bool xCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc chooseC
     }
 
     if (resultCuts) {
-      int pageNum = elements[0]->pageNum;
-      double x = cutStartElement->maxX + ((sElements[cutPos]->minX - cutStartElement->maxX) / 2);
+      int pageNum = elements[0]->position->pageNum;
+      double x = cutStartElement->position->rightX + ((sElements[cutPos]->position->leftX - cutStartElement->position->rightX) / 2);
       resultCuts->push_back(new Cut(CutDir::X, pageNum, x, elementsMinY, x, elementsMaxY));
     }
 
@@ -152,10 +152,10 @@ bool yCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc chooseC
     return false;
   }
 
-  // Sort the elements by their minY-values.
+  // Sort the elements by their upperY-values.
   std::vector<PdfElement*> sElements = elements;
   std::sort(sElements.begin(), sElements.end(), [](const PdfElement* e1, const PdfElement* e2) {
-    return e1->minY < e2->minY;
+    return e1->position->upperY < e2->position->upperY;
   });
 
   PdfElement* elementLargestMaxY = sElements[0];
@@ -166,13 +166,13 @@ bool yCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc chooseC
   for (size_t pos = 1; pos < sElements.size(); pos++) {
     PdfElement* element = sElements[pos];
 
-    double gapHeight = element->minY - elementLargestMaxY->maxY;
+    double gapHeight = element->position->upperY - elementLargestMaxY->position->lowerY;
     if (gapHeight > GAP_MIN_HEIGHT) {
       gapPositions.push_back(pos);
       gapStartElements.push_back(elementLargestMaxY);
     }
 
-    if (element->maxY > elementLargestMaxY->maxY) {
+    if (element->position->lowerY > elementLargestMaxY->position->lowerY) {
       elementLargestMaxY = element;
     }
   }
@@ -183,8 +183,8 @@ bool yCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc chooseC
   double elementsMinX = std::numeric_limits<double>::max();
   double elementsMaxX = std::numeric_limits<double>::min();
   for (const auto* element : sElements) {
-    elementsMinX = std::min(elementsMinX, element->minX);
-    elementsMaxX = std::max(elementsMaxX, element->maxX);
+    elementsMinX = std::min(elementsMinX, element->position->leftX);
+    elementsMaxX = std::max(elementsMaxX, element->position->rightX);
   }
 
   size_t prevCutPos = 0;
@@ -198,8 +198,8 @@ bool yCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc chooseC
     }
 
     if (resultCuts) {
-      int pageNum = elements[0]->pageNum;
-      double y = cutStartElement->maxY + ((sElements[cutPos]->minY - cutStartElement->maxY) / 2);
+      int pageNum = elements[0]->position->pageNum;
+      double y = cutStartElement->position->lowerY + ((sElements[cutPos]->position->upperY - cutStartElement->position->lowerY) / 2);
       resultCuts->push_back(new Cut(CutDir::Y, pageNum, elementsMinX, y, elementsMaxX, y));
     }
 

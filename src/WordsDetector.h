@@ -18,17 +18,17 @@
  * This class iterates through the glyphs of a given document in extraction order and merges them
  * to words, for example by analyzing the spacings, font sizes and writing modes of the glyphs.
  */
-class WordsTokenizer {
+class WordsDetector {
  public:
   /**
-   * This constructor creates and initializes a new `WordsTokenizer`.
+   * This constructor creates and initializes a new `WordsDetector`.
    *
    * @param doc The document to process.
    */
-  explicit WordsTokenizer(PdfDocument* doc);
+  explicit WordsDetector(PdfDocument* doc);
 
   /** The deconstructor. */
-  ~WordsTokenizer();
+  ~WordsDetector();
 
   /**
    * This method processes the document page-wise. For each page, it iterates through the glyphs
@@ -36,9 +36,13 @@ class WordsTokenizer {
    * spacings, font sizes and writing modes of the glyphs. The detected words are appended to
    * `page->words`, where `page` is the `PdfPage` currently processed.
    */
-  void tokenize() const;
+  void detect() const;
 
  private:
+  void tokenize() const;
+
+  void mergeStackedWords() const;
+
   /**
    * This method (1) creates a new `PdfWord` from the given list of glyphs, (2) computes the
    * layout information of the word and (3) appends the word to the given result list.

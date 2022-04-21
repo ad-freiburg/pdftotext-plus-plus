@@ -12,6 +12,7 @@
 #include <limits>  // std::numeric_limits
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include <poppler/GfxFont.h>
@@ -85,17 +86,28 @@ class Cut {
  */
 enum TextUnit { GLYPHS = 1, WORDS = 2, TEXT_LINES = 3, TEXT_BLOCKS = 4, PARAGRAPHS = 5 };
 
-/**
- * This class represents an abstract class for all visible elements in a PDF, for example: glyphs,
- * words, text blocks, figures and shapes.
- */
-class PdfElement {
- public:
-  /** This constructor creates and initializes a new `PdfElement`. */
-  PdfElement();
+class PdfWord;
+class PdfTextLine;
+class PdfTextBlock;
+class PdfPageSegment;
 
-  /** The deconstructor. */
-  virtual ~PdfElement() = 0;
+// =================================================================================================
+
+class PdfPosition {
+ public:
+  /** The page number. */
+  double pageNum = -1;
+
+  /** The minimum and maximum x,y-coordinates of this element. */
+  double leftX = std::numeric_limits<double>::max();
+  double upperY = std::numeric_limits<double>::max();
+  double rightX = std::numeric_limits<double>::min();
+  double lowerY = std::numeric_limits<double>::min();
+
+  /** The rotation of this element. */
+  int rotation = 0;
+  /** The writing mode of this element. */
+  int wMode = 0;
 
   /**
    * This method returns the width of this element.
@@ -111,24 +123,48 @@ class PdfElement {
    */
   double getHeight() const;
 
+  double getRotLeftX() const;
+  double getRotUpperY() const;
+  double getRotRightX() const;
+  double getRotLowerY() const;
+  double getRotHeight() const;
+  double getRotWidth() const;
+
+  /**
+   * This method returns a string representation of this position for debugging purposes.
+   *
+   * @return A string representation of this position.
+   */
+  std::string toString() const;
+};
+
+/**
+ * This class represents an abstract class for all visible elements in a PDF, for example: glyphs,
+ * words, text blocks, figures and shapes.
+ */
+class PdfElement {
+ public:
+  /** This constructor creates and initializes a new `PdfElement`. */
+  PdfElement();
+
+  /** The deconstructor. */
+  virtual ~PdfElement() = 0;
+
+  /** The unique id of this element. **/
+  std::string id;
+
+  /** The position of this element in the PDF. */
+  PdfPosition* position;
+
+  /** The position of this element in the extraction order. */
+  int rank = -1;
+
   /**
    * This method returns a string representation of this element for debugging purposes.
    *
    * @return A string representation of this element.
    */
   virtual std::string toString() const = 0;
-
-  /** The unique id of this element. **/
-  std::string id;
-
-  /** The minimum and maximum x,y-coordinates of this element. */
-  double minX = std::numeric_limits<double>::max();
-  double minY = std::numeric_limits<double>::max();
-  double maxX = std::numeric_limits<double>::min();
-  double maxY = std::numeric_limits<double>::min();
-
-  /** The page number. */
-  double pageNum = -1;
 };
 
 // =================================================================================================
@@ -143,9 +179,6 @@ class PdfGlyph : public PdfElement {
 
   /** The deconstructor. */
   ~PdfGlyph();
-
-  /** The position of this glyph in the extraction order. */
-  int rank = -1;
 
   /** The text of this glyph. */
   std::string text;
@@ -169,23 +202,6 @@ class PdfGlyph : public PdfElement {
   double opacity;
 
   /**
-   * The writing mode of this glyph, given as an integer 0 or 1.
-   * The meaning of this integer is as follows:
-   * 0: vertical writing mode; 1: horizontal writing mode.
-   */
-  int wMode = -1;
-
-  /**
-   * The rotation of this glyph, given as an integer 0, 1, 2, or 3.
-   * The meaning of this integer is as follows:
-   * 0: the glyph is not rotated;
-   * 1: the glyph is rotated by 90 degress (clock-wise);
-   * 2: the glyph is rotated by 180 degress (clock-wise);
-   * 3: the glyph is rotated by 270 degress (clock-wise).
-   */
-  int rotation = -1;
-
-  /**
    * The baseline of the glyph.
    */
   double base;
@@ -199,6 +215,11 @@ class PdfGlyph : public PdfElement {
 
   bool isSubscript = false;
   bool isSuperscript = false;
+
+  /**
+   * The reference to the word of which this glyph is a part of.
+   */
+  PdfWord* word = nullptr;
 
   /**
    * This method returns a string representation of this glyph for debugging purposes.
@@ -254,58 +275,21 @@ class PdfWord : public PdfElement {
   /** The font name of this word. */
   std::string fontName;
 
-  /**
-   * The writing mode of this word, given as an integer 0 or 1.
-   * The meaning of this integer is as follows:
-   * 0: vertical writing mode; 1: horizontal writing mode.
-   */
-  int wMode = -1;
-
-  /**
-   * The rotation of this word, given as an integer 0, 1, 2, or 3.
-   * The meaning of this integer is as follows:
-   * 0: the glyph is not rotated;
-   * 1: the glyph is rotated by 90 degress (clock-wise);
-   * 2: the glyph is rotated by 180 degress (clock-wise);
-   * 3: the glyph is rotated by 270 degress (clock-wise).
-   */
-  int rotation = -1;
-
   /** The glyphs of this word. */
   std::vector<PdfGlyph*> glyphs;
 
-  /**
-   * The left subscript of the word.
-   */
-  PdfWord* leftSubscript = nullptr;
-
-  /**
-   * The left superscript of the word.
-   */
-  PdfWord* leftSuperscript = nullptr;
-
-  /**
-   * The left punctuation of the word.
-   */
-  PdfWord* leftPunctuation = nullptr;
-
-  /**
-   * The right subscript of the word.
-   */
-  PdfWord* rightSubscript = nullptr;
-
-  /**
-   * The right superscript of the word.
-   */
-  PdfWord* rightSuperscript = nullptr;
-
-  /**
-   * The right punctuation of the word.
-   */
-  PdfWord* rightPunctuation = nullptr;
+  // Stacked words: words that logically belong together and overlap horizontally, for example:
+  // a summation symbol with its sub- and superscripts.
+  PdfWord* isPartOfStackedWord = nullptr;
+  std::vector<PdfWord*> isBaseOfStackedWords;
 
   PdfWord* isFirstPartOfHyphenatedWord = nullptr;
   PdfWord* isSecondPartOfHyphenatedWord = nullptr;
+
+  /**
+   * The reference to the text line of which this word is a part of.
+   */
+  PdfTextLine* line = nullptr;
 
   /**
    * This method returns a string representation of this word for debugging purposes.
@@ -313,9 +297,6 @@ class PdfWord : public PdfElement {
    * @return A string representation of this word.
    */
   std::string toString() const override;
-
-  /** The position of this glyph in the extraction sequence. */
-  int rank = -1;
 };
 
 // =================================================================================================
@@ -366,6 +347,8 @@ class PdfShape : public PdfNonTextElement {
 
 // =================================================================================================
 
+enum PdfTextLineAlignment { LEFT, RIGHT, CENTERED, JUSTIFIED };
+
 /**
  * This class represents a single text line in a PDF document.
  */
@@ -387,29 +370,50 @@ class PdfTextLine : public PdfElement {
   std::string text;
 
   /**
-   * The writing mode of this line, given as an integer 0 or 1.
-   * The meaning of this integer is as follows:
-   * 0: vertical writing mode; 1: horizontal writing mode.
-   */
-  int wMode = -1;
-
-  /**
-   * The rotation of this line, given as an integer 0, 1, 2, or 3.
-   * The meaning of this integer is as follows:
-   * 0: the glyph is not rotated;
-   * 1: the glyph is rotated by 90 degress (clock-wise);
-   * 2: the glyph is rotated by 180 degress (clock-wise);
-   * 3: the glyph is rotated by 270 degress (clock-wise).
-   */
-  int rotation = -1;
-
-  /**
    * The baseline of the glyph.
    */
   double base;
 
   /** The words of this line. */
   std::vector<PdfWord*> words;
+
+  /**
+   * The reference to the text block of which this text line is a part of.
+   */
+  PdfTextBlock* block = nullptr;
+
+  /**
+   * The coordinates of the bounding box of this line, with sub- and superscripts ignored.
+   */
+  double baseBBoxLeftX = std::numeric_limits<double>::max();
+  double baseBBoxUpperY = std::numeric_limits<double>::max();
+  double baseBBoxRightX = std::numeric_limits<double>::min();
+  double baseBBoxLowerY = std::numeric_limits<double>::min();
+
+  /**
+   * The possible alignments of this text line. Since the alignment of a text line can be ambiguous
+   * (for example, a justified text line could be considered as a left-aligned or right-aligned
+   * text line), we do not compute a single alignment, but all possible alignments of the text line.
+   *
+   */
+  std::unordered_set<PdfTextLineAlignment> alignments;
+
+  /**
+   * Whether or not this line is indented, that is: the gap between the left boundary of the text
+   * line and the left boundary of the containing segment is equal to the most frequnet line
+   * indentation amount.
+   */
+  bool isIndented = false;
+  double indent = 0.0;
+
+  /**
+   * The segment in which this text line is contained.
+   */
+  const PdfPageSegment* segment = nullptr;
+
+  const PdfTextLine* prevSiblingTextLine = nullptr;
+  const PdfTextLine* nextSiblingTextLine = nullptr;
+  const PdfTextLine* parentTextLine = nullptr;
 
   /**
    * This method returns a string representation of this line for debugging purposes.
@@ -443,23 +447,6 @@ class PdfTextBlock : public PdfElement {
 
   /** The font name of this block. */
   std::string fontName;
-
-  /**
-   * The writing mode of this block, given as an integer 0 or 1.
-   * The meaning of this integer is as follows:
-   * 0: vertical writing mode; 1: horizontal writing mode.
-   */
-  int wMode = -1;
-
-  /**
-   * The rotation of this block, given as an integer 0, 1, 2, or 3.
-   * The meaning of this integer is as follows:
-   * 0: the glyph is not rotated;
-   * 1: the glyph is rotated by 90 degress (clock-wise);
-   * 2: the glyph is rotated by 180 degress (clock-wise);
-   * 3: the glyph is rotated by 270 degress (clock-wise).
-   */
-  int rotation = -1;
 
   /**
    * Whether or not this text block is emphasized compared to the other blocks.
@@ -534,6 +521,9 @@ class PdfPage {
 
   /** The words of this page. */
   std::vector<PdfWord*> words;
+
+  /** The text lines of this page. */
+  std::vector<PdfTextLine*> textLines;
 
   /** The blocks of this page. */
   std::vector<PdfTextBlock*> blocks;

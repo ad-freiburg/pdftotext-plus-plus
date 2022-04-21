@@ -4,8 +4,8 @@ DOCKER_CMD = docker
 DOCKER_FILE=./Dockerfiles/Dockerfile.ubuntu:$(shell lsb_release -r -s)
 DOCKER_IMAGE = pdftotext-plus-plus-ubuntu:$(shell lsb_release -r -s)
 
-INPUT_DIR = /local/data/pdftotext++/evaluation/benchmarks/arxiv-debug
-OUTPUT_DIR = /local/data/pdftotext++/evaluation/extraction-results/arxiv-debug
+INPUT_DIR = /local/data/pdftotext-plus-plus/evaluation/benchmarks/arxiv-debug
+OUTPUT_DIR = /local/data/pdftotext-plus-plus/evaluation/extraction-results/arxiv-debug
 
 INSTALL_DIR = /usr/local
 
@@ -39,14 +39,14 @@ help-dataset:
 	@echo "    contain one word (resp. text block) per line. A line of file.words.jsonl is of the"
 	@echo "    following form:"
 	@echo
-	@echo "    {\"id\": \"w-ynXLvp8F\", \"rank\": 0, \"page\": 1, \"minX\": 177.797, \"minY\": 70.6,"
-	@echo "     \"maxX\": 236.4, \"maxY\": 86.1, \"font\": \"MOFJOH+NimRomNo9L-Medi\", \"fontSize\":"
+	@echo "    {\"id\": \"w-ynXLvp8F\", \"rank\": 0, \"page\": 1, \"leftX\": 177.797, \"upperY\": 70.6,"
+	@echo "     \"rightX\": 236.4, \"lowerY\": 86.1, \"font\": \"MOFJOH+NimRomNo9L-Medi\", \"fontSize\":"
 	@echo "     11.9, \"text\": \"Topological\", \"block\": \"tb-IztYpXWG\", \"origin\": \"pdf\"}"
 	@echo
 	@echo "    A line of file.blocks.jsonl is of the following form:"
 	@echo
-	@echo "    {\"id\": \"tb-IztYpXWG\", \"rank\": 0, \"page\": 1, \"minX\": 177.7, \"minY\": 70.6,"
-	@echo "     \"maxX\": 432.4, \"maxY\": 86.1, \"font\": \"MOFJOH+NimRomNo9L-Medi\", \"fontSize\":"
+	@echo "    {\"id\": \"tb-IztYpXWG\", \"rank\": 0, \"page\": 1, \"leftX\": 177.7, \"upperY\": 70.6,"
+	@echo "     \"rightX\": 432.4, \"lowerY\": 86.1, \"font\": \"MOFJOH+NimRomNo9L-Medi\", \"fontSize\":"
 	@echo "     11.9, \"text\": \"Topological ...\", \"role\": \"title\", \"origin\": \"pdf\"}"
 	@echo
 	@echo "\033[34;1mUSAGE\033[0m"
@@ -87,8 +87,7 @@ dataset: build-docker
 	mkdir -p -m 777 $(OUTPUT_DIR)
 
 	@echo "\033[34;1mRunning the Docker container ...\033[0m"
-	cd ${INPUT_DIR} && find . -name "*.pdf" | sed "s/.pdf$$//" | xargs -I {} docker run --rm -v ${INPUT_DIR}:/input -v ${OUTPUT_DIR}:/output pdftotext-plus-plus /input/{}.pdf --serialize-words "/output/{}.words.jsonl" --serialize-text-blocks "/output/{}.blocks.jsonl" "/output/{}.txt"
-
+	cd ${INPUT_DIR} && find . -name "*.pdf" | sed "s/.wc.pdf$$//" | xargs -I {} docker run --rm -v ${INPUT_DIR}:/input -v ${OUTPUT_DIR}:/output pdftotext-plus-plus /input/{}.wc.pdf --serialize-pages --serialize-text-blocks --serialize-words "/output/{}.jsonl"
 	echo "{ \"benchmarkName\": \"$(shell basename $(INPUT_DIR))\" }" > ${OUTPUT_DIR}/info.json
 
 # ==================================================================================================
@@ -103,7 +102,7 @@ build-docker:
 install: build-docker
 	@echo "\033[34;1mInstalling pdftotext++ ...\033[0m"
 
-	$(DOCKER_CMD) create -it --name $(PROJECT_NAME) $(DOCKER_IMAGE) bash
-	$(DOCKER_CMD) cp $(PROJECT_NAME):/usr/local/lib $(INSTALL_DIR)/
-	$(DOCKER_CMD) cp $(PROJECT_NAME):/usr/local/bin $(INSTALL_DIR)/
-	$(DOCKER_CMD) rm $(PROJECT_NAME)
+	$(DOCKER_CMD) create -it --name $(PROJECT_NAME)-install $(DOCKER_IMAGE) bash
+	$(DOCKER_CMD) cp $(PROJECT_NAME)-install:/usr/local/lib $(INSTALL_DIR)/
+	$(DOCKER_CMD) cp $(PROJECT_NAME)-install:/usr/local/bin $(INSTALL_DIR)/
+	$(DOCKER_CMD) rm $(PROJECT_NAME)-install

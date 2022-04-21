@@ -195,7 +195,7 @@ tensorflow::Tensor SemanticRolesPredictor::createLayoutInputTensor(const PdfDocu
       float pageNumEncoded = 0.0f;
       if (doc->pages.size() > 1) {
         // Normalize the 1-based page numbers.
-        pageNumEncoded = static_cast<float>(block->pageNum - 1) /
+        pageNumEncoded = static_cast<float>(block->position->pageNum - 1) /
                          static_cast<float>(doc->pages.size() - 1);
       }
       layoutTensor.tensor<float, 2>()(blockIndex, 0) = pageNumEncoded;
@@ -203,23 +203,23 @@ tensorflow::Tensor SemanticRolesPredictor::createLayoutInputTensor(const PdfDocu
       // -----
       // Encode the x/y-coordinates. TODO: Reverse the coordinates.
 
-      float minX = block->minX;
-      float minXencoded = page->width > 0 ? minX / page->width : 0.0;
-      layoutTensor.tensor<float, 2>()(blockIndex, 1) = minXencoded;
+      float leftX = block->position->leftX;
+      float leftXencoded = page->width > 0 ? leftX / page->width : 0.0;
+      layoutTensor.tensor<float, 2>()(blockIndex, 1) = leftXencoded;
 
       // The model expects the origin to be in the page's lower left.
-      float minY = page->height - block->maxY;
-      float minYencoded = page->height > 0 ? minY / page->height : 0.0;
-      layoutTensor.tensor<float, 2>()(blockIndex, 2) = minYencoded;
+      float upperY = page->height - block->position->lowerY;
+      float upperYencoded = page->height > 0 ? upperY / page->height : 0.0;
+      layoutTensor.tensor<float, 2>()(blockIndex, 2) = upperYencoded;
 
-      float maxX = block->maxX;
-      float maxXencoded = page->width > 0 ? maxX / page->width : 0.0;
-      layoutTensor.tensor<float, 2>()(blockIndex, 3) = maxXencoded;
+      float rightX = block->position->rightX;
+      float rightXencoded = page->width > 0 ? rightX / page->width : 0.0;
+      layoutTensor.tensor<float, 2>()(blockIndex, 3) = rightXencoded;
 
       // The model expects the origin to be in the page's lower left.
-      float maxY = page->height - block->minY;
-      float maxYencoded = page->height > 0 ? maxY / page->height : 0.0;
-      layoutTensor.tensor<float, 2>()(blockIndex, 4) = maxYencoded;
+      float lowerY = page->height - block->position->upperY;
+      float lowerYencoded = page->height > 0 ? lowerY / page->height : 0.0;
+      layoutTensor.tensor<float, 2>()(blockIndex, 4) = lowerYencoded;
 
       // -----
       // Encode the font size.

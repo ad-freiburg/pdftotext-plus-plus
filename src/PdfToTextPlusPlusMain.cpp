@@ -35,6 +35,7 @@ static bool addSemanticRoles = false;
 static bool excludeSubSuperscripts = false;
 static bool ignoreEmbeddedFontFiles = false;
 static bool disableWordsDehyphenation = false;
+static bool parseMode = false;
 static bool serializePages = false;
 static bool serializeGlyphs = false;
 static bool serializeFigures = false;
@@ -67,6 +68,8 @@ static const ArgDesc argDesc[] = {
       "result in a faster extraction process but also in less accurate extraction results." },
   { "--disable-words-dehyphenation", argFlag, &disableWordsDehyphenation, 0,
       "Don't dephyphenate hyphenated words." },
+  { "--parse-mode", argFlag, &parseMode, 0,
+      "Only parse the glyphs, figures and shapes, don't detect words, lines and blocks." },
   { "--serialize-pages", argFlag, &serializePages, 0, "Whether to serialize the pages." },
   { "--serialize-glyphs", argFlag, &serializeGlyphs, 0, "Whether to serialize the glyphs." },
   { "--serialize-figures", argFlag, &serializeFigures, 0, "Whether to serialize the figures." },
@@ -175,24 +178,13 @@ int main(int argc, char *argv[]) {
     return 99;
   }
 
-  TextUnit targetTextUnit = TextUnit::PARAGRAPHS;
-  if (serializePages || serializeGlyphs || serializeFigures || serializeShapes) {
-    targetTextUnit = TextUnit::GLYPHS;
-  }
-  if (serializeWords) {
-    targetTextUnit = TextUnit::WORDS;
-  }
-  if (serializeBlocks) {
-    targetTextUnit = TextUnit::TEXT_BLOCKS;
-  }
-
   // ------------
   // Compute the extraction result.
 
   PdfToTextPlusPlus pdfToTextPlusPlus(
     !ignoreEmbeddedFontFiles,
     disableWordsDehyphenation,
-    targetTextUnit
+    parseMode
   );
   PdfDocument doc;
   std::vector<Timing> timings;
@@ -283,16 +275,18 @@ int main(int argc, char *argv[]) {
     int64_t timeTotal = 0;
     for (const auto& timing : timings) { timeTotal += timing.time; }
 
-    std::cerr << "\033[1m" << "Finished in " << timeTotal << " ms." << "\033[22m" << std::endl;
+    std::cout << "\033[1m" << "Finished in " << timeTotal << " ms." << "\033[22m" << std::endl;
 
     for (const auto& timing : timings) {
       std::string prefix = " * " + timing.description + ":";
-      std::cerr << std::left << std::setw(25) << prefix;
-      std::cerr << std::right << std::setw(4) << timing.time << " ms ";
-      std::cerr << "(" << round(timing.time / static_cast<double>(timeTotal) * 100, 1) << "%)";
-      std::cerr << std::endl;
+      std::cout << std::left << std::setw(25) << prefix;
+      std::cout << std::right << std::setw(4) << timing.time << " ms ";
+      std::cout << "(" << round(timing.time / static_cast<double>(timeTotal) * 100, 1) << "%)";
+      std::cout << std::endl;
     }
   }
+
+  std::cout << "DDD" << std::endl;
 
   return 0;
 }

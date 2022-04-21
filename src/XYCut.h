@@ -28,10 +28,10 @@
  *   The index identifying the position in `elements` for which to decide whether or not it is a
  *   valid cut position.
  * @param closestElementAlreadySeen
- *   The element in elements[0..cutPos] with the largest maxX-value when this function is passed
- *   to the xCut() method; or the largest maxY-value when it passed to the yCut() method.
+ *   The element in elements[0..cutPos] with the largest rightX-value when this function is passed
+ *   to the xCut() method; or the largest lowerY-value when it passed to the yCut() method.
  *   NOTE: This element is usually *not* equal to elements[cutPos-1], because the elements are
- *   *not* sorted by maxX values (resp. maxY values), but by their minX values (resp. minY values).
+ *   *not* sorted by rightX values (resp. lowerY values), but by their leftX values (resp. upperY values).
  * @return
  *   True if the position between `closestElementAlreadySeen` and `elements[cutPos]` denotes a
  *   valid cut position, false otherwise.
@@ -77,9 +77,9 @@ void xyCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc choose
 
 /**
  * TODO This method divides the given elements into groups by x-cuts. The basic approach is as follows:
- * First, the elements are sorted by their minX-values and iterated in sorted order (= from left
+ * First, the elements are sorted by their leftX-values and iterated in sorted order (= from left
  * to right). In iteration step i, the pair (elementLargestMaxX, elements[i+1]) is considered,
- * where `elementLargestMaxX` is the element in elements[0..i] with the largest maxX-value. For
+ * where `elementLargestMaxX` is the element in elements[0..i] with the largest rightX-value. For
  * each pair, the given `IsValidCutFunc`-function is invoked, with the purpose to find out whether
  * or not the current position is a valid x-cut position (that is: whether or not to divide the
  * elements between elementLargestMaxX and elements[i+1] by a x-cut).
@@ -110,9 +110,9 @@ bool xCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc chooseC
 
 /**
  * TODO This method divides the given elements into groups by y-cuts. The basic approach is as follows:
- * First, the elements are sorted by their minY-values and iterated in sorted order (= from top
+ * First, the elements are sorted by their upperY-values and iterated in sorted order (= from top
  * to bottom). In iteration step i, the pair (elementLargestMaxY, elements[i+1]) is considered,
- * where `elementLargestMaxY` is the element in elements[0..i] with the largest maxY-value. For
+ * where `elementLargestMaxY` is the element in elements[0..i] with the largest lowerY-value. For
  * each pair, the given `IsValidCutFunc`-function is invoked, with the purpose to find out whether
  * or not the current position is a valid y-cut position (that is: whether or not to divide the
  * elements between elementLargestMaxY and elements[i+1] by a y-cut).

@@ -18,8 +18,8 @@
 #include "./utils/Utils.h"
 #include "./XYCut.h"
 
-const double GAP_MIN_WIDTH = 0.5;
-const double GAP_MIN_HEIGHT = 0.5;
+const double GAP_MIN_WIDTH = 0.1;
+const double GAP_MIN_HEIGHT = 0.1;
 
 // _________________________________________________________________________________________________
 PageSegmentator::PageSegmentator(PdfDocument* doc) {
@@ -49,8 +49,8 @@ void PageSegmentator::segment() {
 // _________________________________________________________________________________________________
 void PageSegmentator::segmentPage(PdfPage* page, std::vector<PdfPageSegment*>* segments) {
   // The binds required to pass the chooseXCuts() and chooseYCuts() methods to the XY-cut class.
-  auto choosePrimaryYCutsBind = std::bind(&PageSegmentator::choosePrimaryYCuts, this,
-      std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
+  // auto choosePrimaryYCutsBind = std::bind(&PageSegmentator::choosePrimaryYCuts, this,
+  //     std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
   auto chooseXCutsBind = std::bind(&PageSegmentator::chooseXCuts, this,
       std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
   auto chooseYCutsBind = std::bind(&PageSegmentator::chooseYCuts, this,
@@ -69,21 +69,23 @@ void PageSegmentator::segmentPage(PdfPage* page, std::vector<PdfPageSegment*>* s
   _pageElementsMaxX = std::numeric_limits<double>::min();
   _pageElementsMaxY = std::numeric_limits<double>::min();
   for (const auto* element : pageElements) {
-    _pageElementsMinX = std::min(_pageElementsMinX, element->minX);
-    _pageElementsMinY = std::min(_pageElementsMinY, element->minY);
-    _pageElementsMaxX = std::max(_pageElementsMaxX, element->maxX);
-    _pageElementsMaxY = std::max(_pageElementsMaxY, element->maxY);
+    _pageElementsMinX = std::min(_pageElementsMinX, element->position->leftX);
+    _pageElementsMinY = std::min(_pageElementsMinY, element->position->upperY);
+    _pageElementsMaxX = std::max(_pageElementsMaxX, element->position->rightX);
+    _pageElementsMaxY = std::max(_pageElementsMaxY, element->position->lowerY);
   }
 
   // Identify the primary y-cuts and divide the page elements into groups at each primary y-cut.
-  std::vector<std::vector<PdfElement*>> primaryYCutGroups;
-  yCut(pageElements, choosePrimaryYCutsBind, &primaryYCutGroups, &page->blockDetectionCuts);
+  // std::vector<std::vector<PdfElement*>> primaryYCutGroups;
+  // yCut(pageElements, choosePrimaryYCutsBind, &primaryYCutGroups, &page->blockDetectionCuts);
 
-  // Divide each group further by using the recursive XY-cut algorithm.
+  // // Divide each group further by using the recursive XY-cut algorithm.
   std::vector<std::vector<PdfElement*>> groups;
-  for (const auto& primYCutGroup : primaryYCutGroups) {
-    xyCut(primYCutGroup, chooseXCutsBind, chooseYCutsBind, &groups, &page->blockDetectionCuts);
-  }
+  // for (const auto& primYCutGroup : primaryYCutGroups) {
+  //   xyCut(primYCutGroup, chooseXCutsBind, chooseYCutsBind, &groups, &page->blockDetectionCuts);
+  // }
+
+  xyCut(pageElements, chooseXCutsBind, chooseYCutsBind, &groups, &page->blockDetectionCuts);
 
   // Create a text segment from each group and append it to the result list.
   for (const auto& group : groups) {
@@ -103,36 +105,36 @@ void PageSegmentator::chooseXCuts(const std::vector<PdfElement*>& elements,
     const PdfElement* elementRight = elements[gapPos];
 
     // The gap is *not* a valid x-cut when the width is too small.
-    double gapWidth = elementRight->minX - elementLeft->maxX;
+    double gapWidth = elementRight->position->leftX - elementLeft->position->rightX;
     if (gapWidth < GAP_MIN_WIDTH) {
       continue;
     }
 
     const PdfWord* wordLeft = dynamic_cast<const PdfWord*>(elementLeft);
-    if (wordLeft) {
-      if (wordLeft->wMode != 0 || wordLeft->rotation != 0) {
-        cutIndices->push_back(i);
-        continue;
-      }
-    }
+    // if (wordLeft) {
+    //   if (wordLeft->position->wMode != 0 || wordLeft->position->rotation != 0) {
+    //     cutIndices->push_back(i);
+    //     continue;
+    //   }
+    // }
 
     const PdfWord* wordRight = dynamic_cast<const PdfWord*>(elementRight);
-    if (wordRight) {
-      if (wordRight->wMode != 0 || wordRight->rotation != 0) {
-        cutIndices->push_back(i);
-        continue;
-      }
-    }
+    // if (wordRight) {
+    //   if (wordRight->position->wMode != 0 || wordRight->position->rotation != 0) {
+    //     cutIndices->push_back(i);
+    //     continue;
+    //   }
+    // }
 
     if (wordLeft && wordRight) {
       // The gap is a valid x-cut when the left and right word do not share the same writing mode.
-      if (wordLeft->wMode != wordRight->wMode) {
+      if (wordLeft->position->wMode != wordRight->position->wMode) {
         cutIndices->push_back(i);
         continue;
       }
 
       // The gap is a valid x-cut when the left and right word do not share the same rotation value.
-      if (wordLeft->rotation != wordRight->rotation) {
+      if (wordLeft->position->rotation != wordRight->position->rotation) {
         cutIndices->push_back(i);
         continue;
       }
@@ -158,11 +160,12 @@ void PageSegmentator::chooseXCuts(const std::vector<PdfElement*>& elements,
         }
         // The words are not contiguous, if they do not share the same text line (= if they do
         // not overlap vertically).
-        if (glyphLeft->minY > glyphRight->maxY || glyphLeft->maxY < glyphRight->minY) {
+        if (glyphLeft->position->getRotUpperY() > glyphRight->position->getRotLowerY()
+            || glyphLeft->position->getRotLowerY() < glyphRight->position->getRotUpperY()) {
           isContiguous = false;
         }
         // The words are not contiguous if the vertical distance between them is too large.
-        // double wordDistance = glyphRight->minX - glyphLeft->maxX;
+        // double wordDistance = glyphRight->position->leftX - glyphLeft->position->leftX;
         // if (wordDistance > 5 * _doc->avgGlyphWidth) {
         //   isContiguous = false;
         // }
@@ -186,16 +189,16 @@ void PageSegmentator::chooseXCuts(const std::vector<PdfElement*>& elements,
     // illustrated in the following example:
     // x + y = z     (1)
     // The numbering should *not* be separated from the formula.
-    double leftGroupMinX = elements[0]->minX;  // The elements are sorted by minX.
-    double leftGroupMaxX = elementLeft->maxX;
+    double leftGroupMinX = elements[0]->position->leftX;  // The elements are sorted by leftX.
+    double leftGroupMaxX = elementLeft->position->rightX;
     double leftGroupWidth = leftGroupMaxX - leftGroupMinX;
     if (leftGroupWidth < 10 * _doc->avgGlyphWidth) {
       continue;
     }
-    double rightGroupMinX = elementRight->minX;
-    // TODO(korzen): The elements are sorted by minX, so the last element isn't necessarily the
-    // element with the largest maxX value in the right group.
-    double rightGroupMaxX = elements[elements.size() - 1]->maxX;
+    double rightGroupMinX = elementRight->position->leftX;
+    // TODO(korzen): The elements are sorted by leftX, so the last element isn't necessarily the
+    // element with the largest rightX value in the right group.
+    double rightGroupMaxX = elements[elements.size() - 1]->position->rightX;
     double rightGroupWidth = rightGroupMaxX - rightGroupMinX;
     if (rightGroupWidth < 10 * _doc->avgGlyphWidth) {
       continue;
@@ -206,11 +209,11 @@ void PageSegmentator::chooseXCuts(const std::vector<PdfElement*>& elements,
     // elements between vertical lines (e.g., fraction bars of math formulas).
     const PdfNonTextElement* nonTextLeft = dynamic_cast<const PdfNonTextElement*>(elementLeft);
     const PdfNonTextElement* nonTextRight = dynamic_cast<const PdfNonTextElement*>(elementRight);
-    if (nonTextLeft && nonTextLeft->getHeight() > 2 * _doc->avgGlyphHeight) {
+    if (nonTextLeft && nonTextLeft->position->getHeight() > 2 * _doc->avgGlyphHeight) {
       cutIndices->push_back(i);
       continue;
     }
-    if (nonTextRight && nonTextRight->getHeight() > 2 * _doc->avgGlyphHeight) {
+    if (nonTextRight && nonTextRight->position->getHeight() > 2 * _doc->avgGlyphHeight) {
       cutIndices->push_back(i);
       continue;
     }
@@ -252,15 +255,15 @@ void PageSegmentator::choosePrimaryYCuts(const std::vector<PdfElement*>& element
     // group and/or
     // lower group is approximately equal to the average glpyh height. This should detect separate
     // page headers/footers that consists of a single line.
-    double upperGroupMinY = elements[0]->minY;  // The elements are sorted by minX.
-    double upperGroupMaxY = elementAbove->maxY;
+    double upperGroupMinY = elements[0]->position->upperY;  // The elements are sorted by leftX.
+    double upperGroupMaxY = elementAbove->position->lowerY;
     double upperGroupHeight = upperGroupMaxY - upperGroupMinY;
     if (upperGroupHeight < 2 * _doc->avgGlyphHeight) {
       cutIndices->push_back(i);
       continue;
     }
-    double lowerGroupMinY = elementBelow->minY;
-    double lowerGroupMaxY = elements[elements.size() - 1]->maxY;
+    double lowerGroupMinY = elementBelow->position->upperY;
+    double lowerGroupMaxY = elements[elements.size() - 1]->position->lowerY;
     double lowerGroupHeight = lowerGroupMaxY - lowerGroupMinY;
     if (lowerGroupHeight < 2 * _doc->avgGlyphHeight) {
       cutIndices->push_back(i);
@@ -281,12 +284,12 @@ void PageSegmentator::choosePrimaryYCuts(const std::vector<PdfElement*>& element
     double pageElementsMid = _pageElementsMinX + (_pageElementsMaxX - _pageElementsMinX) / 2.0;
     const PdfNonTextElement* nonTextAbove = dynamic_cast<const PdfNonTextElement*>(elementAbove);
     if (nonTextAbove != nullptr) {
-      double minX = nonTextAbove->minX;
-      double maxX = nonTextAbove->maxX;
-      double width = nonTextAbove->getWidth();
+      double leftX = nonTextAbove->position->leftX;
+      double rightX = nonTextAbove->position->rightX;
+      double width = nonTextAbove->position->getWidth();
       // The element must exceed a certain width; one end point must start in the left half of the
       // bounding box around the page elements; and the other end point in the right half.
-      if (width > 10 * _doc->avgGlyphWidth && minX < pageElementsMid && maxX > pageElementsMid) {
+      if (width > 10 * _doc->avgGlyphWidth && leftX < pageElementsMid && rightX > pageElementsMid) {
         cutIndices->push_back(i);
         continue;
       }
@@ -295,12 +298,12 @@ void PageSegmentator::choosePrimaryYCuts(const std::vector<PdfElement*>& element
 
     const PdfNonTextElement* nonTextBelow = dynamic_cast<const PdfNonTextElement*>(elementBelow);
     if (nonTextBelow != nullptr) {
-      double minX = nonTextBelow->minX;
-      double maxX = nonTextBelow->maxX;
-      double width = nonTextBelow->getWidth();
+      double leftX = nonTextBelow->position->leftX;
+      double rightX = nonTextBelow->position->rightX;
+      double width = nonTextBelow->position->getWidth();
       // The element must exceed a certain width; one end point must start in the left half of the
       // bounding box around the page elements; and the other end point in the right half.
-      if (width > 10 * _doc->avgGlyphWidth && minX < pageElementsMid && maxX > pageElementsMid) {
+      if (width > 10 * _doc->avgGlyphWidth && leftX < pageElementsMid && rightX > pageElementsMid) {
         cutIndices->push_back(i);
         continue;
       }
@@ -320,9 +323,24 @@ void PageSegmentator::chooseYCuts(const std::vector<PdfElement*>& elements,
     const PdfElement* elementBelow = elements[gapPos];
 
     // The gap is *not* a valid x-cut when the height is too small.
-    double gapHeight = elementBelow->minY - elementAbove->maxY;
+    double gapHeight = elementBelow->position->upperY - elementAbove->position->lowerY;
     if (gapHeight < GAP_MIN_HEIGHT) {
       continue;
+    }
+
+    const PdfWord* wordAbove = dynamic_cast<const PdfWord*>(elementAbove);
+    const PdfWord* wordBelow = dynamic_cast<const PdfWord*>(elementBelow);
+
+    if (wordAbove && wordBelow) {
+      if (wordAbove->position->wMode != wordBelow->position->wMode) {
+        cutIndices->push_back(i);
+        continue;
+      }
+
+      if (wordAbove->position->rotation != wordBelow->position->rotation) {
+        cutIndices->push_back(i);
+        continue;
+      }
     }
 
     // The gap is a valid y-cut if the upper and/or lower element is a non-text element (e.g., a
@@ -331,38 +349,57 @@ void PageSegmentator::chooseYCuts(const std::vector<PdfElement*>& elements,
     // element (a horizontal line).
     const PdfNonTextElement* nonTextAbove = dynamic_cast<const PdfNonTextElement*>(elementAbove);
     const PdfNonTextElement* nonTextBelow = dynamic_cast<const PdfNonTextElement*>(elementBelow);
-    if (nonTextAbove && nonTextAbove->getWidth() > 5 * _doc->avgGlyphWidth) {
+    if (nonTextAbove && nonTextAbove->position->getWidth() > 5 * _doc->avgGlyphWidth) {
       cutIndices->push_back(i);
       continue;
     }
-    if (nonTextBelow && nonTextBelow->getWidth() > 5 * _doc->avgGlyphWidth) {
+    if (nonTextBelow && nonTextBelow->position->getWidth() > 5 * _doc->avgGlyphWidth) {
       cutIndices->push_back(i);
       continue;
     }
 
-    // The gap is a valid y-cut if the vertical distance between the upper and lower word is larger
-    // than the most common line distance (with respecting a small tolerance).
-    double lineDist = elementBelow->maxY - elementAbove->maxY;
-    double ratio = 1.05;
+    // Define the bind required to pass the chooseXCuts() method to the XY-cut class.
+    auto chooseXCutsBind = std::bind(&PageSegmentator::chooseXCuts, this,
+      std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
 
-    // If the element above the cut and the element below the cut are words with the same fontsize
-    // that is larger than the most frequent font size, allow a larger ratio (which is relative to
-    // the font size). This rule exists because the distance between two lines of a title is often
-    // larger than the most frequent line distance (and thus, the lines were often extracted as
-    // multiple text blocks).
-    const PdfWord* wordAbove = dynamic_cast<const PdfWord*>(elementAbove);
-    const PdfWord* wordBelow = dynamic_cast<const PdfWord*>(elementBelow);
-    if (wordAbove && wordBelow) {
-      if (fabs(wordAbove->fontSize - wordBelow->fontSize) < 0.1
-          && wordAbove->fontSize - _doc->mostFreqFontSize > 0.1) {
-        ratio = wordAbove->fontSize / _doc->mostFreqFontSize;
-      }
-    }
-
-    if (lineDist > ratio * _doc->mostFreqEstimatedLineDistance) {
+    // The gap is a valid y-cut if the resulting upper half or lower half (or both) can be
+    // subsequently divided by a valid x-cut.
+    std::vector<PdfElement*> upperHalf(elements.begin(), elements.begin() + gapPos);
+    bool cutOk = xCut(upperHalf, chooseXCutsBind);
+    if (cutOk) {
       cutIndices->push_back(i);
       continue;
     }
+    std::vector<PdfElement*> lowerHalf(elements.begin() + gapPos, elements.end());
+    cutOk = xCut(lowerHalf, chooseXCutsBind);
+    if (cutOk) {
+      cutIndices->push_back(i);
+      continue;
+    }
+
+    // // The gap is a valid y-cut if the vertical distance between the upper and lower word is larger
+    // // than the most common line distance (with respecting a small tolerance).
+    // double lineDist = elementBelow->position->lowerY - elementAbove->position->lowerY;
+    // double ratio = 1.05;
+
+    // // If the element above the cut and the element below the cut are words with the same fontsize
+    // // that is larger than the most frequent font size, allow a larger ratio (which is relative to
+    // // the font size). This rule exists because the distance between two lines of a title is often
+    // // larger than the most frequent line distance (and thus, the lines were often extracted as
+    // // multiple text blocks).
+    // const PdfWord* wordAbove = dynamic_cast<const PdfWord*>(elementAbove);
+    // const PdfWord* wordBelow = dynamic_cast<const PdfWord*>(elementBelow);
+    // if (wordAbove && wordBelow) {
+    //   if (fabs(wordAbove->fontSize - wordBelow->fontSize) < 0.1
+    //       && wordAbove->fontSize - _doc->mostFreqFontSize > 0.1) {
+    //     ratio = wordAbove->fontSize / _doc->mostFreqFontSize;
+    //   }
+    // }
+
+    // if (lineDist > ratio * _doc->mostFreqEstimatedLineDistance) {
+    //   cutIndices->push_back(i);
+    //   continue;
+    // }
   }
 }
 
@@ -392,14 +429,14 @@ void PageSegmentator::createPageSegment(const std::vector<PdfElement*>& elements
   segment->id = createRandomString(8, "ps-");
 
   // Set the page number.
-  segment->pageNum = elements[0]->pageNum;
+  segment->position->pageNum = elements[0]->position->pageNum;
 
   // Iterate through the elements and compute the x,y-coordinates of the bounding box.
   for (const auto* element : elements) {
-    segment->minX = std::min(segment->minX, element->minX);
-    segment->minY = std::min(segment->minY, element->minY);
-    segment->maxX = std::max(segment->maxX, element->maxX);
-    segment->maxY = std::max(segment->maxY, element->maxY);
+    segment->position->leftX = std::min(segment->position->leftX, element->position->leftX);
+    segment->position->upperY = std::min(segment->position->upperY, element->position->upperY);
+    segment->position->rightX = std::max(segment->position->rightX, element->position->rightX);
+    segment->position->lowerY = std::max(segment->position->lowerY, element->position->lowerY);
   }
 
   // Sort the elements by reading order.

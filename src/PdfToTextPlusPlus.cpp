@@ -24,7 +24,7 @@
 #include "./TextBlockDetector.h"
 #include "./TextLineDetector.h"
 #include "./WordsDehyphenator.h"
-#include "./WordsTokenizer.h"
+#include "./WordsDetector.h"
 
 using std::chrono::high_resolution_clock;
 using std::chrono::duration_cast;
@@ -36,10 +36,10 @@ static double resolution = 72.0;
 
 // _________________________________________________________________________________________________
 PdfToTextPlusPlus::PdfToTextPlusPlus(bool parseEmbeddedFontFiles, bool disableWordsDehyphenation,
-    TextUnit targetTextUnit) {
+    bool parseMode) {
   _parseEmbeddedFontFiles = parseEmbeddedFontFiles;
   _disableWordsDehyphenation = disableWordsDehyphenation;
-  _targetTextUnit = targetTextUnit;
+  _parseMode = parseMode;
 }
 
 // _________________________________________________________________________________________________
@@ -69,153 +69,147 @@ int PdfToTextPlusPlus::process(const std::string& pdfFilePath, PdfDocument* doc,
 
   PdfDocumentStatisticsCalculator statistician(doc);
 
-  if (_targetTextUnit >= TextUnit::GLYPHS) {
-    // Extract the contents of the PDF pages.
-    start = high_resolution_clock::now();
-    pdfDoc->displayPages(
-      &out,
-      1,  // firstPage
-      pdfDoc->getNumPages(),  // lastPage
-      resolution,  // hDPI
-      resolution,  // vDPI
-      0,  // rotation
-      true,  // useMediaBox
-      false,  // crop
-      false);  // printing
+  // Extract the contents of the PDF pages.
+  start = high_resolution_clock::now();
+  pdfDoc->displayPages(
+    &out,
+    1,  // firstPage
+    pdfDoc->getNumPages(),  // lastPage
+    resolution,  // hDPI
+    resolution,  // vDPI
+    0,  // rotation
+    true,  // useMediaBox
+    false,  // crop
+    false);  // printing
 
-    end = high_resolution_clock::now();
-    auto timeParsing = duration_cast<milliseconds>(end - start).count();
+  end = high_resolution_clock::now();
+  auto timeParsing = duration_cast<milliseconds>(end - start).count();
 
-    // Compute statistics about the glyphs, for example: the most freq. font size among the glyphs.
-    start = high_resolution_clock::now();
-    statistician.computeGlyphStatistics();
-    end = high_resolution_clock::now();
-    auto timeComputeStatistics = duration_cast<milliseconds>(end - start).count();
+  // Compute statistics about the glyphs, for example: the most freq. font size among the glyphs.
+  start = high_resolution_clock::now();
+  statistician.computeGlyphStatistics();
+  end = high_resolution_clock::now();
+  auto timeComputeStatistics = duration_cast<milliseconds>(end - start).count();
 
-    // Combine diacritic marks with their base glyphs.
-    start = high_resolution_clock::now();
-    DiacriticMarksCombiner dmCombiner(doc);
-    dmCombiner.combine();
-    end = high_resolution_clock::now();
-    auto timeCombineDiacriticMarks = duration_cast<milliseconds>(end - start).count();
+  // Combine diacritic marks with their base glyphs.
+  start = high_resolution_clock::now();
+  DiacriticMarksCombiner dmCombiner(doc);
+  dmCombiner.combine();
+  end = high_resolution_clock::now();
+  auto timeCombineDiacriticMarks = duration_cast<milliseconds>(end - start).count();
 
-    if (timings) {
-      Timing timingParsing("Parsing PDF", timeParsing);
-      timings->push_back(timingParsing);
+  if (timings) {
+    Timing timingParsing("Parsing PDF", timeParsing);
+    timings->push_back(timingParsing);
 
-      Timing timingComputeStatistics("Compute glyph stats", timeComputeStatistics);
-      timings->push_back(timingComputeStatistics);
+    Timing timingComputeStatistics("Compute glyph stats", timeComputeStatistics);
+    timings->push_back(timingComputeStatistics);
 
-      Timing timingCombineDiacriticMarks("Combine diacritics", timeCombineDiacriticMarks);
-      timings->push_back(timingCombineDiacriticMarks);
-    }
+    Timing timingCombineDiacriticMarks("Combine diacritics", timeCombineDiacriticMarks);
+    timings->push_back(timingCombineDiacriticMarks);
   }
 
-  if (_targetTextUnit >= TextUnit::WORDS) {
-    // Detect the words.
-    start = high_resolution_clock::now();
-    WordsTokenizer wordsTokenizer(doc);
-    wordsTokenizer.tokenize();
-    end = high_resolution_clock::now();
-    auto timeDetectWords = duration_cast<milliseconds>(end - start).count();
-
-    // Compute statistics about the words, for example: the most frequent word height and -width.
-    start = high_resolution_clock::now();
-    statistician.computeWordStatistics();
-    end = high_resolution_clock::now();
-    auto timeComputeStatistics = duration_cast<milliseconds>(end - start).count();
-
-    if (timings) {
-      Timing timingDetectWords("Detect words", timeDetectWords);
-      timings->push_back(timingDetectWords);
-
-      Timing timingComputeStatistics("Compute word stats", timeComputeStatistics);
-      timings->push_back(timingComputeStatistics);
-    }
+  if (_parseMode) {
+    return 0;
   }
 
-  if (_targetTextUnit >= TextUnit::TEXT_LINES) {
-    // Segment each page of the document.
-    start = high_resolution_clock::now();
-    PageSegmentator pageSegmentator(doc);
-    pageSegmentator.segment();
-    end = high_resolution_clock::now();
-    auto timeSegmentPages = duration_cast<milliseconds>(end - start).count();
+  // Detect the words.
+  start = high_resolution_clock::now();
+  WordsDetector wordsDetector(doc);
+  wordsDetector.detect();
+  end = high_resolution_clock::now();
+  auto timeDetectWords = duration_cast<milliseconds>(end - start).count();
 
-    // Detect the text lines.
-    start = high_resolution_clock::now();
-    TextLineDetector textLineDetector(doc);
-    textLineDetector.detect();
-    end = high_resolution_clock::now();
-    auto timeDetectTextLines = duration_cast<milliseconds>(end - start).count();
+  // Compute statistics about the words, for example: the most frequent word height and -width.
+  start = high_resolution_clock::now();
+  statistician.computeWordStatistics();
+  end = high_resolution_clock::now();
+  timeComputeStatistics = duration_cast<milliseconds>(end - start).count();
 
-    // Compute statistics about the line, for example: the most frequent line indentation.
-    start = high_resolution_clock::now();
-    statistician.computeLineStatistics();
-    end = high_resolution_clock::now();
-    auto timeComputeStatistics = duration_cast<milliseconds>(end - start).count();
+  if (timings) {
+    Timing timingDetectWords("Detect words", timeDetectWords);
+    timings->push_back(timingDetectWords);
 
-    // Detect sub- and superscripts.
-    start = high_resolution_clock::now();
-    SubSuperScriptsDetector scriptsDetector(doc);
-    scriptsDetector.detect();
-    end = high_resolution_clock::now();
-    auto timeDetectSubSuperScripts = duration_cast<milliseconds>(end - start).count();
-
-    if (timings) {
-      Timing timingSegmentPages("Segment pages", timeSegmentPages);
-      timings->push_back(timingSegmentPages);
-
-      Timing timingDetectTextLines("Detect text lines", timeDetectTextLines);
-      timings->push_back(timingDetectTextLines);
-
-      Timing timingComputeStatistics("Compute line stats", timeComputeStatistics);
-      timings->push_back(timingComputeStatistics);
-
-      Timing timingDetectSubSuperScripts("Detect scripts", timeDetectSubSuperScripts);
-      timings->push_back(timingDetectSubSuperScripts);
-    }
+    Timing timingComputeStatistics("Compute word stats", timeComputeStatistics);
+    timings->push_back(timingComputeStatistics);
   }
 
-  if (_targetTextUnit >= TextUnit::TEXT_BLOCKS) {
-    // Detect the text blocks.
-    start = high_resolution_clock::now();
-    TextBlockDetector textBlockDetector(doc);
-    textBlockDetector.detect();
-    end = high_resolution_clock::now();
-    auto timeDetectTextBlocks = duration_cast<milliseconds>(end - start).count();
+  // Segment each page of the document.
+  start = high_resolution_clock::now();
+  PageSegmentator pageSegmentator(doc);
+  pageSegmentator.segment();
+  end = high_resolution_clock::now();
+  auto timeSegmentPages = duration_cast<milliseconds>(end - start).count();
 
-    if (timings) {
-      Timing timingDetectTextBlocks("Detect text blocks", timeDetectTextBlocks);
-      timings->push_back(timingDetectTextBlocks);
-    }
+  // Detect the text lines.
+  start = high_resolution_clock::now();
+  TextLineDetector textLineDetector(doc);
+  textLineDetector.detect();
+  end = high_resolution_clock::now();
+  auto timeDetectTextLines = duration_cast<milliseconds>(end - start).count();
+
+  // Compute statistics about the line, for example: the most frequent line indentation.
+  start = high_resolution_clock::now();
+  statistician.computeLineStatistics();
+  end = high_resolution_clock::now();
+  timeComputeStatistics = duration_cast<milliseconds>(end - start).count();
+
+  // Detect sub- and superscripts.
+  start = high_resolution_clock::now();
+  SubSuperScriptsDetector scriptsDetector(doc);
+  scriptsDetector.detect();
+  end = high_resolution_clock::now();
+  auto timeDetectSubSuperScripts = duration_cast<milliseconds>(end - start).count();
+
+  if (timings) {
+    Timing timingSegmentPages("Segment pages", timeSegmentPages);
+    timings->push_back(timingSegmentPages);
+
+    Timing timingDetectTextLines("Detect text lines", timeDetectTextLines);
+    timings->push_back(timingDetectTextLines);
+
+    Timing timingComputeStatistics("Compute line stats", timeComputeStatistics);
+    timings->push_back(timingComputeStatistics);
+
+    Timing timingDetectSubSuperScripts("Detect scripts", timeDetectSubSuperScripts);
+    timings->push_back(timingDetectSubSuperScripts);
   }
 
-  if (_targetTextUnit >= TextUnit::PARAGRAPHS) {
-    // Detect the reading order of the text blocks.
+  // Detect the text blocks.
+  start = high_resolution_clock::now();
+  TextBlockDetector textBlockDetector(doc);
+  textBlockDetector.detect();
+  end = high_resolution_clock::now();
+  auto timeDetectTextBlocks = duration_cast<milliseconds>(end - start).count();
+
+  if (timings) {
+    Timing timingDetectTextBlocks("Detect text blocks", timeDetectTextBlocks);
+    timings->push_back(timingDetectTextBlocks);
+  }
+
+  // Detect the reading order of the text blocks.
+  start = high_resolution_clock::now();
+  ReadingOrderDetector readingOrderDetector(doc);
+  readingOrderDetector.detect();
+  end = high_resolution_clock::now();
+  auto timeDetectReadingOrder = duration_cast<milliseconds>(end - start).count();
+
+  // Dehyphenate words.
+  auto timeDehyphenateWords = 0;
+  if (!_disableWordsDehyphenation) {
     start = high_resolution_clock::now();
-    ReadingOrderDetector readingOrderDetector(doc);
-    readingOrderDetector.detect();
+    WordsDehyphenator wordsDehyphenator(doc);
+    wordsDehyphenator.dehyphenate();
     end = high_resolution_clock::now();
-    auto timeDetectReadingOrder = duration_cast<milliseconds>(end - start).count();
+    timeDehyphenateWords = duration_cast<milliseconds>(end - start).count();
+  }
 
-    // Dehyphenate words.
-    auto timeDehyphenateWords = 0;
-    if (!_disableWordsDehyphenation) {
-      start = high_resolution_clock::now();
-      WordsDehyphenator wordsDehyphenator(doc);
-      wordsDehyphenator.dehyphenate();
-      end = high_resolution_clock::now();
-      timeDehyphenateWords = duration_cast<milliseconds>(end - start).count();
-    }
+  if (timings) {
+    Timing timingDetectReadingOrder("Detect reading order", timeDetectReadingOrder);
+    timings->push_back(timingDetectReadingOrder);
 
-    if (timings) {
-      Timing timingDetectReadingOrder("Detect reading order", timeDetectReadingOrder);
-      timings->push_back(timingDetectReadingOrder);
-
-      Timing timingDehyphenateWords("Dehyphenate words", timeDehyphenateWords);
-      timings->push_back(timingDehyphenateWords);
-    }
+    Timing timingDehyphenateWords("Dehyphenate words", timeDehyphenateWords);
+    timings->push_back(timingDehyphenateWords);
   }
 
   return 0;

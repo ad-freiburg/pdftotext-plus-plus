@@ -209,8 +209,8 @@ class TextOutputDev : public OutputDev {
   PdfFontInfo* _fontInfo;
   /** The current font size. */
   double _fontSize;
-  /** The number of glyphs already processed. */
-  int _numGlyphs = 0;
+  /** The number of elements (glyphs, shapes, figures) already processed. */
+  int _numElements = 0;
   /** A boolean flag indicating whether or not this device was successfully initialized. */
   bool _ok;
   /** A boolean flag indicating whether or not to parse embedded font files. */

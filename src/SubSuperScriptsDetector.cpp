@@ -39,6 +39,12 @@ void SubSuperScriptsDetector::detect() const {
               glyph->isSubscript = true;
               continue;
             }
+
+            // Compute the bounding box of the line, with sub- and superscripts ignored.
+            line->baseBBoxLeftX = std::min(line->baseBBoxLeftX, glyph->position->leftX);
+            line->baseBBoxUpperY = std::min(line->baseBBoxUpperY, glyph->position->upperY);
+            line->baseBBoxRightX = std::max(line->baseBBoxRightX, glyph->position->rightX);
+            line->baseBBoxLowerY = std::max(line->baseBBoxLowerY, glyph->position->lowerY);
           }
         }
       }
