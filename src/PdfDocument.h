@@ -347,7 +347,7 @@ class PdfShape : public PdfNonTextElement {
 
 // =================================================================================================
 
-enum PdfTextLineAlignment { LEFT, RIGHT, CENTERED, JUSTIFIED };
+// enum PdfTextLineAlignment { LEFT, RIGHT, CENTERED, JUSTIFIED };
 
 /**
  * This class represents a single text line in a PDF document.
@@ -396,15 +396,17 @@ class PdfTextLine : public PdfElement {
    * text line), we do not compute a single alignment, but all possible alignments of the text line.
    *
    */
-  std::unordered_set<PdfTextLineAlignment> alignments;
+  // std::unordered_set<PdfTextLineAlignment> alignments;
 
   /**
    * Whether or not this line is indented, that is: the gap between the left boundary of the text
    * line and the left boundary of the containing segment is equal to the most frequnet line
    * indentation amount.
    */
-  bool isIndented = false;
-  double indent = 0.0;
+  // bool isIndented = false;
+  // double indent = 0.0;
+  double leftMargin = 0.0;
+  double rightMargin = 0.0;
 
   /**
    * The segment in which this text line is contained.
@@ -421,6 +423,8 @@ class PdfTextLine : public PdfElement {
    * @return A string representation of this line.
    */
   std::string toString() const override;
+
+  double maxFontSize = 0;
 };
 
 // =================================================================================================
@@ -587,7 +591,8 @@ class PdfDocument {
   double mostFreqWordHeight = 0;
 
   /** The most frequent line indent in this document. */
-  double mostFreqLineIndent = 0;
+  // double mostFreqLineIndent = 0;
+  double mostFreqLineLeftMargin = 0;
 };
 
 #endif  // PDFDOCUMENT_H_

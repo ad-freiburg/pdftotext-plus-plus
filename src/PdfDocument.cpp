@@ -265,7 +265,7 @@ std::string PdfTextLine::toString() const {
   ss << "PdfTextLine("
      << "text=\"" << text << "\"; "
      << "pos=" << position->toString() << "; "
-     << "indent=" << indent << "; "
+     << "leftMargin=" << leftMargin << "; "
      << "fontName=" << fontName << "; "
      << "fontSize=" << fontSize << ")";
 

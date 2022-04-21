@@ -23,10 +23,14 @@ std::regex item_anchor_regexes[] = {
   std::regex("^(X{0,1}(IX|IV|V?I{0,3}))\\.\\s+", std::regex_constants::icase),
   // A regex to find items starting with "(I)", "(II)", "(III)", etc.
   std::regex("^\\((X{0,1}(IX|IV|V?I{0,3}))\\)\\s+", std::regex_constants::icase),
-  // A regex to find items that start with "a.", "b.", "c.", 0., 1., etc.
-  std::regex("^([a-z0-9])\\.\\s+"),
+  // A regex to find items that start with "a.", "b.", "c.", etc.
+  std::regex("^([a-z])\\.\\s+"),
+  // A regex to find items that start with "1.", "2.", "3.", etc.
+  std::regex("^([0-9]+)\\.\\s+"),
   // A regex to find items that start with (A), (1), (C1), or [1], [2], etc.
-  std::regex("^(\\(|\\[)([a-z0-9][0-9]{0,1})(\\)|\\])\\s+", std::regex_constants::icase),
+  std::regex("^(\\(|\\[)([a-z0-9][0-9]{0,2})(\\)|\\])\\s+", std::regex_constants::icase),
+  // A regex to find items that start with "[Bu2]", "[Ch]", "[Enn2020]", etc.
+  std::regex("^(\\[)([A-Z][a-zA-Z0-9]{0,5})(\\])\\s+"),
   // A regex to find items that start with A) or 1) or a1).
   std::regex("^([a-z0-9][0-9]{0,1})\\)\\s+", std::regex_constants::icase)
 };
@@ -66,7 +70,6 @@ void TextBlockDetector::detect() {
   computeTextLineIndentHierarchies();
 
   for (auto* page : _doc->pages) {
-    std::vector<PdfTextBlock*> textBlocks;
     for (auto* segment : page->segments) {
       std::vector<PdfTextLine*> currentTextBlockLines;
       for (size_t i = 0; i < segment->lines.size(); i++) {
@@ -76,32 +79,35 @@ void TextBlockDetector::detect() {
 
         if (startsNewTextBlock(prevLine, line, nextLine)) {
           // createTextBlock(currentTextBlockLines, &page->blocks);
-          createTextBlock(currentTextBlockLines, &textBlocks);
+          createTextBlock(currentTextBlockLines, &page->blocks);
           currentTextBlockLines.clear();
         }
         currentTextBlockLines.push_back(line);
       }
       // Don't forget to process the remaining text lines of the segment.
-      // createTextBlock(currentTextBlockLines, &page->blocks);
-      createTextBlock(currentTextBlockLines, &textBlocks);
+      createTextBlock(currentTextBlockLines, &page->blocks);
     }
+  }
 
-    computeTextLineAlignments(textBlocks);
+  computeLineMargins();
 
-    for (auto* block : textBlocks) {
+  for (auto* page : _doc->pages) {
+    std::vector<PdfTextBlock*> textBlocks;
+    for (auto* block : page->blocks) {
       std::vector<PdfTextLine*> currentTextBlockLines;
       PdfTextLine* prevLine = nullptr;
       for (auto* line : block->lines) {
         if (startsNewTextBlock2(prevLine, line)) {
-          createTextBlock(currentTextBlockLines, &page->blocks);
+          createTextBlock(currentTextBlockLines, &textBlocks);
           currentTextBlockLines.clear();
         }
         currentTextBlockLines.push_back(line);
         prevLine = line;
       }
       // Don't forget to process the remaining text lines of the segment.
-      createTextBlock(currentTextBlockLines, &page->blocks);
+      createTextBlock(currentTextBlockLines, &textBlocks);
     }
+    page->blocks = textBlocks;
   }
 }
 
@@ -149,7 +155,7 @@ bool TextBlockDetector::startsNewTextBlock(const PdfTextLine* prevLine, const Pd
   std::cout << "Checking font sizes..." << std::endl;
   std::cout << " └─ prevLine.fontSize: " << prevLine->fontSize << std::endl;
   std::cout << " └─ currLine.fontSize: " << line->fontSize << std::endl;
-  if (!equal(prevLine->fontSize, line->fontSize, 1)) {
+  if (!equal(prevLine->fontSize, line->fontSize, 1) && !equal(prevLine->maxFontSize, line->maxFontSize, 1)) {
     std::cout << "\033[1mBegin of new block (font sizes don't match).\033[0m" << std::endl;
     return true;
   }
@@ -232,6 +238,15 @@ bool TextBlockDetector::startsNewTextBlock2(const PdfTextLine* prevLine, const P
 
   // The line starts a new text block if it is the first line of an enumeration item.
   std::cout << "Checking for enumeration item..." << std::endl;
+  if (line->parentTextLine) {
+    std::cout << "parent: " << line->parentTextLine->toString() << std::endl;
+  }
+  if (line->prevSiblingTextLine) {
+    std::cout << "prev: " << line->prevSiblingTextLine->toString() << std::endl;
+  }
+  if (line->nextSiblingTextLine) {
+    std::cout << "next: " << line->nextSiblingTextLine->toString() << std::endl;
+  }
   bool firstLineOfItem = isFirstLineOfItem(line);
   bool continuationLineOfItem = isContinuationLineOfItem(line);
   bool prevFirstLineOfItem = isFirstLineOfItem(prevLine);
@@ -256,15 +271,15 @@ bool TextBlockDetector::startsNewTextBlock2(const PdfTextLine* prevLine, const P
 
   // The line starts a new text block if the previous line or the current line is part of a display
   // formula (but not both).
-  std::cout << "Checking for display formula..." << std::endl;
-  bool isPrevLineDisplayFormula = isDisplayFormula(prevLine);
-  bool isLineDisplayFormula = isDisplayFormula(line);
-  std::cout << "  is prev line display formula: " << isPrevLineDisplayFormula << std::endl;
-  std::cout << "  is line display formula: " << isLineDisplayFormula << std::endl;
-  if (isPrevLineDisplayFormula != isLineDisplayFormula) {
-    std::cout << "\033[1mbegin of new block (change between display formula).\033[0m" << std::endl;
-    return true;
-  }
+  // std::cout << "Checking for display formula..." << std::endl;
+  // bool isPrevLineDisplayFormula = isDisplayFormula(prevLine);
+  // bool isLineDisplayFormula = isDisplayFormula(line);
+  // std::cout << "  is prev line display formula: " << isPrevLineDisplayFormula << std::endl;
+  // std::cout << "  is line display formula: " << isLineDisplayFormula << std::endl;
+  // if (isPrevLineDisplayFormula != isLineDisplayFormula) {
+  //   std::cout << "\033[1mbegin of new block (change between display formula).\033[0m" << std::endl;
+  //   return true;
+  // }
 
   // The line starts a new text block if it is the first line of a footnote.
   std::cout << "Checking for footnote..." << std::endl;
@@ -282,41 +297,94 @@ bool TextBlockDetector::startsNewTextBlock2(const PdfTextLine* prevLine, const P
     return false;
   }
 
+  std::cout << "Checking emphasis." << std::endl;
+  bool isPrevLineEmphasized = computeIsTextLineEmphasized(prevLine);
+  bool isLineEmphasized = computeIsTextLineEmphasized(line);
+  if (isPrevLineEmphasized && isLineEmphasized && prevLine->fontName == line->fontName &&
+        equal(prevLine->fontSize, line->fontSize, 0.1)) {
+    return false;
+  }
+
   // The line starts a new text block if it is indented.
-  std::cout << "Checking indentation..." << std::endl;
-  std::cout << " └─ most freq. line indent: " << _doc->mostFreqLineIndent << std::endl;
-  std::cout << " └─ actual line indent:     " << line->indent << std::endl;
-  if (isIndented(line)) {
-    std::cout << "\033[1mBegin of new block (line is indented).\033[0m" << std::endl;
+  std::cout << "Checking left margin..." << std::endl;
+  std::cout << " └─ most freq. left margin: " << _mostFreqLineLeftMargin << std::endl;
+  std::cout << " └─ prevLine.leftMargin:    " << prevLine->leftMargin << std::endl;
+  std::cout << " └─ line.leftMargin:        " << line->leftMargin << std::endl;
+  bool lineIntended = larger(line->leftMargin, 0, _doc->avgGlyphWidth);
+  if (lineIntended) {
     return true;
   }
+
+  bool prevLineHasLargeLeftMargin = larger(prevLine->leftMargin, _mostFreqLineLeftMargin, _doc->avgGlyphWidth);
+  if (prevLineHasLargeLeftMargin) {
+    return true;
+  }
+
+  // if ()
+
+  // if (larger(line->leftMargin, 0, _doc->avgGlyphWidth) ||
+  //       larger(prevLine->leftMargin, 0, _doc->avgGlyphWidth)) {
+  //   if (!equal(prevLine->leftMargin, line->leftMargin, _doc->avgGlyphWidth)) {
+  //     return true;
+  //   }
+  // }
+  // bool prevLineIsParagraphIndent = larger(prevLine->leftMargin, 0, _doc->avgGlyphWidth) &&
+  //     equalOrSmaller(prevLine->leftMargin, _mostFreqLineLeftMargin, _doc->avgGlyphWidth);
+  // bool lineIsParagraphIndent = larger(line->leftMargin, 0, _doc->avgGlyphWidth) &&
+  //     equalOrSmaller(line->leftMargin, _mostFreqLineLeftMargin, _doc->avgGlyphWidth);
+  // }
+  // bool prevLineIsParagraphIndent = larger(prevLine->leftMargin, 0, _doc->avgGlyphWidth) &&
+  //     equalOrSmaller(prevLine->leftMargin, _mostFreqLineLeftMargin, _doc->avgGlyphWidth);
+  // bool lineIsParagraphIndent = larger(line->leftMargin, 0, _doc->avgGlyphWidth) &&
+  //     equalOrSmaller(line->leftMargin, _mostFreqLineLeftMargin, _doc->avgGlyphWidth);
+  // if (lineIsParagraphIndent) {
+  //   std::cout << "\033[1mBegin of new block (left margin is equal to most freq. left margin).\033[0m" << std::endl;
+  //   return true;
+  // }
+  // if (prevlineIsParagraphIndent) {
+  //   std::cout << "\033[1mBegin of new block (left margin is equal to most freq. left margin).\033[0m" << std::endl;
+  //   return true;
+  // }
+
+  // bool prevLineHasLargeLeftMargin = larger(prevLine->leftMargin, _mostFreqLineLeftMargin, _doc->avgGlyphWidth);
+  // bool lineHasLargeLeftMargin = larger(line->leftMargin, _mostFreqLineLeftMargin, _doc->avgGlyphWidth);
+  // if (prevLineHasLargeLeftMargin != lineHasLargeLeftMargin) {
+  //   std::cout << "\033[1mBegin of new block (change between left margins).\033[0m" << std::endl;
+  //   return true;
+  // }
+
+  // if (prevLineHasLargeLeftMargin && lineHasLargeLeftMargin &&
+  //       !equal(prevLine->leftMargin, line->leftMargin, _doc->avgGlyphWidth)) {
+  //   std::cout << "\033[1mBegin of new block (unequal left margins).\033[0m" << std::endl;
+  //   return true;
+  // }
 
   // The line starts a new text block if it has a different alignment than the previous line.
-  std::cout << "Checking alignments..." << std::endl;
-  std::cout << " └─ prevLine.alignments:";
-  for (const auto& a : prevLine->alignments) { std::cout << " " << a; }
-  std::cout << std::endl << " └─ currLine.alignments:";
-  for (const auto& a : line->alignments) { std::cout << " " << a; }
-  std::cout << std::endl;
-  bool hasEqualAlignment = prevLine->alignments.empty() && line->alignments.empty();
+  // std::cout << "Checking alignments..." << std::endl;
+  // std::cout << " └─ prevLine.alignments:";
+  // for (const auto& a : prevLine->alignments) { std::cout << " " << a; }
+  // std::cout << std::endl << " └─ currLine.alignments:";
+  // for (const auto& a : line->alignments) { std::cout << " " << a; }
+  // std::cout << std::endl;
+  // bool hasEqualAlignment = prevLine->alignments.empty() && line->alignments.empty();
 
-  if (!hasEqualAlignment) {
-    for (const auto& alignment : line->alignments) {
-      if (prevLine->alignments.count(alignment) > 0) {
-        hasEqualAlignment = true;
-        break;
-      }
-    }
-  }
-  if (!hasEqualAlignment) {
-    bool prevLineIndented = larger(prevLine->indent, 0, _doc->avgGlyphWidth) && equalOrSmaller(prevLine->indent, _doc->mostFreqLineIndent, _doc->avgGlyphWidth);
-    hasEqualAlignment = prevLineIndented && line->alignments.count(PdfTextLineAlignment::LEFT) > 0;
-  }
+  // if (!hasEqualAlignment) {
+  //   for (const auto& alignment : line->alignments) {
+  //     if (prevLine->alignments.count(alignment) > 0) {
+  //       hasEqualAlignment = true;
+  //       break;
+  //     }
+  //   }
+  // }
+  // if (!hasEqualAlignment) {
+  //   bool prevLineIndented = larger(prevLine->indent, 0, _doc->avgGlyphWidth) && equalOrSmaller(prevLine->indent, _doc->mostFreqLineIndent, _doc->avgGlyphWidth);
+  //   hasEqualAlignment = prevLineIndented && line->alignments.count(PdfTextLineAlignment::LEFT) > 0;
+  // }
 
-  if (!hasEqualAlignment) {
-    std::cout << "\033[1mBegin of new block (no common alignments).\033[0m" << std::endl;
-    return true;
-  }
+  // if (!hasEqualAlignment) {
+  //   std::cout << "\033[1mBegin of new block (no common alignments).\033[0m" << std::endl;
+  //   return true;
+  // }
   return false;
 }
 
@@ -408,54 +476,55 @@ void TextBlockDetector::createTextBlock(const std::vector<PdfTextLine*>& lines,
 
 // _________________________________________________________________________________________________
 bool TextBlockDetector::computeIsTextBlockEmphasized(const std::vector<PdfTextLine*>& lines) {
-  const PdfFontInfo* docFontInfo = _doc->fontInfos.at(_doc->mostFreqFontName);
-
   for (size_t i = 0; i < lines.size(); i++) {
-    PdfTextLine* line = lines[i];
-    const PdfFontInfo* lineFontInfo = _doc->fontInfos.at(line->fontName);
-
-    // The line is emphasized if ...
-    bool isLineEmphasized = false;
-
-    // ... its font size is significantly larger than the most frequent font size in the document.
-    if (line->fontSize - _doc->mostFreqFontSize > 0.5) {
-      isLineEmphasized = true;
-    }
-
-    // ... its font weight is larger than the most frequent font weight.
-    if (line->fontSize - _doc->mostFreqFontSize >= -1
-        && lineFontInfo->weight > docFontInfo->weight) {
-      isLineEmphasized = true;
-    }
-
-    // ... the line is printed in italics.
-    if (line->fontSize - _doc->mostFreqFontSize >= -1 && lineFontInfo->isItalic) {
-      isLineEmphasized = true;
-    }
-
-    // ... the line contains at least one alphabetic characters and all alphabetic characters are
-    // upper case.
-    bool containsAlpha = false;
-    bool isAllAlphaUpper = true;
-    for (size_t j = 0; j < line->text.size(); j++) {
-      if (isalpha(line->text[j])) {
-        containsAlpha = true;
-        if (islower(line->text[j])) {
-          isAllAlphaUpper = false;
-          break;
-        }
-      }
-    }
-    if (containsAlpha && isAllAlphaUpper) {
-      isLineEmphasized = true;
-    }
-
-    if (!isLineEmphasized) {
+    if (!computeIsTextLineEmphasized(lines[i])) {
       return false;
     }
   }
-
   return true;
+}
+
+// _________________________________________________________________________________________________
+bool TextBlockDetector::computeIsTextLineEmphasized(const PdfTextLine* line) {
+  const PdfFontInfo* docFontInfo = _doc->fontInfos.at(_doc->mostFreqFontName);
+  const PdfFontInfo* lineFontInfo = _doc->fontInfos.at(line->fontName);
+
+  // The line is emphasized if ...
+
+  // ... its font size is significantly larger than the most frequent font size in the document.
+  if (line->fontSize - _doc->mostFreqFontSize > 0.5) {
+    return true;
+  }
+
+  // ... its font weight is larger than the most frequent font weight.
+  if (line->fontSize - _doc->mostFreqFontSize >= -1
+      && lineFontInfo->weight > docFontInfo->weight) {
+    return true;
+  }
+
+  // ... the line is printed in italics.
+  if (line->fontSize - _doc->mostFreqFontSize >= -1 && lineFontInfo->isItalic) {
+    return true;
+  }
+
+  // ... the line contains at least one alphabetic characters and all alphabetic characters are
+  // upper case.
+  bool containsAlpha = false;
+  bool isAllAlphaUpper = true;
+  for (size_t j = 0; j < line->text.size(); j++) {
+    if (isalpha(line->text[j])) {
+      containsAlpha = true;
+      if (islower(line->text[j])) {
+        isAllAlphaUpper = false;
+        break;
+      }
+    }
+  }
+  if (containsAlpha && isAllAlphaUpper) {
+    return true;
+  }
+
+  return false;
 }
 
 // ______________________________________________________________________________________________
@@ -669,8 +738,8 @@ bool TextBlockDetector::isContinuationLineOfFootnote(const PdfTextLine* line) co
 }
 
 bool TextBlockDetector::isIndented(const PdfTextLine* line) const {
-  return larger(line->indent, 0, _doc->avgGlyphWidth)
-      && equalOrSmaller(line->indent, _doc->mostFreqLineIndent, _doc->avgGlyphWidth);
+  return larger(line->leftMargin, 0, _doc->avgGlyphWidth)
+      && equalOrSmaller(line->leftMargin, _mostFreqLineLeftMargin, _doc->avgGlyphWidth);
 }
 
 bool TextBlockDetector::isPartOfFigure(const PdfTextLine* line) const {
@@ -738,39 +807,75 @@ bool TextBlockDetector::isDisplayFormula(const PdfTextLine* line) const {
 
 // =================================================================================================
 
-void TextBlockDetector::computeTextLineAlignments(const std::vector<PdfTextBlock*>& blocks) {
-  std::stack<PdfTextLine*> lineStack;
-  for (auto* block : blocks) {
-    for (auto* line : block->lines) {
-      // Compute the alignments.
-      double leftMargin = round(line->position->getRotLeftX() - block->position->getRotLeftX(), 1);
-      double rightMargin = round(block->position->getRotRightX() - line->position->getRotRightX(), 1);
+void TextBlockDetector::computeLineMargins() {
+  // A mapping of left margins to their frequencies, for computing the most freq. left margin.
+  std::unordered_map<double, int> leftMarginFreqs;
 
-      if (equal(leftMargin, 0, 2 * _doc->avgGlyphWidth) && equal(rightMargin, 0, 2 * _doc->avgGlyphWidth)) {
-        line->alignments.insert(PdfTextLineAlignment::JUSTIFIED);
+  for (auto* page : _doc->pages) {
+    for (auto* block : page->blocks) {
+      for (auto* line : block->lines) {
+        line->leftMargin = round(line->position->getRotLeftX() - block->position->getRotLeftX(), 1);
+        line->rightMargin = round(block->position->getRotRightX() - line->position->getRotRightX(), 1);
+
+        std::cout << line->toString() << " " << line->leftMargin << std::endl;
+
+        // We are only interested in left margins > 0.
+        if (smaller(line->leftMargin, _doc->avgGlyphWidth)) {
+          continue;
+        }
+
+        leftMarginFreqs[line->leftMargin]++;
       }
-
-      if (equal(leftMargin, rightMargin, 2 * _doc->avgGlyphWidth)) {
-        line->alignments.insert(PdfTextLineAlignment::CENTERED);
-      }
-
-      if (larger(leftMargin, 2 * _doc->avgGlyphWidth, 0) && larger(rightMargin, 2 * _doc->avgGlyphWidth, 0)) {
-        line->alignments.insert(PdfTextLineAlignment::CENTERED);
-      }
-
-      if (equal(leftMargin, 0, 2 * _doc->avgGlyphWidth)) {
-        line->alignments.insert(PdfTextLineAlignment::LEFT);
-      }
-
-      if (equal(rightMargin, 0, 2 * _doc->avgGlyphWidth)) {
-        line->alignments.insert(PdfTextLineAlignment::RIGHT);
-      }
-
-      // Compute the indentation.
-      line->indent = !equal(leftMargin, rightMargin, 1) ? leftMargin : 0;
     }
   }
+
+  // Compute the most frequent line indentation.
+  double mostFreqLineLeftMargin = 0;
+  int mostFreqLineLeftMarginCount = 0;
+  for (const auto& pair : leftMarginFreqs) {
+    if (pair.second > mostFreqLineLeftMarginCount) {
+      mostFreqLineLeftMargin = pair.first;
+      mostFreqLineLeftMarginCount = pair.second;
+    }
+  }
+  _mostFreqLineLeftMargin = mostFreqLineLeftMargin;
 }
+
+// void TextBlockDetector::computeTextLineAlignments(const std::vector<PdfTextBlock*>& blocks) {
+//   std::stack<PdfTextLine*> lineStack;
+//   for (auto* block : blocks) {
+//     for (auto* line : block->lines) {
+//       // Compute the alignments.
+//       double leftMargin = round(line->position->getRotLeftX() - block->position->getRotLeftX(), 1);
+//       double rightMargin = round(block->position->getRotRightX() - line->position->getRotRightX(), 1);
+
+//       // if (equal(leftMargin, 0, 2 * _doc->avgGlyphWidth) && equal(rightMargin, 0, 2 * _doc->avgGlyphWidth)) {
+//       //   line->alignments.insert(PdfTextLineAlignment::JUSTIFIED);
+//       // }
+
+//       // if (equal(leftMargin, rightMargin, 2 * _doc->avgGlyphWidth)) {
+//       //   line->alignments.insert(PdfTextLineAlignment::CENTERED);
+//       // }
+
+//       // if (larger(leftMargin, 2 * _doc->avgGlyphWidth, 0) && larger(rightMargin, 2 * _doc->avgGlyphWidth, 0)) {
+//       //   line->alignments.insert(PdfTextLineAlignment::CENTERED);
+//       // }
+
+//       // if (equal(leftMargin, 0, 2 * _doc->avgGlyphWidth)) {
+//       //   line->alignments.insert(PdfTextLineAlignment::LEFT);
+//       // }
+
+//       // if (equal(rightMargin, 0, 2 * _doc->avgGlyphWidth)) {
+//       //   line->alignments.insert(PdfTextLineAlignment::RIGHT);
+//       // }
+
+//       // Compute the indentation.
+//       // line->indent = !equal(leftMargin, rightMargin, 1) ? leftMargin : 0;
+//       line->leftMargin = leftMargin;
+//       line->rightMargin = rightMargin;
+//     }
+//   }
+// }
 
 void TextBlockDetector::computeTextLineIndentHierarchies() {
   std::stack<PdfTextLine*> lineStack;
@@ -778,14 +883,14 @@ void TextBlockDetector::computeTextLineIndentHierarchies() {
     for (auto* segment : page->segments) {
       for (auto* line : segment->lines) {
         // Compute the indentation, relatively to the segment boundaries.
-        line->indent = round(line->position->getRotLeftX() - segment->position->getRotLeftX(), 1);
+        line->leftMargin = round(line->position->getRotLeftX() - segment->position->getRotLeftX(), 1);
 
         while (!lineStack.empty()) {
-          double tolerance = 1.0;
+          double tolerance = _doc->avgGlyphWidth;
           if (lineStack.top()->position->pageNum != line->position->pageNum) {
-            tolerance = 7.5;
+            tolerance = 3 * _doc->avgGlyphWidth;
           }
-          if (!larger(lineStack.top()->indent, line->indent, tolerance)) {
+          if (!larger(lineStack.top()->leftMargin, line->leftMargin, tolerance)) {
             break;
           }
           lineStack.pop();
@@ -799,11 +904,11 @@ void TextBlockDetector::computeTextLineIndentHierarchies() {
         // If the line is positioned on another page than the topmost page, allow a larger
         // threshold. This is because there could be a 2-page layout, where the left margin
         // could differ between even pages and odd pages (hep-ex0205091:9/10).
-        double tolerance = 1.0;
+        double tolerance = _doc->avgGlyphWidth;
         if (lineStack.top()->position->pageNum != line->position->pageNum) {
-          tolerance = 7.5;
+          tolerance = 3 * _doc->avgGlyphWidth;
         }
-        if (equal(lineStack.top()->indent, line->indent, tolerance)) {
+        if (equal(lineStack.top()->leftMargin, line->leftMargin, tolerance)) {
           lineStack.top()->nextSiblingTextLine = line;
           line->prevSiblingTextLine = lineStack.top();
           line->parentTextLine = lineStack.top()->parentTextLine;
@@ -812,11 +917,11 @@ void TextBlockDetector::computeTextLineIndentHierarchies() {
           continue;
         }
 
-        tolerance = 1.0;
+        tolerance = _doc->avgGlyphWidth;
         if (lineStack.top()->position->pageNum != line->position->pageNum) {
-          tolerance = 7.5;
+          tolerance = 3 * _doc->avgGlyphWidth;
         }
-        if (smaller(lineStack.top()->indent, line->indent, tolerance)) {
+        if (smaller(lineStack.top()->leftMargin, line->leftMargin, tolerance)) {
           line->parentTextLine = lineStack.top();
 
           lineStack.push(line);

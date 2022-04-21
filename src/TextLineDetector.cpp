@@ -283,6 +283,7 @@ void TextLineDetector::computeTextLineProperties(PdfTextLine* line) {
     maxFontSize = std::max(maxFontSize, pair.first);
   }
   line->fontSize = mostFreqFontSize;
+  line->maxFontSize = maxFontSize;
 
   // Compute the most frequent baseline.
   int mostFreqBaseCount = 0;

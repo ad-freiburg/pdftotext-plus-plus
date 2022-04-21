@@ -231,14 +231,14 @@ void PdfDocumentStatisticsCalculator::computeLineStatistics() const {
   }
   _doc->mostFreqLineGap = mostFreqLineGap;
 
-  // Compute the most frequent line indentation.
-  double mostFreqLineIndent = 0;
-  int mostFreqLineIndentCount = 0;
-  for (const auto& pair : lineIndentFreqs) {
-    if (pair.second > mostFreqLineIndentCount) {
-      mostFreqLineIndent = pair.first;
-      mostFreqLineIndentCount = pair.second;
-    }
-  }
-  _doc->mostFreqLineIndent = mostFreqLineIndent;
+  // // Compute the most frequent line indentation.
+  // double mostFreqLineIndent = 0;
+  // int mostFreqLineIndentCount = 0;
+  // for (const auto& pair : lineIndentFreqs) {
+  //   if (pair.second > mostFreqLineIndentCount) {
+  //     mostFreqLineIndent = pair.first;
+  //     mostFreqLineIndentCount = pair.second;
+  //   }
+  // }
+  // _doc->mostFreqLineIndent = mostFreqLineIndent;
 }

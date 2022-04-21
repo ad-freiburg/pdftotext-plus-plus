@@ -29,6 +29,7 @@ class TextBlockDetector {
 
   void createTextBlock(const std::vector<PdfTextLine*>& lines, std::vector<PdfTextBlock*>* blocks);
 
+  bool computeIsTextLineEmphasized(const PdfTextLine* line);
   bool computeIsTextBlockEmphasized(const std::vector<PdfTextLine*>& lines);
 
   void computeMostFrequentLinePitch();
@@ -39,7 +40,8 @@ class TextBlockDetector {
 
   void computeTextLineIndentHierarchies();
 
-  void computeTextLineAlignments(const std::vector<PdfTextBlock*>& blocks);
+  // void computeTextLineAlignments(const std::vector<PdfTextBlock*>& blocks);
+  void computeLineMargins();
 
   bool isFirstLineOfItem(const PdfTextLine* line) const;
   bool isContinuationLineOfItem(const PdfTextLine* line) const;
@@ -55,6 +57,7 @@ class TextBlockDetector {
 
   // The most frequent line pitch in the document.
   double _mostFreqLinePitch;
+  double _mostFreqLineLeftMargin;
 
   // A mapping of a page number to the most freq. line pitch in the respective page.
   std::unordered_map<int, double> _mostFreqLinePitchPerPage;

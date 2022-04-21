@@ -251,14 +251,16 @@ void WordsDetector::mergeStackedWords() const {
         }
       }
 
+      if (word->text == "sup" || word->text == "lim") {
+        containsBaseOfStackedWord = true;
+      }
+
       if (containsBaseOfStackedWord) {
         for (size_t j = i; j --> 0 ;) {
           auto* otherWord = page->words.at(j);
           double xOverlapRatio = computeMaximumXOverlapRatio(word, otherWord);
-          bool isAbove = larger(otherWord->position->upperY, word->position->lowerY, 0);
-          bool isBelow = smaller(otherWord->position->lowerY, word->position->upperY, 0);
           bool isSmallerFontSize = smaller(otherWord->fontSize, word->fontSize, 1);
-          if (xOverlapRatio > 0 && isSmallerFontSize && (isAbove || isBelow)) {
+          if (xOverlapRatio > 0.5 && isSmallerFontSize) {
             word->isBaseOfStackedWords.push_back(otherWord);
             page->words.at(j)->isPartOfStackedWord = word;
             continue;
@@ -269,11 +271,9 @@ void WordsDetector::mergeStackedWords() const {
         for (size_t j = i + 1; j < page->words.size(); j++) {
           auto* otherWord = page->words.at(j);
           double xOverlapRatio = computeMaximumXOverlapRatio(word, otherWord);
-          bool isAbove = larger(otherWord->position->upperY, word->position->lowerY, 0);
-          bool isBelow = smaller(otherWord->position->lowerY, word->position->upperY, 0);
           bool isSmallerFontSize = smaller(otherWord->fontSize, word->fontSize, 1);
-          if (xOverlapRatio > 0 && isSmallerFontSize && (isAbove || isBelow)) {
-            word->isBaseOfStackedWords.push_back(page->words.at(j));
+          if (xOverlapRatio > 0.5 && isSmallerFontSize) {
+            word->isBaseOfStackedWords.push_back(otherWord);
             page->words.at(j)->isPartOfStackedWord = word;
             continue;
           }
