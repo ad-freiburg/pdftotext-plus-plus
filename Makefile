@@ -1,7 +1,7 @@
 PROJECT_NAME = pdftotext-plus-plus
 
 DOCKER_CMD = docker
-DOCKER_FILE=./Dockerfiles/Dockerfile.ubuntu:$(shell lsb_release -r -s)
+DOCKER_FILE = ./Dockerfiles/Dockerfile.ubuntu:$(shell lsb_release -r -s)
 DOCKER_IMAGE = pdftotext-plus-plus-ubuntu:$(shell lsb_release -r -s)
 
 INPUT_DIR = /local/data/pdftotext-plus-plus/evaluation/benchmarks/arxiv-debug
@@ -87,7 +87,7 @@ dataset: build-docker
 	mkdir -p -m 777 $(OUTPUT_DIR)
 
 	@echo "\033[34;1mRunning the Docker container ...\033[0m"
-	cd ${INPUT_DIR} && find . -name "*.pdf" | sed "s/.wc.pdf$$//" | xargs -I {} docker run --rm -v ${INPUT_DIR}:/input -v ${OUTPUT_DIR}:/output pdftotext-plus-plus /input/{}.wc.pdf --serialize-pages --serialize-text-blocks --serialize-words "/output/{}.jsonl"
+	cd ${INPUT_DIR} && find . -name "*.pdf" | sed "s/.wc.pdf$$//" | xargs -I {} docker run --rm -v ${INPUT_DIR}:/input -v ${OUTPUT_DIR}:/output $(DOCKER_IMAGE) /input/{}.wc.pdf --serialize-pages --serialize-text-blocks --serialize-words "/output/{}.jsonl"
 	echo "{ \"benchmarkName\": \"$(shell basename $(INPUT_DIR))\" }" > ${OUTPUT_DIR}/info.json
 
 # ==================================================================================================

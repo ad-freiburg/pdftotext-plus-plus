@@ -132,14 +132,14 @@ void TextLineDetector::tokenize() {
             double prevLineYOverlap = 0.0;
             if (prevLine) {
               prevLineXGap = computeHorizontalGap(prevLine, currLine);
-              prevLineYOverlap = computeMaximumYOverlapRatio(prevLine, currLine);
+              prevLineYOverlap = max(computeYOverlapRatios(prevLine, currLine));
             }
 
             double nextLineXGap = 0.0;
             double nextLineYOverlap = 0.0;
             if (nextLine) {
               nextLineXGap = computeHorizontalGap(currLine, nextLine);
-              nextLineYOverlap = computeMaximumYOverlapRatio(currLine, nextLine);
+              nextLineYOverlap = max(computeYOverlapRatios(currLine, nextLine));
             }
 
             double prevLineThreshold = prevLineXGap < 3 * _doc->avgGlyphWidth ? 0.4 : 0.8;

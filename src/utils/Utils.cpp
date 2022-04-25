@@ -136,29 +136,29 @@ bool contains(const PdfElement* element1, const PdfElement* element2, double del
 }
 
 // _________________________________________________________________________________________________
-double computeMaximumXOverlapRatio(const PdfElement* element1, const PdfElement* element2) {
-  double minRightX = std::min(element1->position->rightX, element2->position->rightX);
-  double maxLeftX = std::max(element1->position->leftX, element2->position->leftX);
+std::pair<double, double> computeXOverlapRatios(const PdfElement* e1, const PdfElement* e2) {
+  double minRightX = std::min(e1->position->rightX, e2->position->rightX);
+  double maxLeftX = std::max(e1->position->leftX, e2->position->leftX);
   double overlapLength = std::max(0.0, minRightX - maxLeftX);
-  double width1 = element1->position->getWidth();
-  double width2 = element2->position->getWidth();
+  double width1 = e1->position->getWidth();
+  double width2 = e2->position->getWidth();
   double overlapRatio1 = width1 > 0 ? overlapLength / width1 : 0;
   double overlapRatio2 = width2 > 0 ? overlapLength / width2 : 0;
 
-  return std::max(overlapRatio1, overlapRatio2);
+  return std::make_pair(overlapRatio1, overlapRatio2);
 }
 
 // _________________________________________________________________________________________________
-double computeMaximumYOverlapRatio(const PdfElement* element1, const PdfElement* element2) {
-  double minLowerY = std::min(element1->position->lowerY, element2->position->lowerY);
-  double maxUpperY = std::max(element1->position->upperY, element2->position->upperY);
+std::pair<double, double> computeYOverlapRatios(const PdfElement* e1, const PdfElement* e2) {
+  double minLowerY = std::min(e1->position->lowerY, e2->position->lowerY);
+  double maxUpperY = std::max(e1->position->upperY, e2->position->upperY);
   double overlapLength = std::max(0.0, minLowerY - maxUpperY);
-  double height1 = element1->position->getHeight();
-  double height2 = element2->position->getHeight();
+  double height1 = e1->position->getHeight();
+  double height2 = e2->position->getHeight();
   double overlapRatio1 = height1 > 0 ? overlapLength / height1 : 0;
   double overlapRatio2 = height2 > 0 ? overlapLength / height2 : 0;
 
-  return std::max(overlapRatio1, overlapRatio2);
+  return std::make_pair(overlapRatio1, overlapRatio2);
 }
 
 // _________________________________________________________________________________________________
@@ -181,6 +181,14 @@ double computeVerticalGap(const PdfElement* element1, const PdfElement* element2
     return element2->position->upperY - element1->position->lowerY;
   }
   return 0.0;
+}
+
+double min(std::pair<double, double> pair) {
+  return std::min(pair.first, pair.second);
+}
+
+double max(std::pair<double, double> pair) {
+  return std::max(pair.first, pair.second);
 }
 
 // =================================================================================================

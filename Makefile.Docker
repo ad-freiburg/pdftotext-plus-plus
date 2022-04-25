@@ -6,8 +6,8 @@ TEST_BINARY_FILES = $(basename $(wildcard $(SRC_DIR)/*Test.cpp $(SRC_DIR)/*/*Tes
 HEADER_FILES = $(wildcard $(SRC_DIR)/*.h $(SRC_DIR)/*/*.h)
 OBJECT_FILES = $(addsuffix .o, $(basename $(filter-out %Main.cpp %Test.cpp, $(wildcard $(SRC_DIR)/*.cpp $(SRC_DIR)/*/*.cpp))))
 
-CXX = g++ -g -Wall -std=c++17
-#CXX = g++ -O3 -Wall -std=c++17
+#CXX = g++ -g -Wall -std=c++17
+CXX = g++ -O3 -Wall -std=c++17
 LIBS = -lpoppler -lpoppler-cpp -ltensorflow_cc -ltensorflow_framework -lutf8proc
 LIBS_TEST = $(LIBS) -lgtest -lgtest_main -lpthread
 

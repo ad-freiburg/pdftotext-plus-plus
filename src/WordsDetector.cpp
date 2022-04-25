@@ -16,6 +16,7 @@
 #include "./WordsDetector.h"
 #include "./PdfDocument.h"
 
+#include "./utils/LogUtils.h"
 #include "./utils/Utils.h"
 
 // The inter-glyph space width which will cause the tokenize() method to start a new word.
@@ -23,12 +24,15 @@
 
 
 // _________________________________________________________________________________________________
-WordsDetector::WordsDetector(PdfDocument* doc) {
+WordsDetector::WordsDetector(PdfDocument* doc, bool debug, int debugPageFilter) {
   _doc = doc;
+  _log = new Logger(debug ? DEBUG : INFO, debugPageFilter);
 }
 
 // _________________________________________________________________________________________________
-WordsDetector::~WordsDetector() = default;
+WordsDetector::~WordsDetector() {
+  delete _log;
+};
 
 // _________________________________________________________________________________________________
 void WordsDetector::detect() const {
@@ -258,7 +262,7 @@ void WordsDetector::mergeStackedWords() const {
       if (containsBaseOfStackedWord) {
         for (size_t j = i; j --> 0 ;) {
           auto* otherWord = page->words.at(j);
-          double xOverlapRatio = computeMaximumXOverlapRatio(word, otherWord);
+          double xOverlapRatio = max(computeXOverlapRatios(word, otherWord));
           bool isSmallerFontSize = smaller(otherWord->fontSize, word->fontSize, 1);
           if (xOverlapRatio > 0.5 && isSmallerFontSize) {
             word->isBaseOfStackedWords.push_back(otherWord);
@@ -270,7 +274,7 @@ void WordsDetector::mergeStackedWords() const {
 
         for (size_t j = i + 1; j < page->words.size(); j++) {
           auto* otherWord = page->words.at(j);
-          double xOverlapRatio = computeMaximumXOverlapRatio(word, otherWord);
+          double xOverlapRatio = max(computeXOverlapRatios(word, otherWord));
           bool isSmallerFontSize = smaller(otherWord->fontSize, word->fontSize, 1);
           if (xOverlapRatio > 0.5 && isSmallerFontSize) {
             word->isBaseOfStackedWords.push_back(otherWord);

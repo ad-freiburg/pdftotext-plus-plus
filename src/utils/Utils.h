@@ -108,11 +108,16 @@ bool equalOrSmaller(double d1, double d2, double delta = 0.5);
 
 bool contains(const PdfElement* element1, const PdfElement* element2, double delta = 0.5);
 
-double computeMaximumXOverlapRatio(const PdfElement* element1, const PdfElement* element2);
-double computeMaximumYOverlapRatio(const PdfElement* element1, const PdfElement* element2);
+std::pair<double, double> computeXOverlapRatios(const PdfElement* element1,
+    const PdfElement* element2);
+std::pair<double, double> computeYOverlapRatios(const PdfElement* element1,
+    const PdfElement* element2);
 
 double computeHorizontalGap(const PdfElement* element1, const PdfElement* element2);
 double computeVerticalGap(const PdfElement* element1, const PdfElement* element2);
+
+double min(std::pair<double, double> pair);
+double max(std::pair<double, double> pair);
 
 // =================================================================================================
 

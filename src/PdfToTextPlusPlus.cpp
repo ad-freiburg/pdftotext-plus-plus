@@ -35,11 +35,19 @@ static double resolution = 72.0;
 
 
 // _________________________________________________________________________________________________
-PdfToTextPlusPlus::PdfToTextPlusPlus(bool parseEmbeddedFontFiles, bool disableWordsDehyphenation,
-    bool parseMode) {
+PdfToTextPlusPlus::PdfToTextPlusPlus(
+      bool parseEmbeddedFontFiles,
+      bool disableWordsDehyphenation,
+      bool parseMode,
+      bool debugWordsDetection,
+      bool debugTextBlocksDetection,
+      int debugPageFilter) {
   _parseEmbeddedFontFiles = parseEmbeddedFontFiles;
   _disableWordsDehyphenation = disableWordsDehyphenation;
   _parseMode = parseMode;
+  _debugWordsDetection = debugWordsDetection;
+  _debugTextBlocksDetection = debugTextBlocksDetection;
+  _debugPageFilter = debugPageFilter;
 }
 
 // _________________________________________________________________________________________________
@@ -115,7 +123,7 @@ int PdfToTextPlusPlus::process(const std::string& pdfFilePath, PdfDocument* doc,
 
   // Detect the words.
   start = high_resolution_clock::now();
-  WordsDetector wordsDetector(doc);
+  WordsDetector wordsDetector(doc, _debugWordsDetection, _debugPageFilter);
   wordsDetector.detect();
   end = high_resolution_clock::now();
   auto timeDetectWords = duration_cast<milliseconds>(end - start).count();
@@ -177,7 +185,7 @@ int PdfToTextPlusPlus::process(const std::string& pdfFilePath, PdfDocument* doc,
 
   // Detect the text blocks.
   start = high_resolution_clock::now();
-  TextBlockDetector textBlockDetector(doc);
+  TextBlockDetector textBlockDetector(doc, _debugTextBlocksDetection, _debugPageFilter);
   textBlockDetector.detect();
   end = high_resolution_clock::now();
   auto timeDetectTextBlocks = duration_cast<milliseconds>(end - start).count();

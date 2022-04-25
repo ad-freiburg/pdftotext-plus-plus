@@ -11,6 +11,8 @@
 
 #include <vector>  // std::vector
 
+#include "./utils/LogUtils.h"
+
 #include "./PdfDocument.h"
 
 
@@ -25,7 +27,7 @@ class WordsDetector {
    *
    * @param doc The document to process.
    */
-  explicit WordsDetector(PdfDocument* doc);
+  WordsDetector(PdfDocument* doc, bool debug=false, int debugPageFilter=-1);
 
   /** The deconstructor. */
   ~WordsDetector();
@@ -56,6 +58,8 @@ class WordsDetector {
 
   /** The document to process. */
   PdfDocument* _doc;
+
+  Logger* _log;
 };
 
 #endif  // WORDSTOKENIZER_H_
