@@ -38,8 +38,14 @@ TextOutputDev::~TextOutputDev() = default;
 void TextOutputDev::startPage(int pageNum, GfxState* state, XRef* xref) {
   _page = new PdfPage();
   _page->pageNum = pageNum;
-  _page->width = state ? state->getPageWidth() : 0;
-  _page->height = state ? state->getPageHeight() : 0;
+  if (state) {
+    state->getClipBBox(
+        &_page->clipLeftX,
+        &_page->clipUpperY,
+        &_page->clipRightX,
+        &_page->clipLowerY
+    );
+  }
   _doc->pages.push_back(_page);
   _xref = xref;
 }
@@ -372,78 +378,137 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   glyph->color[1] = colToDbl(rgb.g);
   glyph->color[2] = colToDbl(rgb.b);
 
-  _page->glyphs.push_back(glyph);
+  // Get the current clip box (= a rectangle defining the visible part of the text; text not
+  // falling into this rectangle is not visible to the reader of the PDF).
+  double clipLeftX, clipUpperY, clipRightX, clipLowerY;
+  state->getClipBBox(&clipLeftX, &clipUpperY, &clipRightX, &clipLowerY);
+
+  if (clipLeftX == _page->clipLeftX && clipUpperY == _page->clipUpperY
+        && clipRightX == _page->clipRightX && clipLowerY == _page->clipLowerY) {
+    _page->glyphs.push_back(glyph);
+    return;
+  }
+
+  for (auto* figure : _page->figures) {
+    if (clipLeftX == figure->clipLeftX && clipUpperY == figure->clipUpperY
+        && clipRightX == figure->clipRightX && clipLowerY == figure->clipLowerY) {
+      figure->glyphs.push_back(glyph);
+      figure->position->leftX = std::min(figure->position->leftX, glyph->position->leftX);
+      figure->position->upperY = std::min(figure->position->upperY, glyph->position->upperY);
+      figure->position->rightX = std::max(figure->position->rightX, glyph->position->rightX);
+      figure->position->lowerY = std::max(figure->position->lowerY, glyph->position->lowerY);
+      return;
+    }
+  }
+
+  PdfFigure* figure = new PdfFigure();
+  figure->clipLeftX = clipLeftX;
+  figure->clipUpperY = clipUpperY;
+  figure->clipRightX = clipRightX;
+  figure->clipLowerY = clipLowerY;
+  figure->position->pageNum = _page->pageNum;
+  figure->position->leftX = glyph->position->leftX;
+  figure->position->upperY = glyph->position->upperY;
+  figure->position->rightX = glyph->position->rightX;
+  figure->position->lowerY = glyph->position->lowerY;
+  figure->glyphs.push_back(glyph);
+  _page->figures.push_back(figure);
 }
 
 // _________________________________________________________________________________________________
 void TextOutputDev::clip(GfxState* state) {
-  // Whenever the clipping box is changed, assume that it contains an image.
-  // TODO: Verify that this is a valid assumption.
-  // We do this assumption, because images can be also included via the "Do" (= "draw object")
-  // operator, with subtype "form". Poppler does not provide a special handler for forms, but
-  // calls this method to adapt the clipping box. If our assumption is wrong, we need to patch
-  // the code of Poppler for creating an approprtiate handler method.
-  drawImage(state);
+//   // Whenever the clipping box is changed, assume that it contains an image.
+//   // TODO: Verify that this is a valid assumption.
+//   // We do this assumption, because images can be also included via the "Do" (= "draw object")
+//   // operator, with subtype "form". Poppler does not provide a special handler for forms, but
+//   // calls this method to adapt the clipping box. If our assumption is wrong, we need to patch
+//   // the code of Poppler for creating an approprtiate handler method.
+//   std::cout << _page->pageNum << " " << _graphicsStateLevel << " clip" << std::endl;
+//   drawImage(state);
+}
+
+void TextOutputDev::saveState(GfxState* state) {
+  // _graphicsStateLevel++;
+  // std::cout <<  _page->pageNum << " " << _graphicsStateLevel << " save state" << std::endl;
+}
+
+void TextOutputDev::restoreState(GfxState* state) {
+  // std::cout <<  _page->pageNum << " " << _graphicsStateLevel << " restore state" << std::endl;
+  // _graphicsStateLevel--;
 }
 
 // _________________________________________________________________________________________________
 void TextOutputDev::stroke(GfxState* state) {
   // Get the current clip box (= a rectangle defining the visible part of the path; a path not
-  // falling into this rectangle is not visible to the reader of the PDF). Note that multiple
-  // paths can have the same clip box.
-  double clipMinX, clipMinY, clipMaxX, clipMaxY;
-  state->getClipBBox(&clipMinX, &clipMinY, &clipMaxX, &clipMaxY);
-
-  double clipBoxWidth = clipMaxX - clipMinX;
-  double clipBoxHeight = clipMaxY - clipMinY;
-
-  // A clip box can span the whole page or only a part of the page.
-  // If it spans the whole page, we assume that the path does not have a clip box.
-  // If it spans only a part of the page, we assume that the path has a clip box and consider the
-  // clip box itself as a non-text element - and not the actual path because otherwise we may
-  // include (parts of the) paths which are actually not visible in the PDF.
-
-  // Check if the clip box spans the whole page by checking if the width or height of the clip box
-  // is smaller than the width/height of the page, allowing a small threshold.
-  double xOverlapRatio = clipBoxWidth / _page->width;
-  double yOverlapRatio = clipBoxHeight / _page->height;
-  if (xOverlapRatio < 0.9 || yOverlapRatio < 0.9) {
-    PdfShape* shape = new PdfShape();
-    shape->id = createRandomString(8, "shape-");
-    shape->position->pageNum = _page->pageNum;
-    shape->position->leftX = clipMinX;
-    shape->position->upperY = clipMinY;
-    shape->position->rightX = clipMaxX;
-    shape->position->lowerY = clipMaxY;
-    shape->rank = _numElements++;
-
-    _page->shapes.push_back(shape);
-    return;
-  }
-
-  // The clip box is equal to the bounding box of the page. Instead of the clip box, include the
-  // actual path as a non-text element.
-  PdfShape* shape = new PdfShape();
-  shape->id = createRandomString(8, "shape-");
-  shape->position->pageNum = _page->pageNum;
-  shape->rank = _numElements++;
+  // falling into this rectangle is not visible to the reader of the PDF).
+  double clipLeftX, clipUpperY, clipRightX, clipLowerY;
+  state->getClipBBox(&clipLeftX, &clipUpperY, &clipRightX, &clipLowerY);
 
   // Iterate through each subpath and each point to compute the bounding box of the path.
   double x, y;
+  double leftX = std::numeric_limits<double>::max();
+  double upperY = std::numeric_limits<double>::max();
+  double rightX = std::numeric_limits<double>::min();
+  double lowerY = std::numeric_limits<double>::min();
   const GfxPath* path = state->getPath();
   for (int i = 0; i < path->getNumSubpaths(); i++) {
     const GfxSubpath* subpath = path->getSubpath(i);
 
     for (int j = 0; j < subpath->getNumPoints(); j++) {
       state->transform(subpath->getX(j), subpath->getY(j), &x, &y);
-      shape->position->leftX = std::min(shape->position->leftX, x);
-      shape->position->upperY = std::min(shape->position->upperY, y);
-      shape->position->rightX = std::max(shape->position->rightX, x);
-      shape->position->lowerY = std::max(shape->position->lowerY, y);
+      leftX = std::max(std::min(leftX, x), clipLeftX);
+      upperY = std::max(std::min(upperY, y), clipUpperY);
+      rightX = std::min(std::max(rightX, x), clipRightX);
+      lowerY = std::min(std::max(lowerY, y), clipLowerY);
     }
   }
 
-  _page->shapes.push_back(shape);
+  // Ignore the image if it lies outside of the clip box.
+  if (leftX >= clipRightX || upperY >= clipLowerY || rightX <= clipLeftX || lowerY <= clipUpperY) {
+    return;
+  }
+
+  // Handle each path as a PdfShape.
+  PdfShape* shape = new PdfShape();
+  shape->id = createRandomString(8, "shape-");
+  shape->position->pageNum = _page->pageNum;
+  shape->position->leftX = leftX;
+  shape->position->upperY = upperY;
+  shape->position->rightX = rightX;
+  shape->position->lowerY = lowerY;
+  shape->rank = _numElements++;
+
+  if (clipLeftX == _page->clipLeftX && clipUpperY == _page->clipUpperY
+        && clipRightX == _page->clipRightX && clipLowerY == _page->clipLowerY) {
+    _page->shapes.push_back(shape);
+    return;
+  }
+
+  for (auto* figure : _page->figures) {
+    if (clipLeftX == figure->clipLeftX && clipUpperY == figure->clipUpperY
+        && clipRightX == figure->clipRightX && clipLowerY == figure->clipLowerY) {
+      figure->shapes.push_back(shape);
+      figure->position->leftX = std::min(figure->position->leftX, shape->position->leftX);
+      figure->position->upperY = std::min(figure->position->upperY, shape->position->upperY);
+      figure->position->rightX = std::max(figure->position->rightX, shape->position->rightX);
+      figure->position->lowerY = std::max(figure->position->lowerY, shape->position->lowerY);
+      return;
+    }
+  }
+
+  // Create new figure.
+  PdfFigure* figure = new PdfFigure();
+  figure->clipLeftX = clipLeftX;
+  figure->clipUpperY = clipUpperY;
+  figure->clipRightX = clipRightX;
+  figure->clipLowerY = clipLowerY;
+  figure->position->pageNum = _page->pageNum;
+  figure->position->leftX = shape->position->leftX;
+  figure->position->upperY = shape->position->upperY;
+  figure->position->rightX = shape->position->rightX;
+  figure->position->lowerY = shape->position->lowerY;
+  figure->shapes.push_back(shape);
+  _page->figures.push_back(figure);
 }
 
 // _________________________________________________________________________________________________
@@ -462,6 +527,7 @@ void TextOutputDev::drawImageMask(GfxState* state, Object* ref, Stream* str, int
 // _________________________________________________________________________________________________
 void TextOutputDev::drawImage(GfxState* state, Object* ref, Stream* str, int width, int height,
       GfxImageColorMap* colorMap, bool interpolate, const int* maskColors, bool inlineImg) {
+  // std::cout << _page->pageNum << " " << _graphicsStateLevel << " draw Image" << std::endl;
   // drawImage(state);
 }
 
@@ -482,74 +548,64 @@ void TextOutputDev::drawSoftMaskedImage(GfxState* state, Object* ref, Stream* st
 // _________________________________________________________________________________________________
 void TextOutputDev::drawImage(GfxState* state) {
   // Get the current clip box (= a rectangle defining the visible part of the image; parts of the
-  // image not falling into this rectangle are not visible to the reader of the PDF).
-  double clipMinX, clipMinY, clipMaxX, clipMaxY;
-  state->getClipBBox(&clipMinX, &clipMinY, &clipMaxX, &clipMaxY);
+  // image not falling into this rectangle is not visible to the reader of the PDF).
+  double clipLeftX, clipUpperY, clipRightX, clipLowerY;
+  state->getClipBBox(&clipLeftX, &clipUpperY, &clipRightX, &clipLowerY);
 
-  double clipBoxWidth = clipMaxX - clipMinX;
-  double clipBoxHeight = clipMaxY - clipMinY;
+  // Compute the bounding box of the image from the ctm.
+  const double* ctm = state->getCTM();
+  double leftX = ctm[4];  // ctm[4] = translateX
+  double upperY = ctm[5];  // ctm[5] = translateY
+  double rightX = leftX + ctm[0];  // ctm[0] = scaleX
+  double lowerY = upperY + ctm[3];  // ctm[3] = scaleY
 
-  // A clip box can span the whole page or only a part of the page.
-  // If it spans the whole page, we assume that the image does not have a clip box.
-  // If it spans only a part of the page, we assume that the image has a clip box and consider the
-  // clip box itself as a non-text element - and not the actual image because otherwise we may
-  // include (parts of the) image which are actually not visible in the PDF.
-
-  // Check if the clip box spans the whole page by checking if the width or height of the clip box
-  // is smaller than the width/height of the page, allowing a small threshold.
-  double xOverlapRatio = clipBoxWidth / _page->width; // TODO: Compute the real overlap ratio.
-  double yOverlapRatio = clipBoxHeight / _page->height;
-  if (xOverlapRatio < 0.9 || yOverlapRatio < 0.9) {
-    PdfFigure* figure = new PdfFigure();
-    figure->id = createRandomString(8, "fig-");
-    figure->position->pageNum = _page->pageNum;
-    figure->position->leftX = clipMinX;
-    figure->position->upperY = clipMinY;
-    figure->position->rightX = clipMaxX;
-    figure->position->lowerY = clipMaxY;
-    figure->rank = _numElements++;
-
-    // Ignore the figure if it is fully contained in the previous figure.
-    if (_page->figures.size() > 0) {
-      PdfFigure* prevFigure = _page->figures.at(_page->figures.size() - 1);
-      if (contains(prevFigure, figure)) {
-        return;
-      }
-    }
-
-    _page->figures.push_back(figure);
+  // Ignore the image if it lies outside of the clip box.
+  if (leftX >= clipRightX || upperY >= clipLowerY || rightX <= clipLeftX || lowerY <= clipUpperY) {
     return;
   }
 
-  // The clip box is equal to the bounding box of the page. Instead of the clip box, include the
-  // actual image as a non-text element. Compute the bounding box from the ctm.
-  const double* ctm = state->getCTM();
+  // Handle each image as a PdfGraphic.
+  PdfGraphic* graphic = new PdfGraphic();
+  graphic->id = createRandomString(8, "graphic-");
+  graphic->position->pageNum = _page->pageNum;
+  graphic->position->leftX = leftX;
+  graphic->position->upperY = upperY;
+  graphic->position->rightX = rightX;
+  graphic->position->lowerY = lowerY;
+  graphic->rank = _numElements++;
 
-  PdfFigure* figure = new PdfFigure();
-  figure->id = createRandomString(8, "fig-");
-  figure->position->pageNum = _page->pageNum;
-  figure->position->leftX = ctm[4];  // ctm[4] = translateX
-  figure->position->upperY = ctm[5];  // ctm[5] = translateY
-  figure->position->rightX = figure->position->leftX + ctm[0];  // ctm[0] = scaleX
-  figure->position->lowerY = figure->position->upperY + ctm[3];  // ctm[3] = scaleY
-  figure->rank = _numElements++;
+  if (clipLeftX == _page->clipLeftX && clipUpperY == _page->clipUpperY
+        && clipRightX == _page->clipRightX && clipLowerY == _page->clipLowerY) {
+    _page->graphics.push_back(graphic);
+    return;
+  }
 
-  // Ignore the figure if it is fully contained in the previous figure.
-  if (_page->figures.size() > 0) {
-    PdfFigure* prevFigure = _page->figures.at(_page->figures.size() - 1);
-    if (contains(prevFigure, figure)) {
+  for (auto* figure : _page->figures) {
+    if (clipLeftX == figure->clipLeftX && clipUpperY == figure->clipUpperY
+        && clipRightX == figure->clipRightX && clipLowerY == figure->clipLowerY) {
+      figure->graphics.push_back(graphic);
+      figure->position->leftX = std::min(figure->position->leftX, graphic->position->leftX);
+      figure->position->upperY = std::min(figure->position->upperY, graphic->position->upperY);
+      figure->position->rightX = std::max(figure->position->rightX, graphic->position->rightX);
+      figure->position->lowerY = std::max(figure->position->lowerY, graphic->position->lowerY);
       return;
     }
   }
 
+  // Create new figure.
+  PdfFigure* figure = new PdfFigure();
+  figure->clipLeftX = clipLeftX;
+  figure->clipUpperY = clipUpperY;
+  figure->clipRightX = clipRightX;
+  figure->clipLowerY = clipLowerY;
+  figure->position->pageNum = _page->pageNum;
+  figure->position->leftX = graphic->position->leftX;
+  figure->position->upperY = graphic->position->upperY;
+  figure->position->rightX = graphic->position->rightX;
+  figure->position->lowerY = graphic->position->lowerY;
+  figure->graphics.push_back(graphic);
   _page->figures.push_back(figure);
 }
-
-// _________________________________________________________________________________________________
-void TextOutputDev::restoreState(GfxState* state) {
-  // Nothing to do so far.
-}
-
 
 // _________________________________________________________________________________________________
 void TextOutputDev::endPage() {

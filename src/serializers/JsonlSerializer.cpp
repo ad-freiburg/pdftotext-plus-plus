@@ -88,8 +88,8 @@ void JsonlSerializer::serializePage(const PdfPage* page, std::ostream& stream) {
   stream << "{"
     << "\"type\": \"page\", "
     << "\"num\": " << page->pageNum << ", "
-    << "\"width\": " << page->width << ", "
-    << "\"height\": " << page->height << ", "
+    << "\"width\": " << page->getWidth() << ", "
+    << "\"height\": " << page->getHeight() << ", "
     << "\"origin\": \"pdftotext++\""
     << "}"
     << std::endl;

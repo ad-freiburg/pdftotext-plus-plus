@@ -134,6 +134,9 @@ class TextOutputDev : public OutputDev {
    */
   void stroke(GfxState* state) override;
 
+  void saveState(GfxState* state) override;
+  void restoreState(GfxState* state) override;
+
   /**
    * This method handles the event "fill a path" by gathering all information required
    * by pdftotext++ about the path (for example, the position) and storing this information
@@ -189,13 +192,6 @@ class TextOutputDev : public OutputDev {
   /** This method handles the event "end of the current page". */
   void endPage() override;
 
-  /**
-   * This method handles the event "restore the graphics state".
-   *
-   * @param state The graphics state to restore.
-   */
-  void restoreState(GfxState* state) override;
-
  private:
   void concat(const double* m1, const double* m2, double* res) const;
 
@@ -219,6 +215,8 @@ class TextOutputDev : public OutputDev {
   std::unordered_map<std::string, std::string> _glyphMap;
 
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> _wStringConverter;
+
+  int _graphicsStateLevel = 0;
 };
 
 #endif  // TextOutputDev_H_

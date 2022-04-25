@@ -204,21 +204,21 @@ tensorflow::Tensor SemanticRolesPredictor::createLayoutInputTensor(const PdfDocu
       // Encode the x/y-coordinates. TODO: Reverse the coordinates.
 
       float leftX = block->position->leftX;
-      float leftXencoded = page->width > 0 ? leftX / page->width : 0.0;
+      float leftXencoded = page->getWidth() > 0 ? leftX / page->getWidth() : 0.0;
       layoutTensor.tensor<float, 2>()(blockIndex, 1) = leftXencoded;
 
       // The model expects the origin to be in the page's lower left.
-      float upperY = page->height - block->position->lowerY;
-      float upperYencoded = page->height > 0 ? upperY / page->height : 0.0;
+      float upperY = page->getHeight() - block->position->lowerY;
+      float upperYencoded = page->getHeight() > 0 ? upperY / page->getHeight() : 0.0;
       layoutTensor.tensor<float, 2>()(blockIndex, 2) = upperYencoded;
 
       float rightX = block->position->rightX;
-      float rightXencoded = page->width > 0 ? rightX / page->width : 0.0;
+      float rightXencoded = page->getWidth() > 0 ? rightX / page->getWidth() : 0.0;
       layoutTensor.tensor<float, 2>()(blockIndex, 3) = rightXencoded;
 
       // The model expects the origin to be in the page's lower left.
-      float lowerY = page->height - block->position->upperY;
-      float lowerYencoded = page->height > 0 ? lowerY / page->height : 0.0;
+      float lowerY = page->getHeight() - block->position->upperY;
+      float lowerYencoded = page->getHeight() > 0 ? lowerY / page->getHeight() : 0.0;
       layoutTensor.tensor<float, 2>()(blockIndex, 4) = lowerYencoded;
 
       // -----

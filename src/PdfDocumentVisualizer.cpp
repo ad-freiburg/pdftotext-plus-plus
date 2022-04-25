@@ -119,6 +119,19 @@ void PdfDocumentVisualizer::visualizeShapes(const std::vector<PdfShape*>& shapes
 }
 
 // _________________________________________________________________________________________________
+void PdfDocumentVisualizer::visualizeGraphics(const PdfDocument& doc, const ColorScheme& cs) {
+  for (const auto* page : doc.pages) {
+    drawGraphicBoundingBoxes(page->graphics, cs);
+  }
+}
+
+// _________________________________________________________________________________________________
+void PdfDocumentVisualizer::visualizeGraphics(const std::vector<PdfGraphic*>& graphics,
+    const ColorScheme& cs) {
+  drawGraphicBoundingBoxes(graphics, cs);
+}
+
+// _________________________________________________________________________________________________
 void PdfDocumentVisualizer::visualizeWords(const PdfDocument& doc, const ColorScheme& cs) {
   for (const auto* page : doc.pages) {
     drawWordBoundingBoxes(page->words, cs);
@@ -250,6 +263,14 @@ void PdfDocumentVisualizer::drawShapeBoundingBoxes(const std::vector<PdfShape*>&
     const ColorScheme& cs) {
   for (const auto* shape : shapes) {
     drawBoundingBox(shape, cs);
+  }
+}
+
+// _________________________________________________________________________________________________
+void PdfDocumentVisualizer::drawGraphicBoundingBoxes(const std::vector<PdfGraphic*>& graphics,
+    const ColorScheme& cs) {
+  for (const auto* graphic : graphics) {
+    drawBoundingBox(graphic, cs);
   }
 }
 

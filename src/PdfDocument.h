@@ -87,6 +87,8 @@ class Cut {
 enum TextUnit { GLYPHS = 1, WORDS = 2, TEXT_LINES = 3, TEXT_BLOCKS = 4, PARAGRAPHS = 5 };
 
 class PdfWord;
+class PdfShape;
+class PdfGraphic;
 class PdfTextLine;
 class PdfTextBlock;
 class PdfPageSegment;
@@ -315,6 +317,21 @@ class PdfFigure : public PdfNonTextElement {
   /** The deconstructor. */
   ~PdfFigure();
 
+  /** The glyphs of this figure. */
+  std::vector<PdfGlyph*> glyphs;
+
+  /** The shapes of this figure. */
+  std::vector<PdfShape*> shapes;
+
+  /** The graphics of this figure. */
+  std::vector<PdfGraphic*> graphics;
+
+  /** The coordinates of the clip box of this figure. */
+  double clipLeftX = std::numeric_limits<double>::max();
+  double clipUpperY = std::numeric_limits<double>::max();
+  double clipRightX = std::numeric_limits<double>::min();
+  double clipLowerY = std::numeric_limits<double>::min();
+
   /**
    * This method returns a string representation of this figure for debugging purposes.
    *
@@ -341,6 +358,25 @@ class PdfShape : public PdfNonTextElement {
    * This method returns a string representation of this shape for debugging purposes.
    *
    * @return A string representation of this shape.
+   */
+  std::string toString() const override;
+};
+
+/**
+ * This class represents a single graphic in a PDF document.
+ */
+class PdfGraphic : public PdfNonTextElement {
+ public:
+  /** This constructor creates and initalizes a new `PdfGraphic`. */
+  PdfGraphic();
+
+  /** The deconstructor. */
+  ~PdfGraphic();
+
+  /**
+   * This method returns a string representation of this graphic for debugging purposes.
+   *
+   * @return A string representation of this graphic.
    */
   std::string toString() const override;
 };
@@ -511,11 +547,17 @@ class PdfPage {
   /** The deconstructor. */
   ~PdfPage();
 
+  /** The coordinates of the clip box of this page. */
+  double clipLeftX = std::numeric_limits<double>::max();
+  double clipUpperY = std::numeric_limits<double>::max();
+  double clipRightX = std::numeric_limits<double>::min();
+  double clipLowerY = std::numeric_limits<double>::min();
+
   /** The width of this page. */
-  double width = 0;
+  double getWidth() const { return clipRightX - clipLeftX; };
 
   /** The height of this page. */
-  double height = 0;
+  double getHeight() const { return clipLowerY - clipUpperY; };
 
   /** The page number. */
   int pageNum = -1;
@@ -546,6 +588,9 @@ class PdfPage {
 
   /** The shapes of this page. */
   std::vector<PdfShape*> shapes;
+
+  /** The graphics of this page. */
+  std::vector<PdfGraphic*> graphics;
 };
 
 // =================================================================================================

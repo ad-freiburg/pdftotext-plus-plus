@@ -18,8 +18,8 @@
 #include "./utils/Utils.h"
 #include "./XYCut.h"
 
-const double GAP_MIN_WIDTH = 0.1;
-const double GAP_MIN_HEIGHT = 0.1;
+const double GAP_MIN_WIDTH = 3;
+const double GAP_MIN_HEIGHT = 3;
 
 // _________________________________________________________________________________________________
 PageSegmentator::PageSegmentator(PdfDocument* doc) {

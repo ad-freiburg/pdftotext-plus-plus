@@ -203,7 +203,22 @@ std::string PdfNonTextElement::toString() const {
 PdfFigure::PdfFigure() = default;
 
 // _________________________________________________________________________________________________
-PdfFigure::~PdfFigure() = default;
+PdfFigure::~PdfFigure() {
+  // Delete the glyphs.
+  for (const auto* glyph : glyphs) {
+    delete glyph;
+  }
+
+  // Delete the glyphs.
+  for (const auto* shape : shapes) {
+    delete shape;
+  }
+
+  // Delete the graphics.
+  for (const auto* graphic : graphics) {
+    delete graphic;
+  }
+}
 
 // _________________________________________________________________________________________________
 std::string PdfFigure::toString() const {
@@ -225,6 +240,22 @@ PdfShape::~PdfShape() = default;
 std::string PdfShape::toString() const {
   std::stringstream ss;
   ss << "PdfShape(pos=" << position->toString() << ")";
+  return ss.str();
+}
+
+// =================================================================================================
+// PdfGraphic
+
+// _________________________________________________________________________________________________
+PdfGraphic::PdfGraphic() = default;
+
+// _________________________________________________________________________________________________
+PdfGraphic::~PdfGraphic() = default;
+
+// _________________________________________________________________________________________________
+std::string PdfGraphic::toString() const {
+  std::stringstream ss;
+  ss << "PdfGraphic(pos=" << position->toString() << ")";
   return ss.str();
 }
 
@@ -344,6 +375,10 @@ PdfPage::~PdfPage() {
   // Delete the shapes.
   for (const auto* shape : shapes) {
     delete shape;
+  }
+  // Delete the graphics.
+  for (const auto* graphic : graphics) {
+    delete graphic;
   }
   // Delete the text block detection cuts.
   for (const auto* cut : blockDetectionCuts) {

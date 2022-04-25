@@ -50,6 +50,7 @@ static bool visualizeTextBlocks = false;
 static bool visualizePageSegments = false;
 static bool visualizeFigures = false;
 static bool visualizeShapes = false;
+static bool visualizeGraphics = false;
 static bool visualizeReadingOrder = false;
 static bool visualizeBlockDetectionCuts = false;
 static bool visualizeReadingOrderCuts = false;
@@ -101,6 +102,8 @@ static const ArgDesc argDesc[] = {
       "Draw the bounding boxes of the extracted figures to the visualization." },
   { "--visualize-shapes", argFlag, &visualizeShapes, 0,
       "Draw the bounding boxes of the extracted shapes to the visualization." },
+  { "--visualize-graphics", argFlag, &visualizeGraphics, 0,
+      "Draw the bounding boxes of the extracted graphics to the visualization." },
   { "--visualize-reading-order", argFlag, &visualizeReadingOrder, 0,
       "Add annotations that visualizes the detected reading order of the text blocks to the "
       "visualization." },
@@ -253,6 +256,9 @@ int main(int argc, char *argv[]) {
     }
     if (visualizeShapes) {
       visualizer.visualizeShapes(doc, blue);
+    }
+    if (visualizeGraphics) {
+      visualizer.visualizeGraphics(doc, blue);
     }
     if (visualizeWords) {
       visualizer.visualizeWords(doc, blue);

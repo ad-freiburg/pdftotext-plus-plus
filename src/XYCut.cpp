@@ -168,6 +168,9 @@ bool yCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc chooseC
 
     double gapHeight = element->position->upperY - elementLargestMaxY->position->lowerY;
     if (gapHeight > GAP_MIN_HEIGHT) {
+      if (element->position->pageNum == 4) {
+        std::cout << pos << std::endl;
+      }
       gapPositions.push_back(pos);
       gapStartElements.push_back(elementLargestMaxY);
     }
