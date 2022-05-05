@@ -1,3 +1,11 @@
 **/*.o
 core
 PdfToTextPlusPlusMain
+*.pdf
+*.tex
+*.aux
+*.log
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+settings.json
