@@ -1,5 +1,5 @@
 /**
- * Copyright 2021, University of Freiburg,
+ * Copyright 2022, University of Freiburg,
  * Chair of Algorithms and Data Structures.
  * Author: Claudius Korzen <korzen@cs.uni-freiburg.de>.
  *
@@ -19,85 +19,115 @@
 #include "./TextOutputDev.h"
 
 #include "./utils/GlyphMap.h"
+#include "./utils/LogUtils.h"
 #include "./utils/Utils.h"
 
 
 // _________________________________________________________________________________________________
-TextOutputDev::TextOutputDev(bool parseEmbeddedFontFiles, PdfDocument* doc) {
-  _doc = doc;
+TextOutputDev::TextOutputDev(bool parseEmbeddedFontFiles, PdfDocument* doc,
+      bool debug, int debugPageFilter) {
   _parseEmbeddedFontFiles = parseEmbeddedFontFiles;
-  _fontInfo = nullptr;
-  _fontSize = 0;
-  _ok = true;
+  _doc = doc;
+  _log = new Logger(debug ? DEBUG : INFO, debugPageFilter);
+
+  _log->debug() << "=======================================" << std::endl;
+  _log->debug() << "\033[1mDEBUG MODE | PDF Parsing\033[0m" << std::endl;
+  _log->debug() << " └─ parse font files:  " << parseEmbeddedFontFiles << std::endl;
+  _log->debug() << " └─ debug page filter: " << debugPageFilter << std::endl;
 }
 
 // _________________________________________________________________________________________________
-TextOutputDev::~TextOutputDev() = default;
+TextOutputDev::~TextOutputDev() {
+  delete _log;
+}
 
 // _________________________________________________________________________________________________
 void TextOutputDev::startPage(int pageNum, GfxState* state, XRef* xref) {
+  _log->debug(pageNum) << "=======================================" << std::endl;
+  _log->debug(pageNum) << "\033[1mEvent: START PAGE\033[0m " << std::endl;
+
   _page = new PdfPage();
-  _page->pageNum = pageNum;
-  if (state) {
-    state->getClipBBox(
-        &_page->clipLeftX,
-        &_page->clipUpperY,
-        &_page->clipRightX,
-        &_page->clipLowerY
-    );
-  }
+  _page->pageNum = _p = pageNum;
+  state->getClipBBox(&_page->clipLeftX, &_page->clipUpperY, &_page->clipRightX, &_page->clipLowerY);
   _doc->pages.push_back(_page);
   _xref = xref;
+
+  _log->debug(pageNum) << " └─ page.pageNum: " << _page->pageNum << std::endl;
+  _log->debug(pageNum) << " └─ page.clipLeftX: " << _page->clipLeftX << std::endl;
+  _log->debug(pageNum) << " └─ page.clipUpperY: " << _page->clipUpperY << std::endl;
+  _log->debug(pageNum) << " └─ page.clipRightX: " << _page->clipRightX << std::endl;
+  _log->debug(pageNum) << " └─ page.clipLowerY: " << _page->clipLowerY << std::endl;
 }
 
 // _________________________________________________________________________________________________
 void TextOutputDev::updateFont(GfxState* state) {
-  // Get the current font size.
-  // _fontSize = state->getTransformedFontSize();
-  // _fontSize = state->getFontSize();
+  _log->debug(_p) << "=======================================" << std::endl;
+  _log->debug(_p) << "\033[1mEvent: UPDATE FONT\033[0m " << std::endl;
 
-  // Get the current font info.
+  // Update the current font info.
   _fontInfo = nullptr;
+
+  // Skip the event if the state does not contain any font.
   GfxFont* gfxFont = state->getFont();
-
-  if (gfxFont) {
-    // Get the font name. In some cases (e.g., if the type of the font is "type-3"), the gfxFont
-    // may not provide a font name. So use the pointer address of the font as default font name.
-    std::stringstream gfxFontAddress;
-    gfxFontAddress << (void const *) gfxFont;
-    std::string fontName = gfxFontAddress.str();
-
-    // If the font provide a font name, take this.
-    const GooString* gooFontName = gfxFont->getName();
-    if (gooFontName) {
-      fontName = gooFontName->toStr();
-    }
-
-    // Check if the info about the current font was already computed.
-    if (_doc->fontInfos.find(fontName) == _doc->fontInfos.end()) {
-      // The info about the current font was not computed yet, so compute it.
-      _doc->fontInfos[fontName] = PdfFontInfo::create(state, _xref, _parseEmbeddedFontFiles);
-    }
-    _fontInfo = _doc->fontInfos[fontName];
+  if (!gfxFont) {
+    _log->debug(_p) << " └─ gfxFont: -" << std::endl;
+    return;
   }
+
+  // Get the font name. In some cases (e.g., if the type of the font is "type-3"), the gfxFont
+  // may not provide a font name. If this is the case, use the pointer address of the font instead.
+  std::stringstream gfxFontAddress;
+  gfxFontAddress << (void const *) gfxFont;
+  std::string fontName = gfxFontAddress.str();
+  const GooString* gooFontName = gfxFont->getName();
+  if (gooFontName) {
+    fontName = gooFontName->toStr();
+  }
+
+  // Check if the info about the current font was already computed. If not, compute it.
+  if (_doc->fontInfos.count(fontName) == 0) {
+    _doc->fontInfos[fontName] = PdfFontInfo::create(state, _xref, _parseEmbeddedFontFiles);
+  }
+  _fontInfo = _doc->fontInfos[fontName];
+
+  _log->debug(_p) << " └─ font.name: " << _fontInfo->fontName << std::endl;
+  _log->debug(_p) << " └─ font.basename: " << _fontInfo->fontBaseName << std::endl;
+  _log->debug(_p) << " └─ font.normFontName: " << _fontInfo->normFontName << std::endl;
+  _log->debug(_p) << " └─ font.ascent: " << _fontInfo->ascent << std::endl;
+  _log->debug(_p) << " └─ font.descent: " << _fontInfo->descent << std::endl;
+  _log->debug(_p) << " └─ font.isItalic: " << _fontInfo->isItalic << std::endl;
+  _log->debug(_p) << " └─ font.isSerif: " << _fontInfo->isSerif << std::endl;
+  _log->debug(_p) << " └─ font.isSymbolic: " << _fontInfo->isSymbolic << std::endl;
+  _log->debug(_p) << " └─ font.isType3: " << _fontInfo->isType3 << std::endl;
+  _log->debug(_p) << " └─ font.weight: " << _fontInfo->weight << std::endl;
 }
 
 // _________________________________________________________________________________________________
 void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, double dy,
     double originX, double originY, CharCode c, int nBytes, const Unicode* u, int uLen) {
+  _log->debug(_p) << "=======================================" << std::endl;
+  _log->debug(_p) << "\033[1mEvent: DRAW CHAR\033[0m " << std::endl;
+
   if (!state) {
+    _log->debug(_p) << " └─ state: -" << std::endl;
     return;
   }
 
   if (!_fontInfo) {
+    _log->debug(_p) << " └─ fontInfo: -" << std::endl;
     return;
   }
 
   const Gfx8BitFont* gfx8BitFont = dynamic_cast<Gfx8BitFont*>(state->getFont());
   const GfxCIDFont* gfxCidFont = dynamic_cast<GfxCIDFont*>(state->getFont());
 
+  // Parse the information about the character and store it in form of a `PdfGlyph`.
+  PdfGlyph* glyph = new PdfGlyph();
+  glyph->id = createRandomString(8, "g-");
+  _log->debug(_p) << " └─ glyph.id: \"" << glyph->id << "\"" << std::endl;
+
   // ----------------------------------
-  // Compute and set the character name.
+  // The character name (e.g., "summationdisplay" for "Σ").
 
   std::string charName;
   GfxFont* gfxFont = state->getFont();
@@ -107,15 +137,17 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
       charName = charNameArray;
     }
   }
+  glyph->charName = charName;
+  _log->debug(_p) << " └─ glyph.charName: \"" << glyph->charName << "\"" << std::endl;
 
   // ----------------------------------
-  // Compute and set the text of the glyph.
-
-  PdfGlyph* glyph = new PdfGlyph();
+  // The text of the glyph.
 
   std::string text;
 
-  if (uLen == 1 && glyphMap.count(charName)) {
+  // If the glyph map contains an entry for the given char name, use the text stored in this map.
+  // Otherwise, map the character code(s) to Unicode.
+  if (uLen == 1 && glyphMap.count(charName) > 0) {
     glyph->unicodes.push_back(glyphMap.at(charName).first);
     text = glyphMap.at(charName).second;
   } else if (u) {
@@ -126,23 +158,24 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
     if ((uMap = globalParams->getTextEncoding())) {
       // Usually, uLen == 1 (meaning that the glyph represents a single character.
       // But it may uLen > 1, for example for ligatures.
-      for (int i = 0; i < uLen; ++i) {
+      for (int i = 0; i < uLen; i++) {
         n = uMap->mapUnicode(u[i], buf, sizeof(buf));
         text.append(buf, n);
       }
     }
 
-    for (int i = 0; i < uLen; ++i) {
+    for (int i = 0; i < uLen; i++) {
       glyph->unicodes.push_back(u[i]);
     }
   }
+  glyph->text = text;
+  _log->debug(_p) << " └─ glyph.text: \"" << glyph->text << "\"" << std::endl;
 
   // Ignore the glyph if it represents a whitespace. We want to consider the "non-breaking space"
   // character (\u00a0) as a whitespace, but std::isspace does not. So we have to check the glyph
   // for a non-breaking space manually. To do so, convert the text to a wide character, as the
   // non-breaking space is a 2-byte character.
   std::wstring wText = _wStringConverter.from_bytes(text);
-
   bool isWhitespace = true;
   for (wchar_t& ch : wText) {
     if (!std::iswspace(ch) && ch != 0x00a0) {
@@ -152,21 +185,19 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   }
 
   if (isWhitespace) {
+    _log->debug(_p) << "\033[1mSkipping glyph (is a whitespace).\033[0m" << std::endl;
+    delete glyph;
     return;
   }
 
-
-  glyph->id = createRandomString(8, "g-");
-  glyph->charName = charName;
-  glyph->text = text;
-
   // ----------------------------------
-  // Set the page number of the glyph.
+  // The page number.
 
   glyph->position->pageNum = _page->pageNum;
+  _log->debug(_p) << " └─ glyph.pageNum: " << glyph->position->pageNum << std::endl;
 
   // ----------------------------------
-  // Compute and set the rotation of the glyph (this code is adopted from Poppler).
+  // The rotation (this code is adopted from Poppler).
 
   const double* fontm;
   double m[4], m2[4];
@@ -191,14 +222,16 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   if (gfxFont && gfxFont->getWMode()) {
     glyph->position->rotation = (glyph->position->rotation + 1) & 3;
   }
+  _log->debug(_p) << " └─ glyph.rotation: " << glyph->position->rotation << std::endl;
 
   // ----------------------------------
-  // Set the writing mode of the glyph.
+  // The writing mode.
 
   glyph->position->wMode = gfxFont->getWMode();
+  _log->debug(_p) << " └─ glyph.wMode: " << glyph->position->wMode << std::endl;
 
   // ----------------------------------
-  // Compute the x,y-coordinates of the bounding box around the glyph.
+  // The bounding box.
 
   // Compute the current text rendering matrix.
   double fontSize = state->getFontSize();
@@ -259,7 +292,6 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   if (wMode) {  // vertical writing mode
     switch (glyph->position->rotation) {
       case 0:
-
         break;
       case 1:
         glyph->position->leftX = x0;
@@ -313,11 +345,13 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
     }
   }
 
-  // ===============================================================================================
-
-  // TODO(korzen):
+  // If the current font info contains exact bounding boxes (parsed from the embedded font files),
+  // compute the exact bounding box for the current glyph and write it to `glyph->position` if the
+  // vertical extent of the exact bounding box is smaller than of the bounding box computed above.
+  // This should especially update the bounding boxes of math symbols like the summation symbol or
+  // the product symbol, for which the computed bounding boxes are often by far too high.
   if (_fontInfo && _fontInfo->glyphBoundingBoxes.count(glyph->charName)) {
-    auto boundingBox = _fontInfo->glyphBoundingBoxes[glyph->charName];
+    auto& boundingBox = _fontInfo->glyphBoundingBoxes[glyph->charName];  // tuple of four doubles.
     double leftX = std::get<0>(boundingBox);
     double upperY = std::get<1>(boundingBox);
     double rightX = std::get<2>(boundingBox);
@@ -348,60 +382,89 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
     }
   }
 
+  _log->debug(_p) << " └─ glyph.leftX: " << glyph->position->leftX << std::endl;
+  _log->debug(_p) << " └─ glyph.upperY: " << glyph->position->upperY << std::endl;
+  _log->debug(_p) << " └─ glyph.rightX: " << glyph->position->rightX << std::endl;
+  _log->debug(_p) << " └─ glyph.lowerY: " << glyph->position->lowerY << std::endl;
+  _log->debug(_p) << " └─ glyph.base: " << glyph->base << std::endl;
+  if (glyph->position->rotation > 0) {
+    _log->debug(_p) << " └─ glyph.rotLeftX: " << glyph->position->getRotLeftX() << std::endl;
+    _log->debug(_p) << " └─ glyph.rotUpperY: " << glyph->position->getRotUpperY() << std::endl;
+    _log->debug(_p) << " └─ glyph.rotRightX: " << glyph->position->getRotRightX() << std::endl;
+    _log->debug(_p) << " └─ glyph.rotLowerY: " << glyph->position->getRotLowerY() << std::endl;
+  }
+
   // ----------------------------------
-  // Set the font name.
+  // The font name.
 
   glyph->fontName = _fontInfo ? _fontInfo->fontName : "";
+  _log->debug(_p) << " └─ glyph.fontName: " << glyph->fontName << std::endl;
 
   // ----------------------------------
-  // Set the font size.
+  // The font size (rounded to one decimal).
 
-  double fs = static_cast<double>(static_cast<int>(transformedFontSize * 10.)) / 10.;
-  glyph->fontSize = fs;
+  glyph->fontSize = static_cast<double>(static_cast<int>(transformedFontSize * 10.)) / 10.;
+  _log->debug(_p) << " └─ glyph.fontSize: " << glyph->fontSize << std::endl;
 
   // ----------------------------------
-  // Set the extraction rank.
+  // The extraction rank.
 
   glyph->rank = _numElements++;
+  _log->debug(_p) << " └─ glyph.rank: " << glyph->rank << std::endl;
 
   // ----------------------------------
-  // Set the opacity.
+  // The opacity.
 
   glyph->opacity = state->getStrokeOpacity();
+  _log->debug(_p) << " └─ glyph.opacity: " << glyph->opacity << std::endl;
 
   // ----------------------------------
-  // Set the color.
+  // The color.
 
   GfxRGB rgb;
   state->getStrokeRGB(&rgb);
   glyph->color[0] = colToDbl(rgb.r);
   glyph->color[1] = colToDbl(rgb.g);
   glyph->color[2] = colToDbl(rgb.b);
+  _log->debug(_p) << " └─ glyph.color: [" << glyph->color[0] << ", " << glyph->color[1] << ", "
+      << glyph->color[2] << "]" << std::endl;
 
-  // Get the current clip box (= a rectangle defining the visible part of the text; text not
-  // falling into this rectangle is not visible to the reader of the PDF).
+  // ----------------------------------
+  // Add the glyph to the page or to a figure, depending on the current clipbox. If the current
+  // clipbox is equal to the page's clipbox, append the glyph to `page->glyphs`.
+  // Otherwise, append the glyph to `figure->glyphs`, where `figure` is the `PdfFigure` object
+  // related to the current clipbox. If no such object exists yet, create it.
+
   double clipLeftX, clipUpperY, clipRightX, clipLowerY;
   state->getClipBBox(&clipLeftX, &clipUpperY, &clipRightX, &clipLowerY);
+  _log->debug(_p) << " └─ clipbox: leftX: " << clipLeftX << "; upperY: " << clipUpperY
+      << "; rightX: " << clipRightX << "; lowerY: " << clipLowerY << std::endl;
 
-  if (clipLeftX == _page->clipLeftX && clipUpperY == _page->clipUpperY
-        && clipRightX == _page->clipRightX && clipLowerY == _page->clipLowerY) {
+  if (equal(clipLeftX, _page->clipLeftX, 0.1) && equal(clipUpperY, _page->clipUpperY, 0.1)
+        && equal(clipRightX, _page->clipRightX, 0.1) && equal(clipLowerY, _page->clipLowerY, 0.1)) {
     _page->glyphs.push_back(glyph);
+    _log->debug(_p) << "\033[1mAppended glyph to page.\033[0m" << std::endl;
     return;
   }
 
-  for (auto* figure : _page->figures) {
-    if (clipLeftX == figure->clipLeftX && clipUpperY == figure->clipUpperY
-        && clipRightX == figure->clipRightX && clipLowerY == figure->clipLowerY) {
-      figure->glyphs.push_back(glyph);
-      figure->position->leftX = std::min(figure->position->leftX, glyph->position->leftX);
-      figure->position->upperY = std::min(figure->position->upperY, glyph->position->upperY);
-      figure->position->rightX = std::max(figure->position->rightX, glyph->position->rightX);
-      figure->position->lowerY = std::max(figure->position->lowerY, glyph->position->lowerY);
+  // Iterate through the figures to check if there is a figure with the same current clipbox.
+  for (auto* fig : _page->figures) {
+    if (equal(clipLeftX, fig->clipLeftX, 0.1) && equal(clipUpperY, fig->clipUpperY, 0.1)
+        && equal(clipRightX, fig->clipRightX, 0.1) && equal(clipLowerY, fig->clipLowerY, 0.1)) {
+      // Update the bounding box of the figure.
+      fig->position->leftX = std::min(fig->position->leftX, glyph->position->leftX);
+      fig->position->upperY = std::min(fig->position->upperY, glyph->position->upperY);
+      fig->position->rightX = std::max(fig->position->rightX, glyph->position->rightX);
+      fig->position->lowerY = std::max(fig->position->lowerY, glyph->position->lowerY);
+      fig->glyphs.push_back(glyph);
+      _log->debug(_p) << "\033[1mAppended glyph to figure " << fig->id << ".\033[0m" << std::endl;
       return;
     }
   }
 
+  // No figure exists for the current clipbox. Create a new figure and append the glyph to it.
   PdfFigure* figure = new PdfFigure();
+  figure->id = createRandomString(8, "fig-");
   figure->clipLeftX = clipLeftX;
   figure->clipUpperY = clipUpperY;
   figure->clipRightX = clipRightX;
@@ -412,33 +475,27 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   figure->position->rightX = glyph->position->rightX;
   figure->position->lowerY = glyph->position->lowerY;
   figure->glyphs.push_back(glyph);
+
+  _log->debug(_p) << "\033[1mAppended glyph to a new figure.\033[0m" << std::endl;
+  _log->debug(_p) << " └─ figure.id: " << figure->id << std::endl;
+  _log->debug(_p) << " └─ figure.clipLeftX: " << figure->clipLeftX << std::endl;
+  _log->debug(_p) << " └─ figure.clipUpperY: " << figure->clipUpperY << std::endl;
+  _log->debug(_p) << " └─ figure.clipRightX: " << figure->clipRightX << std::endl;
+  _log->debug(_p) << " └─ figure.clipLowerY: " << figure->clipLowerY << std::endl;
+  _log->debug(_p) << " └─ figure.pageNum: " << figure->position->pageNum << std::endl;
+  _log->debug(_p) << " └─ figure.leftX: " << figure->position->leftX << std::endl;
+  _log->debug(_p) << " └─ figure.upperY: " << figure->position->upperY << std::endl;
+  _log->debug(_p) << " └─ figure.rightX: " << figure->position->rightX << std::endl;
+  _log->debug(_p) << " └─ figure.lowerY: " << figure->position->lowerY << std::endl;
+
   _page->figures.push_back(figure);
 }
 
 // _________________________________________________________________________________________________
-void TextOutputDev::clip(GfxState* state) {
-//   // Whenever the clipping box is changed, assume that it contains an image.
-//   // TODO: Verify that this is a valid assumption.
-//   // We do this assumption, because images can be also included via the "Do" (= "draw object")
-//   // operator, with subtype "form". Poppler does not provide a special handler for forms, but
-//   // calls this method to adapt the clipping box. If our assumption is wrong, we need to patch
-//   // the code of Poppler for creating an approprtiate handler method.
-//   std::cout << _page->pageNum << " " << _graphicsStateLevel << " clip" << std::endl;
-//   drawImage(state);
-}
-
-void TextOutputDev::saveState(GfxState* state) {
-  // _graphicsStateLevel++;
-  // std::cout <<  _page->pageNum << " " << _graphicsStateLevel << " save state" << std::endl;
-}
-
-void TextOutputDev::restoreState(GfxState* state) {
-  // std::cout <<  _page->pageNum << " " << _graphicsStateLevel << " restore state" << std::endl;
-  // _graphicsStateLevel--;
-}
-
-// _________________________________________________________________________________________________
 void TextOutputDev::stroke(GfxState* state) {
+  _log->debug(_p) << "=======================================" << std::endl;
+  _log->debug(_p) << "\033[1mEvent: STROKE PATH\033[0m " << std::endl;
+
   // Get the current clip box (= a rectangle defining the visible part of the path; a path not
   // falling into this rectangle is not visible to the reader of the PDF).
   double clipLeftX, clipUpperY, clipRightX, clipLowerY;
@@ -456,6 +513,14 @@ void TextOutputDev::stroke(GfxState* state) {
 
     for (int j = 0; j < subpath->getNumPoints(); j++) {
       state->transform(subpath->getX(j), subpath->getY(j), &x, &y);
+      // Ignore points that lies outside the clip box (since points outside the clip box are
+      // not visible).
+      // TODO: This is dangerous, since we may ignore a path that is actually visible, for example,
+      // when the first endpoint of a line lies left to the clip box and the second endpoint lies
+      // right to the clip box (and the connecting line goes straight through the clip box).
+      if (x >= clipRightX || y >= clipLowerY || x <= clipLeftX || y <= clipUpperY) {
+        continue;
+      }
       leftX = std::max(std::min(leftX, x), clipLeftX);
       upperY = std::max(std::min(upperY, y), clipUpperY);
       rightX = std::min(std::max(rightX, x), clipRightX);
@@ -463,12 +528,7 @@ void TextOutputDev::stroke(GfxState* state) {
     }
   }
 
-  // Ignore the image if it lies outside of the clip box.
-  if (leftX >= clipRightX || upperY >= clipLowerY || rightX <= clipLeftX || lowerY <= clipUpperY) {
-    return;
-  }
-
-  // Handle each path as a PdfShape.
+  // Store the information about the path in form of a `PdfShape`.
   PdfShape* shape = new PdfShape();
   shape->id = createRandomString(8, "shape-");
   shape->position->pageNum = _page->pageNum;
@@ -478,26 +538,44 @@ void TextOutputDev::stroke(GfxState* state) {
   shape->position->lowerY = lowerY;
   shape->rank = _numElements++;
 
-  if (clipLeftX == _page->clipLeftX && clipUpperY == _page->clipUpperY
-        && clipRightX == _page->clipRightX && clipLowerY == _page->clipLowerY) {
+  _log->debug(_p) << " └─ shape.id: " << shape->id << std::endl;
+  _log->debug(_p) << " └─ shape.pageNum: " << shape->position->pageNum << std::endl;
+  _log->debug(_p) << " └─ shape.leftX: " << shape->position->leftX << std::endl;
+  _log->debug(_p) << " └─ shape.upperY: " << shape->position->upperY << std::endl;
+  _log->debug(_p) << " └─ shape.rightX: " << shape->position->rightX << std::endl;
+  _log->debug(_p) << " └─ shape.lowerY: " << shape->position->lowerY << std::endl;
+  _log->debug(_p) << " └─ shape.rank: " << shape->rank << std::endl;
+  _log->debug(_p) << " └─ clipBox: leftX: " << clipLeftX << "; upperY: " << clipUpperY
+      << "; rightX: " << clipRightX << "; lowerY: " << clipLowerY << std::endl;
+
+  // Add the shape to the page or to a figure, depending on the current clipbox. If the current
+  // clipbox is equal to the page's clipbox, append the shape to `page->shapes`.
+  // Otherwise, append the shape to `figure->shapes`, where `figure` is the `PdfFigure` object
+  // related to the current clipbox. If no such object exists yet, create it.
+  if (equal(clipLeftX, _page->clipLeftX, 0.1) && equal(clipUpperY, _page->clipUpperY, 0.1)
+        && equal(clipRightX, _page->clipRightX, 0.1) && equal(clipLowerY, _page->clipLowerY, 0.1)) {
     _page->shapes.push_back(shape);
+    _log->debug(_p) << "\033[1mAppended shape to page.\033[0m" << std::endl;
     return;
   }
 
-  for (auto* figure : _page->figures) {
-    if (clipLeftX == figure->clipLeftX && clipUpperY == figure->clipUpperY
-        && clipRightX == figure->clipRightX && clipLowerY == figure->clipLowerY) {
-      figure->shapes.push_back(shape);
-      figure->position->leftX = std::min(figure->position->leftX, shape->position->leftX);
-      figure->position->upperY = std::min(figure->position->upperY, shape->position->upperY);
-      figure->position->rightX = std::max(figure->position->rightX, shape->position->rightX);
-      figure->position->lowerY = std::max(figure->position->lowerY, shape->position->lowerY);
+  for (auto* fig : _page->figures) {
+    if (equal(clipLeftX, fig->clipLeftX, 0.1) && equal(clipUpperY, fig->clipUpperY, 0.1)
+        && equal(clipRightX, fig->clipRightX, 0.1) && equal(clipLowerY, fig->clipLowerY, 0.1)) {
+      // Update the bounding box of the figure.
+      fig->position->leftX = std::min(fig->position->leftX, shape->position->leftX);
+      fig->position->upperY = std::min(fig->position->upperY, shape->position->upperY);
+      fig->position->rightX = std::max(fig->position->rightX, shape->position->rightX);
+      fig->position->lowerY = std::max(fig->position->lowerY, shape->position->lowerY);
+      fig->shapes.push_back(shape);
+      _log->debug(_p) << "\033[1mAppended shape to figure " << fig->id << ".\033[0m" << std::endl;
       return;
     }
   }
 
-  // Create new figure.
+  // No figure exists for the current clipbox. Create a new figure and append the shape to it.
   PdfFigure* figure = new PdfFigure();
+  figure->id = createRandomString(8, "fig-");
   figure->clipLeftX = clipLeftX;
   figure->clipUpperY = clipUpperY;
   figure->clipRightX = clipRightX;
@@ -508,109 +586,88 @@ void TextOutputDev::stroke(GfxState* state) {
   figure->position->rightX = shape->position->rightX;
   figure->position->lowerY = shape->position->lowerY;
   figure->shapes.push_back(shape);
+
+  _log->debug(_p) << "\033[1mAppended shape to a new figure.\033[0m" << std::endl;
+  _log->debug(_p) << " └─ figure.id: " << figure->id << std::endl;
+  _log->debug(_p) << " └─ figure.clipLeftX: " << figure->clipLeftX << std::endl;
+  _log->debug(_p) << " └─ figure.clipUpperY: " << figure->clipUpperY << std::endl;
+  _log->debug(_p) << " └─ figure.clipRightX: " << figure->clipRightX << std::endl;
+  _log->debug(_p) << " └─ figure.clipLowerY: " << figure->clipLowerY << std::endl;
+  _log->debug(_p) << " └─ figure.pageNum: " << figure->position->pageNum << std::endl;
+  _log->debug(_p) << " └─ figure.leftX: " << figure->position->leftX << std::endl;
+  _log->debug(_p) << " └─ figure.upperY: " << figure->position->upperY << std::endl;
+  _log->debug(_p) << " └─ figure.rightX: " << figure->position->rightX << std::endl;
+  _log->debug(_p) << " └─ figure.lowerY: " << figure->position->lowerY << std::endl;
+
   _page->figures.push_back(figure);
 }
 
 // _________________________________________________________________________________________________
 void TextOutputDev::fill(GfxState* state) {
-  // Handle a "fill path" event in the same way as a "stroke path" event (this is ok, because we
-  // only need the position of the path, but not the information whether the path is filled or not).
   stroke(state);
 }
 
 // _________________________________________________________________________________________________
-void TextOutputDev::drawImageMask(GfxState* state, Object* ref, Stream* str, int width, int height,
-    bool invert, bool interpolate, bool inlineImg) {
-  // drawImage(state);
-}
+// void TextOutputDev::drawImage(GfxState* state) {
+//   // Get the current clip box (= a rectangle defining the visible part of the image; parts of the
+//   // image not falling into this rectangle is not visible to the reader of the PDF).
+//   double clipLeftX, clipUpperY, clipRightX, clipLowerY;
+//   state->getClipBBox(&clipLeftX, &clipUpperY, &clipRightX, &clipLowerY);
 
-// _________________________________________________________________________________________________
-void TextOutputDev::drawImage(GfxState* state, Object* ref, Stream* str, int width, int height,
-      GfxImageColorMap* colorMap, bool interpolate, const int* maskColors, bool inlineImg) {
-  // std::cout << _page->pageNum << " " << _graphicsStateLevel << " draw Image" << std::endl;
-  // drawImage(state);
-}
+//   // Compute the bounding box of the image from the ctm.
+//   const double* ctm = state->getCTM();
+//   double leftX = ctm[4];  // ctm[4] = translateX
+//   double upperY = ctm[5];  // ctm[5] = translateY
+//   double rightX = leftX + ctm[0];  // ctm[0] = scaleX
+//   double lowerY = upperY + ctm[3];  // ctm[3] = scaleY
 
-// _________________________________________________________________________________________________
-void TextOutputDev::drawMaskedImage(GfxState* state, Object* ref, Stream* str, int width, int height,
-    GfxImageColorMap* colorMap, bool interpolate, Stream* maskStr, int maskWidth, int maskHeight,
-    bool maskInvert, bool maskInterpolate) {
-  // drawImage(state);
-}
+//   // Ignore the image if it lies outside of the clip box.
+//   if (leftX >= clipRightX || upperY >= clipLowerY || rightX <= clipLeftX || lowerY <= clipUpperY) {
+//     return;
+//   }
 
-// _________________________________________________________________________________________________
-void TextOutputDev::drawSoftMaskedImage(GfxState* state, Object* ref, Stream* str, int width,
-    int height, GfxImageColorMap* colorMap, bool interpolate, Stream* maskStr, int maskWidth,
-    int maskHeight, GfxImageColorMap* maskColorMap, bool maskInterpolate) {
-  // drawImage(state);
-}
+//   // Handle each image as a PdfGraphic.
+//   PdfGraphic* graphic = new PdfGraphic();
+//   graphic->id = createRandomString(8, "graphic-");
+//   graphic->position->pageNum = _page->pageNum;
+//   graphic->position->leftX = leftX;
+//   graphic->position->upperY = upperY;
+//   graphic->position->rightX = rightX;
+//   graphic->position->lowerY = lowerY;
+//   graphic->rank = _numElements++;
 
-// _________________________________________________________________________________________________
-void TextOutputDev::drawImage(GfxState* state) {
-  // Get the current clip box (= a rectangle defining the visible part of the image; parts of the
-  // image not falling into this rectangle is not visible to the reader of the PDF).
-  double clipLeftX, clipUpperY, clipRightX, clipLowerY;
-  state->getClipBBox(&clipLeftX, &clipUpperY, &clipRightX, &clipLowerY);
+//   if (clipLeftX == _page->clipLeftX && clipUpperY == _page->clipUpperY
+//         && clipRightX == _page->clipRightX && clipLowerY == _page->clipLowerY) {
+//     _page->graphics.push_back(graphic);
+//     return;
+//   }
 
-  // Compute the bounding box of the image from the ctm.
-  const double* ctm = state->getCTM();
-  double leftX = ctm[4];  // ctm[4] = translateX
-  double upperY = ctm[5];  // ctm[5] = translateY
-  double rightX = leftX + ctm[0];  // ctm[0] = scaleX
-  double lowerY = upperY + ctm[3];  // ctm[3] = scaleY
+//   for (auto* figure : _page->figures) {
+//     if (clipLeftX == figure->clipLeftX && clipUpperY == figure->clipUpperY
+//         && clipRightX == figure->clipRightX && clipLowerY == figure->clipLowerY) {
+//       figure->graphics.push_back(graphic);
+//       figure->position->leftX = std::min(figure->position->leftX, graphic->position->leftX);
+//       figure->position->upperY = std::min(figure->position->upperY, graphic->position->upperY);
+//       figure->position->rightX = std::max(figure->position->rightX, graphic->position->rightX);
+//       figure->position->lowerY = std::max(figure->position->lowerY, graphic->position->lowerY);
+//       return;
+//     }
+//   }
 
-  // Ignore the image if it lies outside of the clip box.
-  if (leftX >= clipRightX || upperY >= clipLowerY || rightX <= clipLeftX || lowerY <= clipUpperY) {
-    return;
-  }
-
-  // Handle each image as a PdfGraphic.
-  PdfGraphic* graphic = new PdfGraphic();
-  graphic->id = createRandomString(8, "graphic-");
-  graphic->position->pageNum = _page->pageNum;
-  graphic->position->leftX = leftX;
-  graphic->position->upperY = upperY;
-  graphic->position->rightX = rightX;
-  graphic->position->lowerY = lowerY;
-  graphic->rank = _numElements++;
-
-  if (clipLeftX == _page->clipLeftX && clipUpperY == _page->clipUpperY
-        && clipRightX == _page->clipRightX && clipLowerY == _page->clipLowerY) {
-    _page->graphics.push_back(graphic);
-    return;
-  }
-
-  for (auto* figure : _page->figures) {
-    if (clipLeftX == figure->clipLeftX && clipUpperY == figure->clipUpperY
-        && clipRightX == figure->clipRightX && clipLowerY == figure->clipLowerY) {
-      figure->graphics.push_back(graphic);
-      figure->position->leftX = std::min(figure->position->leftX, graphic->position->leftX);
-      figure->position->upperY = std::min(figure->position->upperY, graphic->position->upperY);
-      figure->position->rightX = std::max(figure->position->rightX, graphic->position->rightX);
-      figure->position->lowerY = std::max(figure->position->lowerY, graphic->position->lowerY);
-      return;
-    }
-  }
-
-  // Create new figure.
-  PdfFigure* figure = new PdfFigure();
-  figure->clipLeftX = clipLeftX;
-  figure->clipUpperY = clipUpperY;
-  figure->clipRightX = clipRightX;
-  figure->clipLowerY = clipLowerY;
-  figure->position->pageNum = _page->pageNum;
-  figure->position->leftX = graphic->position->leftX;
-  figure->position->upperY = graphic->position->upperY;
-  figure->position->rightX = graphic->position->rightX;
-  figure->position->lowerY = graphic->position->lowerY;
-  figure->graphics.push_back(graphic);
-  _page->figures.push_back(figure);
-}
-
-// _________________________________________________________________________________________________
-void TextOutputDev::endPage() {
-  // Nothing to do so far.
-}
+//   // Create new figure.
+//   PdfFigure* figure = new PdfFigure();
+//   figure->clipLeftX = clipLeftX;
+//   figure->clipUpperY = clipUpperY;
+//   figure->clipRightX = clipRightX;
+//   figure->clipLowerY = clipLowerY;
+//   figure->position->pageNum = _page->pageNum;
+//   figure->position->leftX = graphic->position->leftX;
+//   figure->position->upperY = graphic->position->upperY;
+//   figure->position->rightX = graphic->position->rightX;
+//   figure->position->lowerY = graphic->position->lowerY;
+//   figure->graphics.push_back(graphic);
+//   _page->figures.push_back(figure);
+// }
 
 // _________________________________________________________________________________________________
 void TextOutputDev::concat(const double* m1, const double* m2, double* res) const {

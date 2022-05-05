@@ -282,8 +282,8 @@ class PdfWord : public PdfElement {
 
   // Stacked words: words that logically belong together and overlap horizontally, for example:
   // a summation symbol with its sub- and superscripts.
-  PdfWord* isPartOfStackedWord = nullptr;
-  std::vector<PdfWord*> isBaseOfStackedWords;
+  PdfWord* isPartOfStackedMathSymbol = nullptr;
+  std::vector<PdfWord*> isBaseOfStackedMathSymbol;
 
   PdfWord* isFirstPartOfHyphenatedWord = nullptr;
   PdfWord* isSecondPartOfHyphenatedWord = nullptr;

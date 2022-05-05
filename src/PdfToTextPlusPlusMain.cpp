@@ -55,7 +55,10 @@ static bool visualizeReadingOrder = false;
 static bool visualizeBlockDetectionCuts = false;
 static bool visualizeReadingOrderCuts = false;
 static char visualizeFilePath[256] = "";
+static bool debugPdfParsing = false;
+static bool debugDiacriticMarksMerging = false;
 static bool debugWordsDetection = false;
+static bool debugTextLinesDetection = false;
 static bool debugTextBlocksDetection = false;
 static int debugPageFilter = -1;
 static bool printRunningTimes = false;
@@ -113,8 +116,14 @@ static const ArgDesc argDesc[] = {
       "Add annotations that visualizes the XY-cuts made to detect the reading order." },
   { "--print-running-times", argFlag, &printRunningTimes, 0,
       "Print the running times of the different modules at the end." },
+  { "--debug-pdf-parsing", argFlag, &debugPdfParsing, 0,
+      "Print the debug output of the PDF parser." },
+  { "--debug-diacritic-marks-merging", argFlag, &debugDiacriticMarksMerging, 0,
+      "Print the debug output of diacritic marks merging." },
   { "--debug-words-detection", argFlag, &debugWordsDetection, 0,
       "Print the debug output of words detection." },
+  { "--debug-text-lines-detection", argFlag, &debugTextLinesDetection, 0,
+      "Print the debug output of text lines detection." },
   { "--debug-text-blocks-detection", argFlag, &debugTextBlocksDetection, 0,
       "Print the debug output of text blocks detection." },
   { "--debug-page-filter", argInt, &debugPageFilter, 0,
@@ -200,7 +209,10 @@ int main(int argc, char *argv[]) {
     !ignoreEmbeddedFontFiles,
     disableWordsDehyphenation,
     parseMode,
+    debugPdfParsing,
+    debugDiacriticMarksMerging,
     debugWordsDetection,
+    debugTextLinesDetection,
     debugTextBlocksDetection,
     debugPageFilter
   );
@@ -307,7 +319,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  std::cout << "AAA" << std::endl;
+  std::cout << "XXX" << std::endl;
 
   return 0;
 }

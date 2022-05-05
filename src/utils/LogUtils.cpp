@@ -57,7 +57,7 @@ std::ostream& Logger::log(LogLevel logLevel, int page) {
     return nullStr;
   }
 
-  if (_pageFilter > 0 && _pageFilter != page) {
+  if (_pageFilter > 0 && page > 0 && _pageFilter != page) {
     return nullStr;
   }
 

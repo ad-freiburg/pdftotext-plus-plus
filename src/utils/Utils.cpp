@@ -137,24 +137,28 @@ bool contains(const PdfElement* element1, const PdfElement* element2, double del
 
 // _________________________________________________________________________________________________
 std::pair<double, double> computeXOverlapRatios(const PdfElement* e1, const PdfElement* e2) {
-  double minRightX = std::min(e1->position->rightX, e2->position->rightX);
-  double maxLeftX = std::max(e1->position->leftX, e2->position->leftX);
-  double overlapLength = std::max(0.0, minRightX - maxLeftX);
-  double width1 = e1->position->getWidth();
-  double width2 = e2->position->getWidth();
-  double overlapRatio1 = width1 > 0 ? overlapLength / width1 : 0;
-  double overlapRatio2 = width2 > 0 ? overlapLength / width2 : 0;
-
-  return std::make_pair(overlapRatio1, overlapRatio2);
+  return computeOverlapRatios(e1->position->rightX, e1->position->leftX,
+      e2->position->rightX, e2->position->leftX);
 }
 
 // _________________________________________________________________________________________________
 std::pair<double, double> computeYOverlapRatios(const PdfElement* e1, const PdfElement* e2) {
-  double minLowerY = std::min(e1->position->lowerY, e2->position->lowerY);
-  double maxUpperY = std::max(e1->position->upperY, e2->position->upperY);
-  double overlapLength = std::max(0.0, minLowerY - maxUpperY);
-  double height1 = e1->position->getHeight();
-  double height2 = e2->position->getHeight();
+  return computeOverlapRatios(e1->position->upperY, e1->position->lowerY,
+      e2->position->upperY, e2->position->lowerY);
+}
+
+// _________________________________________________________________________________________________
+std::pair<double, double> computeOverlapRatios(double s1, double e1, double s2, double e2) {
+  double min1 = std::min(s1, e1);
+  double max1 = std::max(s1, e1);
+  double min2 = std::min(s2, e2);
+  double max2 = std::max(s2, e2);
+  double height1 = max1 - min1;
+  double height2 = max2 - min2;
+
+  double minMax = std::min(max1, max2);
+  double maxMin = std::max(min1, min2);
+  double overlapLength = std::max(0.0, minMax - maxMin);
   double overlapRatio1 = height1 > 0 ? overlapLength / height1 : 0;
   double overlapRatio2 = height2 > 0 ? overlapLength / height2 : 0;
 

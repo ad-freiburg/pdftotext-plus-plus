@@ -85,16 +85,19 @@ void ReadingOrderDetector::detectReadingOrder() {
 
     // Identify the primary x-cuts and divide the page elements into groups at each primary x-cut.
     std::vector<std::vector<PdfElement*>> primaryXCutGroups;
-    xCut(pageElements, choosePrimaryXCutsBind, &primaryXCutGroups, &page->readingOrderCuts);
+    xCut(pageElements, choosePrimaryXCutsBind, _minXCutGapWidth, false, &primaryXCutGroups,
+        &page->readingOrderCuts);
 
     for (const auto& primXCutGroup : primaryXCutGroups) {
       // Identify the primary y-cuts and divide the page elements into groups at each primary y-cut.
       std::vector<std::vector<PdfElement*>> primaryYCutGroups;
-      yCut(primXCutGroup, choosePrimaryYCutsBind, &primaryYCutGroups, &page->readingOrderCuts);
+      yCut(primXCutGroup, choosePrimaryYCutsBind, _minYCutGapHeight, &primaryYCutGroups,
+          &page->readingOrderCuts);
 
       // Divide each group further by using the recursive XY-cut algorithm.
       for (const auto& primYCutGroup : primaryYCutGroups) {
-        xyCut(primYCutGroup, chooseXCutsBind, chooseYCutsBind, &groups, &page->readingOrderCuts);
+        xyCut(primYCutGroup, chooseXCutsBind, chooseYCutsBind, _minXCutGapWidth, _minYCutGapHeight,
+            false, &groups, &page->readingOrderCuts);
       }
     }
 
@@ -345,7 +348,7 @@ void ReadingOrderDetector::chooseYCuts(const std::vector<PdfElement*>& elements,
   for (size_t i = 0; i < gapPositions.size(); i++) {
     size_t gapPos = gapPositions[i];
     std::vector<PdfElement*> group(elements.begin() + gapPos, elements.end());
-    bool cutOk = xCut(group, chooseXCutsBind);
+    bool cutOk = xCut(group, chooseXCutsBind, _minXCutGapWidth, false);
     if (cutOk) {
       cutIndicesSet.insert(i);
       lastGapPositionIndex = i;
@@ -359,7 +362,7 @@ void ReadingOrderDetector::chooseYCuts(const std::vector<PdfElement*>& elements,
   for (size_t i = lastGapPositionIndex + 1; i --> firstGapPositionIndex; ) {
     size_t gapPos = gapPositions[i];
     std::vector<PdfElement*> group(elements.begin(), elements.begin() + gapPos);
-    bool cutOk = xCut(group, chooseXCutsBind);
+    bool cutOk = xCut(group, chooseXCutsBind, _minXCutGapWidth, false);
     if (cutOk) {
       cutIndicesSet.insert(i);
       firstGapPositionIndex = i;
@@ -376,7 +379,7 @@ void ReadingOrderDetector::chooseYCuts(const std::vector<PdfElement*>& elements,
     for (size_t j = lastGapPositionIndex + 1; j --> i; ) {
       size_t lowGapPos = gapPositions[j];
       std::vector<PdfElement*> group(elements.begin() + highGapPos, elements.begin() + lowGapPos);
-      bool cutOk = xCut(group, chooseXCutsBind);
+      bool cutOk = xCut(group, chooseXCutsBind, _minXCutGapWidth, false);
 
       if (cutOk) {
         cutIndicesSet.insert(i);

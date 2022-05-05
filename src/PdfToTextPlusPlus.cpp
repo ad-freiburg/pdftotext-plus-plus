@@ -15,14 +15,14 @@
 #include <poppler/PDFDocFactory.h>
 
 #include "./TextOutputDev.h"
-#include "./DiacriticMarksCombiner.h"
+#include "./DiacriticMarksMerger.h"
 #include "./PageSegmentator.h"
 #include "./PdfDocumentStatisticsCalculator.h"
 #include "./PdfToTextPlusPlus.h"
 #include "./ReadingOrderDetector.h"
 #include "./SubSuperScriptsDetector.h"
-#include "./TextBlockDetector.h"
-#include "./TextLineDetector.h"
+#include "./TextBlocksDetector.h"
+#include "./TextLinesDetector.h"
 #include "./WordsDehyphenator.h"
 #include "./WordsDetector.h"
 
@@ -39,13 +39,19 @@ PdfToTextPlusPlus::PdfToTextPlusPlus(
       bool parseEmbeddedFontFiles,
       bool disableWordsDehyphenation,
       bool parseMode,
+      bool debugPdfParsing,
+      bool debugDiacriticMarksMerging,
       bool debugWordsDetection,
+      bool debugTextLinesDetection,
       bool debugTextBlocksDetection,
       int debugPageFilter) {
   _parseEmbeddedFontFiles = parseEmbeddedFontFiles;
   _disableWordsDehyphenation = disableWordsDehyphenation;
   _parseMode = parseMode;
+  _debugPdfParsing = debugPdfParsing;
+  _debugDiacMarksMerging = debugDiacriticMarksMerging;
   _debugWordsDetection = debugWordsDetection;
+  _debugTextLinesDetection = debugTextLinesDetection;
   _debugTextBlocksDetection = debugTextBlocksDetection;
   _debugPageFilter = debugPageFilter;
 }
@@ -70,14 +76,10 @@ int PdfToTextPlusPlus::process(const std::string& pdfFilePath, PdfDocument* doc,
     return 1;
   }
 
-  TextOutputDev out(_parseEmbeddedFontFiles, doc);
-  if (!out.isOk()) {
-    return 2;
-  }
-
+  TextOutputDev out(_parseEmbeddedFontFiles, doc, _debugPdfParsing, _debugPageFilter);
   PdfDocumentStatisticsCalculator statistician(doc);
 
-  // Extract the contents of the PDF pages.
+  // Parse the PDF for glyphs, figures and shapes.
   start = high_resolution_clock::now();
   pdfDoc->displayPages(
     &out,
@@ -93,28 +95,32 @@ int PdfToTextPlusPlus::process(const std::string& pdfFilePath, PdfDocument* doc,
   end = high_resolution_clock::now();
   auto timeParsing = duration_cast<milliseconds>(end - start).count();
 
+  if (timings) {
+    Timing timingParsing("Parsing PDF", timeParsing);
+    timings->push_back(timingParsing);
+  }
+
   // Compute statistics about the glyphs, for example: the most freq. font size among the glyphs.
   start = high_resolution_clock::now();
   statistician.computeGlyphStatistics();
   end = high_resolution_clock::now();
   auto timeComputeStatistics = duration_cast<milliseconds>(end - start).count();
 
-  // Combine diacritic marks with their base glyphs.
-  start = high_resolution_clock::now();
-  DiacriticMarksCombiner dmCombiner(doc);
-  dmCombiner.combine();
-  end = high_resolution_clock::now();
-  auto timeCombineDiacriticMarks = duration_cast<milliseconds>(end - start).count();
-
   if (timings) {
-    Timing timingParsing("Parsing PDF", timeParsing);
-    timings->push_back(timingParsing);
-
     Timing timingComputeStatistics("Compute glyph stats", timeComputeStatistics);
     timings->push_back(timingComputeStatistics);
+  }
 
-    Timing timingCombineDiacriticMarks("Combine diacritics", timeCombineDiacriticMarks);
-    timings->push_back(timingCombineDiacriticMarks);
+  // Merge the diacritic marks with their base glyphs.
+  start = high_resolution_clock::now();
+  DiacriticMarksMerger dmm(doc, _debugDiacMarksMerging, _debugPageFilter);
+  dmm.merge();
+  end = high_resolution_clock::now();
+  auto timeMergeDiacriticMarks = duration_cast<milliseconds>(end - start).count();
+
+  if (timings) {
+    Timing timingMergeDiacriticMarks("Merge diacritics", timeMergeDiacriticMarks);
+    timings->push_back(timingMergeDiacriticMarks);
   }
 
   if (_parseMode) {
@@ -128,6 +134,11 @@ int PdfToTextPlusPlus::process(const std::string& pdfFilePath, PdfDocument* doc,
   end = high_resolution_clock::now();
   auto timeDetectWords = duration_cast<milliseconds>(end - start).count();
 
+  if (timings) {
+    Timing timingDetectWords("Detect words", timeDetectWords);
+    timings->push_back(timingDetectWords);
+  }
+
   // Compute statistics about the words, for example: the most frequent word height and -width.
   start = high_resolution_clock::now();
   statistician.computeWordStatistics();
@@ -135,9 +146,6 @@ int PdfToTextPlusPlus::process(const std::string& pdfFilePath, PdfDocument* doc,
   timeComputeStatistics = duration_cast<milliseconds>(end - start).count();
 
   if (timings) {
-    Timing timingDetectWords("Detect words", timeDetectWords);
-    timings->push_back(timingDetectWords);
-
     Timing timingComputeStatistics("Compute word stats", timeComputeStatistics);
     timings->push_back(timingComputeStatistics);
   }
@@ -151,8 +159,8 @@ int PdfToTextPlusPlus::process(const std::string& pdfFilePath, PdfDocument* doc,
 
   // Detect the text lines.
   start = high_resolution_clock::now();
-  TextLineDetector textLineDetector(doc);
-  textLineDetector.detect();
+  TextLinesDetector textLinesDetector(doc, _debugTextLinesDetection, _debugPageFilter);
+  textLinesDetector.detect();
   end = high_resolution_clock::now();
   auto timeDetectTextLines = duration_cast<milliseconds>(end - start).count();
 
@@ -185,8 +193,8 @@ int PdfToTextPlusPlus::process(const std::string& pdfFilePath, PdfDocument* doc,
 
   // Detect the text blocks.
   start = high_resolution_clock::now();
-  TextBlockDetector textBlockDetector(doc, _debugTextBlocksDetection, _debugPageFilter);
-  textBlockDetector.detect();
+  TextBlocksDetector textBlocksDetector(doc, _debugTextBlocksDetection, _debugPageFilter);
+  textBlocksDetector.detect();
   end = high_resolution_clock::now();
   auto timeDetectTextBlocks = duration_cast<milliseconds>(end - start).count();
 

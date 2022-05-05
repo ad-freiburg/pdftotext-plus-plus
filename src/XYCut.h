@@ -72,8 +72,9 @@ typedef std::function<void(const std::vector<PdfElement*>& elements, const std::
  *   visualization purposes.
  */
 void xyCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc chooseXCutsFunc,
-  const ChooseCutsFunc chooseYCutsFunc, std::vector<std::vector<PdfElement*>>* resultGroups,
-  std::vector<Cut*>* resultCuts = nullptr);
+  const ChooseCutsFunc chooseYCutsFunc, double minXCutGapWidth, double minYCutGapHeight,
+  bool errorTolerant,
+  std::vector<std::vector<PdfElement*>>* resultGroups, std::vector<Cut*>* resultCuts = nullptr);
 
 /**
  * TODO This method divides the given elements into groups by x-cuts. The basic approach is as follows:
@@ -105,6 +106,7 @@ void xyCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc choose
  * @return True, if the elements were divided into two or more groups; false otherwise.
  */
 bool xCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc chooseCutsFunc,
+  double minGapWidth, bool errorTolerant,
   std::vector<std::vector<PdfElement*>>* resultGroups = nullptr,
   std::vector<Cut*>* resultCuts = nullptr);
 
@@ -138,7 +140,7 @@ bool xCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc chooseC
  * @return True, if the elements were divided into two or more groups; false otherwise.
  */
 bool yCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc chooseCutsFunc,
-  std::vector<std::vector<PdfElement*>>* resultGroups = nullptr,
+  double minGapHeight, std::vector<std::vector<PdfElement*>>* resultGroups = nullptr,
   std::vector<Cut*>* resultCuts = nullptr);
 
 #endif  // XYCUT_H_

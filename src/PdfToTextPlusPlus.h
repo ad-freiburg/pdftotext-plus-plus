@@ -22,7 +22,7 @@
 class PdfToTextPlusPlus {
  public:
   /**
-   * This constructor creates and initializes a new `PdfToTextPlusPlus` object.
+   * This constructor creates and initializes a new instance of this `PdfToTextPlusPlus` class.
    *
    * @param parseEmbeddedFontFiles
    *   A boolean flag indicating whether or not to parse the embedded font files of a PDF file in
@@ -30,11 +30,14 @@ class PdfToTextPlusPlus {
    *   bounding boxes of the glyphs. Setting this flag to true results in a faster extraction
    *   process but less accurate extraction results.
    */
-  explicit PdfToTextPlusPlus(
+  PdfToTextPlusPlus(
     bool parseEmbeddedFontFiles,
     bool disableWordsDehyphenation,
     bool parseMode,
+    bool debugPdfParsing=false,
+    bool debugDiacriticMarksMerging=false,
     bool debugWordsDetection=false,
+    bool debugTextLinesDetection=false,
     bool debugTextBlocksDetection=false,
     int debugPageFilter=-1);
 
@@ -55,14 +58,17 @@ class PdfToTextPlusPlus {
       std::vector<Timing>* timings = nullptr);
 
  private:
-  /** Wether or not to parse the embedded font files of a PDF file. */
+  /** Whether or not to parse the embedded font files of a PDF file. */
   bool _parseEmbeddedFontFiles;
 
   bool _disableWordsDehyphenation;
 
   bool _parseMode;
 
+  bool _debugPdfParsing;
+  bool _debugDiacMarksMerging;
   bool _debugWordsDetection;
+  bool _debugTextLinesDetection;
   bool _debugTextBlocksDetection;
   int _debugPageFilter;
 };

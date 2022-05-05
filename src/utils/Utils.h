@@ -112,6 +112,7 @@ std::pair<double, double> computeXOverlapRatios(const PdfElement* element1,
     const PdfElement* element2);
 std::pair<double, double> computeYOverlapRatios(const PdfElement* element1,
     const PdfElement* element2);
+std::pair<double, double> computeOverlapRatios(double s1, double e1, double s2, double e2);
 
 double computeHorizontalGap(const PdfElement* element1, const PdfElement* element2);
 double computeVerticalGap(const PdfElement* element1, const PdfElement* element2);

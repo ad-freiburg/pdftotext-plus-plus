@@ -157,6 +157,9 @@ class ReadingOrderDetector {
   /** The document to process. */
   PdfDocument* _doc;
 
+  double _minXCutGapWidth = 0;
+  double _minYCutGapHeight = 0;
+
   /** The current page. */
   PdfPage* _page;
 

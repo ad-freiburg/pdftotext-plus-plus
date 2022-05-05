@@ -1,4 +1,3 @@
-
 FROM ubuntu:20.04 as base
 
 LABEL maintainer="Claudius Korzen <korzen@cs.uni-freiburg.de>"
@@ -134,7 +133,7 @@ RUN cp -r /usr/local/lib/libutf8proc.a .
 FROM base as poppler-builder
 
 ARG POP_VERSION=22.01.0
-RUN apt-get install -y libboost-all-dev libfontconfig1-dev libfreetype6-dev libnss3-dev libopenjp2-7-dev libtiff5-dev
+RUN apt-get update && apt-get install -y libboost-all-dev libfontconfig1-dev libfreetype6-dev libnss3-dev libopenjp2-7-dev libtiff5-dev
 WORKDIR /poppler
 RUN git config --global advice.detachedHead false
 RUN git clone --depth 1 --branch poppler-${POP_VERSION} https://github.com/freedesktop/poppler.git .
@@ -185,11 +184,12 @@ WORKDIR /opt/lib
 RUN cp -a /gtest/googletest-release-${GT_VERSION}/googletest/bld/lib/*.a .
 RUN ldconfig
 
-
 # ==================================================================================================
 # Build pdftotext++.
 
 FROM base as runtime
+
+RUN apt-get install -y fontconfig python3-dev
 
 WORKDIR /pdftotext
 COPY --from=tensorflow-builder /opt/include/ /usr/local/include/
@@ -202,13 +202,19 @@ COPY --from=gtest-builder /opt/include/ /usr/local/include/
 COPY --from=gtest-builder /opt/lib/ /usr/local/lib/
 RUN ldconfig
 
+# COPY src src
+# COPY Makefile.Docker Makefile
+# RUN make install
+
+# ENTRYPOINT ["pdftotext++"]
+# RUN apt-get update && apt-get install -y gdb
 CMD ["/bin/bash"]
 
 # ==================================================================================================
 # USEFUL COMMANDS
 
 # BUILDING DOCKER IMAGE:
-# docker build -f Dockerfile.dev -t pdftotext-plus-plus.dev .
+# docker build -t pdftotext-plus-plus .
 
-# RUNNING DOCKER CONTAINER:
-# docker run --rm -it -v $(pwd):/pdftotext -v <path-to-pdf-dir>:/pdfs --name pdftotext-plus-plus.dev pdftotext-plus-plus.dev
+# EXTRACTING TEXT FROM A SINGLE PDF:
+# docker run --rm -v <path-to-pdf>:/file.pdf pdftotext-plus-plus /file.pdf -

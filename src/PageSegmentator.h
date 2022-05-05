@@ -127,6 +127,9 @@ class PageSegmentator {
   /** The document to process. */
   PdfDocument* _doc;
 
+  double _minXCutGapWidth = 0;
+  double _minYCutGapHeight = 0;
+
   /** The coordinates of the bounding box around all page elements (blocks, figures, shapes). */
   double _pageElementsMinX;
   double _pageElementsMinY;
