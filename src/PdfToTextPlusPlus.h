@@ -37,6 +37,7 @@ class PdfToTextPlusPlus {
     bool debugPdfParsing=false,
     bool debugDiacriticMarksMerging=false,
     bool debugWordsDetection=false,
+    bool debugPageSegmentation=false,
     bool debugTextLinesDetection=false,
     bool debugTextBlocksDetection=false,
     int debugPageFilter=-1);
@@ -68,6 +69,7 @@ class PdfToTextPlusPlus {
   bool _debugPdfParsing;
   bool _debugDiacMarksMerging;
   bool _debugWordsDetection;
+  bool _debugPageSegmentation;
   bool _debugTextLinesDetection;
   bool _debugTextBlocksDetection;
   int _debugPageFilter;

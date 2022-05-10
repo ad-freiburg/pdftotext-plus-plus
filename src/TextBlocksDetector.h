@@ -29,7 +29,7 @@ class TextBlocksDetector {
 
   bool startsTextBlock(const PdfTextLine* prevLine, const PdfTextLine* currLine,
       const PdfTextLine* nextLine, const std::unordered_set<std::string>* potentialFootnoteMarkers,
-      double hangingIndent);
+      double hangingIndent, double percNoRightMarginLines);
 
 
   void createTextBlock(const std::vector<PdfTextLine*>& lines, std::vector<PdfTextBlock*>* blocks);
@@ -53,6 +53,8 @@ class TextBlocksDetector {
   double computeHangingIndent(const PdfTextBlock* block) const;
   void computePotentialFootnoteMarkers(const PdfPage* page,
       std::unordered_set<std::string>* footnoteMarkers) const;
+  double computePercentageNoRightMarginLines(const PdfTextBlock* block) const;
+  void computeSegmentTrimBoxes() const;
 
   PdfFigure* isPartOfFigure(const PdfTextLine* line) const;
 

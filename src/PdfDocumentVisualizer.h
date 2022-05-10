@@ -41,9 +41,13 @@ const AnnotColor g3(0.7, 1, 0.7);
 const AnnotColor b1(0, 0, 1);
 const AnnotColor b2(0.5, 0.5, 1);
 const AnnotColor b3(0.7, 0.7, 1);
+const AnnotColor gr1(0.7, 0.7, 0.7);
+const AnnotColor gr2(0.8, 0.8, 0.8);
+const AnnotColor gr3(0.9, 0.9, 0.9);
 const ColorScheme red(r1, r2, r3);
 const ColorScheme green(g1, g2, g3);
 const ColorScheme blue(b1, b2, b3);
+const ColorScheme gray(gr1, gr2, gr3);
 
 // =================================================================================================
 

@@ -12,6 +12,7 @@
 #include <string>
 #include <vector>
 
+#include "./utils/LogUtils.h"
 #include "./PdfDocument.h"
 
 
@@ -29,7 +30,7 @@ class PageSegmentator {
    * @param doc
    *   The document to process.
    */
-  explicit PageSegmentator(PdfDocument* doc);
+  PageSegmentator(PdfDocument* doc, bool debug, int debugPageFilter);
 
   /** The deconstructor. **/
   ~PageSegmentator();
@@ -66,9 +67,7 @@ class PageSegmentator {
    * @return True if the position between `closestElementLeft` and `elements[cutPos]` denotes a
    *   valid x-cut position, false otherwise.
    */
-  void chooseXCuts(const std::vector<PdfElement*>& elements,
-      const std::vector<size_t>& gapPositions, const std::vector<PdfElement*>& gapStartElements,
-      std::vector<size_t>* cutIndices);
+  void chooseXCuts(const std::vector<PdfElement*>& elements, std::vector<Cut*>& cuts, bool silent);
 
   // TODO(korzen): /**
   //  * This method tells the XY-cut algorithm whether or not the position between the elements
@@ -86,9 +85,8 @@ class PageSegmentator {
   //  * @return True if the position between `closestElementAbove` and `elements[cutPos]` denotes a
   //  *   valid semantic y-cut position, false otherwise.
   //  */
-  void choosePrimaryYCuts(const std::vector<PdfElement*>& elements,
-      const std::vector<size_t>& gapPositions, const std::vector<PdfElement*>& gapStartElements,
-      std::vector<size_t>* cutIndices);
+  void choosePrimaryYCuts(const std::vector<PdfElement*>& elements, std::vector<Cut*>& cuts,
+      bool silent);
 
   /**
    * TODO This method tells the XY-cut algorithm whether or not the position between the elements
@@ -107,9 +105,7 @@ class PageSegmentator {
    * @return True if the position between `closestElementAbove` and `elements[cutPos]` denotes a
    *   valid y-cut position, false otherwise.
    */
-  void chooseYCuts(const std::vector<PdfElement*>& elements,
-      const std::vector<size_t>& gapPositions, const std::vector<PdfElement*>& gapStartElements,
-      std::vector<size_t>* cutIndices);
+  void chooseYCuts(const std::vector<PdfElement*>& elements, std::vector<Cut*>& cuts, bool silent);
 
   /**
    * TODO This method (1) creates a new `PdfTextBlock` from the words in the given list of
@@ -135,6 +131,9 @@ class PageSegmentator {
   double _pageElementsMinY;
   double _pageElementsMaxX;
   double _pageElementsMaxY;
+
+  /** The logger. */
+  Logger* _log;
 };
 
 #endif  // PAGESEGMENTATOR_H_

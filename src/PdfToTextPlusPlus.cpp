@@ -42,6 +42,7 @@ PdfToTextPlusPlus::PdfToTextPlusPlus(
       bool debugPdfParsing,
       bool debugDiacriticMarksMerging,
       bool debugWordsDetection,
+      bool debugPageSegmentation,
       bool debugTextLinesDetection,
       bool debugTextBlocksDetection,
       int debugPageFilter) {
@@ -51,6 +52,7 @@ PdfToTextPlusPlus::PdfToTextPlusPlus(
   _debugPdfParsing = debugPdfParsing;
   _debugDiacMarksMerging = debugDiacriticMarksMerging;
   _debugWordsDetection = debugWordsDetection;
+  _debugPageSegmentation = debugPageSegmentation;
   _debugTextLinesDetection = debugTextLinesDetection;
   _debugTextBlocksDetection = debugTextBlocksDetection;
   _debugPageFilter = debugPageFilter;
@@ -152,7 +154,7 @@ int PdfToTextPlusPlus::process(const std::string& pdfFilePath, PdfDocument* doc,
 
   // Segment each page of the document.
   start = high_resolution_clock::now();
-  PageSegmentator pageSegmentator(doc);
+  PageSegmentator pageSegmentator(doc, _debugPageSegmentation, _debugPageFilter);
   pageSegmentator.segment();
   end = high_resolution_clock::now();
   auto timeSegmentPages = duration_cast<milliseconds>(end - start).count();

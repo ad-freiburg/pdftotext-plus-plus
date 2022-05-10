@@ -1,5 +1,5 @@
 /**
- * Copyright 2021, University of Freiburg,
+ * Copyright 2022, University of Freiburg,
  * Chair of Algorithms and Data Structures.
  * Author: Claudius Korzen <korzen@cs.uni-freiburg.de>.
  *
@@ -10,51 +10,54 @@
 #include <iostream>
 #include <vector>
 
+#include "./utils/Utils.h"
 #include "./PdfDocument.h"
 #include "./XYCut.h"
+
 
 // _________________________________________________________________________________________________
 void xyCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc chooseXCutsFunc,
     const ChooseCutsFunc chooseYCutsFunc, double minXCutGapWidth, double minYCutGapHeight,
-    bool errorTolerant,
-    std::vector<std::vector<PdfElement*>>* resultGroups, std::vector<Cut*>* chosenCuts) {
+    int maxNumCuttingElements, bool silent, std::vector<std::vector<PdfElement*>>* resultGroups,
+    std::vector<Cut*>* chosenCuts) {
   // Do nothing if no elements are given.
-  if (elements.size() == 0) {
+  if (elements.empty()) {
     return;
   }
 
-  // Check if the elements can be separated into groups by vertical cuts (= x-cuts).
+  // Check if the elements can be separated into groups by one or more vertical cuts (= x-cuts).
   std::vector<std::vector<PdfElement*>> xGroups;
-  bool ok = xCut(elements, chooseXCutsFunc, minXCutGapWidth, errorTolerant, &xGroups, chosenCuts);
+  bool ok = xCut(elements, chooseXCutsFunc, minXCutGapWidth, maxNumCuttingElements, silent,
+      &xGroups, chosenCuts);
 
   if (!ok) {
     // The elements could *not* be separated by a vertical cut.
-    // Try to separate the elements by horizontal cuts (= y-cuts).
+    // Try to separate the elements by one ore more horizontal cuts (= y-cuts).
     std::vector<std::vector<PdfElement*>> yGroups;
-    ok = yCut(elements, chooseYCutsFunc, minYCutGapHeight, &yGroups, chosenCuts);
+    ok = yCut(elements, chooseYCutsFunc, minYCutGapHeight, silent, &yGroups, chosenCuts);
 
     if (!ok) {
-      // The blocks could also *not* be separated by a horizontal cut.
-      // So add the group of elements to the result.
+      // The elements could also *not* be separated by a horizontal cut.
+      // So add the group of elements to the result list.
       resultGroups->push_back(elements);
       return;
     }
 
-    // The elements could be separated by one or more horizontal cuts.
-    // Try to further separate each "Y-group" recursively by vertical and horizontal cuts.
+    // The elements could be separated by one or more y-cuts.
+    // Try to further separate each sub-group recursively by vertical and horizontal cuts.
     for (const auto& yGroup : yGroups) {
       xyCut(yGroup, chooseXCutsFunc, chooseYCutsFunc, minXCutGapWidth, minYCutGapHeight,
-          errorTolerant, resultGroups, chosenCuts);
+          maxNumCuttingElements, silent, resultGroups, chosenCuts);
     }
 
     return;
   }
 
-  // The elements could be separated by one or more vertical cuts.
-  // Now try to separate each "X-group" by horizontal cuts (= y-cuts).
+  // The elements could be separated by one or more x-cuts.
+  // Now try to separate each group by y-cuts.
   for (const auto& xGroup : xGroups) {
     std::vector<std::vector<PdfElement*>> yGroups;
-    ok = yCut(xGroup, chooseYCutsFunc, minYCutGapHeight, &yGroups, chosenCuts);
+    ok = yCut(xGroup, chooseYCutsFunc, minYCutGapHeight, silent, &yGroups, chosenCuts);
 
     if (!ok) {
       // The group could *not* be further separated by a horizontal cut.
@@ -67,17 +70,17 @@ void xyCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc choose
     // Try to further separate each group recursively by vertical and horizontal cuts.
     for (const auto& yGroup : yGroups) {
       xyCut(yGroup, chooseXCutsFunc, chooseYCutsFunc, minXCutGapWidth, minYCutGapHeight,
-          errorTolerant, resultGroups, chosenCuts);
+          maxNumCuttingElements, silent, resultGroups, chosenCuts);
     }
   }
 }
 
 // _________________________________________________________________________________________________
 bool xCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc chooseCutsFunc,
-    double minGapWidth, bool errorTolerant, std::vector<std::vector<PdfElement*>>* resultGroups,
-    std::vector<Cut*>* resultCuts) {
+    double minGapWidth, int maxNumCuttingElements, bool silent,
+    std::vector<std::vector<PdfElement*>>* resultGroups, std::vector<Cut*>* resultCuts) {
   // Do nothing if no elements are given.
-  if (elements.size() == 0) {
+  if (elements.empty()) {
     return false;
   }
 
@@ -87,12 +90,7 @@ bool xCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc chooseC
     return e1->position->leftX < e2->position->leftX;
   });
 
-  PdfElement* elementLargestMaxX = sElements[0];
-  PdfElement* elementSecondLargestMaxX = sElements[0];
-
-  std::vector<size_t> gapPositions;
-  std::vector<PdfElement*> gapStartElements;
-
+  // Compute minY and maxY of the bounding box around the elements.
   double elementsMinY = std::numeric_limits<double>::max();
   double elementsMaxY = std::numeric_limits<double>::min();
   for (const auto* element : sElements) {
@@ -100,51 +98,96 @@ bool xCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc chooseC
     elementsMaxY = std::max(elementsMaxY, element->position->lowerY);
   }
 
-  // Iterate the elements in sorted order (= from left to right) and find all gaps with width > 0.
+  std::vector<Cut*> cuts;
+  PdfElement* elementLargestRightX = sElements[0];
+  PdfElement* elementSecondLargestRightX = sElements[0];
+
+  // Iterate the elements in sorted order (= from left to right) and find all gaps with
+  // width > minGapWidth.
+  int numGroupElements = 0;
   for (size_t pos = 1; pos < sElements.size(); pos++) {
     PdfElement* element = sElements[pos];
 
-    if (element->position->leftX - elementLargestMaxX->position->rightX > minGapWidth) {
-      gapPositions.push_back(pos);
-      gapStartElements.push_back(elementLargestMaxX);
-      elementLargestMaxX = sElements[pos];
-      elementSecondLargestMaxX = sElements[pos];
-    } else if (errorTolerant && elementsMaxY - elementsMinY > 300) {  // TODO
-      if (element->position->leftX - elementSecondLargestMaxX->position->rightX > minGapWidth) {
-        gapPositions.push_back(pos);
-        gapStartElements.push_back(elementLargestMaxX);
-        elementLargestMaxX = sElements[pos];
-        elementSecondLargestMaxX = sElements[pos];
+    // TODO: Currently, there is no difference in setting maxNumCuttingElements to 1,
+    double gapWidth = element->position->leftX - elementLargestRightX->position->rightX;
+    double gapX = elementLargestRightX->position->rightX + ((gapWidth) / 2.0);
+
+    if (gapWidth >= minGapWidth) {
+      Cut* cut = new Cut(CutDir::X);
+      cut->id = createRandomString(3);
+      cut->posInElements = pos;
+      cut->elementBefore = elementLargestRightX;
+      cut->elementAfter = element;
+      cut->pageNum = element->position->pageNum;
+      cut->x1 = gapX;
+      cut->y1 = elementsMinY;
+      cut->x2 = gapX;
+      cut->y2 = elementsMaxY;
+      cut->gapWidth = gapWidth;
+      cut->gapHeight = elementsMaxY - elementsMinY;
+
+      cuts.push_back(cut);
+      numGroupElements = 0;
+    } else {
+      // Error-Tolerant.
+      std::vector<PdfElement*> cuttingElements;
+      if (maxNumCuttingElements > 0 && numGroupElements > maxNumCuttingElements) {
+        gapWidth = element->position->leftX - elementSecondLargestRightX->position->rightX;
+        gapX = elementSecondLargestRightX->position->rightX + ((gapWidth) / 2.0);
+
+        if (gapWidth >= minGapWidth) {
+          Cut* cut = new Cut(CutDir::X);
+          cut->id = createRandomString(3);
+          cut->posInElements = pos;
+          cut->elementBefore = elementSecondLargestRightX;
+          cut->elementAfter = element;
+          cut->cuttingElements.push_back(elementLargestRightX);
+          cut->pageNum = element->position->pageNum;
+          cut->x1 = gapX;
+          cut->y1 = elementsMinY;
+          cut->x2 = gapX;
+          cut->y2 = elementsMaxY;
+          cut->gapWidth = gapWidth;
+          cut->gapHeight = elementsMaxY - elementsMinY;
+
+          cuts.push_back(cut);
+          numGroupElements = 0;
+        }
       }
     }
 
-    if (element->position->rightX > elementLargestMaxX->position->rightX) {
-      elementSecondLargestMaxX = elementLargestMaxX;
-      elementLargestMaxX = element;
-    } else if (element->position->rightX > elementSecondLargestMaxX->position->rightX) {
-      elementSecondLargestMaxX = element;
+    if (element->position->rightX > elementLargestRightX->position->rightX) {
+      elementSecondLargestRightX = elementLargestRightX;
+      elementLargestRightX = element;
+    } else if (element->position->rightX > elementSecondLargestRightX->position->rightX) {
+      elementSecondLargestRightX = element;
     }
+
+    numGroupElements++;
   }
 
-  std::vector<size_t> cutIndices;
-  chooseCutsFunc(sElements, gapPositions, gapStartElements, &cutIndices);
+  // Choose the valid cuts.
+  chooseCutsFunc(sElements, cuts, silent);
 
   size_t prevCutPos = 0;
-  for (size_t cutIndex : cutIndices) {
-    size_t cutPos = gapPositions[cutIndex];
-    PdfElement* cutStartElement = gapStartElements[cutIndex];
+  bool hasChosenCut = false;
+  for (auto* cut : cuts) {
+    size_t cutPos = cut->posInElements;
+
+    if (resultCuts) {
+      resultCuts->push_back(cut);
+    }
+
+    // Skip the cut if it was not chosen.
+    if (!cut->isChosen) {
+      continue;
+    }
 
     if (resultGroups) {
       std::vector<PdfElement*> group(sElements.begin() + prevCutPos, sElements.begin() + cutPos);
       resultGroups->push_back(group);
     }
-
-    if (resultCuts) {
-      int pageNum = elements[0]->position->pageNum;
-      double x = cutStartElement->position->rightX + ((sElements[cutPos]->position->leftX - cutStartElement->position->rightX) / 2);
-      resultCuts->push_back(new Cut(CutDir::X, pageNum, x, elementsMinY, x, elementsMaxY));
-    }
-
+    hasChosenCut = true;
     prevCutPos = cutPos;
   }
 
@@ -154,15 +197,15 @@ bool xCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc chooseC
     resultGroups->push_back(group);
   }
 
-  return cutIndices.size() > 0;
+  return hasChosenCut;
 }
 
 // _________________________________________________________________________________________________
 bool yCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc chooseCutsFunc,
-    double minGapHeight, std::vector<std::vector<PdfElement*>>* resultGroups,
+    double minGapHeight, bool silent, std::vector<std::vector<PdfElement*>>* resultGroups,
     std::vector<Cut*>* resultCuts) {
   // Do nothing if no elements are given.
-  if (elements.size() == 0) {
+  if (elements.empty()) {
     return false;
   }
 
@@ -172,28 +215,7 @@ bool yCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc chooseC
     return e1->position->upperY < e2->position->upperY;
   });
 
-  PdfElement* elementLargestMaxY = sElements[0];
-  std::vector<size_t> gapPositions;
-  std::vector<PdfElement*> gapStartElements;
-
-  // Iterate the elements in sorted order (= from top to bottom) and find all gaps with width > 0.
-  for (size_t pos = 1; pos < sElements.size(); pos++) {
-    PdfElement* element = sElements[pos];
-
-    double gapHeight = element->position->upperY - elementLargestMaxY->position->lowerY;
-    if (gapHeight > minGapHeight) {
-      gapPositions.push_back(pos);
-      gapStartElements.push_back(elementLargestMaxY);
-    }
-
-    if (element->position->lowerY > elementLargestMaxY->position->lowerY) {
-      elementLargestMaxY = element;
-    }
-  }
-
-  std::vector<size_t> cutIndices;
-  chooseCutsFunc(sElements, gapPositions, gapStartElements, &cutIndices);
-
+  // Compute minY and maxY of the bounding box around the elements.
   double elementsMinX = std::numeric_limits<double>::max();
   double elementsMaxX = std::numeric_limits<double>::min();
   for (const auto* element : sElements) {
@@ -201,23 +223,60 @@ bool yCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc chooseC
     elementsMaxX = std::max(elementsMaxX, element->position->rightX);
   }
 
+  std::vector<Cut*> cuts;
+  PdfElement* elementLargestLowerY = sElements[0];
+
+  // Iterate the elements in sorted order (= from top to bottom) and find all gaps with
+  // height > minGapHeight.
+  for (size_t pos = 1; pos < sElements.size(); pos++) {
+    PdfElement* element = sElements[pos];
+
+    double gapHeight = element->position->upperY - elementLargestLowerY->position->lowerY;
+    double gapY = elementLargestLowerY->position->lowerY + ((gapHeight) / 2.0);
+
+    if (gapHeight > minGapHeight) {
+      Cut* cut = new Cut(CutDir::Y);
+      cut->id = createRandomString(3);
+      cut->posInElements = pos;
+      cut->elementBefore = elementLargestLowerY;
+      cut->elementAfter = element;
+      cut->pageNum = element->position->pageNum;
+      cut->x1 = elementsMinX;
+      cut->y1 = gapY;
+      cut->x2 = elementsMaxX;
+      cut->y2 = gapY;
+      cut->gapWidth = elementsMaxX - elementsMinX;
+      cut->gapHeight = gapHeight;
+      cuts.push_back(cut);
+    }
+
+    if (element->position->lowerY > elementLargestLowerY->position->lowerY) {
+      elementLargestLowerY = element;
+    }
+  }
+
+  // Choose the valid cuts.
+  chooseCutsFunc(sElements, cuts, silent);
+
   size_t prevCutPos = 0;
-  for (size_t cutIndex : cutIndices) {
-    size_t cutPos = gapPositions[cutIndex];
-    PdfElement* cutStartElement = gapStartElements[cutIndex];
+  bool hasChosenCut = false;
+  for (auto* cut : cuts) {
+    size_t cutPos = cut->posInElements;
+
+    if (resultCuts) {
+      resultCuts->push_back(cut);
+    }
+
+    // Skip the cut if it was not chosen.
+    if (!cut->isChosen) {
+      continue;
+    }
 
     if (resultGroups) {
       std::vector<PdfElement*> group(sElements.begin() + prevCutPos, sElements.begin() + cutPos);
       resultGroups->push_back(group);
     }
-
-    if (resultCuts) {
-      int pageNum = elements[0]->position->pageNum;
-      double y = cutStartElement->position->lowerY +
-          ((sElements[cutPos]->position->upperY - cutStartElement->position->lowerY) / 2);
-      resultCuts->push_back(new Cut(CutDir::Y, pageNum, elementsMinX, y, elementsMaxX, y));
-    }
-
+    hasChosenCut = true;
     prevCutPos = cutPos;
   }
 
@@ -227,5 +286,5 @@ bool yCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc chooseC
     resultGroups->push_back(group);
   }
 
-  return cutIndices.size() > 0;
+  return hasChosenCut;
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021, University of Freiburg,
+ * Copyright 2022, University of Freiburg,
  * Chair of Algorithms and Data Structures.
  * Author: Claudius Korzen <korzen@cs.uni-freiburg.de>.
  *
@@ -36,9 +36,8 @@
  *   True if the position between `closestElementAlreadySeen` and `elements[cutPos]` denotes a
  *   valid cut position, false otherwise.
  */
-typedef std::function<void(const std::vector<PdfElement*>& elements, const std::vector<size_t>&
-    gapPositions, const std::vector<PdfElement*>& gapStartElements, std::vector<size_t>*
-    cutIndices)> ChooseCutsFunc;
+typedef std::function<void(const std::vector<PdfElement*>& elements, std::vector<Cut*>& cuts,
+    bool silent)> ChooseCutsFunc;
 
 // =================================================================================================
 
@@ -73,7 +72,7 @@ typedef std::function<void(const std::vector<PdfElement*>& elements, const std::
  */
 void xyCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc chooseXCutsFunc,
   const ChooseCutsFunc chooseYCutsFunc, double minXCutGapWidth, double minYCutGapHeight,
-  bool errorTolerant,
+  int maxNumCuttingElements, bool silent,
   std::vector<std::vector<PdfElement*>>* resultGroups, std::vector<Cut*>* resultCuts = nullptr);
 
 /**
@@ -106,7 +105,7 @@ void xyCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc choose
  * @return True, if the elements were divided into two or more groups; false otherwise.
  */
 bool xCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc chooseCutsFunc,
-  double minGapWidth, bool errorTolerant,
+  double minGapWidth, int maxNumCuttingElements, bool silent,
   std::vector<std::vector<PdfElement*>>* resultGroups = nullptr,
   std::vector<Cut*>* resultCuts = nullptr);
 
@@ -140,7 +139,8 @@ bool xCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc chooseC
  * @return True, if the elements were divided into two or more groups; false otherwise.
  */
 bool yCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc chooseCutsFunc,
-  double minGapHeight, std::vector<std::vector<PdfElement*>>* resultGroups = nullptr,
+  double minGapHeight, bool silent,
+  std::vector<std::vector<PdfElement*>>* resultGroups = nullptr,
   std::vector<Cut*>* resultCuts = nullptr);
 
 #endif  // XYCUT_H_

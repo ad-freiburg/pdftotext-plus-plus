@@ -569,6 +569,7 @@ void TextOutputDev::stroke(GfxState* state) {
       fig->position->lowerY = std::max(fig->position->lowerY, shape->position->lowerY);
       fig->shapes.push_back(shape);
       _log->debug(_p) << "\033[1mAppended shape to figure " << fig->id << ".\033[0m" << std::endl;
+      _log->debug(_p) << fig->position->toString() << std::endl;
       return;
     }
   }
@@ -608,66 +609,116 @@ void TextOutputDev::fill(GfxState* state) {
 }
 
 // _________________________________________________________________________________________________
-// void TextOutputDev::drawImage(GfxState* state) {
-//   // Get the current clip box (= a rectangle defining the visible part of the image; parts of the
-//   // image not falling into this rectangle is not visible to the reader of the PDF).
-//   double clipLeftX, clipUpperY, clipRightX, clipLowerY;
-//   state->getClipBBox(&clipLeftX, &clipUpperY, &clipRightX, &clipLowerY);
+void TextOutputDev::drawImageMask(GfxState* state, Object* ref, Stream* str, int width, int height,
+    bool invert, bool interpolate, bool inlineImg) {
+  drawGraphic(state);
+}
 
-//   // Compute the bounding box of the image from the ctm.
-//   const double* ctm = state->getCTM();
-//   double leftX = ctm[4];  // ctm[4] = translateX
-//   double upperY = ctm[5];  // ctm[5] = translateY
-//   double rightX = leftX + ctm[0];  // ctm[0] = scaleX
-//   double lowerY = upperY + ctm[3];  // ctm[3] = scaleY
+// _________________________________________________________________________________________________
+void TextOutputDev::drawImage(GfxState* state, Object* ref, Stream* str, int width, int height,
+      GfxImageColorMap* colorMap, bool interpolate, const int* maskColors, bool inlineImg) {
+  drawGraphic(state);
+}
 
-//   // Ignore the image if it lies outside of the clip box.
-//   if (leftX >= clipRightX || upperY >= clipLowerY || rightX <= clipLeftX || lowerY <= clipUpperY) {
-//     return;
-//   }
+// _________________________________________________________________________________________________
+void TextOutputDev::drawMaskedImage(GfxState* state, Object* ref, Stream* str, int width, int height,
+    GfxImageColorMap* colorMap, bool interpolate, Stream* maskStr, int maskWidth, int maskHeight,
+    bool maskInvert, bool maskInterpolate) {
+  drawGraphic(state);
+}
 
-//   // Handle each image as a PdfGraphic.
-//   PdfGraphic* graphic = new PdfGraphic();
-//   graphic->id = createRandomString(8, "graphic-");
-//   graphic->position->pageNum = _page->pageNum;
-//   graphic->position->leftX = leftX;
-//   graphic->position->upperY = upperY;
-//   graphic->position->rightX = rightX;
-//   graphic->position->lowerY = lowerY;
-//   graphic->rank = _numElements++;
+// _________________________________________________________________________________________________
+void TextOutputDev::drawSoftMaskedImage(GfxState* state, Object* ref, Stream* str, int width,
+    int height, GfxImageColorMap* colorMap, bool interpolate, Stream* maskStr, int maskWidth,
+    int maskHeight, GfxImageColorMap* maskColorMap, bool maskInterpolate) {
+  drawGraphic(state);
+}
 
-//   if (clipLeftX == _page->clipLeftX && clipUpperY == _page->clipUpperY
-//         && clipRightX == _page->clipRightX && clipLowerY == _page->clipLowerY) {
-//     _page->graphics.push_back(graphic);
-//     return;
-//   }
+// _________________________________________________________________________________________________
+void TextOutputDev::drawGraphic(GfxState* state) {
+  _log->debug(_p) << "=======================================" << std::endl;
+  _log->debug(_p) << "\033[1mEvent: DRAW GRAPHIC\033[0m " << std::endl;
 
-//   for (auto* figure : _page->figures) {
-//     if (clipLeftX == figure->clipLeftX && clipUpperY == figure->clipUpperY
-//         && clipRightX == figure->clipRightX && clipLowerY == figure->clipLowerY) {
-//       figure->graphics.push_back(graphic);
-//       figure->position->leftX = std::min(figure->position->leftX, graphic->position->leftX);
-//       figure->position->upperY = std::min(figure->position->upperY, graphic->position->upperY);
-//       figure->position->rightX = std::max(figure->position->rightX, graphic->position->rightX);
-//       figure->position->lowerY = std::max(figure->position->lowerY, graphic->position->lowerY);
-//       return;
-//     }
-//   }
+  // Get the current clip box (= a rectangle defining the visible part of the image; parts of the
+  // image not falling into this rectangle is not visible to the reader of the PDF).
+  double clipLeftX, clipUpperY, clipRightX, clipLowerY;
+  state->getClipBBox(&clipLeftX, &clipUpperY, &clipRightX, &clipLowerY);
 
-//   // Create new figure.
-//   PdfFigure* figure = new PdfFigure();
-//   figure->clipLeftX = clipLeftX;
-//   figure->clipUpperY = clipUpperY;
-//   figure->clipRightX = clipRightX;
-//   figure->clipLowerY = clipLowerY;
-//   figure->position->pageNum = _page->pageNum;
-//   figure->position->leftX = graphic->position->leftX;
-//   figure->position->upperY = graphic->position->upperY;
-//   figure->position->rightX = graphic->position->rightX;
-//   figure->position->lowerY = graphic->position->lowerY;
-//   figure->graphics.push_back(graphic);
-//   _page->figures.push_back(figure);
-// }
+  // Compute the bounding box of the image from the ctm.
+  const double* ctm = state->getCTM();
+  double leftX = ctm[4];  // ctm[4] = translateX
+  double upperY = ctm[5];  // ctm[5] = translateY
+  double rightX = leftX + ctm[0];  // ctm[0] = scaleX
+  double lowerY = upperY + ctm[3];  // ctm[3] = scaleY
+
+  // Handle each image as a PdfGraphic.
+  PdfGraphic* graphic = new PdfGraphic();
+  graphic->id = createRandomString(8, "graphic-");
+  graphic->position->pageNum = _page->pageNum;
+  graphic->position->leftX = std::max(std::min(leftX, rightX), clipLeftX);
+  graphic->position->upperY = std::max(std::min(upperY, lowerY), clipUpperY);
+  graphic->position->rightX = std::min(std::max(leftX, rightX), clipRightX);
+  graphic->position->lowerY = std::min(std::max(upperY, lowerY), clipLowerY);
+  graphic->rank = _numElements++;
+
+  _log->debug(_p) << " └─ graphic.id: " << graphic->id << std::endl;
+  _log->debug(_p) << " └─ graphic.pageNum: " << graphic->position->pageNum << std::endl;
+  _log->debug(_p) << " └─ graphic.leftX: " << graphic->position->leftX << std::endl;
+  _log->debug(_p) << " └─ graphic.upperY: " << graphic->position->upperY << std::endl;
+  _log->debug(_p) << " └─ graphic.rightX: " << graphic->position->rightX << std::endl;
+  _log->debug(_p) << " └─ graphic.lowerY: " << graphic->position->lowerY << std::endl;
+  _log->debug(_p) << " └─ graphic.rank: " << graphic->rank << std::endl;
+  _log->debug(_p) << " └─ clipBox: leftX: " << clipLeftX << "; upperY: " << clipUpperY
+      << "; rightX: " << clipRightX << "; lowerY: " << clipLowerY << std::endl;
+
+  if (clipLeftX == _page->clipLeftX && clipUpperY == _page->clipUpperY
+        && clipRightX == _page->clipRightX && clipLowerY == _page->clipLowerY) {
+    _page->graphics.push_back(graphic);
+    _log->debug(_p) << "\033[1mAppended graphic to page.\033[0m" << std::endl;
+    return;
+  }
+
+  for (auto* fig : _page->figures) {
+    if (clipLeftX == fig->clipLeftX && clipUpperY == fig->clipUpperY
+        && clipRightX == fig->clipRightX && clipLowerY == fig->clipLowerY) {
+      fig->graphics.push_back(graphic);
+      fig->position->leftX = std::min(fig->position->leftX, graphic->position->leftX);
+      fig->position->upperY = std::min(fig->position->upperY, graphic->position->upperY);
+      fig->position->rightX = std::max(fig->position->rightX, graphic->position->rightX);
+      fig->position->lowerY = std::max(fig->position->lowerY, graphic->position->lowerY);
+      _log->debug(_p) << "\033[1mAppended graphic to figure " << fig->id << ".\033[0m" << std::endl;
+      return;
+    }
+  }
+
+  // Create new figure.
+  PdfFigure* figure = new PdfFigure();
+  figure->id = createRandomString(8, "fig-");
+  figure->clipLeftX = clipLeftX;
+  figure->clipUpperY = clipUpperY;
+  figure->clipRightX = clipRightX;
+  figure->clipLowerY = clipLowerY;
+  figure->position->pageNum = _page->pageNum;
+  figure->position->leftX = graphic->position->leftX;
+  figure->position->upperY = graphic->position->upperY;
+  figure->position->rightX = graphic->position->rightX;
+  figure->position->lowerY = graphic->position->lowerY;
+  figure->graphics.push_back(graphic);
+
+  _log->debug(_p) << "\033[1mAppended graphic to a new figure.\033[0m" << std::endl;
+  _log->debug(_p) << " └─ figure.id: " << figure->id << std::endl;
+  _log->debug(_p) << " └─ figure.clipLeftX: " << figure->clipLeftX << std::endl;
+  _log->debug(_p) << " └─ figure.clipUpperY: " << figure->clipUpperY << std::endl;
+  _log->debug(_p) << " └─ figure.clipRightX: " << figure->clipRightX << std::endl;
+  _log->debug(_p) << " └─ figure.clipLowerY: " << figure->clipLowerY << std::endl;
+  _log->debug(_p) << " └─ figure.pageNum: " << figure->position->pageNum << std::endl;
+  _log->debug(_p) << " └─ figure.leftX: " << figure->position->leftX << std::endl;
+  _log->debug(_p) << " └─ figure.upperY: " << figure->position->upperY << std::endl;
+  _log->debug(_p) << " └─ figure.rightX: " << figure->position->rightX << std::endl;
+  _log->debug(_p) << " └─ figure.lowerY: " << figure->position->lowerY << std::endl;
+
+  _page->figures.push_back(figure);
+}
 
 // _________________________________________________________________________________________________
 void TextOutputDev::concat(const double* m1, const double* m2, double* res) const {

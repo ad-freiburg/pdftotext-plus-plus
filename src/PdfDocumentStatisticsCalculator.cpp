@@ -24,9 +24,9 @@ PdfDocumentStatisticsCalculator::~PdfDocumentStatisticsCalculator() = default;
 
 // _________________________________________________________________________________________________
 void PdfDocumentStatisticsCalculator::computeGlyphStatistics() const {
-  // A mapping of font sizes to their frequencies, for computing the most common font size.
+  // A mapping of font sizes to their frequencies, for computing the most frequent font size.
   std::unordered_map<double, int> fontSizeFreqs;
-  // A mapping of font names to their frequencies, for computing the most common font name.
+  // A mapping of font names to their frequencies, for computing the most frequent font name.
   std::unordered_map<std::string, int> fontNameFreqs;
 
   // The sum of glyph widths and heights, for computing the average glyph width/height.
@@ -82,8 +82,13 @@ void PdfDocumentStatisticsCalculator::computeGlyphStatistics() const {
 
 // _________________________________________________________________________________________________
 void PdfDocumentStatisticsCalculator::computeWordStatistics() const {
-  // A mapping of line distances to their frequencies, for computing the most freq. line distance.
-  std::unordered_map<double, int> lineDistanceFreqs;
+  std::unordered_map<double, int> xDistanceFreqs;
+  // A mapping of vertical word distances, for computing the most frequent vertical word distance.
+  // This is used to estimate the most frequent line distance, needed to define a minimum gap
+  // height on page segmentation (text line detection comes after page segmentation, that's why
+  // we estimate the the most frequent line distance based on words instead of computing it
+  // exactly from text lines).
+  std::unordered_map<double, int> yDistanceFreqs;
   // A mapping of word heights to their frequencies, for computing the most freq. word height.
   std::unordered_map<double, int> wordHeightFreqs;
 
@@ -97,33 +102,27 @@ void PdfDocumentStatisticsCalculator::computeWordStatistics() const {
       PdfWord* currWord = page->words[i];
 
       if (prevWord) {
-        // Compute the vertical overlap between `prevWord` and `currWord`.
-        double minMaxY = std::min(prevWord->position->lowerY, currWord->position->lowerY);
-        double maxMinY = std::max(prevWord->position->upperY, currWord->position->upperY);
-        double verticalOverlap = std::max(0.0, minMaxY - maxMinY);
-
-        // Ignore all word pairs that overlap vertically (that are in the same text line). In some
-        // PDFs, two words can slightly overlap even when they are from different text lines, so
-        // allow a small tolerance.
-        double minHeight = std::min(prevWord->position->getHeight(), currWord->position->getHeight());
-        if (verticalOverlap > 0.2 * minHeight) {
-          continue;
-        }
-
         // Ignore all word pairs that have a different font size than the most frequent font size.
         if ((fabs(prevWord->fontSize - _doc->mostFreqFontSize) > 0.01) ||
             (fabs(currWord->fontSize - _doc->mostFreqFontSize) > 0.01)) {
           continue;
         }
 
-        // Compute the vertical distance between the base lines of the two words with a precision
-        // of one decimal. Add the distance to `lineDistanceFreqs`. Note that the y-coordinates
-        // of the base lines of the words are given by the rightX values, since the origin of the
-        // coordinate system is the upper left of the page.
-        double distance = std::max(0.0, currWord->position->lowerY - prevWord->position->lowerY);
-        distance = static_cast<double>(static_cast<int>(distance * 10.)) / 10.;
+        std::pair<double, double> yOverlapRatios = computeYOverlapRatios(prevWord, currWord);
+        double maxYOverlap = std::max(yOverlapRatios.first, yOverlapRatios.second);
 
-        lineDistanceFreqs[distance]++;
+        // Count the horizontal distance.
+        if (maxYOverlap > 0.5) {
+          double xd = currWord->position->getRotLeftX() - prevWord->position->getRotRightX();
+          xd = round(xd, 1);
+          xDistanceFreqs[xd]++;
+        }
+
+        if (maxYOverlap == 0) {
+          double yd = currWord->position->getRotUpperY() - prevWord->position->getRotLowerY();
+          yd = round(yd, 1);
+          yDistanceFreqs[yd]++;
+        }
       }
 
       // Count the word heights, for computing the most frequent word height.
@@ -144,16 +143,27 @@ void PdfDocumentStatisticsCalculator::computeWordStatistics() const {
   }
   _doc->mostFreqWordHeight = mostFreqWordHeight;
 
-  // Compute the most frequent line distance.
-  double mostFreqLineDistance = 0;
-  int mostFreqLineDistanceCount = 0;
-  for (const auto& pair : lineDistanceFreqs) {
-    if (pair.second > mostFreqLineDistanceCount) {
-      mostFreqLineDistance = pair.first;
-      mostFreqLineDistanceCount = pair.second;
+  // Compute the most frequent horizontal distance.
+  double mostFreqXDistance = 0;
+  int mostFreqXDistanceCount = 0;
+  for (const auto& pair : xDistanceFreqs) {
+    if (pair.second > mostFreqXDistanceCount) {
+      mostFreqXDistance = pair.first;
+      mostFreqXDistanceCount = pair.second;
     }
   }
-  _doc->mostFreqEstimatedLineDistance = mostFreqLineDistance;
+  _doc->mostFreqWordDistance = mostFreqXDistance;
+
+  // Compute the most frequent vertical distance.
+  double mostFreqYDistance = 0;
+  int mostFreqYDistanceCount = 0;
+  for (const auto& pair : yDistanceFreqs) {
+    if (pair.second > mostFreqYDistanceCount) {
+      mostFreqYDistance = pair.first;
+      mostFreqYDistanceCount = pair.second;
+    }
+  }
+  _doc->mostFreqEstimatedLineDistance = mostFreqYDistance;
 }
 
 // _________________________________________________________________________________________________

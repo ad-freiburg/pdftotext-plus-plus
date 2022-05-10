@@ -78,7 +78,7 @@ size_t utf8_length(const std::string& str);
  *
  * @return The created string.
  */
-std::string createRandomString(size_t len, const std::string& prefix);
+std::string createRandomString(size_t len, const std::string& prefix="");
 
 // =================================================================================================
 

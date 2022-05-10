@@ -48,6 +48,9 @@ static GooString cutIndexAppearance("/Helv 7 Tf 1 1 1 rg");
 /** The radius of a square containing a cut index. */
 static double cutSquareRadius = 5;
 
+/** The font appearance of a cut id. */
+static GooString cutIdAppearance("/Helv 3 Tf .9 .9 .9 rg");
+
 // =================================================================================================
 
 // _________________________________________________________________________________________________
@@ -303,6 +306,31 @@ void PdfDocumentVisualizer::drawPageSegmentBoundingBoxes(
     const std::vector<PdfPageSegment*>& segments, const ColorScheme& cs) {
   for (const auto* segment : segments) {
     drawBoundingBox(segment, cs);
+
+    // TODO: Delete this some time.
+    const ColorScheme& cos = red;
+    Page* pdfPage = _pdfDoc->getPage(segment->position->pageNum);
+    Gfx* gfx = _gfxs[segment->position->pageNum];
+    double leftX = segment->trimLeftX;
+    double upperY = pdfPage->getMediaHeight() - segment->trimLowerY;  // make it relative to the lower left.
+    double rightX = segment->trimRightX;
+    double lowerY = pdfPage->getMediaHeight() - segment->trimUpperY;  // make it relative to the lower left.
+    // Vertical/horizontal lines can have a width/height of zero, in which case they are not
+    // visible in the visualization. So ensure a minimal width/height of 1.
+    if (fabs(leftX - rightX) < 1) { rightX += 1; }
+    if (fabs(upperY - lowerY) < 1) { lowerY += 1; }
+    PDFRectangle rect(leftX, upperY, rightX, lowerY);
+
+    // Create the bounding box.
+    AnnotGeometry* annot = new AnnotGeometry(_pdfDoc.get(), &rect, Annot::AnnotSubtype::typeSquare);
+
+    // Define the color of the bounding box.
+    std::unique_ptr<AnnotColor> color = std::make_unique<AnnotColor>(cos.primaryColor);
+    annot->setColor(std::move(color));
+
+    // Draw the bounding box.
+    pdfPage->addAnnot(annot);
+    annot->draw(gfx, false);
   }
 }
 
@@ -470,9 +498,12 @@ void PdfDocumentVisualizer::drawReadingOrderIndexCircle(Page* page, Gfx* gfx, do
 
 // _________________________________________________________________________________________________
 void PdfDocumentVisualizer::drawCuts(const std::vector<Cut*>& cuts, const ColorScheme& cs) {
+  size_t chosenCutIndex = 0;
   // Iterate through the cuts and visualize each.
   for (size_t i = 0; i < cuts.size(); i++) {
     const auto* cut = cuts[i];
+
+    const ColorScheme& cos = cut->isChosen ? cs : gray;
 
     Page* pdfPage = _pdfDoc->getPage(cut->pageNum);
     Gfx* gfx = _gfxs[cut->pageNum];
@@ -496,60 +527,94 @@ void PdfDocumentVisualizer::drawCuts(const std::vector<Cut*>& cuts, const ColorS
     lineAnnot->setBorder(std::move(lineBorder));
 
     // Define the line color.
-    auto lineColor = std::make_unique<AnnotColor>(cs.tertiaryColor);
+    auto lineColor = std::make_unique<AnnotColor>(cos.tertiaryColor);
     lineAnnot->setColor(std::move(lineColor));
 
     // Draw the line.
     pdfPage->addAnnot(lineAnnot);
     lineAnnot->draw(gfx, false);
 
+    if (cut->isChosen) {
+      // ==========
+      // Draw a square at the beginning of the line, containing the cut index.
+
+      // Define the position of the square.
+      PDFRectangle squareRect(
+        x1 - cutSquareRadius, y1 - cutSquareRadius,
+        x1 + cutSquareRadius, y1 + cutSquareRadius);
+      AnnotGeometry* squareAnnot = new AnnotGeometry(_pdfDoc.get(), &squareRect,
+          Annot::AnnotSubtype::typeSquare);
+
+      // Define the stroking color of the square.
+
+      auto squareStrokingColor = std::make_unique<AnnotColor>(cos.secondaryColor);
+      squareAnnot->setColor(std::move(squareStrokingColor));
+
+      // Define the filling color of the square.
+      auto squareFillingColor = std::make_unique<AnnotColor>(cos.secondaryColor);
+      squareAnnot->setInteriorColor(std::move(squareFillingColor));
+
+      // Draw the square.
+      pdfPage->addAnnot(squareAnnot);
+      squareAnnot->draw(gfx, false);
+
+      // ----------
+
+      // Define the appearance of the cut index.
+      const DefaultAppearance indexAppearance(&cutIndexAppearance);
+
+      // Define the position of the cut index.
+      PDFRectangle indexRect(
+        x1 - cutSquareRadius, y1 - cutSquareRadius,
+        x1 + cutSquareRadius, y1 + cutSquareRadius * 0.6);
+      AnnotFreeText* indexAnnot = new AnnotFreeText(_pdfDoc.get(), &indexRect, indexAppearance);
+
+      // Define the text of the annot (= the how many-th chosen cut the index is).
+      GooString index(std::to_string(++chosenCutIndex));
+      indexAnnot->setContents(convertToUtf16(&index));
+      // Center the text horizontally.
+      indexAnnot->setQuadding(AnnotFreeText::AnnotFreeTextQuadding::quaddingCentered);
+
+      // Remove the default border around the cut index.
+      std::unique_ptr<AnnotBorder> indexBorder(new AnnotBorderArray());
+      indexBorder->setWidth(0);
+      indexAnnot->setBorder(std::move(indexBorder));
+
+      // Draw the cut index.
+      pdfPage->addAnnot(indexAnnot);
+      indexAnnot->draw(gfx, false);
+    }
+
     // ==========
-    // Draw a square at the beginning of the line, containing the cut index.
+    // Draw the id of the cut.
 
-    // Define the position of the square.
-    PDFRectangle squareRect(
-      x1 - cutSquareRadius, y1 - cutSquareRadius,
-      x1 + cutSquareRadius, y1 + cutSquareRadius);
-    AnnotGeometry* squareAnnot = new AnnotGeometry(_pdfDoc.get(), &squareRect,
-        Annot::AnnotSubtype::typeSquare);
+    // Define the appearance of the id.
+    const DefaultAppearance idAppearance(&cutIdAppearance);
 
-    // Define the stroking color of the square.
-    auto squareStrokingColor = std::make_unique<AnnotColor>(cs.secondaryColor);
-    squareAnnot->setColor(std::move(squareStrokingColor));
+    // Define the position of the id.
+    double rectWidth = 30;
+    double rectHeight = 15;
+    double rectMinX = cut->dir == CutDir::X ? x2 - (rectWidth / 2.0) : x2 - rectWidth;
+    double rectMinY = cut->dir == CutDir::X ? y2 - rectHeight : y2;
+    double rectMaxX = rectMinX + rectWidth;
+    double rectMaxY = rectMinY + rectHeight;
+    PDFRectangle idRect(rectMinX, rectMinY, rectMaxX, rectMaxY);
+    AnnotFreeText* idAnnot = new AnnotFreeText(_pdfDoc.get(), &idRect, idAppearance);
 
-    // Define the filling color of the square.
-    auto squareFillingColor = std::make_unique<AnnotColor>(cs.secondaryColor);
-    squareAnnot->setInteriorColor(std::move(squareFillingColor));
-
-    // Draw the square.
-    pdfPage->addAnnot(squareAnnot);
-    squareAnnot->draw(gfx, false);
-
-    // ----------
-
-    // Define the appearance of the cut index.
-    const DefaultAppearance indexAppearance(&cutIndexAppearance);
-
-    // Define the position of the cut index.
-    PDFRectangle indexRect(
-      x1 - cutSquareRadius, y1 - cutSquareRadius,
-      x1 + cutSquareRadius, y1 + cutSquareRadius * 0.6);
-    AnnotFreeText* indexAnnot = new AnnotFreeText(_pdfDoc.get(), &indexRect, indexAppearance);
-
-    // Define the text of the annot (= the cut index).
-    GooString index(std::to_string(i + 1));
-    indexAnnot->setContents(convertToUtf16(&index));
+    // Define the text of the annot (= the id).
+    GooString id(cut->id);
+    idAnnot->setContents(convertToUtf16(&id));
     // Center the text horizontally.
-    indexAnnot->setQuadding(AnnotFreeText::AnnotFreeTextQuadding::quaddingCentered);
+    idAnnot->setQuadding(AnnotFreeText::AnnotFreeTextQuadding::quaddingCentered);
 
-    // Remove the default border around the cut index.
-    std::unique_ptr<AnnotBorder> indexBorder(new AnnotBorderArray());
-    indexBorder->setWidth(0);
-    indexAnnot->setBorder(std::move(indexBorder));
+    // Remove the default border around the cut id.
+    // std::unique_ptr<AnnotBorder> idBorder(new AnnotBorderArray());
+    // idBorder->setWidth(0);
+    // idAnnot->setBorder(std::move(idBorder));
 
-    // Draw the cut index.
-    pdfPage->addAnnot(indexAnnot);
-    indexAnnot->draw(gfx, false);
+    // Draw the id.
+    pdfPage->addAnnot(idAnnot);
+    idAnnot->draw(gfx, false);
   }
 }
 

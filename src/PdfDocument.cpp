@@ -18,13 +18,8 @@
 // Cut
 
 // _________________________________________________________________________________________________
-Cut::Cut(const CutDir dirA, int pageNumA, double x1A, double y1A, double x2A, double y2A) {
+Cut::Cut(const CutDir dirA) {
   dir = dirA;
-  pageNum = pageNumA;
-  x1 = x1A;
-  y1 = y1A;
-  x2 = x2A;
-  y2 = y2A;
 }
 
 // =================================================================================================

@@ -181,6 +181,48 @@ class TextOutputDev : public OutputDev {
    */
   void fill(GfxState* state) override;
 
+  /**
+   * This method handles the event "draw an image mask" by invoking the `drawImage(state, width,
+   * height)` method described below.
+   */
+  void drawImageMask(GfxState* state, Object* ref, Stream* str, int width, int height,
+      bool invert, bool interpolate, bool inlineImg) override;
+
+  /**
+   * This method handles the event "draw an image" by invoking the `drawImage(state, width, height)`
+   * method described below.
+   */
+  void drawImage(GfxState* state, Object* ref, Stream* str, int width, int height,
+      GfxImageColorMap* colorMap, bool interpolate, const int* maskColors,
+      bool inlineImg) override;
+
+  /**
+   * This method handles the event "draw a masked image" by invoking the `drawImage(state, width,
+   * height)` method described below.
+   */
+  void drawMaskedImage(GfxState* state, Object* ref, Stream* str, int width, int height,
+      GfxImageColorMap* colorMap, bool interpolate, Stream* maskStr, int maskWidth,
+      int maskHeight, bool maskInvert, bool maskInterpolate) override;
+
+  /**
+   * This method handles the event "draw a soft masked image" by invoking the `drawImage(state,
+   * width, height)` method described below.
+   */
+  void drawSoftMaskedImage(GfxState* state, Object* ref, Stream* str, int width,
+      int height, GfxImageColorMap* colorMap, bool interpolate, Stream* maskStr,
+      int maskWidth, int maskHeight, GfxImageColorMap* maskColorMap,
+      bool maskInterpolate) override;
+
+  /**
+   * This method is a generic method to handle all events belonging to the `drawImageMask()`,
+   * `drawImage()`, `drawMaskedImage()`, and `drawSoftMaskedImage()` methods in the exact same way
+   * (it is internally invoked by each of the mentioned methods). It gathers all information
+   * required by pdftotext++ about the image (for example, the position) and stores this
+   * information in form of a `PdfFigure` to `page->figures`, where `page` denotes the current
+   * `PdfPage`.
+   */
+  void drawGraphic(GfxState* state);
+
  private:
   /**
    * This method multiplies the given transformation matrices and writes the result to `res`.

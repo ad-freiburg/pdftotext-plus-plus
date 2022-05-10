@@ -88,9 +88,8 @@ class ReadingOrderDetector {
   //  * @return True if the position between `closestElementAbove` and `elements[cutPos]` denotes a
   //  *   valid semantic y-cut position, false otherwise.
   //  */
-  void choosePrimaryXCuts(const std::vector<PdfElement*>& elements,
-      const std::vector<size_t>& gapPositions, const std::vector<PdfElement*>& gapStartElements,
-      std::vector<size_t>* cutIndices);
+  void choosePrimaryXCuts(const std::vector<PdfElement*>& elements, std::vector<Cut*>& cuts,
+      bool silent);
 
   // TODO(korzen): /**
   //  * This method tells the XY-cut algorithm whether or not the position between the elements
@@ -108,9 +107,8 @@ class ReadingOrderDetector {
   //  * @return True if the position between `closestElementAbove` and `elements[cutPos]` denotes a
   //  *   valid semantic y-cut position, false otherwise.
   //  */
-  void choosePrimaryYCuts(const std::vector<PdfElement*>& elements,
-      const std::vector<size_t>& gapPositions, const std::vector<PdfElement*>& gapStartElements,
-      std::vector<size_t>* cutIndices);
+  void choosePrimaryYCuts(const std::vector<PdfElement*>& elements, std::vector<Cut*>& cuts,
+      bool silent);
 
   /**
    * TODO(korzen): This method tells the XY-cut algorithm whether or not the position between the
@@ -129,9 +127,7 @@ class ReadingOrderDetector {
    * @return True if the position between `closestElementLeft` and `elements[cutPos]` denotes a
    *   valid x-cut position, false otherwise.
    */
-  void chooseXCuts(const std::vector<PdfElement*>& elements,
-      const std::vector<size_t>& gapPositions, const std::vector<PdfElement*>& gapStartElements,
-      std::vector<size_t>* cutIndices);
+  void chooseXCuts(const std::vector<PdfElement*>& elements, std::vector<Cut*>& cuts, bool silent);
 
   /**
    * TODO(korzen): This method tells the XY-cut algorithm whether or not the position between the
@@ -150,9 +146,7 @@ class ReadingOrderDetector {
    * @return True if the position between `closestElementAbove` and `elements[cutPos]` denotes a
    *   valid y-cut position, false otherwise.
    */
-  void chooseYCuts(const std::vector<PdfElement*>& elements,
-      const std::vector<size_t>& gapPositions, const std::vector<PdfElement*>& gapStartElements,
-      std::vector<size_t>* cutIndices);
+  void chooseYCuts(const std::vector<PdfElement*>& elements, std::vector<Cut*>& cuts, bool silent);
 
   /** The document to process. */
   PdfDocument* _doc;

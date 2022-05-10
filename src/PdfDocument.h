@@ -21,6 +21,13 @@
 
 #include "./PdfFontInfo.h"
 
+class PdfElement;
+class PdfWord;
+class PdfShape;
+class PdfGraphic;
+class PdfTextLine;
+class PdfTextBlock;
+class PdfPageSegment;
 
 struct Timing {
   std::string description;
@@ -61,10 +68,16 @@ class Cut {
    * @param y2
    *   The y-coordinate of the end point of the cut.
    */
-  Cut(const CutDir dir, int pageNum, double x1, double y1, double x2, double y2);
+  Cut(const CutDir dir);
 
   /** The direction of the cut. */
   CutDir dir;
+
+  /** The id of this cut, needed for debugging purposes. */
+  std::string id;
+
+  /** Whether or not this cut was chosen on page segmentation. */
+  bool isChosen = false;
 
   /** The page number. */
   int pageNum = -1;
@@ -77,6 +90,16 @@ class Cut {
   double y1 = std::numeric_limits<double>::max();
   double x2 = std::numeric_limits<double>::min();
   double y2 = std::numeric_limits<double>::min();
+
+  /** The gap width and gap height. */
+  double gapWidth = 0.0;
+  double gapHeight = 0.0;
+
+  PdfElement* elementBefore = nullptr;
+  PdfElement* elementAfter = nullptr;
+  std::vector<PdfElement*> cuttingElements;
+
+  size_t posInElements;
 };
 
 // =================================================================================================
@@ -85,13 +108,6 @@ class Cut {
  * The different text unit.
  */
 enum TextUnit { GLYPHS = 1, WORDS = 2, TEXT_LINES = 3, TEXT_BLOCKS = 4, PARAGRAPHS = 5 };
-
-class PdfWord;
-class PdfShape;
-class PdfGraphic;
-class PdfTextLine;
-class PdfTextBlock;
-class PdfPageSegment;
 
 // =================================================================================================
 
@@ -523,8 +539,16 @@ class PdfPageSegment : public PdfElement {
   /** The text lines of this segment. */
   std::vector<PdfTextLine*> lines;
 
+  /** The text lines of this segment. */
+  std::vector<PdfTextBlock*> blocks;
+
   /** A boolen flag that indicates whether or not the segment is justified. */
   bool isJustified;
+
+  double trimLeftX;
+  double trimUpperY;
+  double trimRightX;
+  double trimLowerY;
 
   /**
    * This method returns a string representation of this segment for debugging purposes.
@@ -628,6 +652,7 @@ class PdfDocument {
   std::string mostFreqFontName;
 
   /** The most frequent line distance in this document. */
+  double mostFreqWordDistance = 0;
   double mostFreqEstimatedLineDistance = 0;
 
   double mostFreqLineGap = 0;

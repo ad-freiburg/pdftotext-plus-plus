@@ -58,6 +58,7 @@ static char visualizeFilePath[256] = "";
 static bool debugPdfParsing = false;
 static bool debugDiacriticMarksMerging = false;
 static bool debugWordsDetection = false;
+static bool debugPageSegmentation = false;
 static bool debugTextLinesDetection = false;
 static bool debugTextBlocksDetection = false;
 static int debugPageFilter = -1;
@@ -122,6 +123,8 @@ static const ArgDesc argDesc[] = {
       "Print the debug output of diacritic marks merging." },
   { "--debug-words-detection", argFlag, &debugWordsDetection, 0,
       "Print the debug output of words detection." },
+  { "--debug-page-segmentation", argFlag, &debugPageSegmentation, 0,
+      "Print the debug output of page segmentation." },
   { "--debug-text-lines-detection", argFlag, &debugTextLinesDetection, 0,
       "Print the debug output of text lines detection." },
   { "--debug-text-blocks-detection", argFlag, &debugTextBlocksDetection, 0,
@@ -212,6 +215,7 @@ int main(int argc, char *argv[]) {
     debugPdfParsing,
     debugDiacriticMarksMerging,
     debugWordsDetection,
+    debugPageSegmentation,
     debugTextLinesDetection,
     debugTextBlocksDetection,
     debugPageFilter
