@@ -110,7 +110,7 @@ void TextBlocksDetector::detect() {
     }
   }
 
-  computeSegmentTrimBoxes();
+  // computeSegmentTrimBoxes();
   computeTextLineIndentHierarchies();
   computeTextLineMargins();
 
@@ -571,27 +571,18 @@ void TextBlocksDetector::computeTextLineMargins() {
   double numBodyTextLines = 0;
 
   for (auto* page : _doc->pages) {
-    std::cout << "PAGE: " << page->pageNum << "#SEGMENTS: " << page->segments.size() << std::endl;
     for (auto* segment : page->segments) {
-      std::cout << "#BLOCKS: " << segment->blocks.size() << std::endl;
       for (auto* block : segment->blocks) {
-        std::cout << "#LINES: " << block->lines.size() << std::endl;
         for (size_t i = 0; i < block->lines.size(); i++) {
           PdfTextLine* prevLine = i > 0 ? block->lines.at(i - 1) : nullptr;
           PdfTextLine* currLine = block->lines.at(i);
           PdfTextLine* nextLine = i < block->lines.size() - 1 ? block->lines.at(i + 1) : nullptr;
 
-          std::cout << "LINE: " << currLine->toString() << std::endl;
-
-          double trimLeftX = std::max(segment->trimLeftX, block->position->leftX);
+          // double trimLeftX = std::max(segment->trimLeftX, block->position->leftX);
           // double trimRightX = std::min(segment->trimRightX, block->position->rightX);
-          double trimRightX = segment->trimRightX;
-          currLine->leftMargin = round(currLine->position->getRotLeftX() - trimLeftX);
-          currLine->rightMargin = round(trimRightX - currLine->position->getRotRightX());
-
-          if (currLine->position->pageNum == 1) {
-            std::cout << currLine->leftMargin << " " << currLine->text << std::endl;
-          }
+          // double trimRightX = segment->trimRightX;
+          currLine->leftMargin = round(currLine->position->getRotLeftX() - block->position->getRotLeftX());
+          currLine->rightMargin = round(block->position->getRotRightX() - currLine->position->getRotRightX());
 
           // Make sure that the indent is measured only for lines from body text paragraphs.
           // Reason: Lines from the bibliography could have other indents.
@@ -822,62 +813,62 @@ bool TextBlocksDetector::isTextLineEmphasized(const PdfTextLine* line) {
 }
 
 // _________________________________________________________________________________________________
-void TextBlocksDetector::computeSegmentTrimBoxes() const {
-  for (auto* page : _doc->pages) {
-    for (auto* segment : page->segments) {
-      // Default values.
-      segment->trimLeftX = segment->position->leftX;
-      segment->trimUpperY = segment->position->upperY;
-      segment->trimRightX = segment->position->rightX;
-      segment->trimLowerY = segment->position->lowerY;
+// void TextBlocksDetector::computeSegmentTrimBoxes() const {
+//   for (auto* page : _doc->pages) {
+//     for (auto* segment : page->segments) {
+//       // Default values.
+//       segment->trimLeftX = segment->position->leftX;
+//       segment->trimUpperY = segment->position->upperY;
+//       segment->trimRightX = segment->position->rightX;
+//       segment->trimLowerY = segment->position->lowerY;
 
-      if (segment->lines.empty()) {
-        continue;
-      }
+//       if (segment->lines.empty()) {
+//         continue;
+//       }
 
-      // Compute the most frequent leftX coordinates among the text lines in the segment.
-      std::unordered_map<double, int> leftXFreqs;
-      for (auto* line : segment->lines) {
-        double leftX = round(line->position->getRotLeftX(), 1);
-        leftXFreqs[leftX]++;
-      }
-      double mostFreqLeftX = 0;
-      int mostFreqLeftXCount = 0;
-      for (const auto& pair : leftXFreqs) {
-        if (pair.second > mostFreqLeftXCount) {
-          mostFreqLeftX = pair.first;
-          mostFreqLeftXCount = pair.second;
-        }
-      }
+//       // Compute the most frequent leftX coordinates among the text lines in the segment.
+//       std::unordered_map<double, int> leftXFreqs;
+//       for (auto* line : segment->lines) {
+//         double leftX = round(line->position->getRotLeftX(), 1);
+//         leftXFreqs[leftX]++;
+//       }
+//       double mostFreqLeftX = 0;
+//       int mostFreqLeftXCount = 0;
+//       for (const auto& pair : leftXFreqs) {
+//         if (pair.second > mostFreqLeftXCount) {
+//           mostFreqLeftX = pair.first;
+//           mostFreqLeftXCount = pair.second;
+//         }
+//       }
 
-      // Compute the most frequent rightX coordinates among the text lines in the segment.
-      std::unordered_map<double, int> rightXFreqs;
-      for (auto* line : segment->lines) {
-        double rightX = round(line->position->getRotRightX(), 1);
-        rightXFreqs[rightX]++;
-      }
-      double mostFreqRightX = 0;
-      int mostFreqRightXCount = 0;
-      for (const auto& pair : rightXFreqs) {
-        if (pair.second > mostFreqRightXCount) {
-          mostFreqRightX = pair.first;
-          mostFreqRightXCount = pair.second;
-        }
-      }
+//       // Compute the most frequent rightX coordinates among the text lines in the segment.
+//       std::unordered_map<double, int> rightXFreqs;
+//       for (auto* line : segment->lines) {
+//         double rightX = round(line->position->getRotRightX(), 1);
+//         rightXFreqs[rightX]++;
+//       }
+//       double mostFreqRightX = 0;
+//       int mostFreqRightXCount = 0;
+//       for (const auto& pair : rightXFreqs) {
+//         if (pair.second > mostFreqRightXCount) {
+//           mostFreqRightX = pair.first;
+//           mostFreqRightXCount = pair.second;
+//         }
+//       }
 
-      double numLines = segment->lines.size();
-      double mostFreqLeftXRatio = mostFreqLeftXCount / numLines;
-      double mostFreqRightXRatio = mostFreqRightXCount / numLines;
+//       double numLines = segment->lines.size();
+//       double mostFreqLeftXRatio = mostFreqLeftXCount / numLines;
+//       double mostFreqRightXRatio = mostFreqRightXCount / numLines;
 
-      // if (mostFreqLeftXRatio > 0.4) {
-      //   segment->trimLeftX = mostFreqLeftX;
-      // }
-      if (mostFreqRightXRatio > 0.4) {
-        segment->trimRightX = mostFreqRightX;
-      }
-    }
-  }
-}
+//       // if (mostFreqLeftXRatio > 0.4) {
+//       //   segment->trimLeftX = mostFreqLeftX;
+//       // }
+//       if (mostFreqRightXRatio > 0.4) {
+//         segment->trimRightX = mostFreqRightX;
+//       }
+//     }
+//   }
+// }
 
 // _________________________________________________________________________________________________
 void TextBlocksDetector::computeTextLineIndentHierarchies() {
@@ -887,8 +878,8 @@ void TextBlocksDetector::computeTextLineIndentHierarchies() {
         std::stack<PdfTextLine*> lineStack;
         for (auto* line : block->lines) {
           // Compute the indentation, relatively to the segment boundaries.
-          double trimLeftX = std::max(segment->trimLeftX, block->position->leftX);
-          line->leftMargin = round(line->position->getRotLeftX() - trimLeftX);
+          // double trimLeftX = std::max(segment->trimLeftX, block->position->leftX);
+          line->leftMargin = round(line->position->getRotLeftX() - block->position->leftX);
 
           while (!lineStack.empty()) {
             if (!larger(lineStack.top()->leftMargin, line->leftMargin, _doc->avgGlyphWidth)) {
