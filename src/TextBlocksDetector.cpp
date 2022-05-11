@@ -64,24 +64,26 @@ TextBlocksDetector::~TextBlocksDetector() {
 
 // _________________________________________________________________________________________________
 void TextBlocksDetector::detect() {
-  // Do nothing if no document is given.
   if (!_doc) {
     return;
   }
 
-  // Do nothing if the document contains no pages.
-  if (_doc->pages.size() == 0) {
+  if (_doc->pages.empty()) {
     return;
   }
 
   // Compute some statistics needed for detecting text blocks.
+  // TODO: Compute this in the statistician.
   computeMostFreqTextLineDistance();
 
-  // Detect the text blocks in two steps.
-  // In the first step, split the text lines of each page into (preliminary) text blocks using
-  // rules regarding, for example, the vertical distances between the text lines. This step is
-  // purposed to get text blocks that allow to compute the text line indentations more precisely
-  // (by computing the horizontal gap between the text lines and the text block boundaries).
+  // The detection of text blocks is split in two steps.
+  // In the first step, we split the text lines of each segment into (preliminary) text blocks
+  // using rules regarding, for example, the vertical distances between the text lines and the font
+  // sizes. This step was introduced because a PDF can contain text blocks with different
+  // alignments and different margins (= the width of gaps between the text and the page
+  // boundaries). For example, the left and right margin of the abstract is often larger than of
+  // the body text. The preliminary text blocks are used to compute the identations and the margins
+  // of the text lines.
   // NOTE: Initially, we computed the text line indentations by computing the gap between the text
   // lines and the *segment* boundaries. This approach often resulted in inaccurately computed text
   // line indentations, since the segments were often broader than expected, because of text parts
@@ -99,14 +101,18 @@ void TextBlocksDetector::detect() {
         PdfTextLine* currLine = segment->lines[i];
         PdfTextLine* nextLine = i < segment->lines.size() - 1 ? segment->lines[i + 1] : nullptr;
 
-        if (startsPreliminaryTextBlock(prevLine, currLine, nextLine) && !currBlockLines.empty()) {
-          createTextBlock(currBlockLines, &segment->blocks);
-          currBlockLines.clear();
+        if (startsPreliminaryTextBlock(prevLine, currLine, nextLine)) {
+          if (!currBlockLines.empty()) {
+            createTextBlock(currBlockLines, &segment->blocks);
+            currBlockLines.clear();
+          }
         }
 
         currBlockLines.push_back(currLine);
       }
-      if (!currBlockLines.empty()) { createTextBlock(currBlockLines, &segment->blocks); }
+      if (!currBlockLines.empty()) {
+        createTextBlock(currBlockLines, &segment->blocks);
+      }
     }
   }
 
@@ -167,40 +173,50 @@ bool TextBlocksDetector::startsPreliminaryTextBlock(const PdfTextLine* prevLine,
   }
   _log->debug(p) << "---------------" << std::endl;
 
+  // ------------
+  // The line starts a new block if there is no previous line.
   if (!prevLine) {
     _log->debug(p) << "\033[1mstarts new block (no previous line).\033[0m" << std::endl;
     return true;
   }
 
+  // ------------
   // The line does *not* start a new block if the line and prev line are part of the same figure.
-  _log->debug(p) << "Checking overlappings of figures..." << std::endl;
   PdfFigure* isPrevLinePartOfFigure = isPartOfFigure(prevLine);
   PdfFigure* isCurrLinePartOfFigure = isPartOfFigure(currLine);
+
+  _log->debug(p) << "Checking figure overlappings ..." << std::endl;
   _log->debug(p) << " └─ prevLine.isPartOfFigure: " << isPrevLinePartOfFigure << std::endl;
   _log->debug(p) << " └─ currLine.isPartOfFigure: " << isCurrLinePartOfFigure << std::endl;
+
   if (isCurrLinePartOfFigure && isCurrLinePartOfFigure == isPrevLinePartOfFigure) {
     _log->debug(p) << "\033[1mcontinues block (part of the same figure).\033[0m" << std::endl;
     return false;
   }
 
+  // ------------
   // The line starts a new block if it has another rotation than the previous line.
-  _log->debug(p) << "Checking rotations..." << std::endl;
+  _log->debug(p) << "Checking rotations ..." << std::endl;
   _log->debug(p) << " └─ prevLine.rotation: " << prevLine->position->rotation << std::endl;
   _log->debug(p) << " └─ currLine.rotation: " << currLine->position->rotation << std::endl;
+
   if (prevLine->position->rotation != currLine->position->rotation) {
     _log->debug(p) << "\033[1mstarts new block (rotations differ).\033[0m" << std::endl;
     return true;
   }
 
+  // ------------
   // The line starts a new block if it has another writing mode than the previous line.
   _log->debug(p) << "Checking writing modes..." << std::endl;
   _log->debug(p) << " └─ prevLine.wMode: " << prevLine->position->wMode << std::endl;
   _log->debug(p) << " └─ currLine.wMode: " << currLine->position->wMode << std::endl;
+
   if (prevLine->position->wMode != currLine->position->wMode) {
     _log->debug(p) << "\033[1mstarts new block (writing modes differ).\033[0m" << std::endl;
     return true;
   }
 
+  // ------------
   // The line starts a new block if the difference between neither the most frequent font sizes nor
   // the maximum font sizes of the previous text line and of the current text line are equal, under
   // consideration of a small threshold. This rule exists to split e.g., headings (which usually
@@ -214,6 +230,7 @@ bool TextBlocksDetector::startsPreliminaryTextBlock(const PdfTextLine* prevLine,
   _log->debug(p) << " └─ currLine.mostFreqFontSize: " << currLine->fontSize << std::endl;
   _log->debug(p) << " └─ prevLine.maxFontSize: " << prevLine->maxFontSize << std::endl;
   _log->debug(p) << " └─ currLine.maxFontSize: " << currLine->maxFontSize << std::endl;
+
   if (!equal(prevLine->fontSize, currLine->fontSize, 1) &&
         !equal(prevLine->maxFontSize, currLine->maxFontSize, 1)) {
     _log->debug(p) << "\033[1mstarts new block (font sizes differ).\033[0m" << std::endl;
@@ -245,6 +262,9 @@ bool TextBlocksDetector::startsPreliminaryTextBlock(const PdfTextLine* prevLine,
       actualLineDistance = prevLine->position->getRotLowerY() - currLine->position->getRotUpperY();
       break;
   }
+
+  _log->debug(p) << "Checking line distances..." << std::endl;
+  _log->debug(p) << " └─ expected line distance: " << expectedLineDistance << std::endl;
   _log->debug(p) << " └─ actual line distance: " << actualLineDistance << std::endl;
 
   // The line does *not* start a new block if the actual line distance is <= 0.
@@ -339,22 +359,49 @@ bool TextBlocksDetector::startsTextBlock(const PdfTextLine* prevLine, const PdfT
   // rule exists, to identify the last line of a paragraph, which is often shorter (that is: right
   // margin > 0) than the rest of the text lines. The first condition should ensure that the text
   // in the document is justified.
-  if (percNoRightMarginLines >= 0.75 && larger(prevLine->rightMargin, 0, 5 * _doc->avgGlyphWidth)) {
-    _log->debug(p) << "\033[1mstarts new block (prevLine.rightMargin > 0).\033[0m" << std::endl;
-    return true;
-  }
-  if (_percZeroRightMarginTextLines > 0.5 && larger(prevLine->rightMargin, 0, 10 * _doc->avgGlyphWidth)) {
-    _log->debug(p) << "\033[1mstarts new block (prevLine.rightMargin > 0).\033[0m" << std::endl;
-    return true;
+  if (larger(prevLine->rightMargin, 0, _doc->avgGlyphWidth)) {
+    // ---------------
+    // The line starts a new text block if the first word of the current line would have enough space
+    // at the end of the previous line, the previous line does not end with a punctuation mark and
+    // the current line starts with an uppercase character.
+    double pRightMargin = prevLine->rightMargin;
+    bool pEndsWithPunct = endsWithSentenceDelimiter(prevLine->text);
+    double cFirstWordWidth = currLine->words[0]->position->getWidth();
+
+    _log->debug(p) << "Checking if 1st word of line would have space in prev line..." << std::endl;
+    _log->debug(p) << " └─ prevLine.rightMargin: " << pRightMargin << std::endl;
+    _log->debug(p) << " └─ prevLine.endsWithPunct: " << pEndsWithPunct << std::endl;
+    _log->debug(p) << " └─ currLine.firstWordWidth: " << cFirstWordWidth << std::endl;
+
+    if (pRightMargin > cFirstWordWidth && pEndsWithPunct) {
+      _log->debug(p) << "\033[1mstarts new block (word would have space).\033[0m" << std::endl;
+      return true;
+    }
+
+    if (pRightMargin < cFirstWordWidth && !pEndsWithPunct) {
+      _log->debug(p) << "\033[1mcontinues block (word does not have space).\033[0m" << std::endl;
+      return false;
+    }
+
+    if (percNoRightMarginLines >= 0.75 && larger(prevLine->rightMargin, 0, 5 * _doc->avgGlyphWidth)) {
+      _log->debug(p) << "\033[1mstarts new block (prevLine.rightMargin > 0).\033[0m" << std::endl;
+      return true;
+    }
+    if (_percZeroRightMarginTextLines > 0.5 && larger(prevLine->rightMargin, 0, 10 * _doc->avgGlyphWidth)) {
+      _log->debug(p) << "\033[1mstarts new block (prevLine.rightMargin > 0).\033[0m" << std::endl;
+      return true;
+    }
   }
 
   // The line starts a new block if it is the first line of an enumeration item.
   // The line does not start a new block if it is a continuation of an enumeration item.
   _log->debug(p) << "Checking for enumeration..." << std::endl;
   std::string pStr = currLine->parentTextLine ? currLine->parentTextLine->text : "-";
+  const PdfTextLine* x = currLine->parentTextLine ? currLine->parentTextLine->nextSiblingTextLine : nullptr;
   std::string psStr = currLine->prevSiblingTextLine ? currLine->prevSiblingTextLine->text : "-";
   std::string nsStr = currLine->nextSiblingTextLine ? currLine->nextSiblingTextLine->text : "-";
   _log->debug(p) << " └─ parent:   " << pStr << std::endl;
+  if (x) { _log->debug(p) << " └─ parent sibling:   " << x->toString() << std::endl; }
   _log->debug(p) << " └─ prev sibling: " << psStr << std::endl;
   _log->debug(p) << " └─ next sibling: " << nsStr << std::endl;
   bool firstLineOfItemPrev = isFirstLineOfItem(prevLine);
@@ -995,6 +1042,12 @@ double TextBlocksDetector::computeHangingIndent(const PdfTextBlock* block) const
     return 0.0;
   }
 
+  // The block is *not* in hanging indent format if there is at least one non-indented line that
+  // starts with a lowercase character.
+  if (numLowercasedNotIndentedLines > 0) {
+    return 0.0;
+  }
+
   // The block is in hanging indent format if the first line is not indented, but all other lines.
   // This should identify single enumeration items, e.g., in the format:
   // Dynamics: The low energy behavior of
@@ -1002,12 +1055,6 @@ double TextBlocksDetector::computeHangingIndent(const PdfTextBlock* block) const
   //    dynamics.
   if (!isFirstLineIndented && !isFirstLineShort && isAllOtherLinesIndented) {
     return mostFreqLeftMargin;
-  }
-
-  // The block is *not* in hanging indent format if there is at least one non-indented line that
-  // starts with a lowercase character.
-  if (numLowercasedNotIndentedLines > 0) {
-    return 0.0;
   }
 
   // The block is in hanging indent format if all non-indented lines start with an uppercase

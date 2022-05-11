@@ -14,7 +14,7 @@
 
 #include "../PdfDocument.h"
 
-const std::string punctAlphabet = "?!\"',.:;`“”()[]{}";
+const std::string sentenceDelimiterAlphabet = "?!.);";
 
 /**
  * Splits the given text (given as a std::wstring) into words.
@@ -122,7 +122,8 @@ double max(std::pair<double, double> pair);
 
 // =================================================================================================
 
-bool isPunct(const std::string& str);
+bool endsWithSentenceDelimiter(const std::string& str);
+bool startsWithUpper(const std::string& str);
 
 double round(double d, int numDecimals);
 

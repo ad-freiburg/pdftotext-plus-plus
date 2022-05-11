@@ -307,14 +307,14 @@ void PdfDocumentVisualizer::drawPageSegmentBoundingBoxes(
   for (const auto* segment : segments) {
     drawBoundingBox(segment, cs);
 
-    // TODO: Delete this some time.
-    const ColorScheme& cos = red;
+    // Draw the trim box of the segment.
+    const ColorScheme& cs1 = green;
     Page* pdfPage = _pdfDoc->getPage(segment->position->pageNum);
     Gfx* gfx = _gfxs[segment->position->pageNum];
     double leftX = segment->trimLeftX;
-    double upperY = pdfPage->getMediaHeight() - segment->trimLowerY;  // make it relative to the lower left.
+    double upperY = pdfPage->getMediaHeight() - segment->trimLowerY;
     double rightX = segment->trimRightX;
-    double lowerY = pdfPage->getMediaHeight() - segment->trimUpperY;  // make it relative to the lower left.
+    double lowerY = pdfPage->getMediaHeight() - segment->trimUpperY;
     // Vertical/horizontal lines can have a width/height of zero, in which case they are not
     // visible in the visualization. So ensure a minimal width/height of 1.
     if (fabs(leftX - rightX) < 1) { rightX += 1; }
@@ -325,12 +325,39 @@ void PdfDocumentVisualizer::drawPageSegmentBoundingBoxes(
     AnnotGeometry* annot = new AnnotGeometry(_pdfDoc.get(), &rect, Annot::AnnotSubtype::typeSquare);
 
     // Define the color of the bounding box.
-    std::unique_ptr<AnnotColor> color = std::make_unique<AnnotColor>(cos.primaryColor);
+    std::unique_ptr<AnnotColor> color = std::make_unique<AnnotColor>(cs1.primaryColor);
     annot->setColor(std::move(color));
 
     // Draw the bounding box.
     pdfPage->addAnnot(annot);
     annot->draw(gfx, false);
+
+    // Draw the (preliminary) text blocks stored in the segment.
+    for (const auto* block : segment->blocks) {
+      const ColorScheme& cs2 = red;
+      Page* pdfPage = _pdfDoc->getPage(segment->position->pageNum);
+      Gfx* gfx = _gfxs[segment->position->pageNum];
+      double leftX = block->position->leftX;
+      double upperY = pdfPage->getMediaHeight() - block->position->lowerY;
+      double rightX = block->position->rightX;
+      double lowerY = pdfPage->getMediaHeight() - block->position->upperY;
+      // Vertical/horizontal lines can have a width/height of zero, in which case they are not
+      // visible in the visualization. So ensure a minimal width/height of 1.
+      if (fabs(leftX - rightX) < 1) { rightX += 1; }
+      if (fabs(upperY - lowerY) < 1) { lowerY += 1; }
+      PDFRectangle rect(leftX, upperY, rightX, lowerY);
+
+      // Create the bounding box.
+      AnnotGeometry* annot = new AnnotGeometry(_pdfDoc.get(), &rect, Annot::AnnotSubtype::typeSquare);
+
+      // Define the color of the bounding box.
+      std::unique_ptr<AnnotColor> color = std::make_unique<AnnotColor>(cs2.primaryColor);
+      annot->setColor(std::move(color));
+
+      // Draw the bounding box.
+      pdfPage->addAnnot(annot);
+      annot->draw(gfx, false);
+    }
   }
 }
 

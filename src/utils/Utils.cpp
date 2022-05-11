@@ -251,17 +251,21 @@ std::string escapeJson(const std::string& str) {
 }
 
 // _________________________________________________________________________________________________
-bool isPunct(const std::string& str) {
+bool endsWithSentenceDelimiter(const std::string& str) {
   if (str.empty()) {
     return false;
   }
 
-  for (size_t i = 0; i < str.length(); i++) {
-    if (punctAlphabet.find(str[i]) == std::string::npos) {
-      return false;
-    }
+  return sentenceDelimiterAlphabet.find(str.back()) != std::string::npos;
+}
+
+// _________________________________________________________________________________________________
+bool startsWithUpper(const std::string& str) {
+  if (str.empty()) {
+    return false;
   }
-  return true;
+
+  return isupper(str[0]);
 }
 
 // _________________________________________________________________________________________________
