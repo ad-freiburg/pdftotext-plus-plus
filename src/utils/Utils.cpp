@@ -119,6 +119,11 @@ bool equalOrSmaller(double d1, double d2, double delta) {
 }
 
 // _________________________________________________________________________________________________
+bool between(double d, double low, double up) {
+  return equalOrLarger(d, low, 0.0001) && equalOrSmaller(d, up, 0.0001);
+}
+
+// _________________________________________________________________________________________________
 bool contains(const PdfElement* element1, const PdfElement* element2, double delta) {
   if (smaller(element2->position->rightX, element1->position->leftX, delta)) {
     return false;
@@ -266,6 +271,15 @@ bool startsWithUpper(const std::string& str) {
   }
 
   return isupper(str[0]);
+}
+
+// _________________________________________________________________________________________________
+bool startsWithLower(const std::string& str) {
+  if (str.empty()) {
+    return false;
+  }
+
+  return islower(str[0]);
 }
 
 // _________________________________________________________________________________________________

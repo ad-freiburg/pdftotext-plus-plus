@@ -116,9 +116,10 @@ void TextBlocksDetector::detect() {
     }
   }
 
-  // computeSegmentTrimBoxes();
+  computeTextBlockTrimBoxes();
   computeTextLineIndentHierarchies();
   computeTextLineMargins();
+  computeHangingIndents();
 
   for (auto* page : _doc->pages) {
     // Compute the potential footnote markers.
@@ -127,7 +128,6 @@ void TextBlocksDetector::detect() {
 
     for (auto* segment : page->segments) {
       for (auto* block : segment->blocks) {
-        double hangIndent = computeHangingIndent(block);
         double percNoRightMarginLines = computePercentageNoRightMarginLines(block);
         std::vector<PdfTextLine*> currBlockLines;
         for (size_t i = 0; i < block->lines.size(); i++) {
@@ -135,15 +135,17 @@ void TextBlocksDetector::detect() {
           PdfTextLine* currLine = block->lines[i];
           PdfTextLine* nextLine = i < block->lines.size() - 1 ? block->lines[i + 1] : nullptr;
 
-          if (startsTextBlock(prevLine, currLine, nextLine, &potentialFootnoteMarkers, hangIndent, percNoRightMarginLines)
-                && !currBlockLines.empty()) {
+          if (startsTextBlock(prevLine, currLine, nextLine, &potentialFootnoteMarkers,
+                block->hangingIndent, percNoRightMarginLines) && !currBlockLines.empty()) {
             createTextBlock(currBlockLines, &page->blocks);
             currBlockLines.clear();
           }
 
           currBlockLines.push_back(currLine);
         }
-        if (!currBlockLines.empty()) { createTextBlock(currBlockLines, &page->blocks); }
+        if (!currBlockLines.empty()) {
+          createTextBlock(currBlockLines, &page->blocks);
+        }
       }
     }
   }
@@ -351,146 +353,178 @@ bool TextBlocksDetector::startsTextBlock(const PdfTextLine* prevLine, const PdfT
     return true;
   }
 
-  _log->debug(p) << "Checking right margin..." << std::endl;
-  _log->debug(p) << " └─ \% lines, no right margin: " << _percZeroRightMarginTextLines << std::endl;
-  _log->debug(p) << " └─ \% lines, no right margin: " << percNoRightMarginLines << std::endl;
-  // The line starts a new block if the computed percentage of text lines with right margin == 0
-  // is larger than a given threshold, and if the right margin of the previous line is > 0. This
-  // rule exists, to identify the last line of a paragraph, which is often shorter (that is: right
-  // margin > 0) than the rest of the text lines. The first condition should ensure that the text
-  // in the document is justified.
-  if (larger(prevLine->rightMargin, 0, _doc->avgGlyphWidth)) {
-    // ---------------
-    // The line starts a new text block if the first word of the current line would have enough space
-    // at the end of the previous line, the previous line does not end with a punctuation mark and
-    // the current line starts with an uppercase character.
-    double pRightMargin = prevLine->rightMargin;
-    bool pEndsWithPunct = endsWithSentenceDelimiter(prevLine->text);
-    double cFirstWordWidth = currLine->words[0]->position->getWidth();
+  // ==========
+  // rightX
+  double currLineFirstWordWidth = currLine->words[0]->position->getWidth();
+  double isUnexpectedRightX = smaller(currLineFirstWordWidth, prevLine->rightMargin, 2 * _doc->avgGlyphWidth);
 
-    _log->debug(p) << "Checking if 1st word of line would have space in prev line..." << std::endl;
-    _log->debug(p) << " └─ prevLine.rightMargin: " << pRightMargin << std::endl;
-    _log->debug(p) << " └─ prevLine.endsWithPunct: " << pEndsWithPunct << std::endl;
-    _log->debug(p) << " └─ currLine.firstWordWidth: " << cFirstWordWidth << std::endl;
-
-    if (pRightMargin > cFirstWordWidth && pEndsWithPunct) {
-      _log->debug(p) << "\033[1mstarts new block (word would have space).\033[0m" << std::endl;
-      return true;
-    }
-
-    if (pRightMargin < cFirstWordWidth && !pEndsWithPunct) {
-      _log->debug(p) << "\033[1mcontinues block (word does not have space).\033[0m" << std::endl;
-      return false;
-    }
-
-    if (percNoRightMarginLines >= 0.75 && larger(prevLine->rightMargin, 0, 5 * _doc->avgGlyphWidth)) {
-      _log->debug(p) << "\033[1mstarts new block (prevLine.rightMargin > 0).\033[0m" << std::endl;
-      return true;
-    }
-    if (_percZeroRightMarginTextLines > 0.5 && larger(prevLine->rightMargin, 0, 10 * _doc->avgGlyphWidth)) {
-      _log->debug(p) << "\033[1mstarts new block (prevLine.rightMargin > 0).\033[0m" << std::endl;
-      return true;
-    }
+  // leftX
+  bool isMoreIndented = larger(currLine->leftMargin, 6 * _doc->avgGlyphWidth, 0);
+  bool prevIsMoreIndented = larger(prevLine->leftMargin, 6 * _doc->avgGlyphWidth, 0);
+  bool isUnexpectedLeftX = false;
+  if (isMoreIndented) {
+    isUnexpectedLeftX |= !equal(currLine->leftMargin, prevLine->leftMargin, _doc->avgGlyphWidth);
   }
+  if (prevIsMoreIndented) {
+    isUnexpectedLeftX |= !equal(currLine->leftMargin, prevLine->leftMargin, _doc->avgGlyphWidth);
+  }
+  // ==========
 
+  // ---------------
   // The line starts a new block if it is the first line of an enumeration item.
-  // The line does not start a new block if it is a continuation of an enumeration item.
-  _log->debug(p) << "Checking for enumeration..." << std::endl;
+  bool prevFirstLineOfItem = isFirstLineOfItem(prevLine);
+  bool currFirstLineOfItem = isFirstLineOfItem(currLine);
+
   std::string pStr = currLine->parentTextLine ? currLine->parentTextLine->text : "-";
-  const PdfTextLine* x = currLine->parentTextLine ? currLine->parentTextLine->nextSiblingTextLine : nullptr;
   std::string psStr = currLine->prevSiblingTextLine ? currLine->prevSiblingTextLine->text : "-";
   std::string nsStr = currLine->nextSiblingTextLine ? currLine->nextSiblingTextLine->text : "-";
-  _log->debug(p) << " └─ parent:   " << pStr << std::endl;
-  if (x) { _log->debug(p) << " └─ parent sibling:   " << x->toString() << std::endl; }
+
+  _log->debug(p) << "Checking for first line of enumeration item..." << std::endl;
   _log->debug(p) << " └─ prev sibling: " << psStr << std::endl;
   _log->debug(p) << " └─ next sibling: " << nsStr << std::endl;
-  bool firstLineOfItemPrev = isFirstLineOfItem(prevLine);
-  bool contLineOfItemPrev = isContinuationLineOfItem(prevLine);
-  bool firstLineOfItem = isFirstLineOfItem(currLine);
-  bool contLineOfItem = isContinuationLineOfItem(currLine);
-  _log->debug(p) << " └─ currLine.isFirstLineOfItem: " << firstLineOfItem << std::endl;
-  _log->debug(p) << " └─ currLine.isContinuationOfItem: " << contLineOfItem << std::endl;
-  if (firstLineOfItem) {
+  _log->debug(p) << " └─ prevLine.isFirstLineOfItem: " << prevFirstLineOfItem << std::endl;
+  _log->debug(p) << " └─ currLine.isFirstLineOfItem: " << currFirstLineOfItem << std::endl;
+
+  if (currFirstLineOfItem) {
     _log->debug(p) << "\033[1mstarts new block (first line of item).\033[0m" << std::endl;
     return true;
   }
-  if (contLineOfItem) {
-    _log->debug(p) << "\033[1mcontinues block (continuation of item).\033[0m" << std::endl;
-    return false;
-  }
-  // if ((firstLineOfItemPrev || contLineOfItemPrev) && !firstLineOfItem && !contLineOfItem) {
-  //   _log->debug(p) << "\033[1mstarts new block (prev line is enumeration, but curr line not.\033[0m"
-  //       << std::endl;
-  //   return true;
-  // }
 
+  // ---------------
+  // The line continues a new block if it is a continuation of an enumeration item.
+  bool prevContLineOfItem = isContinuationLineOfItem(prevLine);
+  bool currContLineOfItem = isContinuationLineOfItem(currLine);
+
+  _log->debug(p) << "Checking for continuation line of enumeration item..." << std::endl;
+  _log->debug(p) << " └─ parent:   " << pStr << std::endl;
+  _log->debug(p) << " └─ prevLine.isContinuationOfItem: " << prevContLineOfItem << std::endl;
+  _log->debug(p) << " └─ currLine.isContinuationOfItem: " << currContLineOfItem << std::endl;
+
+  if (currContLineOfItem) {
+    if (prevContLineOfItem) {
+      double xOffset = prevLine->position->leftX - currLine->position->leftX;
+      return !between(xOffset, -_doc->avgGlyphWidth, 6 * _doc->avgGlyphWidth);
+    } else if (isUnexpectedRightX) {
+      _log->debug(p) << "\033[1mstarts new block (unexpected right x).\033[0m" << std::endl;
+      return true;
+    } else {
+      _log->debug(p) << "\033[1mcontinues block (continuation of item).\033[0m" << std::endl;
+      return false;
+    }
+  }
+
+  bool prevPartOfItem = prevFirstLineOfItem || prevContLineOfItem;
+  bool currPartOfItem = currFirstLineOfItem || currContLineOfItem;
+  if (prevPartOfItem && !currPartOfItem) {
+    // There could be an item in the following format:
+    //    (i) This is an item that continues in the next
+    //  line. Note the smaller leftX of the second line.
+    if (!endsWithSentenceDelimiter(prevLine->text) && !startsWithUpper(currLine->text)) {
+      _log->debug(p) << "\033[1mcontinues block (punct & lower).\033[0m" << std::endl;
+      return false;
+    }
+
+    _log->debug(p) << "\033[1mstarts block (prev part of item).\033[0m" << std::endl;
+    return true;
+  }
+
+  // ---------------
   // The line starts a new text block if it is the first line of a footnote.
-  // The line does not start a new block if it is a continuation of a footnote.
-  _log->debug(p) << "Checking for footnote..." << std::endl;
-  bool firstLineOfFootnote = isFirstLineOfFootnote(currLine, potentialFootnoteMarkers);
-  bool contLineOfFootnote = isContinuationLineOfFootnote(currLine, potentialFootnoteMarkers);
-  _log->debug(p) << " └─ currLine.isFirstLineOfFootnote: " << firstLineOfFootnote << std::endl;
-  _log->debug(p) << " └─ currLine.isContinuationOfFootnote: " << contLineOfFootnote << std::endl;
-  if (firstLineOfFootnote) {
+  bool prevFirstLineOfFootnote = isFirstLineOfFootnote(currLine, potentialFootnoteMarkers);
+  bool currFirstLineOfFootnote = isFirstLineOfFootnote(currLine, potentialFootnoteMarkers);
+
+  _log->debug(p) << "Checking for first line of footnote..." << std::endl;
+  _log->debug(p) << " └─ prevLine.isFirstLineOfFootnote: " << prevFirstLineOfFootnote << std::endl;
+  _log->debug(p) << " └─ currLine.isFirstLineOfFootnote: " << currFirstLineOfFootnote << std::endl;
+
+  if (currFirstLineOfFootnote) {
     _log->debug(p) << "\033[1mstarts new block (first line of footnote).\033[0m" << std::endl;
     return true;
   }
-  if (contLineOfFootnote) {
-    _log->debug(p) << "\033[1mcontinues block (continuation of footnote).\033[0m" << std::endl;
-    return false;
+
+  // ---------------
+  // The line continues a new block if it is a continuation of a footnote.
+  bool prevContLineOfFootnote = isContinuationLineOfFootnote(prevLine, potentialFootnoteMarkers);
+  bool currContLineOfFootnote = isContinuationLineOfFootnote(currLine, potentialFootnoteMarkers);
+
+  _log->debug(p) << "Checking for continuation line of footnote..." << std::endl;
+  _log->debug(p) << " └─ prevLine.isContOfFootnote: " << prevContLineOfFootnote << std::endl;
+  _log->debug(p) << " └─ currLine.isContOfFootnote: " << currContLineOfFootnote << std::endl;
+
+  if (currContLineOfFootnote) {
+    if (prevContLineOfFootnote) {
+      double xOffset = prevLine->position->leftX - currLine->position->leftX;
+      return !between(xOffset, -_doc->avgGlyphWidth, 6 * _doc->avgGlyphWidth);
+    } else if (isUnexpectedRightX) {
+      _log->debug(p) << "\033[1mstarts new block (unexpected right x).\033[0m" << std::endl;
+      return true;
+    } else {
+      _log->debug(p) << "\033[1mcontinues block (continuation of item).\033[0m" << std::endl;
+      return false;
+    }
   }
 
+  bool prevPartOfFootnote = prevFirstLineOfFootnote || prevContLineOfFootnote;
+  bool currPartOfFootnote = currFirstLineOfFootnote || currContLineOfFootnote;
+  if (prevPartOfFootnote && !currPartOfFootnote) {
+    _log->debug(p) << "\033[1mstarts block (prev part of footnote).\033[0m" << std::endl;
+    return true;
+  }
+
+  // ---------------
   // The line does not start a new block if the previous line and the current line are emphasized,
   // and if both lines exhibits the same font and the same font size. This rule exists to not split
   // titles and headings, which are often centered (which means that the left margin of the text
   // lines are > 0), in two parts in the next rule (which assumes the start of a new block if the
   // left margin of the current line is > 0).
-  _log->debug(p) << "Checking for emphasis..." << std::endl;
   bool isPrevLineEmphasized = isTextLineEmphasized(prevLine);
   bool isCurrLineEmphasized = isTextLineEmphasized(currLine);
+  bool hasEqualFontName = prevLine->fontName == currLine->fontName;
+  bool hasEqualFontSize = equal(prevLine->fontSize, currLine->fontSize, 0.1);
+
+  _log->debug(p) << "Checking for emphasis..." << std::endl;
   _log->debug(p) << " └─ prevLine.isEmphasized: " << isPrevLineEmphasized << std::endl;
   _log->debug(p) << " └─ currLine.isEmphasized: " << isCurrLineEmphasized << std::endl;
   _log->debug(p) << " └─ prevLine.fontName: " << prevLine->fontName << std::endl;
   _log->debug(p) << " └─ currLine.fontName: " << currLine->fontName << std::endl;
   _log->debug(p) << " └─ prevLine.fontSize: " << prevLine->fontSize << std::endl;
   _log->debug(p) << " └─ currLine.fontSize: " << currLine->fontSize << std::endl;
-  if (isPrevLineEmphasized && isCurrLineEmphasized && prevLine->fontName == currLine->fontName &&
-        equal(prevLine->fontSize, currLine->fontSize, 0.1)) {
+
+  if (isPrevLineEmphasized && isCurrLineEmphasized && hasEqualFontName && hasEqualFontSize) {
     _log->debug(p) << "\033[1mcontinues block (same emphasized font style).\033[0m" << std::endl;
     return false;
   }
 
-  _log->debug(p) << "Checking left margin..." << std::endl;
-  _log->debug(p) << " └─ most freq. left margin: " << _mostFreqLineLeftMargin << std::endl;
-  _log->debug(p) << " └─ doc.avgGlyphWidth:      " << _doc->avgGlyphWidth << std::endl;
-  _log->debug(p) << " └─ prevLine.leftMargin:    " << prevLine->leftMargin << std::endl;
-  _log->debug(p) << " └─ currLine.leftMargin:    " << currLine->leftMargin << std::endl;
-  _log->debug(p) << " └─ prevLine.rightMargin:      " << prevLine->rightMargin << std::endl;
-  _log->debug(p) << " └─ currLine.rightMargin:      " << currLine->rightMargin << std::endl;
-
-  // The line does not start a new text block if the current line and the previous line is centered,
-  // that is: when leftMargin == rightMargin.
+  // ---------------
+  // The line does not start a new text block if the current line and the previous line are
+  // centered, that is: when leftMargin == rightMargin.
   bool prevLineCentered = equal(prevLine->leftMargin, prevLine->rightMargin, 0.1);
   bool currLineCentered = equal(currLine->leftMargin, currLine->rightMargin, 0.1);
-  bool prevLineLargeLeftMargin = larger(prevLine->leftMargin, 0, _doc->avgGlyphWidth);
-  bool currLineLargeLeftMargin = larger(currLine->leftMargin, 0, _doc->avgGlyphWidth);
-  if (prevLineCentered && currLineCentered && (prevLineLargeLeftMargin || currLineLargeLeftMargin)) {
+  bool isLargeLeftMargin = larger(currLine->leftMargin, 0, _doc->avgGlyphWidth);
+  bool prevIsLargeLeftMargin = larger(prevLine->leftMargin, 0, _doc->avgGlyphWidth);
+  if (prevLineCentered && currLineCentered && (isLargeLeftMargin || prevIsLargeLeftMargin)) {
     _log->debug(p) << "\033[1mcontinues block (prev and curr line centered).\033[0m" << std::endl;
     return false;
   }
 
+  // TODO
   // The line starts a new text block if (1) the left margin of the current line is == 0, and (2)
   // the left margin of the previous line is larger than the most frequent left margin. This rule
   // exists to split body text paragraph following a display formula apart. The second condition
   // exists to not detect the second line of a body text paragraph from the (indented) first line.
-  if (larger(prevLine->leftMargin - currLine->leftMargin, 6 * _doc->avgGlyphWidth, 0)) {
-  // if (equal(currLine->leftMargin, 0, 2 * _doc->avgGlyphWidth) &&
-  //       equalOrLarger(prevLine->leftMargin, 6 * _doc->avgGlyphWidth, 0)) {
-    _log->debug(p) << "\033[1mstarts new block (line not indented, but previous line).\033[0m"
-        << std::endl;
-    return true;
-  }
+  // if (larger(prevLine->leftMargin - currLine->leftMargin, 6 * _doc->avgGlyphWidth, 0)) {
+  //   return true;
+  // }
 
+  _log->debug(p) << "Checking indentation..." << std::endl;
+  _log->debug(p) << " └─ most freq. left margin: " << _mostFreqLineLeftMargin << std::endl;
+  _log->debug(p) << " └─ doc.avgGlyphWidth: " << _doc->avgGlyphWidth << std::endl;
+  _log->debug(p) << " └─ prevLine.leftMargin: " << prevLine->leftMargin << std::endl;
+  _log->debug(p) << " └─ currLine.leftMargin: " << currLine->leftMargin << std::endl;
+  _log->debug(p) << " └─ prevLine.rightMargin: " << prevLine->rightMargin << std::endl;
+  _log->debug(p) << " └─ currLine.rightMargin: " << currLine->rightMargin << std::endl;
+
+  // -----
   if (hangingIndent > 0) {
     bool notIndented = smaller(currLine->leftMargin, hangingIndent, _doc->avgGlyphWidth);
     if (notIndented) {
@@ -499,29 +533,47 @@ bool TextBlocksDetector::startsTextBlock(const PdfTextLine* prevLine, const PdfT
     }
     bool indented = equal(currLine->leftMargin, hangingIndent, _doc->avgGlyphWidth);
     if (indented) {
-      _log->debug(p) << "\033[1mcontinues block (hanging indent & indent).\033[0m" << std::endl;
-      return false;
+      if (isUnexpectedRightX) {
+        _log->debug(p) << "\033[1mstarts new block (prev line is short).\033[0m" << std::endl;
+        return true;
+      } else {
+        _log->debug(p) << "\033[1mcontinues block (hanging indent & indent).\033[0m" << std::endl;
+        return false;
+      }
     }
-  } else {
-    bool notIndented = smaller(currLine->leftMargin, _doc->avgGlyphWidth, 0);
-    if (notIndented) {
-      _log->debug(p) << "\033[1mcontinues block (no hanging indent & no indent).\033[0m" << std::endl;
-      return false;
-    }
-    bool indented = smaller(currLine->leftMargin, 6 * _doc->avgGlyphWidth, 0);
-    if (indented) {
-      _log->debug(p) << "\033[1mstarts block (no hanging indent & indent).\033[0m" << std::endl;
-      return true;
-    }
+
+    _log->debug(p) << "\033[1mcontinues block (hanging indent, no rule applied).\033[0m" << std::endl;
+    return false;
   }
 
-  // The line starts a new block if its left margin is > 0. This rule exists, because the first
-  // line of a paragraph is often intended by a certain amount. It also exists to detect display
-  // formulas, which are often centered (and thus, have a left margin > 0), as the start of a new
-  // block.
-  // if (larger(currLine->leftMargin, 0, _doc->avgGlyphWidth)) {
-  if (equalOrLarger(currLine->leftMargin, 6 * _doc->avgGlyphWidth, 0)) {
-    _log->debug(p) << "\033[1mstarts new block (left margin > mostFreqLineMargin).\033[0m" << std::endl;
+  if (isMoreIndented) {
+    _log->debug(p) << "\033[1mstarts new block (left margin > expected indent).\033[0m" << std::endl;
+    return !equal(currLine->position->leftX, prevLine->position->leftX, _doc->avgGlyphWidth);
+  }
+  if (prevIsMoreIndented) {
+    _log->debug(p) << "\033[1mstarts block (prev is more indented, curr line not).\033[0m" << std::endl;
+    return !equal(currLine->position->leftX, prevLine->position->leftX, _doc->avgGlyphWidth);
+  }
+
+
+  bool isIndented = between(currLine->leftMargin, _doc->avgGlyphWidth, 6 * _doc->avgGlyphWidth);
+
+  if (isIndented) {
+    _log->debug(p) << "\033[1mstarts block (no hanging indent & indent).\033[0m" << std::endl;
+    return true;
+  }
+
+  if (isUnexpectedRightX) {
+    _log->debug(p) << "\033[1mstarts new block (prev line has capacity).\033[0m" << std::endl;
+    return true;
+  }
+
+  if (percNoRightMarginLines >= 0.75 && larger(prevLine->rightMargin, 0, 5 * _doc->avgGlyphWidth)) {
+    _log->debug(p) << "\033[1mAstarts new block (prevLine.rightMargin > 0).\033[0m" << std::endl;
+    return true;
+  }
+  if (_percZeroRightMarginTextLines > 0.5 && larger(prevLine->rightMargin, 0, 10 * _doc->avgGlyphWidth)) {
+    _log->debug(p) << "\033[1mBstarts new block (prevLine.rightMargin > 0).\033[0m" << std::endl;
     return true;
   }
 
@@ -628,8 +680,8 @@ void TextBlocksDetector::computeTextLineMargins() {
           // double trimLeftX = std::max(segment->trimLeftX, block->position->leftX);
           // double trimRightX = std::min(segment->trimRightX, block->position->rightX);
           // double trimRightX = segment->trimRightX;
-          currLine->leftMargin = round(currLine->position->getRotLeftX() - block->position->getRotLeftX());
-          currLine->rightMargin = round(block->position->getRotRightX() - currLine->position->getRotRightX());
+          currLine->leftMargin = round(currLine->position->leftX - block->trimLeftX);
+          currLine->rightMargin = round(block->trimRightX - currLine->position->rightX);
 
           // Make sure that the indent is measured only for lines from body text paragraphs.
           // Reason: Lines from the bibliography could have other indents.
@@ -762,7 +814,8 @@ bool TextBlocksDetector::isFirstLineOfItem(const PdfTextLine* line) const {
 
 // _________________________________________________________________________________________________
 bool TextBlocksDetector::isContinuationLineOfItem(const PdfTextLine* line) const {
-  return line->parentTextLine && isFirstLineOfItem(line->parentTextLine);
+  return line->parentTextLine && (isFirstLineOfItem(line->parentTextLine)
+      || isContinuationLineOfItem(line->parentTextLine));
 }
 
 // _________________________________________________________________________________________________
@@ -803,7 +856,9 @@ bool TextBlocksDetector::isFirstLineOfFootnote(const PdfTextLine* line,
 // _________________________________________________________________________________________________
 bool TextBlocksDetector::isContinuationLineOfFootnote(const PdfTextLine* line,
       const std::unordered_set<std::string>* potentialFootnoteMarkers) const {
-  return line->parentTextLine && isFirstLineOfFootnote(line->parentTextLine, potentialFootnoteMarkers);
+  return line->parentTextLine &&
+      (isFirstLineOfFootnote(line->parentTextLine, potentialFootnoteMarkers)
+        || isContinuationLineOfFootnote(line->parentTextLine, potentialFootnoteMarkers));
 }
 
 // _________________________________________________________________________________________________
@@ -860,76 +915,56 @@ bool TextBlocksDetector::isTextLineEmphasized(const PdfTextLine* line) {
 }
 
 // _________________________________________________________________________________________________
-// void TextBlocksDetector::computeSegmentTrimBoxes() const {
-//   for (auto* page : _doc->pages) {
-//     for (auto* segment : page->segments) {
-//       // Default values.
-//       segment->trimLeftX = segment->position->leftX;
-//       segment->trimUpperY = segment->position->upperY;
-//       segment->trimRightX = segment->position->rightX;
-//       segment->trimLowerY = segment->position->lowerY;
+void TextBlocksDetector::computeTextBlockTrimBoxes() const {
+  for (auto* page : _doc->pages) {
+    for (auto* segment : page->segments) {
+      // Compute the most frequent rightX coordinates among the text lines in the segment.
+      std::unordered_map<double, int> rightXFreqs;
 
-//       if (segment->lines.empty()) {
-//         continue;
-//       }
+      for (auto* block : segment->blocks) {
+        block->trimLeftX = block->position->leftX;
+        block->trimUpperY = block->position->upperY;
+        block->trimRightX = block->position->rightX;
+        block->trimLowerY = block->position->lowerY;
 
-//       // Compute the most frequent leftX coordinates among the text lines in the segment.
-//       std::unordered_map<double, int> leftXFreqs;
-//       for (auto* line : segment->lines) {
-//         double leftX = round(line->position->getRotLeftX(), 1);
-//         leftXFreqs[leftX]++;
-//       }
-//       double mostFreqLeftX = 0;
-//       int mostFreqLeftXCount = 0;
-//       for (const auto& pair : leftXFreqs) {
-//         if (pair.second > mostFreqLeftXCount) {
-//           mostFreqLeftX = pair.first;
-//           mostFreqLeftXCount = pair.second;
-//         }
-//       }
+        for (auto* line : block->lines) {
+          double rightX = round(line->position->getRotRightX(), 1);
+          rightXFreqs[rightX]++;
+        }
+      }
 
-//       // Compute the most frequent rightX coordinates among the text lines in the segment.
-//       std::unordered_map<double, int> rightXFreqs;
-//       for (auto* line : segment->lines) {
-//         double rightX = round(line->position->getRotRightX(), 1);
-//         rightXFreqs[rightX]++;
-//       }
-//       double mostFreqRightX = 0;
-//       int mostFreqRightXCount = 0;
-//       for (const auto& pair : rightXFreqs) {
-//         if (pair.second > mostFreqRightXCount) {
-//           mostFreqRightX = pair.first;
-//           mostFreqRightXCount = pair.second;
-//         }
-//       }
+      double mostFreqRightX = 0;
+      int mostFreqRightXCount = 0;
+      for (const auto& pair : rightXFreqs) {
+        if (pair.second > mostFreqRightXCount) {
+          mostFreqRightX = pair.first;
+          mostFreqRightXCount = pair.second;
+        }
+      }
 
-//       double numLines = segment->lines.size();
-//       double mostFreqLeftXRatio = mostFreqLeftXCount / numLines;
-//       double mostFreqRightXRatio = mostFreqRightXCount / numLines;
+      double numLines = segment->lines.size();
+      double mostFreqRightXRatio = mostFreqRightXCount / numLines;
 
-//       // if (mostFreqLeftXRatio > 0.4) {
-//       //   segment->trimLeftX = mostFreqLeftX;
-//       // }
-//       if (mostFreqRightXRatio > 0.4) {
-//         segment->trimRightX = mostFreqRightX;
-//       }
-//     }
-//   }
-// }
+      if (mostFreqRightXRatio < 0.5) {
+        continue;
+      }
+
+      for (auto* block : segment->blocks) {
+        block->trimRightX = std::min(block->position->rightX, mostFreqRightX);
+      }
+    }
+  }
+}
 
 // _________________________________________________________________________________________________
 void TextBlocksDetector::computeTextLineIndentHierarchies() {
   for (auto* page : _doc->pages) {
+    std::stack<PdfTextLine*> lineStack;
     for (auto* segment : page->segments) {
       for (auto* block : segment->blocks) {
-        std::stack<PdfTextLine*> lineStack;
         for (auto* line : block->lines) {
-          // Compute the indentation, relatively to the segment boundaries.
-          // double trimLeftX = std::max(segment->trimLeftX, block->position->leftX);
-          line->leftMargin = round(line->position->getRotLeftX() - block->position->leftX);
-
           while (!lineStack.empty()) {
-            if (!larger(lineStack.top()->leftMargin, line->leftMargin, _doc->avgGlyphWidth)) {
+            if (!larger(lineStack.top()->position->leftX, line->position->leftX, _doc->avgGlyphWidth)) {
               break;
             }
             lineStack.pop();
@@ -943,7 +978,7 @@ void TextBlocksDetector::computeTextLineIndentHierarchies() {
           std::pair<double, double> xOverlapRatios = computeXOverlapRatios(lineStack.top(), line);
           double maxXOVerlapRatio = std::max(xOverlapRatios.first, xOverlapRatios.second);
           if (maxXOVerlapRatio > 0) {
-            if (equal(lineStack.top()->leftMargin, line->leftMargin, _doc->avgGlyphWidth)) {
+            if (equal(lineStack.top()->position->leftX, line->position->leftX, _doc->avgGlyphWidth)) {
               lineStack.top()->nextSiblingTextLine = line;
               line->prevSiblingTextLine = lineStack.top();
               line->parentTextLine = lineStack.top()->parentTextLine;
@@ -952,7 +987,7 @@ void TextBlocksDetector::computeTextLineIndentHierarchies() {
               continue;
             }
 
-            if (smaller(lineStack.top()->leftMargin, line->leftMargin, _doc->avgGlyphWidth)) {
+            if (smaller(lineStack.top()->position->leftX, line->position->leftX, _doc->avgGlyphWidth)) {
               line->parentTextLine = lineStack.top();
 
               lineStack.push(line);
@@ -966,110 +1001,117 @@ void TextBlocksDetector::computeTextLineIndentHierarchies() {
 }
 
 // _________________________________________________________________________________________________
-double TextBlocksDetector::computeHangingIndent(const PdfTextBlock* block) const {
-  // Compute the most frequent left margin > 0.
-  int numLines = 0;
-  int numLeftMarginLines = 0;
-  std::unordered_map<double, int> leftMarginCounts;
-  for (const auto* line : block->lines) {
-    if (larger(line->leftMargin, 0, _doc->avgGlyphWidth)) {
-      leftMarginCounts[line->leftMargin]++;
-      numLeftMarginLines++;
+void TextBlocksDetector::computeHangingIndents() const {
+  for (auto* page : _doc->pages) {
+    for (auto* segment : page->segments) {
+      for (auto* block : segment->blocks) {
+        // Compute the most frequent left margin > 0.
+        int numLines = 0;
+        int numLeftMarginLines = 0;
+        std::unordered_map<double, int> leftMarginCounts;
+        for (const auto* line : block->lines) {
+          if (larger(line->leftMargin, 0, _doc->avgGlyphWidth)) {
+            leftMarginCounts[line->leftMargin]++;
+            numLeftMarginLines++;
+          }
+          numLines++;
+        }
+        double mostFreqLeftMargin = 0.0;
+        int mostFreqLeftMarginCount = 0;
+        for (const auto& pair : leftMarginCounts) {
+          if (pair.second > mostFreqLeftMarginCount) {
+            mostFreqLeftMargin = pair.first;
+            mostFreqLeftMarginCount = pair.second;
+          }
+        }
+
+        // Abort if there are no more than two lines.
+        if (numLines <= 1) {
+          continue;
+        }
+
+        // Abort if there are no lines with leftMargin > 0.
+        if (numLeftMarginLines == 0) {
+          continue;
+        }
+
+        // Abort if less than 50% of the indented lines are indented by the same level.
+        if (mostFreqLeftMarginCount <= 0.5 * numLeftMarginLines) {
+          continue;
+        }
+
+        bool isFirstLineIndented = false;
+        bool isFirstLineShort = false;
+        bool isAllOtherLinesIndented = true;
+        int numLowercasedNotIndentedLines = 0;
+        int numLowercasedIndentedLines = 0;
+        int numNotIndentedLines = 0;
+        int numIndentedLines = 0;
+
+        for (size_t i = 0; i < block->lines.size(); i++) {
+          const PdfTextLine* line = block->lines[i];
+
+          bool isNotIndented = equal(line->leftMargin, 0, _doc->avgGlyphWidth);
+          bool isIndented = equal(line->leftMargin, mostFreqLeftMargin, _doc->avgGlyphWidth);
+          bool isLower = !line->text.empty() && islower(line->text[0]);
+
+          if (i == 0) {
+            isFirstLineIndented = isIndented;
+            isFirstLineShort = larger(line->rightMargin, 0, 2 * _doc->avgGlyphWidth);
+          } else {
+            isAllOtherLinesIndented &= isIndented;
+          }
+
+          if (isLower && isNotIndented) {
+            numLowercasedNotIndentedLines++;
+          }
+          if (isLower && isIndented) {
+            numLowercasedIndentedLines++;
+          }
+          if (isIndented) {
+            numIndentedLines++;
+          }
+          if (isNotIndented) {
+            numNotIndentedLines++;
+          }
+        }
+
+        if (numIndentedLines == 0) {
+          continue;
+        }
+
+        // The block is *not* in hanging indent format if there is at least one non-indented line
+        // that starts with a lowercase character.
+        if (numLowercasedNotIndentedLines > 0) {
+          continue;
+        }
+
+        // The block is in hanging indent format if the first line is not indented, but all other
+        // lines. This should identify single enumeration items, e.g., in the format:
+        // Dynamics: The low energy behavior of
+        //    a physical system depends on its
+        //    dynamics.
+        if (!isFirstLineIndented && !isFirstLineShort && isAllOtherLinesIndented) {
+          block->hangingIndent = mostFreqLeftMargin;
+          continue;
+        }
+
+        // The block is in hanging indent format if all non-indented lines start with an uppercase
+        // character and if the number of non-indented lines exceed a certain threshold.
+        if (numNotIndentedLines >= 10 && numLowercasedNotIndentedLines == 0) {
+          block->hangingIndent = mostFreqLeftMargin;
+          continue;
+        }
+
+        // The block is in hanging indent format if there is at least one indented line that start
+        // with a lowercase character.
+        if (numLowercasedIndentedLines > 0) {
+          block->hangingIndent = mostFreqLeftMargin;
+          continue;
+        }
+      }
     }
-    numLines++;
   }
-  double mostFreqLeftMargin = 0.0;
-  int mostFreqLeftMarginCount = 0;
-  for (const auto& pair : leftMarginCounts) {
-    if (pair.second > mostFreqLeftMarginCount) {
-      mostFreqLeftMargin = pair.first;
-      mostFreqLeftMarginCount = pair.second;
-    }
-  }
-
-  // Abort if there are no more than two lines.
-  if (numLines <= 1) {
-    return 0.0;
-  }
-
-  // Abort if there are no lines with leftMargin > 0.
-  if (numLeftMarginLines == 0) {
-    return 0.0;
-  }
-
-  // Abort if less than 50% of the indented lines are indented by the same level.
-  if (mostFreqLeftMarginCount <= 0.5 * numLeftMarginLines) {
-    return 0.0;
-  }
-
-  bool isFirstLineIndented = false;
-  bool isFirstLineShort = false;
-  bool isAllOtherLinesIndented = true;
-  int numLowercasedNotIndentedLines = 0;
-  int numLowercasedIndentedLines = 0;
-  int numNotIndentedLines = 0;
-  int numIndentedLines = 0;
-
-  for (size_t i = 0; i < block->lines.size(); i++) {
-    const PdfTextLine* line = block->lines[i];
-
-    bool isNotIndented = equal(line->leftMargin, 0, _doc->avgGlyphWidth);
-    bool isIndented = equal(line->leftMargin, mostFreqLeftMargin, _doc->avgGlyphWidth);
-    bool isLower = !line->text.empty() && islower(line->text[0]);
-
-    if (i == 0) {
-      isFirstLineIndented = isIndented;
-      isFirstLineShort = larger(line->rightMargin, 0, 2 * _doc->avgGlyphWidth);
-    } else {
-      isAllOtherLinesIndented &= isIndented;
-    }
-
-    if (isLower && isNotIndented) {
-      numLowercasedNotIndentedLines++;
-    }
-    if (isLower && isIndented) {
-      numLowercasedIndentedLines++;
-    }
-    if (isIndented) {
-      numIndentedLines++;
-    }
-    if (isNotIndented) {
-      numNotIndentedLines++;
-    }
-  }
-
-  if (numIndentedLines == 0) {
-    return 0.0;
-  }
-
-  // The block is *not* in hanging indent format if there is at least one non-indented line that
-  // starts with a lowercase character.
-  if (numLowercasedNotIndentedLines > 0) {
-    return 0.0;
-  }
-
-  // The block is in hanging indent format if the first line is not indented, but all other lines.
-  // This should identify single enumeration items, e.g., in the format:
-  // Dynamics: The low energy behavior of
-  //    a physical system depends on its
-  //    dynamics.
-  if (!isFirstLineIndented && !isFirstLineShort && isAllOtherLinesIndented) {
-    return mostFreqLeftMargin;
-  }
-
-  // The block is in hanging indent format if all non-indented lines start with an uppercase
-  // character and if the number of non-indented lines exceed a certain threshold.
-  if (numNotIndentedLines >= 10 && numLowercasedNotIndentedLines == 0) {
-    return mostFreqLeftMargin;
-  }
-
-  // The block is in hanging indent format if there is at least one indented line that starts with
-  // a lowercase character.
-  if (numLowercasedIndentedLines > 0) {
-    return mostFreqLeftMargin;
-  }
-
-  return 0.0;
 }
 
 // _________________________________________________________________________________________________

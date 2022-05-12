@@ -106,6 +106,8 @@ bool smaller(double d1, double d2, double delta = 0.5);
 
 bool equalOrSmaller(double d1, double d2, double delta = 0.5);
 
+bool between(double d, double low, double up);
+
 bool contains(const PdfElement* element1, const PdfElement* element2, double delta = 0.5);
 
 std::pair<double, double> computeXOverlapRatios(const PdfElement* element1,
@@ -124,6 +126,7 @@ double max(std::pair<double, double> pair);
 
 bool endsWithSentenceDelimiter(const std::string& str);
 bool startsWithUpper(const std::string& str);
+bool startsWithLower(const std::string& str);
 
 double round(double d, int numDecimals);
 

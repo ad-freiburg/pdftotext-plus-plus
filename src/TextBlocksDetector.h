@@ -50,11 +50,11 @@ class TextBlocksDetector {
       potentialFootnoteMarkers) const;
   bool isContinuationLineOfFootnote(const PdfTextLine* line,
       const std::unordered_set<std::string>* potentialFootnoteMarkers) const;
-  double computeHangingIndent(const PdfTextBlock* block) const;
+  void computeHangingIndents() const;
   void computePotentialFootnoteMarkers(const PdfPage* page,
       std::unordered_set<std::string>* footnoteMarkers) const;
   double computePercentageNoRightMarginLines(const PdfTextBlock* block) const;
-  void computeSegmentTrimBoxes() const;
+  void computeTextBlockTrimBoxes() const;
 
   PdfFigure* isPartOfFigure(const PdfTextLine* line) const;
 

@@ -512,6 +512,13 @@ class PdfTextBlock : public PdfElement {
   /** The text lines of this block. */
   std::vector<PdfTextLine*> lines;
 
+  double hangingIndent = 0.0;
+
+  double trimLeftX = 0.0;
+  double trimUpperY = 0.0;
+  double trimRightX = 0.0;
+  double trimLowerY = 0.0;
+
   /**
    * This method returns a string representation of this block for debugging purposes.
    *
