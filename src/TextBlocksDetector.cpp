@@ -1036,7 +1036,7 @@ void TextBlocksDetector::computeTextLineIndentHierarchies() {
                 actualLineDistance = prevLine->position->getRotLowerY() - line->position->getRotUpperY();
                 break;
             }
-            if (larger(actualLineDistance, std::max(10.0, 3 * _mostFreqLineDistance))) {
+            if (larger(abs(actualLineDistance), std::max(10.0, 3 * _mostFreqLineDistance))) {
               lineStack = std::stack<PdfTextLine*>();
             }
           }
