@@ -176,7 +176,7 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   // for a non-breaking space manually. To do so, convert the text to a wide character, as the
   // non-breaking space is a 2-byte character.
   std::wstring wText = _wStringConverter.from_bytes(text);
-  bool isWhitespace = true;
+  bool isWhitespace = !wText.empty();
   for (wchar_t& ch : wText) {
     if (!std::iswspace(ch) && ch != 0x00a0) {
       isWhitespace = false;
