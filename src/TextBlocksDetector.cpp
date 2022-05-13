@@ -557,20 +557,24 @@ bool TextBlocksDetector::startsTextBlock(const PdfTextLine* prevLine, const PdfT
     _log->debug(p) << " └─ currLine.moreIndented: " << currMoreIndented << std::endl;
 
     if (currIndented) {
-      if (isUnexpectedRightX) {
+      if (prevMoreIndented) {
+        double xOffset = prevLine->position->leftX - currLine->position->leftX;
+        return !between(xOffset, -_doc->avgGlyphWidth, 3 * _doc->avgGlyphWidth);
+      } else if (isUnexpectedRightX) {
         return true;
       } else {
-        _log->debug(p) << "\033[1mstarts block: " << prevMoreIndented << "\033[0m" << std::endl;
-        return prevMoreIndented;
+        return false;
       }
     }
 
     if (currMoreIndented) {
-      if (isUnexpectedRightX) {
+      if (prevMoreIndented) {
+        double xOffset = prevLine->position->leftX - currLine->position->leftX;
+        return !between(xOffset, -_doc->avgGlyphWidth, _doc->avgGlyphWidth);
+      } else if (isUnexpectedRightX) {
         return true;
       } else {
-        double xOffset = prevLine->position->leftX - currLine->position->leftX;
-        return !equal(xOffset, 0, _doc->avgGlyphWidth);
+        return true;
       }
     }
 
