@@ -405,12 +405,14 @@ bool TextBlocksDetector::startsTextBlock(const PdfTextLine* prevLine, const PdfT
   _log->debug(p) << " └─ currLine.isContinuationOfItem: " << currContLineOfItem << std::endl;
 
   if (currContLineOfItem) {
-    if (prevContLineOfItem) {
-      double xOffset = prevLine->position->leftX - currLine->position->leftX;
-      return !between(xOffset, -_doc->avgGlyphWidth, 6 * _doc->avgGlyphWidth);
-    } else if (isUnexpectedRightX) {
+    if (isUnexpectedRightX) {
       _log->debug(p) << "\033[1mstarts new block (unexpected right x).\033[0m" << std::endl;
       return true;
+    } else if (prevFirstLineOfItem) {
+      return false;
+    } else if (prevContLineOfItem) {
+      double xOffset = prevLine->position->leftX - currLine->position->leftX;
+      return !between(xOffset, -_doc->avgGlyphWidth, 6 * _doc->avgGlyphWidth);
     } else {
       _log->debug(p) << "\033[1mcontinues block (continuation of item).\033[0m" << std::endl;
       return false;
