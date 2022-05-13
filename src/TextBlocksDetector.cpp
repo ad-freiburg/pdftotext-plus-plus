@@ -346,6 +346,12 @@ bool TextBlocksDetector::startsTextBlock(const PdfTextLine* prevLine, const PdfT
         << "; \033[1mrotLeftX:\033[0m " << currLine->position->getRotLeftX()
         << "; \033[1mrotLowerY:\033[0m " << currLine->position->getRotLowerY() << std::endl;
   }
+  std::string pStr = currLine->parentTextLine ? currLine->parentTextLine->text : "-";
+  std::string psStr = currLine->prevSiblingTextLine ? currLine->prevSiblingTextLine->text : "-";
+  std::string nsStr = currLine->nextSiblingTextLine ? currLine->nextSiblingTextLine->text : "-";
+  _log->debug(p) << " └─ line.parent: " << pStr << std::endl;
+  _log->debug(p) << " └─ line.prevSibling: " << psStr << std::endl;
+  _log->debug(p) << " └─ line.nextSibling: " << nsStr << std::endl;
   _log->debug(p) << "---------------" << std::endl;
 
   if (!prevLine) {
@@ -375,10 +381,6 @@ bool TextBlocksDetector::startsTextBlock(const PdfTextLine* prevLine, const PdfT
   bool prevFirstLineOfItem = isFirstLineOfItem(prevLine);
   bool currFirstLineOfItem = isFirstLineOfItem(currLine);
 
-  std::string pStr = currLine->parentTextLine ? currLine->parentTextLine->text : "-";
-  std::string psStr = currLine->prevSiblingTextLine ? currLine->prevSiblingTextLine->text : "-";
-  std::string nsStr = currLine->nextSiblingTextLine ? currLine->nextSiblingTextLine->text : "-";
-
   _log->debug(p) << "Checking for first line of enumeration item..." << std::endl;
   _log->debug(p) << " └─ prev sibling: " << psStr << std::endl;
   _log->debug(p) << " └─ next sibling: " << nsStr << std::endl;
@@ -394,6 +396,8 @@ bool TextBlocksDetector::startsTextBlock(const PdfTextLine* prevLine, const PdfT
   // The line continues a new block if it is a continuation of an enumeration item.
   bool prevContLineOfItem = isContinuationLineOfItem(prevLine);
   bool currContLineOfItem = isContinuationLineOfItem(currLine);
+  bool prevPartOfItem = prevFirstLineOfItem || prevContLineOfItem;
+  bool currPartOfItem = currFirstLineOfItem || currContLineOfItem;
 
   _log->debug(p) << "Checking for continuation line of enumeration item..." << std::endl;
   _log->debug(p) << " └─ parent:   " << pStr << std::endl;
@@ -413,9 +417,12 @@ bool TextBlocksDetector::startsTextBlock(const PdfTextLine* prevLine, const PdfT
     }
   }
 
-  bool prevPartOfItem = prevFirstLineOfItem || prevContLineOfItem;
-  bool currPartOfItem = currFirstLineOfItem || currContLineOfItem;
   if (prevPartOfItem && !currPartOfItem) {
+    if (isUnexpectedRightX) {
+      _log->debug(p) << "\033[1mstarts new block (unexpected right x).\033[0m" << std::endl;
+      return true;
+    }
+
     // There could be an item in the following format:
     //    (i) This is an item that continues in the next
     //  line. Note the smaller leftX of the second line.
@@ -446,6 +453,8 @@ bool TextBlocksDetector::startsTextBlock(const PdfTextLine* prevLine, const PdfT
   // The line continues a new block if it is a continuation of a footnote.
   bool prevContLineOfFootnote = isContinuationLineOfFootnote(prevLine, potentialFootnoteMarkers);
   bool currContLineOfFootnote = isContinuationLineOfFootnote(currLine, potentialFootnoteMarkers);
+  bool prevPartOfFootnote = prevFirstLineOfFootnote || prevContLineOfFootnote;
+  bool currPartOfFootnote = currFirstLineOfFootnote || currContLineOfFootnote;
 
   _log->debug(p) << "Checking for continuation line of footnote..." << std::endl;
   _log->debug(p) << " └─ prevLine.isContOfFootnote: " << prevContLineOfFootnote << std::endl;
@@ -464,8 +473,6 @@ bool TextBlocksDetector::startsTextBlock(const PdfTextLine* prevLine, const PdfT
     }
   }
 
-  bool prevPartOfFootnote = prevFirstLineOfFootnote || prevContLineOfFootnote;
-  bool currPartOfFootnote = currFirstLineOfFootnote || currContLineOfFootnote;
   if (prevPartOfFootnote && !currPartOfFootnote) {
     _log->debug(p) << "\033[1mstarts block (prev part of footnote).\033[0m" << std::endl;
     return true;
@@ -524,23 +531,69 @@ bool TextBlocksDetector::startsTextBlock(const PdfTextLine* prevLine, const PdfT
   _log->debug(p) << " └─ prevLine.rightMargin: " << prevLine->rightMargin << std::endl;
   _log->debug(p) << " └─ currLine.rightMargin: " << currLine->rightMargin << std::endl;
 
-  // -----
   if (hangingIndent > 0) {
-    bool notIndented = smaller(currLine->leftMargin, hangingIndent, _doc->avgGlyphWidth);
-    if (notIndented) {
+    // -----
+    bool prevNotIndented = smaller(prevLine->leftMargin, hangingIndent, _doc->avgGlyphWidth);
+    bool currNotIndented = smaller(currLine->leftMargin, hangingIndent, _doc->avgGlyphWidth);
+
+    _log->debug(p) << " └─ prevLine.notIndented: " << prevNotIndented << std::endl;
+    _log->debug(p) << " └─ currLine.notIndented: " << currNotIndented << std::endl;
+
+    if (currNotIndented) {
       _log->debug(p) << "\033[1mstarts block (hanging indent & no indent).\033[0m" << std::endl;
       return true;
     }
-    bool indented = equal(currLine->leftMargin, hangingIndent, _doc->avgGlyphWidth);
-    if (indented) {
+
+    // ---------------
+    // The line continues a new block if it is a continuation of a footnote.
+    bool prevIndented = equal(prevLine->leftMargin, hangingIndent, _doc->avgGlyphWidth);
+    bool currIndented = equal(currLine->leftMargin, hangingIndent, _doc->avgGlyphWidth);
+    bool prevMoreIndented = larger(prevLine->leftMargin, hangingIndent, _doc->avgGlyphWidth);
+    bool currMoreIndented = larger(currLine->leftMargin, hangingIndent, _doc->avgGlyphWidth);
+
+    _log->debug(p) << " └─ prevLine.indented: " << prevIndented << std::endl;
+    _log->debug(p) << " └─ currLine.indented: " << currIndented << std::endl;
+    _log->debug(p) << " └─ prevLine.moreIndented: " << prevMoreIndented << std::endl;
+    _log->debug(p) << " └─ currLine.moreIndented: " << currMoreIndented << std::endl;
+
+    if (currIndented) {
       if (isUnexpectedRightX) {
-        _log->debug(p) << "\033[1mstarts new block (prev line is short).\033[0m" << std::endl;
         return true;
       } else {
-        _log->debug(p) << "\033[1mcontinues block (hanging indent & indent).\033[0m" << std::endl;
-        return false;
+        _log->debug(p) << "\033[1mstarts block: " << prevMoreIndented << "\033[0m" << std::endl;
+        return prevMoreIndented;
       }
     }
+
+    if (currMoreIndented) {
+      if (isUnexpectedRightX) {
+        return true;
+      } else {
+        double xOffset = prevLine->position->leftX - currLine->position->leftX;
+        return !equal(xOffset, 0, _doc->avgGlyphWidth);
+      }
+    }
+
+    // bool notIndented = smaller(currLine->leftMargin, hangingIndent, _doc->avgGlyphWidth);
+    // if (notIndented) {
+    //   _log->debug(p) << "\033[1mstarts block (hanging indent & no indent).\033[0m" << std::endl;
+    //   return true;
+    // }
+    // bool indented = equal(currLine->leftMargin, hangingIndent, _doc->avgGlyphWidth);
+    // if (indented) {
+    //   if (isUnexpectedRightX) {
+    //     _log->debug(p) << "\033[1mstarts new block (prev line is short).\033[0m" << std::endl;
+    //     return true;
+    //   } else {
+    //     _log->debug(p) << "\033[1mcontinues block (hanging indent & indent).\033[0m" << std::endl;
+    //     return false;
+    //   }
+    // }
+    // bool moreIndented = larger(currLine->leftMargin, hangingIndent, _doc->avgGlyphWidth);
+    // if (moreIndented) {
+    //   _log->debug(p) << "\033[1mstarts new block (is more indented).\033[0m" << std::endl;
+    //   return true;
+    // }
 
     _log->debug(p) << "\033[1mcontinues block (hanging indent, no rule applied).\033[0m" << std::endl;
     return false;
@@ -960,9 +1013,29 @@ void TextBlocksDetector::computeTextBlockTrimBoxes() const {
 void TextBlocksDetector::computeTextLineIndentHierarchies() {
   for (auto* page : _doc->pages) {
     std::stack<PdfTextLine*> lineStack;
+    PdfTextLine* prevLine = nullptr;
     for (auto* segment : page->segments) {
       for (auto* block : segment->blocks) {
         for (auto* line : block->lines) {
+          // Compute the actual line distance.
+          if (prevLine) {
+            double actualLineDistance = 0;
+            switch(line->position->rotation) {
+              case 0:
+              case 1:
+                actualLineDistance = line->position->getRotUpperY() - prevLine->position->getRotLowerY();
+                break;
+              case 2:
+              case 3:
+                actualLineDistance = prevLine->position->getRotLowerY() - line->position->getRotUpperY();
+                break;
+            }
+            if (larger(actualLineDistance, std::max(10.0, 3 * _mostFreqLineDistance))) {
+              lineStack = std::stack<PdfTextLine*>();
+            }
+          }
+          prevLine = line;
+
           while (!lineStack.empty()) {
             if (!larger(lineStack.top()->position->leftX, line->position->leftX, _doc->avgGlyphWidth)) {
               break;
@@ -1057,7 +1130,7 @@ void TextBlocksDetector::computeHangingIndents() const {
 
           if (i == 0) {
             isFirstLineIndented = isIndented;
-            isFirstLineShort = larger(line->rightMargin, 0, 2 * _doc->avgGlyphWidth);
+            isFirstLineShort = larger(line->rightMargin, 0, 4 * _doc->avgGlyphWidth);
           } else {
             isAllOtherLinesIndented &= isIndented;
           }
@@ -1105,7 +1178,7 @@ void TextBlocksDetector::computeHangingIndents() const {
 
         // The block is in hanging indent format if there is at least one indented line that start
         // with a lowercase character.
-        if (numLowercasedIndentedLines > 0) {
+        if (numLines >= 4 && numLowercasedIndentedLines > 0) {
           block->hangingIndent = mostFreqLeftMargin;
           continue;
         }

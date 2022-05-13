@@ -10,6 +10,7 @@
 #include <iostream>
 #include <vector>
 
+#include "./utils/Utils.h"
 #include "./PdfDocument.h"
 #include "./SubSuperScriptsDetector.h"
 
@@ -29,15 +30,17 @@ void SubSuperScriptsDetector::detect() const {
         for (auto* word : line->words) {
           for (auto* glyph : word->glyphs) {
             // Identify superscripts.
-            if (glyph->base < line->base) {
-              glyph->isSuperscript = true;
-              continue;
-            }
+            if (smaller(glyph->fontSize, _doc->mostFreqFontSize, 0.9)) {
+              if (glyph->base < line->base) {
+                glyph->isSuperscript = true;
+                continue;
+              }
 
-            // Identify subscripts.
-            if (glyph->base > line->base) {
-              glyph->isSubscript = true;
-              continue;
+              // Identify subscripts.
+              if (glyph->base > line->base) {
+                glyph->isSubscript = true;
+                continue;
+              }
             }
 
             // Compute the bounding box of the line, with sub- and superscripts ignored.
