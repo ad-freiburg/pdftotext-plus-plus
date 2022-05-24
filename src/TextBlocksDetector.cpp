@@ -903,6 +903,25 @@ bool TextBlocksDetector::isFirstLineOfItem(const PdfTextLine* line,
     existsNextItem = nextStartsWithItemLabel && isSameFont && isSameFontsize;
   }
 
+  // EXPERIMENTAL: The line is not the first line of a footnote when (1) the font of the line is
+  // equal to the font of the previous line, (2) the line distance to the previous line is <= 0; and
+  // and (3) the previous line does not end with a punctuation mark. This should avoid to detect
+  // lines that occasionally starts with a superscripted number as a footnote. Example:
+  // 0901.4737:11.
+  if (line->prevLine) {
+    bool prevStartsWithItemLabel = startsWithItemLabel(line->prevLine);
+    bool isEqualFont = line->prevLine->fontName == line->fontName;
+    bool isEqualFontSize = equal(line->prevLine->fontSize, line->fontSize, 0.5);
+    double distance = line->position->upperY - line->prevLine->position->lowerY;
+    bool isSentenceDelimiter = endsWithSentenceDelimiter(line->prevLine->text);
+    bool isEqualLeftX = equal(line->prevLine->position->leftX, line->position->leftX, _doc->avgGlyphWidth);
+
+    if (!prevStartsWithItemLabel && isEqualFont && isEqualFontSize && distance <= 0 && !isSentenceDelimiter && isEqualLeftX) {
+      return false;
+    }
+  }
+
+
   if (currStartsWithItemLabel && (existsPrevItem || existsNextItem)) {
     return true;
   }
