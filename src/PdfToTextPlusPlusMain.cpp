@@ -193,6 +193,8 @@ int main(int argc, char *argv[]) {
   // Get the specified path to the input PDF file.
   std::string pdfFilePathStr(argv[1]);
 
+  std::cout << pdfFilePathStr << std::endl;
+
   // Get the specified path to the output file.
   std::string outputFilePathStr;
   if (argc > 2) {
@@ -323,7 +325,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  std::cout << "XXX" << std::endl;
+  std::cout << "YYYXXX" << std::endl;
 
   return 0;
 }

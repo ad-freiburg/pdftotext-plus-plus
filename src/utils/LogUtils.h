@@ -15,7 +15,7 @@
 
 // =================================================================================================
 
-enum LogLevel { ERROR, WARN, INFO, DEBUG };
+enum LogLevel { ERROR, WARN, INFO, DEBUG, TRACE };
 
 class NullStream : public std::ostream {
  public:
@@ -30,6 +30,7 @@ class Logger {
   void setLogLevel(LogLevel logLevel);
   void setPageFilter(int pageNum);
 
+  std::ostream& trace(int page=-1);
   std::ostream& debug(int page=-1);
   std::ostream& info(int page=-1);
   std::ostream& warn(int page=-1);

@@ -32,6 +32,11 @@ void Logger::setPageFilter(int pageFilter) {
 }
 
 // _________________________________________________________________________________________________
+std::ostream& Logger::trace(int page) {
+  return log(LogLevel::TRACE, page);
+}
+
+// _________________________________________________________________________________________________
 std::ostream& Logger::debug(int page) {
   return log(LogLevel::DEBUG, page);
 }
@@ -63,6 +68,9 @@ std::ostream& Logger::log(LogLevel logLevel, int page) {
 
   std::string logLevelStr;
   switch (logLevel) {
+    case TRACE:
+      logLevelStr = "\033[35;1mDEBUG:\033[0m"; // magenta + bold
+      break;
     case DEBUG:
       logLevelStr = "\033[32;1mDEBUG:\033[0m"; // green + bold
       break;

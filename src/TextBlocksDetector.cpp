@@ -36,16 +36,16 @@ std::regex item_anchor_regexes[] = {
   // A regex to find items starting with "[Bu2] ", "[Ch] ", "[Enn2020] ", etc.
   std::regex("^(\\[)([A-Z][a-zA-Z0-9]{0,5})(\\])\\s+"),
   // A regex to find items starting with "A) " or "1) " or "a1) ".
-  std::regex("^([a-z0-9][0-9]{0,1})\\)\\s+", std::regex_constants::icase)
+  std::regex("^([a-z0-9][0-9]{0,1})\\)\\s+", std::regex_constants::icase),
+  // A regex to find items starting with "PACS" (1011.5073).
+  std::regex("^PACS\\s+", std::regex_constants::icase)
 };
 
-// A regular expression to find footnotes starting with a superscript "1", "2", "a", "b".
-std::regex isFootnoteMarkerSuperscriptRegex("^(\\d+|[a-z])");
-// A regular expression to find footnotes starting with "*", "†", or "‡", or "?". These markers
-// must not be superscripted.
-std::regex isFootnoteMarkerRegex("^(\\*|∗|†|‡|\\?)");
+const std::string FOOTNOTE_LABEL_ALPHABET = "*∗†‡?";
+const std::string ITEM_LABEL_SUPERSCRIPT_ALPHABET = "abcdefghijklmnopqrstuvwxyz01234567890()";
+const std::string FORMULA_ID_ALPHABET = "=+";
 
-std::unordered_set<std::string> specialFootnoteMarkers { "∗", "†", "‡" };
+const std::unordered_set<std::string> lastNamePrefixes = { "van", "von", "de" };
 
 // _________________________________________________________________________________________________
 TextBlocksDetector::TextBlocksDetector(PdfDocument* doc, bool debug, int debugPageFilter) {
@@ -129,6 +129,8 @@ void TextBlocksDetector::detect() {
     for (auto* segment : page->segments) {
       for (auto* block : segment->blocks) {
         double percNoRightMarginLines = computePercentageNoRightMarginLines(block);
+        bool isCentered = computeIsCentered(block);
+
         std::vector<PdfTextLine*> currBlockLines;
         for (size_t i = 0; i < block->lines.size(); i++) {
           PdfTextLine* prevLine = i > 0 ? block->lines[i - 1] : nullptr;
@@ -136,7 +138,7 @@ void TextBlocksDetector::detect() {
           PdfTextLine* nextLine = i < block->lines.size() - 1 ? block->lines[i + 1] : nullptr;
 
           if (startsTextBlock(prevLine, currLine, nextLine, &potentialFootnoteMarkers,
-                block->hangingIndent, percNoRightMarginLines) && !currBlockLines.empty()) {
+                block->hangingIndent, percNoRightMarginLines, isCentered) && !currBlockLines.empty()) {
             createTextBlock(currBlockLines, &page->blocks);
             currBlockLines.clear();
           }
@@ -264,6 +266,7 @@ bool TextBlocksDetector::startsPreliminaryTextBlock(const PdfTextLine* prevLine,
       actualLineDistance = prevLine->position->getRotLowerY() - currLine->position->getRotUpperY();
       break;
   }
+  actualLineDistance = round(actualLineDistance, 1);
 
   _log->debug(p) << "Checking line distances..." << std::endl;
   _log->debug(p) << " └─ expected line distance: " << expectedLineDistance << std::endl;
@@ -324,8 +327,9 @@ bool TextBlocksDetector::startsPreliminaryTextBlock(const PdfTextLine* prevLine,
 
 // _________________________________________________________________________________________________
 bool TextBlocksDetector::startsTextBlock(const PdfTextLine* prevLine, const PdfTextLine* currLine,
-      const PdfTextLine* nextLine, const std::unordered_set<std::string>* potentialFootnoteMarkers,
-      double hangingIndent, double percNoRightMarginLines) {
+      const PdfTextLine* nextLine, const std::unordered_set<std::string>* potentialFootnoteLabels,
+      double hangingIndent, double percNoRightMarginLines, bool isCentered) {
+
   if (!currLine) {
     return false;
   }
@@ -376,12 +380,25 @@ bool TextBlocksDetector::startsTextBlock(const PdfTextLine* prevLine, const PdfT
   }
   // ==========
 
+  if (isCentered) {
+    // Centered author info
+    bool currFirstLineOfItem = isFirstLineOfItem(currLine);
+
+    if (currFirstLineOfItem) {
+      _log->debug(p) << "\033[1mstarts block (centered + item start).\033[0m" << std::endl;
+      return true;
+    }
+
+    _log->debug(p) << "\033[1mcontinues block (centered).\033[0m" << std::endl;
+    return false;
+  }
+
   // ---------------
   // The line starts a new block if it is the first line of an enumeration item.
-  bool prevFirstLineOfItem = isFirstLineOfItem(prevLine);
-  bool currFirstLineOfItem = isFirstLineOfItem(currLine);
+  bool prevFirstLineOfItem = isFirstLineOfItem(prevLine, potentialFootnoteLabels);
+  bool currFirstLineOfItem = isFirstLineOfItem(currLine, potentialFootnoteLabels);
 
-  _log->debug(p) << "Checking for first line of enumeration item..." << std::endl;
+  _log->debug(p) << "Checking for first line of an item..." << std::endl;
   _log->debug(p) << " └─ prev sibling: " << psStr << std::endl;
   _log->debug(p) << " └─ next sibling: " << nsStr << std::endl;
   _log->debug(p) << " └─ prevLine.isFirstLineOfItem: " << prevFirstLineOfItem << std::endl;
@@ -394,8 +411,8 @@ bool TextBlocksDetector::startsTextBlock(const PdfTextLine* prevLine, const PdfT
 
   // ---------------
   // The line continues a new block if it is a continuation of an enumeration item.
-  bool prevContLineOfItem = isContinuationLineOfItem(prevLine);
-  bool currContLineOfItem = isContinuationLineOfItem(currLine);
+  bool prevContLineOfItem = isContinuationLineOfItem(prevLine, potentialFootnoteLabels);
+  bool currContLineOfItem = isContinuationLineOfItem(currLine, potentialFootnoteLabels);
   bool prevPartOfItem = prevFirstLineOfItem || prevContLineOfItem;
   bool currPartOfItem = currFirstLineOfItem || currContLineOfItem;
 
@@ -405,13 +422,17 @@ bool TextBlocksDetector::startsTextBlock(const PdfTextLine* prevLine, const PdfT
   _log->debug(p) << " └─ currLine.isContinuationOfItem: " << currContLineOfItem << std::endl;
 
   if (currContLineOfItem) {
-    if (isUnexpectedRightX) {
+    if (isCentered) {
+      _log->debug(p) << "\033[1mcontinues block (centered).\033[0m" << std::endl;
+      return false;
+    } else if (isUnexpectedRightX) {
       _log->debug(p) << "\033[1mstarts new block (unexpected right x).\033[0m" << std::endl;
       return true;
     } else if (prevFirstLineOfItem) {
       return false;
     } else if (prevContLineOfItem) {
       double xOffset = prevLine->position->leftX - currLine->position->leftX;
+      _log->debug(p) << xOffset << " " << _doc->avgGlyphWidth << std::endl;
       return !between(xOffset, -_doc->avgGlyphWidth, 6 * _doc->avgGlyphWidth);
     } else {
       _log->debug(p) << "\033[1mcontinues block (continuation of item).\033[0m" << std::endl;
@@ -433,52 +454,52 @@ bool TextBlocksDetector::startsTextBlock(const PdfTextLine* prevLine, const PdfT
       return false;
     }
 
-    _log->debug(p) << "\033[1mstarts block (prev part of item).\033[0m" << std::endl;
-    return true;
+    // _log->debug(p) << "\033[1mstarts block (prev part of item).\033[0m" << std::endl;
+    // return true;
   }
 
-  // ---------------
-  // The line starts a new text block if it is the first line of a footnote.
-  bool prevFirstLineOfFootnote = isFirstLineOfFootnote(currLine, potentialFootnoteMarkers);
-  bool currFirstLineOfFootnote = isFirstLineOfFootnote(currLine, potentialFootnoteMarkers);
+  // // ---------------
+  // // The line starts a new text block if it is the first line of a footnote.
+  // bool prevFirstLineOfFootnote = isFirstLineOfFootnote(currLine, potentialFootnoteLabels);
+  // bool currFirstLineOfFootnote = isFirstLineOfFootnote(currLine, potentialFootnoteLabels);
 
-  _log->debug(p) << "Checking for first line of footnote..." << std::endl;
-  _log->debug(p) << " └─ prevLine.isFirstLineOfFootnote: " << prevFirstLineOfFootnote << std::endl;
-  _log->debug(p) << " └─ currLine.isFirstLineOfFootnote: " << currFirstLineOfFootnote << std::endl;
+  // _log->debug(p) << "Checking for first line of footnote..." << std::endl;
+  // _log->debug(p) << " └─ prevLine.isFirstLineOfFootnote: " << prevFirstLineOfFootnote << std::endl;
+  // _log->debug(p) << " └─ currLine.isFirstLineOfFootnote: " << currFirstLineOfFootnote << std::endl;
 
-  if (currFirstLineOfFootnote) {
-    _log->debug(p) << "\033[1mstarts new block (first line of footnote).\033[0m" << std::endl;
-    return true;
-  }
+  // if (currFirstLineOfFootnote) {
+  //   _log->debug(p) << "\033[1mstarts new block (first line of footnote).\033[0m" << std::endl;
+  //   return true;
+  // }
 
-  // ---------------
-  // The line continues a new block if it is a continuation of a footnote.
-  bool prevContLineOfFootnote = isContinuationLineOfFootnote(prevLine, potentialFootnoteMarkers);
-  bool currContLineOfFootnote = isContinuationLineOfFootnote(currLine, potentialFootnoteMarkers);
-  bool prevPartOfFootnote = prevFirstLineOfFootnote || prevContLineOfFootnote;
-  bool currPartOfFootnote = currFirstLineOfFootnote || currContLineOfFootnote;
+  // // ---------------
+  // // The line continues a new block if it is a continuation of a footnote.
+  // bool prevContLineOfFootnote = isContinuationLineOfFootnote(prevLine, potentialFootnoteLabels);
+  // bool currContLineOfFootnote = isContinuationLineOfFootnote(currLine, potentialFootnoteLabels);
+  // bool prevPartOfFootnote = prevFirstLineOfFootnote || prevContLineOfFootnote;
+  // bool currPartOfFootnote = currFirstLineOfFootnote || currContLineOfFootnote;
 
-  _log->debug(p) << "Checking for continuation line of footnote..." << std::endl;
-  _log->debug(p) << " └─ prevLine.isContOfFootnote: " << prevContLineOfFootnote << std::endl;
-  _log->debug(p) << " └─ currLine.isContOfFootnote: " << currContLineOfFootnote << std::endl;
+  // _log->debug(p) << "Checking for continuation line of footnote..." << std::endl;
+  // _log->debug(p) << " └─ prevLine.isContOfFootnote: " << prevContLineOfFootnote << std::endl;
+  // _log->debug(p) << " └─ currLine.isContOfFootnote: " << currContLineOfFootnote << std::endl;
 
-  if (currContLineOfFootnote) {
-    if (prevContLineOfFootnote) {
-      double xOffset = prevLine->position->leftX - currLine->position->leftX;
-      return !between(xOffset, -_doc->avgGlyphWidth, 6 * _doc->avgGlyphWidth);
-    } else if (isUnexpectedRightX) {
-      _log->debug(p) << "\033[1mstarts new block (unexpected right x).\033[0m" << std::endl;
-      return true;
-    } else {
-      _log->debug(p) << "\033[1mcontinues block (continuation of item).\033[0m" << std::endl;
-      return false;
-    }
-  }
+  // if (currContLineOfFootnote) {
+  //   if (prevContLineOfFootnote) {
+  //     double xOffset = prevLine->position->leftX - currLine->position->leftX;
+  //     return !between(xOffset, -_doc->avgGlyphWidth, 6 * _doc->avgGlyphWidth);
+  //   } else if (isUnexpectedRightX) {
+  //     _log->debug(p) << "\033[1mstarts new block (unexpected right x).\033[0m" << std::endl;
+  //     return true;
+  //   } else {
+  //     _log->debug(p) << "\033[1mcontinues block (continuation of item).\033[0m" << std::endl;
+  //     return false;
+  //   }
+  // }
 
-  if (prevPartOfFootnote && !currPartOfFootnote) {
-    _log->debug(p) << "\033[1mstarts block (prev part of footnote).\033[0m" << std::endl;
-    return true;
-  }
+  // if (prevPartOfFootnote && !currPartOfFootnote) {
+  //   _log->debug(p) << "\033[1mstarts block (prev part of footnote).\033[0m" << std::endl;
+  //   return true;
+  // }
 
   // ---------------
   // The line does not start a new block if the previous line and the current line are emphasized,
@@ -504,18 +525,6 @@ bool TextBlocksDetector::startsTextBlock(const PdfTextLine* prevLine, const PdfT
     return false;
   }
 
-  // ---------------
-  // The line does not start a new text block if the current line and the previous line are
-  // centered, that is: when leftMargin == rightMargin.
-  bool prevLineCentered = equal(prevLine->leftMargin, prevLine->rightMargin, 0.1);
-  bool currLineCentered = equal(currLine->leftMargin, currLine->rightMargin, 0.1);
-  bool isLargeLeftMargin = larger(currLine->leftMargin, 0, _doc->avgGlyphWidth);
-  bool prevIsLargeLeftMargin = larger(prevLine->leftMargin, 0, _doc->avgGlyphWidth);
-  if (prevLineCentered && currLineCentered && (isLargeLeftMargin || prevIsLargeLeftMargin)) {
-    _log->debug(p) << "\033[1mcontinues block (prev and curr line centered).\033[0m" << std::endl;
-    return false;
-  }
-
   // TODO
   // The line starts a new text block if (1) the left margin of the current line is == 0, and (2)
   // the left margin of the previous line is larger than the most frequent left margin. This rule
@@ -532,6 +541,7 @@ bool TextBlocksDetector::startsTextBlock(const PdfTextLine* prevLine, const PdfT
   _log->debug(p) << " └─ currLine.leftMargin: " << currLine->leftMargin << std::endl;
   _log->debug(p) << " └─ prevLine.rightMargin: " << prevLine->rightMargin << std::endl;
   _log->debug(p) << " └─ currLine.rightMargin: " << currLine->rightMargin << std::endl;
+  _log->debug(p) << " └─ hangingIndent: " << hangingIndent << std::endl;
 
   if (hangingIndent > 0) {
     // -----
@@ -730,17 +740,33 @@ void TextBlocksDetector::computeTextLineMargins() {
 
   for (auto* page : _doc->pages) {
     for (auto* segment : page->segments) {
-      for (auto* block : segment->blocks) {
-        for (size_t i = 0; i < block->lines.size(); i++) {
-          PdfTextLine* prevLine = i > 0 ? block->lines.at(i - 1) : nullptr;
-          PdfTextLine* currLine = block->lines.at(i);
-          PdfTextLine* nextLine = i < block->lines.size() - 1 ? block->lines.at(i + 1) : nullptr;
+      for (size_t i = 0; i < segment->blocks.size(); i++) {
+        PdfTextBlock* prevBlock = i > 0 ? segment->blocks.at(i - 1) : nullptr;
+        PdfTextBlock* currBlock = segment->blocks.at(i);
+        PdfTextBlock* nextBlock = i < segment->blocks.size() - 1 ? segment->blocks.at(i + 1) : nullptr;
+
+        // Enlarge short text blocks that consists of two lines.
+        double blockTrimRightX = currBlock->trimRightX;
+        if (currBlock->lines.size() == 2) {
+          double leftMargin = currBlock->position->leftX - segment->position->leftX;
+          double rightMargin = segment->position->rightX - currBlock->position->rightX;
+          double isCentered = equal(leftMargin, rightMargin, _doc->avgGlyphWidth);
+          if (!isCentered) {
+            if (prevBlock) { blockTrimRightX = std::max(blockTrimRightX, prevBlock->trimRightX); }
+            if (nextBlock) { blockTrimRightX = std::max(blockTrimRightX, nextBlock->trimRightX); }
+          }
+        }
+
+        for (size_t j = 0; j < currBlock->lines.size(); j++) {
+          PdfTextLine* prevLine = j > 0 ? currBlock->lines.at(j - 1) : nullptr;
+          PdfTextLine* currLine = currBlock->lines.at(j);
+          PdfTextLine* nextLine = j < currBlock->lines.size() - 1 ? currBlock->lines.at(j + 1) : nullptr;
 
           // double trimLeftX = std::max(segment->trimLeftX, block->position->leftX);
           // double trimRightX = std::min(segment->trimRightX, block->position->rightX);
           // double trimRightX = segment->trimRightX;
-          currLine->leftMargin = round(currLine->position->leftX - block->trimLeftX);
-          currLine->rightMargin = round(block->trimRightX - currLine->position->rightX);
+          currLine->leftMargin = round(currLine->position->leftX - currBlock->trimLeftX);
+          currLine->rightMargin = round(blockTrimRightX - currLine->position->rightX);
 
           // Make sure that the indent is measured only for lines from body text paragraphs.
           // Reason: Lines from the bibliography could have other indents.
@@ -776,7 +802,7 @@ void TextBlocksDetector::computeTextLineMargins() {
 
           double nextLineLeftMargin = 0.0;
           if (nextLine) {
-            nextLineLeftMargin = round(nextLine->position->getRotLeftX() - block->position->getRotLeftX());
+            nextLineLeftMargin = round(nextLine->position->getRotLeftX() - currBlock->position->getRotLeftX());
           }
 
           if (!equal(prevLineLeftMargin, 0, _doc->avgGlyphWidth)) {
@@ -843,27 +869,82 @@ PdfFigure* TextBlocksDetector::isPartOfFigure(const PdfTextLine* line) const {
 }
 
 // _________________________________________________________________________________________________
-bool TextBlocksDetector::isFirstLineOfItem(const PdfTextLine* line) const {
+bool TextBlocksDetector::isFirstLineOfItem(const PdfTextLine* line,
+      const std::unordered_set<std::string>* potentialFootnoteLabels) const {
   if (!line) {
     return false;
   }
 
-  if (line->text.size() == 0) {
+  if (line->text.empty()) {
     return false;
   }
 
-  std::smatch m1;
-  std::smatch m2;
-  std::smatch m3;
+  // The line is the first line of an item if it starts with an item label, and there is a previous
+  // and/or next sibling text line that also starts with an item label.
+  bool currStartsWithItemLabel = startsWithItemLabel(line);
 
+  bool existsPrevItem = false;
+  if (line->prevSiblingTextLine && !line->prevSiblingTextLine->words.empty()) {
+    bool prevStartsWithItemLabel = startsWithItemLabel(line->prevSiblingTextLine);
+    PdfWord* prevFirstWord = line->prevSiblingTextLine->words[0];
+    PdfWord* currFirstWord = line->words[0];
+    bool isSameFont = prevFirstWord->fontName == currFirstWord->fontName;
+    bool isSameFontsize = equal(prevFirstWord->fontSize, currFirstWord->fontSize, 0.5);
+    existsPrevItem = prevStartsWithItemLabel && isSameFont && isSameFontsize;
+  }
+
+  bool existsNextItem = false;
+  if (line->nextSiblingTextLine && !line->nextSiblingTextLine->words.empty()) {
+    bool nextStartsWithItemLabel = startsWithItemLabel(line->nextSiblingTextLine);
+    PdfWord* nextFirstWord = line->nextSiblingTextLine->words[0];
+    PdfWord* currFirstWord = line->words[0];
+    bool isSameFont = nextFirstWord->fontName == currFirstWord->fontName;
+    bool isSameFontsize = equal(nextFirstWord->fontSize, currFirstWord->fontSize, 0.5);
+    existsNextItem = nextStartsWithItemLabel && isSameFont && isSameFontsize;
+  }
+
+  if (currStartsWithItemLabel && (existsPrevItem || existsNextItem)) {
+    return true;
+  }
+
+  // The line is the first line of an item if it starts with a footnote label.
+  if (startsWithFootnoteLabel(line, potentialFootnoteLabels)) {
+    return true;
+  }
+
+  return false;
+}
+
+// _________________________________________________________________________________________________
+bool TextBlocksDetector::isContinuationLineOfItem(const PdfTextLine* line,
+      const std::unordered_set<std::string>* potentialFootnoteLabels) const {
+  if (!line) {
+    return false;
+  }
+
+  return isFirstLineOfItem(line->parentTextLine, potentialFootnoteLabels)
+      || isContinuationLineOfItem(line->parentTextLine, potentialFootnoteLabels);
+}
+
+// _________________________________________________________________________________________________
+bool TextBlocksDetector::startsWithItemLabel(const PdfTextLine* line) const {
+  if (!line) {
+    return false;
+  }
+
+  if (line->text.empty()) {
+    return false;
+  }
+
+  // The line starts with an item label if its first word is a superscripted 1,2,3... (or a,b,c...).
+  PdfGlyph* firstGlyph = line->words[0]->glyphs[0];
+  if (firstGlyph->isSuperscript && ITEM_LABEL_SUPERSCRIPT_ALPHABET.find(firstGlyph->text[0]) != std::string::npos) {
+    return true;
+  }
+
+  std::smatch m;
   for (const auto& regex : item_anchor_regexes) {
-    bool startsWithAnchor = std::regex_search(line->text, m1, regex);
-    bool prevSiblingStartsWithAnchor = line->prevSiblingTextLine
-      && std::regex_search(line->prevSiblingTextLine->text, m2, regex);
-    bool nextSiblingStartsWithAnchor = line->nextSiblingTextLine
-      && std::regex_search(line->nextSiblingTextLine->text, m3, regex);
-
-    if (startsWithAnchor && (prevSiblingStartsWithAnchor || nextSiblingStartsWithAnchor)) {
+    if (std::regex_search(line->text, m, regex)) {
       return true;
     }
   }
@@ -872,25 +953,15 @@ bool TextBlocksDetector::isFirstLineOfItem(const PdfTextLine* line) const {
 }
 
 // _________________________________________________________________________________________________
-bool TextBlocksDetector::isContinuationLineOfItem(const PdfTextLine* line) const {
-  return line->parentTextLine && (isFirstLineOfItem(line->parentTextLine)
-      || isContinuationLineOfItem(line->parentTextLine));
-}
-
-// _________________________________________________________________________________________________
-bool TextBlocksDetector::isFirstLineOfFootnote(const PdfTextLine* line,
-      const std::unordered_set<std::string>* potentialFootnoteMarkers) const {
+bool TextBlocksDetector::startsWithFootnoteLabel(const PdfTextLine* line,
+      const std::unordered_set<std::string>* potentialFootnoteLabels) const {
   if (!line) {
     return false;
   }
 
-  if (line->text.size() == 0) {
+  if (line->text.empty()) {
     return false;
   }
-
-  // if (!smaller(line->fontSize, _doc->mostFreqFontSize, .9)) { // TODO
-  //   return false;
-  // }
 
   std::string superScriptPrefix;
   PdfWord* firstWord = line->words[0];
@@ -901,24 +972,92 @@ bool TextBlocksDetector::isFirstLineOfFootnote(const PdfTextLine* line,
     superScriptPrefix += glyph->text;
   }
 
-  if (potentialFootnoteMarkers->count(superScriptPrefix) > 0) {
-    return true;
+  if (potentialFootnoteLabels) {
+    return potentialFootnoteLabels->count(superScriptPrefix) > 0;
   }
 
-  // if (std::regex_search(firstWord->text, m, isFootnoteMarkerRegex)) {
-  //   return true;
-  // }
-
-  return false;
+  return !superScriptPrefix.empty();
 }
+
+
+
+// // _________________________________________________________________________________________________
+// bool TextBlocksDetector::isContinuationLineOfItem(const PdfTextLine* line) const {
+//   if (!line) {
+//     return false;
+//   }
+
+//   if (!line->parentTextLine) {
+//     return false;
+//   }
+
+//   if (line->parentTextLine->words.empty()) {
+//     return false;
+//   }
+
+//   // The line is a continuation of an item, if the parent text line is an continuation of the item.
+//   if (isContinuationLineOfItem(line->parentTextLine)) {
+//     return true;
+//   }
+
+//   // The line is not a continuation of an item when the parent line is not the 1st line of an item.
+//   if (!isFirstLineOfItem(line->parentTextLine)) {
+//     return false;
+//   }
+
+//   // The line is not a continuation of an item when its leftX value is smaller than the rightX value
+//   // of the first word of the parent text line. The assumption made here is that the item label
+//   // consists of only one word and the second word is the first word of the item body.
+//   const PdfWord* firstParentWord = line->parentTextLine->words[0];
+//   if (smaller(line->position->leftX, firstParentWord->position->rightX)) {
+//     return false;
+//   }
+
+//   return true;
+// }
 
 // _________________________________________________________________________________________________
-bool TextBlocksDetector::isContinuationLineOfFootnote(const PdfTextLine* line,
-      const std::unordered_set<std::string>* potentialFootnoteMarkers) const {
-  return line->parentTextLine &&
-      (isFirstLineOfFootnote(line->parentTextLine, potentialFootnoteMarkers)
-        || isContinuationLineOfFootnote(line->parentTextLine, potentialFootnoteMarkers));
-}
+// bool TextBlocksDetector::isFirstLineOfFootnote(const PdfTextLine* line,
+//       const std::unordered_set<std::string>* potentialFootnoteMarkers) const {
+//   if (!line) {
+//     return false;
+//   }
+
+//   if (line->text.size() == 0) {
+//     return false;
+//   }
+
+//   // if (!smaller(line->fontSize, _doc->mostFreqFontSize, .9)) { // TODO
+//   //   return false;
+//   // }
+
+//   std::string superScriptPrefix;
+//   PdfWord* firstWord = line->words[0];
+//   for (auto* glyph : firstWord->glyphs) {
+//     if (!glyph->isSuperscript) {
+//       break;
+//     }
+//     superScriptPrefix += glyph->text;
+//   }
+
+//   if (potentialFootnoteMarkers->count(superScriptPrefix) > 0) {
+//     return true;
+//   }
+
+//   // if (std::regex_search(firstWord->text, m, isFootnoteMarkerRegex)) {
+//   //   return true;
+//   // }
+
+//   return false;
+// }
+
+// _________________________________________________________________________________________________
+// bool TextBlocksDetector::isContinuationLineOfFootnote(const PdfTextLine* line,
+//       const std::unordered_set<std::string>* potentialFootnoteMarkers) const {
+//   return line->parentTextLine &&
+//       (isFirstLineOfFootnote(line->parentTextLine, potentialFootnoteMarkers)
+//         || isContinuationLineOfFootnote(line->parentTextLine, potentialFootnoteMarkers));
+// }
 
 // _________________________________________________________________________________________________
 bool TextBlocksDetector::isTextBlockEmphasized(const std::vector<PdfTextLine*>& lines) {
@@ -944,7 +1083,7 @@ bool TextBlocksDetector::isTextLineEmphasized(const PdfTextLine* line) {
 
   // ... its font weight is larger than the most frequent font weight.
   if (line->fontSize - _doc->mostFreqFontSize >= -1
-      && lineFontInfo->weight > docFontInfo->weight) {
+      && lineFontInfo->weight - docFontInfo->weight > 100) {
     return true;
   }
 
@@ -987,7 +1126,7 @@ void TextBlocksDetector::computeTextBlockTrimBoxes() const {
         block->trimLowerY = block->position->lowerY;
 
         for (auto* line : block->lines) {
-          double rightX = round(line->position->getRotRightX(), 1);
+          double rightX = round(line->position->getRotRightX());
           rightXFreqs[rightX]++;
         }
       }
@@ -1054,9 +1193,10 @@ void TextBlocksDetector::computeTextLineIndentHierarchies() {
             continue;
           }
 
-          std::pair<double, double> xOverlapRatios = computeXOverlapRatios(lineStack.top(), line);
-          double maxXOVerlapRatio = std::max(xOverlapRatios.first, xOverlapRatios.second);
-          if (maxXOVerlapRatio > 0) {
+          // std::pair<double, double> xOverlapRatios = computeXOverlapRatios(lineStack.top(), line);
+          // double maxXOVerlapRatio = std::max(xOverlapRatios.first, xOverlapRatios.second);
+          // if (maxXOVerlapRatio > 0) {
+          if (lineStack.top()->position->lowerY < line->position->lowerY) {
             if (equal(lineStack.top()->position->leftX, line->position->leftX, _doc->avgGlyphWidth)) {
               lineStack.top()->nextSiblingTextLine = line;
               line->prevSiblingTextLine = lineStack.top();
@@ -1130,9 +1270,16 @@ void TextBlocksDetector::computeHangingIndents() const {
         for (size_t i = 0; i < block->lines.size(); i++) {
           const PdfTextLine* line = block->lines[i];
 
+          bool isCentered = equal(line->leftMargin, line->rightMargin, _doc->avgGlyphWidth) &&
+              larger(line->leftMargin, _doc->avgGlyphWidth, 0);
           bool isNotIndented = equal(line->leftMargin, 0, _doc->avgGlyphWidth);
           bool isIndented = equal(line->leftMargin, mostFreqLeftMargin, _doc->avgGlyphWidth);
           bool isLower = !line->text.empty() && islower(line->text[0]);
+          bool startsWithLastNamePrefix = lastNamePrefixes.count(line->words[0]->text) > 0;
+
+          if (isCentered) {
+            continue;
+          }
 
           if (i == 0) {
             isFirstLineIndented = isIndented;
@@ -1141,7 +1288,7 @@ void TextBlocksDetector::computeHangingIndents() const {
             isAllOtherLinesIndented &= isIndented;
           }
 
-          if (isLower && isNotIndented) {
+          if (isLower && !startsWithLastNamePrefix && isNotIndented) {
             numLowercasedNotIndentedLines++;
           }
           if (isLower && isIndented) {
@@ -1230,7 +1377,7 @@ void TextBlocksDetector::computePotentialFootnoteMarkers(const PdfPage* page,
           }
 
           bool isMarker = glyph->isSuperscript && !glyph->text.empty() && isalnum(glyph->text[0]);
-          isMarker |= !glyph->text.empty() && specialFootnoteMarkers.count(glyph->text) > 0;
+          isMarker |= !glyph->text.empty() && FOOTNOTE_LABEL_ALPHABET.find(glyph->text[0]) != std::string::npos;
 
           if (!isMarker) {
             if (!footnoteMarker.empty()) {
@@ -1265,11 +1412,15 @@ void TextBlocksDetector::createTextBlock(const std::vector<PdfTextLine*>& lines,
 
   std::unordered_map<std::string, int> fontNameFreqs;
   std::unordered_map<double, int> fontSizeFreqs;
-  for (const auto* line : lines) {
-    double lineMinX = std::min(line->position->leftX, line->position->rightX);
-    double lineMinY = std::min(line->position->upperY, line->position->lowerY);
-    double lineMaxX = std::max(line->position->leftX, line->position->rightX);
-    double lineMaxY = std::max(line->position->upperY, line->position->lowerY);
+  for (size_t i = 0; i < lines.size(); i++) {
+    PdfTextLine* prevLine = i > 0 ? lines[i-1] : nullptr;
+    PdfTextLine* currLine = lines[i];
+    PdfTextLine* nextLine = i < lines.size() - 1 ? lines[i+1] : nullptr;
+
+    double lineMinX = std::min(currLine->position->leftX, currLine->position->rightX);
+    double lineMinY = std::min(currLine->position->upperY, currLine->position->lowerY);
+    double lineMaxX = std::max(currLine->position->leftX, currLine->position->rightX);
+    double lineMaxY = std::max(currLine->position->upperY, currLine->position->lowerY);
 
     // Update the x,y-coordinates.
     block->position->leftX = std::min(block->position->leftX, lineMinX);
@@ -1278,8 +1429,11 @@ void TextBlocksDetector::createTextBlock(const std::vector<PdfTextLine*>& lines,
     block->position->lowerY = std::max(block->position->lowerY, lineMaxY);
 
     // Count the font names and font sizes, for computing the most frequent font name / font size.
-    fontNameFreqs[line->fontName]++;
-    fontSizeFreqs[line->fontSize]++;
+    fontNameFreqs[currLine->fontName]++;
+    fontSizeFreqs[currLine->fontSize]++;
+
+    currLine->prevLine = prevLine;
+    currLine->nextLine = nextLine;
   }
 
   // Compute and set the most frequent font name.
@@ -1334,4 +1488,138 @@ void TextBlocksDetector::createTextBlock(const std::vector<PdfTextLine*>& lines,
   block->rank = blocks->size();
 
   blocks->push_back(block);
+}
+
+
+
+// =================================================================================================
+
+// _________________________________________________________________________________________________
+bool TextBlocksDetector::computeIsCentered(const PdfTextBlock* block) const {
+  bool hasLineWithLargeMarginNoFormula = false;
+  int numLinesNoMargin = 0;
+
+  for (size_t i = 1; i < block->lines.size(); i++) {
+    const PdfTextLine* prevLine = block->lines[i - 1];
+    const PdfTextLine* currLine = block->lines[i];
+
+    std::pair<double, double> ratios = computeXOverlapRatios(prevLine, currLine);
+    double maxXOverlapRatio = std::max(ratios.first, ratios.second);
+
+    if (smaller(maxXOverlapRatio, 1, 0.01)) {
+      return false;
+    }
+
+    double leftXOffset = abs(prevLine->position->leftX - currLine->position->leftX);
+    double rightXOffset = abs(prevLine->position->rightX - currLine->position->rightX);
+    bool isEqualOffset = equal(leftXOffset, rightXOffset, 2 * _doc->avgGlyphWidth);
+
+    if (!isEqualOffset) {
+      return false;
+    }
+
+    bool isLargeLeftXOffset = larger(leftXOffset, 0, 2 * _doc->avgGlyphWidth);
+    bool isLargeRightXOffset = larger(rightXOffset, 0, 2 * _doc->avgGlyphWidth);
+    bool isLargeXOffset = isLargeLeftXOffset || isLargeRightXOffset;
+    bool prevIsFormula = false;
+    for (char c : FORMULA_ID_ALPHABET) {
+      if (prevLine->text.find(c) != std::string::npos) {
+        prevIsFormula = true;
+        break;
+      }
+    }
+    bool currIsFormula = false;
+    for (char c : FORMULA_ID_ALPHABET) {
+      if (currLine->text.find(c) != std::string::npos) {
+        currIsFormula = true;
+        break;
+      }
+    }
+
+    if (isLargeXOffset && !prevIsFormula && !currIsFormula) {
+      hasLineWithLargeMarginNoFormula = true;
+    } else {
+      numLinesNoMargin++;
+    }
+  }
+  return hasLineWithLargeMarginNoFormula && numLinesNoMargin <= 5;
+}
+
+// _________________________________________________________________________________________________
+bool TextBlocksDetector::isCenteredBlock(const PdfTextLine* prevLine, const PdfTextLine* currLine,
+    bool verbose) const {
+
+
+  if (!prevLine) {
+    return false;
+  }
+
+  if (!currLine) {
+    return false;
+  }
+
+  // The previous and current line is considered to be a part of a centered block, when all of the
+  // following requirements are true:
+
+  // (1) The differences between the leftX values is equal to the differences of the rightX values.
+  double leftXOffset = abs(prevLine->position->leftX - currLine->position->leftX);
+  double rightXOffset = abs(prevLine->position->rightX - currLine->position->rightX);
+  bool isEqualOffset = equal(leftXOffset, rightXOffset, 2 * _doc->avgGlyphWidth);
+
+
+
+
+  // (2) One of the following values is larger than 0: the left margin or the right margin of the
+  // previous or current line; leftXOffset, rightXOffset. This requirement exists to not
+  // accidentally consider two text lines that are actually justified (for which requirement 1 is
+  // also true) to be part of a centered block.
+  bool isLargePrevLeftMargin = larger(prevLine->leftMargin, 0, _doc->avgGlyphWidth);
+  bool isLargePrevRightMargin = larger(prevLine->rightMargin, 0, _doc->avgGlyphWidth);
+  bool isLargeCurrLeftMargin = larger(currLine->leftMargin, 0, _doc->avgGlyphWidth);
+  bool isLargeCurrRightMargin = larger(currLine->rightMargin, 0, _doc->avgGlyphWidth);
+  bool isLargePrevMargin = isLargePrevLeftMargin || isLargePrevRightMargin;
+  bool isLargeCurrMargin = isLargeCurrLeftMargin || isLargeCurrRightMargin;
+  bool isLargeMargin = isLargePrevMargin || isLargeCurrMargin;
+  bool isLargeLeftXOffset = larger(leftXOffset, 0, _doc->avgGlyphWidth);
+  bool isLargeRightXOffset = larger(rightXOffset, 0, _doc->avgGlyphWidth);
+  bool isLargeXOffset = isLargeLeftXOffset || isLargeRightXOffset;
+
+  _log->debug(prevLine->position->pageNum) << "YYY " << isLargeMargin << " " << currLine->text << std::endl;
+  _log->debug(prevLine->position->pageNum) << "ZZZ " << isLargeXOffset << " " << currLine->text << std::endl;
+
+  // (3) The height of the previous line and current line is almost the same. This requirement
+  // exists to not accidentally consider a centered formula and a subsequent text line, which is
+  // actually part of a justified block, to be part of a centered block.
+  // TODO: This assumes that the height of formulas are larger than the height of text lines, which
+  // is not true in any case.
+  double prevLineHeight = prevLine->position->getHeight();
+  double currLineHeight = currLine->position->getHeight();
+  bool isSameHeight = equal(prevLineHeight, currLineHeight, 0.25 * _doc->mostFreqWordHeight);
+
+  bool isCentered = isEqualOffset && (isLargeMargin || isLargeXOffset) && isSameHeight;
+
+  if (verbose) {
+    int p = currLine->position->pageNum;
+    _log->debug(p) << "Checking for centered block..." << std::endl;
+    _log->trace(p) << " └─ leftXOffset: " << leftXOffset << std::endl;
+    _log->trace(p) << " └─ rightXOffset: " << rightXOffset << std::endl;
+    _log->debug(p) << " └─ isEqualOffset: " << isEqualOffset << std::endl;
+    _log->trace(p) << " └─ isLargePrevLeftMargin: " << isLargePrevLeftMargin << std::endl;
+    _log->trace(p) << " └─ isLargePrevRightMargin: " << isLargePrevRightMargin << std::endl;
+    _log->trace(p) << " └─ isLargeCurrLeftMargin: " << isLargeCurrLeftMargin << std::endl;
+    _log->trace(p) << " └─ isLargeCurrRightMargin: " << isLargeCurrRightMargin << std::endl;
+    _log->trace(p) << " └─ isLargePrevMargin: " << isLargePrevMargin << std::endl;
+    _log->trace(p) << " └─ isLargeCurrMargin: " << isLargeCurrMargin << std::endl;
+    _log->trace(p) << " └─ isLargeMargin: " << isLargeMargin << std::endl;
+    _log->trace(p) << " └─ isLargeLeftXOffset: " << isLargeLeftXOffset << std::endl;
+    _log->trace(p) << " └─ isLargeRightXOffset: " << isLargeRightXOffset << std::endl;
+    _log->debug(p) << " └─ isLargeXOffset: " << isLargeXOffset << std::endl;
+    _log->trace(p) << " └─ prevLine.height: " << prevLineHeight << std::endl;
+    _log->trace(p) << " └─ currLine.height: " << currLineHeight << std::endl;
+    _log->trace(p) << " └─ _doc->mostFreqWordHeight: " << _doc->mostFreqWordHeight << std::endl;
+    _log->debug(p) << " └─ isSameHeight: " << isSameHeight << std::endl;
+    _log->debug(p) << "is centered block: " << isCentered << std::endl;
+  }
+
+  return isCentered;
 }

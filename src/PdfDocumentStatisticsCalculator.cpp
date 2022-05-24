@@ -76,8 +76,8 @@ void PdfDocumentStatisticsCalculator::computeGlyphStatistics() const {
   _doc->mostFreqFontName = mostFreqFontName;
 
   // Compute the average glyph-width and -height.
-  _doc->avgGlyphWidth = sumWidths / static_cast<double>(numGlyphs);
-  _doc->avgGlyphHeight = sumHeights / static_cast<double>(numGlyphs);
+  _doc->avgGlyphWidth = round(sumWidths / static_cast<double>(numGlyphs), 1);
+  _doc->avgGlyphHeight = round(sumHeights / static_cast<double>(numGlyphs), 1);
 }
 
 // _________________________________________________________________________________________________

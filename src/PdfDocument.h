@@ -477,6 +477,9 @@ class PdfTextLine : public PdfElement {
   std::string toString() const override;
 
   double maxFontSize = 0;
+
+  PdfTextLine* prevLine;
+  PdfTextLine* nextLine;
 };
 
 // =================================================================================================

@@ -29,7 +29,7 @@ class TextBlocksDetector {
 
   bool startsTextBlock(const PdfTextLine* prevLine, const PdfTextLine* currLine,
       const PdfTextLine* nextLine, const std::unordered_set<std::string>* potentialFootnoteMarkers,
-      double hangingIndent, double percNoRightMarginLines);
+      double hangingIndent, double percNoRightMarginLines, bool isCentered);
 
 
   void createTextBlock(const std::vector<PdfTextLine*>& lines, std::vector<PdfTextBlock*>* blocks);
@@ -44,12 +44,19 @@ class TextBlocksDetector {
   // void computeTextLineAlignments(const std::vector<PdfTextBlock*>& blocks);
   void computeTextLineMargins();
 
-  bool isFirstLineOfItem(const PdfTextLine* line) const;
-  bool isContinuationLineOfItem(const PdfTextLine* line) const;
-  bool isFirstLineOfFootnote(const PdfTextLine* line, const std::unordered_set<std::string>*
-      potentialFootnoteMarkers) const;
-  bool isContinuationLineOfFootnote(const PdfTextLine* line,
-      const std::unordered_set<std::string>* potentialFootnoteMarkers) const;
+  bool isFirstLineOfItem(const PdfTextLine* line, const std::unordered_set<std::string>*
+      potentialFootnoteLabels = nullptr) const;
+  bool isContinuationLineOfItem(const PdfTextLine* line, const std::unordered_set<std::string>*
+      potentialFootnoteLabels = nullptr) const;
+  bool startsWithItemLabel(const PdfTextLine* line) const;
+  bool startsWithFootnoteLabel(const PdfTextLine* line, const std::unordered_set<std::string>*
+      potentialFootnoteLabels = nullptr) const;
+
+
+  // bool isFirstLineOfFootnote(const PdfTextLine* line, const std::unordered_set<std::string>*
+  //     potentialFootnoteMarkers) const;
+  // bool isContinuationLineOfFootnote(const PdfTextLine* line,
+  //     const std::unordered_set<std::string>* potentialFootnoteMarkers) const;
   void computeHangingIndents() const;
   void computePotentialFootnoteMarkers(const PdfPage* page,
       std::unordered_set<std::string>* footnoteMarkers) const;
@@ -57,6 +64,14 @@ class TextBlocksDetector {
   void computeTextBlockTrimBoxes() const;
 
   PdfFigure* isPartOfFigure(const PdfTextLine* line) const;
+
+  // This method returns true if the given previous and current lines are part of the same centered
+  // block, false otherwise. If 'verbose' is set to true, this method will print debug information
+  // for reproducing purposes.
+  bool isCenteredBlock(const PdfTextLine* prevLine, const PdfTextLine* currLine,
+      bool verbose=false) const;
+
+  bool computeIsCentered(const PdfTextBlock* block) const;
 
   PdfDocument* _doc;
 
