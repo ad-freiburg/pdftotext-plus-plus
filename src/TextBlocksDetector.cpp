@@ -42,7 +42,7 @@ std::regex item_anchor_regexes[] = {
 };
 
 const std::string FOOTNOTE_LABEL_ALPHABET = "*∗†‡?";
-const std::string ITEM_LABEL_SUPERSCRIPT_ALPHABET = "abcdefghijklmnopqrstuvwxyz01234567890()";
+const std::string ITEM_LABEL_SUPERSCRIPT_ALPHABET = "*∗abcdefghijklmnopqrstuvwxyz01234567890()";
 const std::string FORMULA_ID_ALPHABET = "=+";
 
 const std::unordered_set<std::string> lastNamePrefixes = { "van", "von", "de" };
@@ -380,6 +380,45 @@ bool TextBlocksDetector::startsTextBlock(const PdfTextLine* prevLine, const PdfT
   }
   // ==========
 
+  double actualLineDistance = 0;
+  switch(currLine->position->rotation) {
+    case 0:
+    case 1:
+      actualLineDistance = currLine->position->getRotUpperY() - prevLine->position->getRotLowerY();
+      break;
+    case 2:
+    case 3:
+      actualLineDistance = prevLine->position->getRotLowerY() - currLine->position->getRotUpperY();
+      break;
+  }
+  actualLineDistance = round(actualLineDistance, 1);
+
+  if (prevLine->prevLine) {
+    double prevActualLineDistance = 0;
+    switch(currLine->position->rotation) {
+      case 0:
+      case 1:
+        prevActualLineDistance = prevLine->position->getRotUpperY() - prevLine->prevLine->position->getRotLowerY();
+        break;
+      case 2:
+      case 3:
+        prevActualLineDistance = prevLine->prevLine->position->getRotLowerY() - prevLine->position->getRotUpperY();
+        break;
+    }
+    prevActualLineDistance = round(prevActualLineDistance, 1);
+
+    _log->debug(p) << "Checking for line distance..." << std::endl;
+    _log->debug(p) << " └─ prevLine: " << prevLine->text << std::endl;
+    _log->debug(p) << " └─ preprevLine: " << prevLine->prevLine->text << std::endl;
+    _log->debug(p) << " └─ actual line distance: " << actualLineDistance << std::endl;
+    _log->debug(p) << " └─ prev line distance: " << prevActualLineDistance << std::endl;
+
+    if (larger(actualLineDistance, prevActualLineDistance, 0.5 * _doc->mostFreqWordHeight)) {
+      _log->debug(p) << "\033[1mstarts new block (prev line distance < line distance)." << std::endl;
+      return true;
+    }
+  }
+
   if (isCentered) {
     // Centered author info
     bool currFirstLineOfItem = isFirstLineOfItem(currLine);
@@ -417,7 +456,7 @@ bool TextBlocksDetector::startsTextBlock(const PdfTextLine* prevLine, const PdfT
   bool currPartOfItem = currFirstLineOfItem || currContLineOfItem;
 
   _log->debug(p) << "Checking for continuation line of enumeration item..." << std::endl;
-  _log->debug(p) << " └─ parent:   " << pStr << std::endl;
+  _log->debug(p) << " └─ Parent:   " << pStr << std::endl;
   _log->debug(p) << " └─ prevLine.isContinuationOfItem: " << prevContLineOfItem << std::endl;
   _log->debug(p) << " └─ currLine.isContinuationOfItem: " << currContLineOfItem << std::endl;
 
@@ -454,8 +493,9 @@ bool TextBlocksDetector::startsTextBlock(const PdfTextLine* prevLine, const PdfT
       return false;
     }
 
-    // _log->debug(p) << "\033[1mstarts block (prev part of item).\033[0m" << std::endl;
-    // return true;
+    if (larger(prevLine->rightMargin, 3 * _doc->avgGlyphWidth, 0)) {
+      return true;
+    }
   }
 
   // // ---------------
@@ -1248,6 +1288,7 @@ void TextBlocksDetector::computeHangingIndents() const {
         int numLeftMarginLines = 0;
         std::unordered_map<double, int> leftMarginCounts;
         for (const auto* line : block->lines) {
+          if (line->text.size() < 3) { continue; }
           if (larger(line->leftMargin, 0, _doc->avgGlyphWidth)) {
             leftMarginCounts[line->leftMargin]++;
             numLeftMarginLines++;
@@ -1288,6 +1329,8 @@ void TextBlocksDetector::computeHangingIndents() const {
 
         for (size_t i = 0; i < block->lines.size(); i++) {
           const PdfTextLine* line = block->lines[i];
+
+          if (line->text.size() < 3) { continue; }
 
           bool isCentered = equal(line->leftMargin, line->rightMargin, _doc->avgGlyphWidth) &&
               larger(line->leftMargin, _doc->avgGlyphWidth, 0);
