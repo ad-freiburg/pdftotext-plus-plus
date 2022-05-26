@@ -509,6 +509,7 @@ void PageSegmentator::createPageSegment(const std::vector<PdfElement*>& elements
 
   PdfPageSegment* segment = new PdfPageSegment();
   segment->id = createRandomString(8, "ps-");
+  segment->doc = _doc;
 
   // Set the page number.
   segment->position->pageNum = elements[0]->position->pageNum;

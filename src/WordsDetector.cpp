@@ -407,6 +407,7 @@ void WordsDetector::createWord(const std::vector<PdfGlyph*>& glyphs, std::vector
     const {
   PdfWord* word = new PdfWord();
   word->id = createRandomString(8, "w-");
+  word->doc = _doc;
 
   // Iteratively compute the text, the x,y-coordinates of the bounding box, and the font info.
   std::string text;

@@ -22,12 +22,14 @@
 #include "./PdfFontInfo.h"
 
 class PdfElement;
+class PdfTextElement;
 class PdfWord;
 class PdfShape;
 class PdfGraphic;
 class PdfTextLine;
 class PdfTextBlock;
 class PdfPageSegment;
+class PdfDocument;
 
 struct Timing {
   std::string description;
@@ -177,6 +179,8 @@ class PdfElement {
   /** The position of this element in the extraction order. */
   int rank = -1;
 
+  PdfDocument* doc;
+
   /**
    * This method returns a string representation of this element for debugging purposes.
    *
@@ -185,12 +189,64 @@ class PdfElement {
   virtual std::string toString() const = 0;
 };
 
+/**
+ * This class represents an abstract class for all text elements in a PDF, for example: glyphs,
+ * words, text blocks.
+ */
+class PdfTextElement : public PdfElement {
+ public:
+  /** This constructor creates and initializes a new `PdfTextElement`. */
+  PdfTextElement();
+
+  /** The deconstructor. */
+  virtual ~PdfTextElement() = 0;
+
+  /** The text of this element. */
+  std::string text;
+
+  /** The font size of this element. */
+  double fontSize = -1;
+
+  /** The font name of this element. */
+  std::string fontName;
+
+  /** The RGB stroking color of this element. */
+  double color[3];
+
+  /** The opacity of this element. */
+  double opacity;
+
+  /** The baseline of this element. */
+  double base;
+};
+
+// =================================================================================================
+
+/**
+ * This class represents any non-text element in a PDF document, for example: a figure or a shape.
+ */
+class PdfNonTextElement : public PdfElement {
+ public:
+  /** This constructor creates and initalizes a new `PdfNonTextElement` object. */
+  PdfNonTextElement();
+
+  /** The deconstructor. */
+  ~PdfNonTextElement();
+
+  /**
+   * This method returns a string representation of this element for debugging purposes.
+   *
+   * @return A string representation of this element.
+   */
+  std::string toString() const override;
+};
+
 // =================================================================================================
 
 /**
  * This class represents a single glyph in a PDF document.
  */
-class PdfGlyph : public PdfElement {
+class PdfGlyph : public PdfTextElement {
  public:
   /** This constructor creates and initalizes a new `PdfGlyph`. */
   PdfGlyph();
@@ -198,31 +254,11 @@ class PdfGlyph : public PdfElement {
   /** The deconstructor. */
   ~PdfGlyph();
 
-  /** The text of this glyph. */
-  std::string text;
-
   /**
    * The name of the character which is represented by this glyph, for example: "A" or
    * "summationdisplay".
    */
   std::string charName;
-
-  /** The font size of this glyph. */
-  double fontSize = -1;
-
-  /** The font name of this glyph. */
-  std::string fontName;
-
-  /** The RGB stroking color of this glyph. */
-  double color[3];
-
-  /** The opacity of this glyph. */
-  double opacity;
-
-  /**
-   * The baseline of the glyph.
-   */
-  double base;
 
   /** The unicode codepoints of the character(s) this glyph represents. */
   std::vector<unsigned int> unicodes;
@@ -250,30 +286,9 @@ class PdfGlyph : public PdfElement {
 // =================================================================================================
 
 /**
- * This class represents any non-text element in a PDF document, for example: a figure or a shape.
- */
-class PdfNonTextElement : public PdfElement {
- public:
-  /** This constructor creates and initalizes a new `PdfNonTextElement` object. */
-  PdfNonTextElement();
-
-  /** The deconstructor. */
-  ~PdfNonTextElement();
-
-  /**
-   * This method returns a string representation of this element for debugging purposes.
-   *
-   * @return A string representation of this element.
-   */
-  std::string toString() const override;
-};
-
-// =================================================================================================
-
-/**
  * This class represents a single word in a PDF document.
  */
-class PdfWord : public PdfElement {
+class PdfWord : public PdfTextElement {
  public:
   /** This constructor creates and initalizes a new `PdfWord`. */
   PdfWord();
@@ -283,15 +298,6 @@ class PdfWord : public PdfElement {
 
   /** The deconstructor. */
   ~PdfWord();
-
-  /** The text of this word. */
-  std::string text;
-
-  /** The font size of this word. */
-  double fontSize = -1;
-
-  /** The font name of this word. */
-  std::string fontName;
 
   /** The glyphs of this word. */
   std::vector<PdfGlyph*> glyphs;
@@ -404,27 +410,13 @@ class PdfGraphic : public PdfNonTextElement {
 /**
  * This class represents a single text line in a PDF document.
  */
-class PdfTextLine : public PdfElement {
+class PdfTextLine : public PdfTextElement {
  public:
   /** This constructor creates and initalizes a new `PdfTextLine` object. **/
   PdfTextLine();
 
   /** The deconstructor. */
   ~PdfTextLine();
-
-  /** The font size of this text line. */
-  double fontSize = -1;
-
-  /** The font name of this line. */
-  std::string fontName;
-
-  /** The text of this line. */
-  std::string text;
-
-  /**
-   * The baseline of the glyph.
-   */
-  double base;
 
   /** The words of this line. */
   std::vector<PdfWord*> words;
@@ -487,7 +479,7 @@ class PdfTextLine : public PdfElement {
 /**
  * This class represents a single text block in PDF document.
  */
-class PdfTextBlock : public PdfElement {
+class PdfTextBlock : public PdfTextElement {
  public:
   /** This constructor creates and initalizes a new `PdfTextBlock` object. **/
   PdfTextBlock();
@@ -497,15 +489,6 @@ class PdfTextBlock : public PdfElement {
 
   /** The semantic role of this block. */
   std::string role;
-
-  /** The text of this block. */
-  std::string text;
-
-  /** The font size of this block. */
-  double fontSize = -1;
-
-  /** The font name of this block. */
-  std::string fontName;
 
   /**
    * Whether or not this text block is emphasized compared to the other blocks.

@@ -124,6 +124,7 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   // Parse the information about the character and store it in form of a `PdfGlyph`.
   PdfGlyph* glyph = new PdfGlyph();
   glyph->id = createRandomString(8, "g-");
+  glyph->doc = _doc;
   _log->debug(_p) << " └─ glyph.id: \"" << glyph->id << "\"" << std::endl;
 
   // ----------------------------------
@@ -465,6 +466,7 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   // No figure exists for the current clipbox. Create a new figure and append the glyph to it.
   PdfFigure* figure = new PdfFigure();
   figure->id = createRandomString(8, "fig-");
+  figure->doc = _doc;
   figure->clipLeftX = clipLeftX;
   figure->clipUpperY = clipUpperY;
   figure->clipRightX = clipRightX;
@@ -531,6 +533,7 @@ void TextOutputDev::stroke(GfxState* state) {
   // Store the information about the path in form of a `PdfShape`.
   PdfShape* shape = new PdfShape();
   shape->id = createRandomString(8, "shape-");
+  shape->doc = _doc;
   shape->position->pageNum = _page->pageNum;
   shape->position->leftX = leftX;
   shape->position->upperY = upperY;
@@ -577,6 +580,7 @@ void TextOutputDev::stroke(GfxState* state) {
   // No figure exists for the current clipbox. Create a new figure and append the shape to it.
   PdfFigure* figure = new PdfFigure();
   figure->id = createRandomString(8, "fig-");
+  figure->doc = _doc;
   figure->clipLeftX = clipLeftX;
   figure->clipUpperY = clipUpperY;
   figure->clipRightX = clipRightX;
@@ -654,6 +658,7 @@ void TextOutputDev::drawGraphic(GfxState* state) {
   // Handle each image as a PdfGraphic.
   PdfGraphic* graphic = new PdfGraphic();
   graphic->id = createRandomString(8, "graphic-");
+  graphic->doc = _doc;
   graphic->position->pageNum = _page->pageNum;
   graphic->position->leftX = std::max(std::min(leftX, rightX), clipLeftX);
   graphic->position->upperY = std::max(std::min(upperY, lowerY), clipUpperY);
@@ -694,6 +699,7 @@ void TextOutputDev::drawGraphic(GfxState* state) {
   // Create new figure.
   PdfFigure* figure = new PdfFigure();
   figure->id = createRandomString(8, "fig-");
+  figure->doc = _doc;
   figure->clipLeftX = clipLeftX;
   figure->clipUpperY = clipUpperY;
   figure->clipRightX = clipRightX;

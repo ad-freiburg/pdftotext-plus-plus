@@ -14,7 +14,14 @@
 
 #include "../PdfDocument.h"
 
+
 const std::string sentenceDelimiterAlphabet = "?!.);";
+const int FONT_SIZE_PREC = 1;
+const int LINE_DIST_PREC = 1;
+
+enum Trool { None = -1, False, True };
+
+
 
 /**
  * Splits the given text (given as a std::wstring) into words.

@@ -43,6 +43,7 @@ void WordsDehyphenator::dehyphenate() {
 
             if (isHyphenated) {
               PdfWord* dehyphenatedWord = new PdfWord();
+              dehyphenatedWord->doc = _doc;
               dehyphenatedWord->text = prevLineLastWordText.substr(0, prevLineLastWordText.length() - 1);
               dehyphenatedWord->text += currLineFirstWordText;
 

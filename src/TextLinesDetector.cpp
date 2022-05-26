@@ -273,6 +273,15 @@ void TextLinesDetector::detect() {
           lines = nLines;
         }
       }
+
+      for (size_t i = 0; i < segment->lines.size(); i++) {
+        PdfTextLine* prevLine = i > 0 ? segment->lines[i-1] : nullptr;
+        PdfTextLine* currLine = segment->lines[i];
+        PdfTextLine* nextLine = i < segment->lines.size() - 1 ? segment->lines[i+1] : nullptr;
+
+        currLine->prevLine = prevLine;
+        currLine->nextLine = nextLine;
+      }
     }
   }
 }
@@ -286,6 +295,7 @@ void TextLinesDetector::createTextLine(const std::vector<PdfWord*>& words,
 
   PdfTextLine* line = new PdfTextLine();
   line->id = createRandomString(8, "line-");
+  line->doc = _doc;
 
   // Set the segment.
   line->segment = segment;

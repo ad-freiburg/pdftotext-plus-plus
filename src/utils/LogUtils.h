@@ -17,6 +17,11 @@
 
 enum LogLevel { ERROR, WARN, INFO, DEBUG, TRACE };
 
+const std::string BOLD = "\033[1m";
+const std::string BLUE = "\033[34m";
+const std::string BOLD_BLUE = "\033[34;1m";
+const std::string OFF = "\033[0m";
+
 class NullStream : public std::ostream {
  public:
   NullStream() : std::ostream(nullptr) {}
