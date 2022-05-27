@@ -9,7 +9,7 @@
 #ifndef PDFDOCUMENT_H_
 #define PDFDOCUMENT_H_
 
-#include <limits>  // std::numeric_limits
+#include <limits>  // numeric_limits
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -20,6 +20,8 @@
 #include <poppler/PDFDoc.h>
 
 #include "./PdfFontInfo.h"
+
+using namespace std;
 
 class PdfElement;
 class PdfTextElement;
@@ -32,10 +34,10 @@ class PdfPageSegment;
 class PdfDocument;
 
 struct Timing {
-  std::string description;
+  string description;
   int64_t time = 0;
 
-  Timing(const std::string& descriptionA, int64_t timeA) {
+  Timing(const string& descriptionA, int64_t timeA) {
     description = descriptionA;
     time = timeA;
   }
@@ -76,7 +78,7 @@ class Cut {
   CutDir dir;
 
   /** The id of this cut, needed for debugging purposes. */
-  std::string id;
+  string id;
 
   /** Whether or not this cut was chosen on page segmentation. */
   bool isChosen = false;
@@ -88,10 +90,10 @@ class Cut {
    * The x,y-coordinates of the cut. x1, y1 are the coordinates of the start point of the cut and
    * x2, y2 are the coordinates of the end point.
    */
-  double x1 = std::numeric_limits<double>::max();
-  double y1 = std::numeric_limits<double>::max();
-  double x2 = std::numeric_limits<double>::min();
-  double y2 = std::numeric_limits<double>::min();
+  double x1 = numeric_limits<double>::max();
+  double y1 = numeric_limits<double>::max();
+  double x2 = numeric_limits<double>::min();
+  double y2 = numeric_limits<double>::min();
 
   /** The gap width and gap height. */
   double gapWidth = 0.0;
@@ -99,7 +101,7 @@ class Cut {
 
   PdfElement* elementBefore = nullptr;
   PdfElement* elementAfter = nullptr;
-  std::vector<PdfElement*> cuttingElements;
+  vector<PdfElement*> cuttingElements;
 
   size_t posInElements;
 };
@@ -119,10 +121,10 @@ class PdfPosition {
   double pageNum = -1;
 
   /** The minimum and maximum x,y-coordinates of this element. */
-  double leftX = std::numeric_limits<double>::max();
-  double upperY = std::numeric_limits<double>::max();
-  double rightX = std::numeric_limits<double>::min();
-  double lowerY = std::numeric_limits<double>::min();
+  double leftX = numeric_limits<double>::max();
+  double upperY = numeric_limits<double>::max();
+  double rightX = numeric_limits<double>::min();
+  double lowerY = numeric_limits<double>::min();
 
   /** The rotation of this element. */
   int rotation = 0;
@@ -155,7 +157,7 @@ class PdfPosition {
    *
    * @return A string representation of this position.
    */
-  std::string toString() const;
+  string toString() const;
 };
 
 /**
@@ -171,7 +173,7 @@ class PdfElement {
   virtual ~PdfElement() = 0;
 
   /** The unique id of this element. **/
-  std::string id;
+  string id;
 
   /** The position of this element in the PDF. */
   PdfPosition* position;
@@ -186,7 +188,7 @@ class PdfElement {
    *
    * @return A string representation of this element.
    */
-  virtual std::string toString() const = 0;
+  virtual string toString() const = 0;
 };
 
 /**
@@ -202,13 +204,13 @@ class PdfTextElement : public PdfElement {
   virtual ~PdfTextElement() = 0;
 
   /** The text of this element. */
-  std::string text;
+  string text;
 
   /** The font size of this element. */
   double fontSize = -1;
 
   /** The font name of this element. */
-  std::string fontName;
+  string fontName;
 
   /** The RGB stroking color of this element. */
   double color[3];
@@ -238,7 +240,7 @@ class PdfNonTextElement : public PdfElement {
    *
    * @return A string representation of this element.
    */
-  std::string toString() const override;
+  string toString() const override;
 };
 
 // =================================================================================================
@@ -258,14 +260,14 @@ class PdfGlyph : public PdfTextElement {
    * The name of the character which is represented by this glyph, for example: "A" or
    * "summationdisplay".
    */
-  std::string charName;
+  string charName;
 
   /** The unicode codepoints of the character(s) this glyph represents. */
-  std::vector<unsigned int> unicodes;
+  vector<unsigned int> unicodes;
 
   PdfGlyph* isDiacriticMarkOfBaseGlyph = nullptr;
   PdfGlyph* isBaseGlyphOfDiacriticMark = nullptr;
-  std::string textWithDiacriticMark;
+  string textWithDiacriticMark;
 
   bool isSubscript = false;
   bool isSuperscript = false;
@@ -280,7 +282,7 @@ class PdfGlyph : public PdfTextElement {
    *
    * @return A string representation of this glyph.
    */
-  std::string toString() const override;
+  string toString() const override;
 };
 
 // =================================================================================================
@@ -300,12 +302,12 @@ class PdfWord : public PdfTextElement {
   ~PdfWord();
 
   /** The glyphs of this word. */
-  std::vector<PdfGlyph*> glyphs;
+  vector<PdfGlyph*> glyphs;
 
   // Stacked words: words that logically belong together and overlap horizontally, for example:
   // a summation symbol with its sub- and superscripts.
   PdfWord* isPartOfStackedMathSymbol = nullptr;
-  std::vector<PdfWord*> isBaseOfStackedMathSymbol;
+  vector<PdfWord*> isBaseOfStackedMathSymbol;
 
   PdfWord* isFirstPartOfHyphenatedWord = nullptr;
   PdfWord* isSecondPartOfHyphenatedWord = nullptr;
@@ -320,7 +322,7 @@ class PdfWord : public PdfTextElement {
    *
    * @return A string representation of this word.
    */
-  std::string toString() const override;
+  string toString() const override;
 };
 
 // =================================================================================================
@@ -340,26 +342,26 @@ class PdfFigure : public PdfNonTextElement {
   ~PdfFigure();
 
   /** The glyphs of this figure. */
-  std::vector<PdfGlyph*> glyphs;
+  vector<PdfGlyph*> glyphs;
 
   /** The shapes of this figure. */
-  std::vector<PdfShape*> shapes;
+  vector<PdfShape*> shapes;
 
   /** The graphics of this figure. */
-  std::vector<PdfGraphic*> graphics;
+  vector<PdfGraphic*> graphics;
 
   /** The coordinates of the clip box of this figure. */
-  double clipLeftX = std::numeric_limits<double>::max();
-  double clipUpperY = std::numeric_limits<double>::max();
-  double clipRightX = std::numeric_limits<double>::min();
-  double clipLowerY = std::numeric_limits<double>::min();
+  double clipLeftX = numeric_limits<double>::max();
+  double clipUpperY = numeric_limits<double>::max();
+  double clipRightX = numeric_limits<double>::min();
+  double clipLowerY = numeric_limits<double>::min();
 
   /**
    * This method returns a string representation of this figure for debugging purposes.
    *
    * @return A string representation of this figure.
    */
-  std::string toString() const override;
+  string toString() const override;
 };
 
 /**
@@ -381,7 +383,7 @@ class PdfShape : public PdfNonTextElement {
    *
    * @return A string representation of this shape.
    */
-  std::string toString() const override;
+  string toString() const override;
 };
 
 /**
@@ -400,7 +402,7 @@ class PdfGraphic : public PdfNonTextElement {
    *
    * @return A string representation of this graphic.
    */
-  std::string toString() const override;
+  string toString() const override;
 };
 
 // =================================================================================================
@@ -419,7 +421,7 @@ class PdfTextLine : public PdfTextElement {
   ~PdfTextLine();
 
   /** The words of this line. */
-  std::vector<PdfWord*> words;
+  vector<PdfWord*> words;
 
   /**
    * The reference to the text block of which this text line is a part of.
@@ -429,10 +431,10 @@ class PdfTextLine : public PdfTextElement {
   /**
    * The coordinates of the bounding box of this line, with sub- and superscripts ignored.
    */
-  double baseBBoxLeftX = std::numeric_limits<double>::max();
-  double baseBBoxUpperY = std::numeric_limits<double>::max();
-  double baseBBoxRightX = std::numeric_limits<double>::min();
-  double baseBBoxLowerY = std::numeric_limits<double>::min();
+  double baseBBoxLeftX = numeric_limits<double>::max();
+  double baseBBoxUpperY = numeric_limits<double>::max();
+  double baseBBoxRightX = numeric_limits<double>::min();
+  double baseBBoxLowerY = numeric_limits<double>::min();
 
   /**
    * The possible alignments of this text line. Since the alignment of a text line can be ambiguous
@@ -440,7 +442,7 @@ class PdfTextLine : public PdfTextElement {
    * text line), we do not compute a single alignment, but all possible alignments of the text line.
    *
    */
-  // std::unordered_set<PdfTextLineAlignment> alignments;
+  // unordered_set<PdfTextLineAlignment> alignments;
 
   /**
    * Whether or not this line is indented, that is: the gap between the left boundary of the text
@@ -466,7 +468,7 @@ class PdfTextLine : public PdfTextElement {
    *
    * @return A string representation of this line.
    */
-  std::string toString() const override;
+  string toString() const override;
 
   double maxFontSize = 0;
 
@@ -488,7 +490,7 @@ class PdfTextBlock : public PdfTextElement {
   ~PdfTextBlock();
 
   /** The semantic role of this block. */
-  std::string role;
+  string role;
 
   /**
    * Whether or not this text block is emphasized compared to the other blocks.
@@ -496,7 +498,7 @@ class PdfTextBlock : public PdfTextElement {
   bool isEmphasized;
 
   /** The text lines of this block. */
-  std::vector<PdfTextLine*> lines;
+  vector<PdfTextLine*> lines;
 
   double hangingIndent = 0.0;
 
@@ -505,12 +507,18 @@ class PdfTextBlock : public PdfTextElement {
   double trimRightX = 0.0;
   double trimLowerY = 0.0;
 
+  bool isCentered;
+
+  PdfTextBlock* prevBlock = nullptr;
+  PdfTextBlock* nextBlock = nullptr;
+  const PdfPageSegment* segment = nullptr;
+
   /**
    * This method returns a string representation of this block for debugging purposes.
    *
    * @return A string representation of this block.
    */
-  std::string toString() const override;
+  string toString() const override;
 };
 
 // =================================================================================================
@@ -527,28 +535,28 @@ class PdfPageSegment : public PdfElement {
   ~PdfPageSegment();
 
   /** The elements of this segment. */
-  std::vector<PdfElement*> elements;
+  vector<PdfElement*> elements;
 
   /** The text lines of this segment. */
-  std::vector<PdfTextLine*> lines;
+  vector<PdfTextLine*> lines;
 
   /** The text lines of this segment. */
-  std::vector<PdfTextBlock*> blocks;
+  vector<PdfTextBlock*> blocks;
 
   /** A boolen flag that indicates whether or not the segment is justified. */
   bool isJustified;
 
-  double trimLeftX;
-  double trimUpperY;
-  double trimRightX;
-  double trimLowerY;
+  double trimLeftX = 0.0;
+  double trimUpperY = 0.0;
+  double trimRightX = 0.0;
+  double trimLowerY = 0.0;
 
   /**
    * This method returns a string representation of this segment for debugging purposes.
    *
    * @return A string representation of this segment.
    */
-  std::string toString() const override;
+  string toString() const override;
 };
 
 // =================================================================================================
@@ -565,10 +573,10 @@ class PdfPage {
   ~PdfPage();
 
   /** The coordinates of the clip box of this page. */
-  double clipLeftX = std::numeric_limits<double>::max();
-  double clipUpperY = std::numeric_limits<double>::max();
-  double clipRightX = std::numeric_limits<double>::min();
-  double clipLowerY = std::numeric_limits<double>::min();
+  double clipLeftX = numeric_limits<double>::max();
+  double clipUpperY = numeric_limits<double>::max();
+  double clipRightX = numeric_limits<double>::min();
+  double clipLowerY = numeric_limits<double>::min();
 
   /** The width of this page. */
   double getWidth() const { return clipRightX - clipLeftX; };
@@ -580,34 +588,34 @@ class PdfPage {
   int pageNum = -1;
 
   /** The glyphs of this page. */
-  std::vector<PdfGlyph*> glyphs;
+  vector<PdfGlyph*> glyphs;
 
   /** The words of this page. */
-  std::vector<PdfWord*> words;
+  vector<PdfWord*> words;
 
   /** The text lines of this page. */
-  std::vector<PdfTextLine*> textLines;
+  vector<PdfTextLine*> textLines;
 
   /** The blocks of this page. */
-  std::vector<PdfTextBlock*> blocks;
+  vector<PdfTextBlock*> blocks;
 
   /** The segments of this page. */
-  std::vector<PdfPageSegment*> segments;
+  vector<PdfPageSegment*> segments;
 
   /** The XY-cuts made to detect the text blocks. */
-  std::vector<Cut*> blockDetectionCuts;
+  vector<Cut*> blockDetectionCuts;
 
   /** The XY-cuts made to detect the reading order of the text blocks. */
-  std::vector<Cut*> readingOrderCuts;
+  vector<Cut*> readingOrderCuts;
 
   /** The figures of this page. */
-  std::vector<PdfFigure*> figures;
+  vector<PdfFigure*> figures;
 
   /** The shapes of this page. */
-  std::vector<PdfShape*> shapes;
+  vector<PdfShape*> shapes;
 
   /** The graphics of this page. */
-  std::vector<PdfGraphic*> graphics;
+  vector<PdfGraphic*> graphics;
 };
 
 // =================================================================================================
@@ -624,13 +632,13 @@ class PdfDocument {
   ~PdfDocument();
 
   /** The pages of this document. */
-  std::vector<PdfPage*> pages;
+  vector<PdfPage*> pages;
 
   /**
    * A dictionary that maps font names to respective `PdfFontInfo` objects (each providing
    * further information about a font, for example: whether or not the font is a bold font.
    */
-  std::unordered_map<std::string, PdfFontInfo*> fontInfos;
+  unordered_map<string, PdfFontInfo*> fontInfos;
 
   /** The average glyph width in this document. */
   double avgGlyphWidth = 0;
@@ -642,13 +650,14 @@ class PdfDocument {
   double mostFreqFontSize = 0;
 
   /** The name of the most frequent font among the glyphs of this document. */
-  std::string mostFreqFontName;
+  string mostFreqFontName;
 
   /** The most frequent line distance in this document. */
   double mostFreqWordDistance = 0;
   double mostFreqEstimatedLineDistance = 0;
 
-  double mostFreqLineGap = 0;
+  double mostFreqLineDistance = 0;
+  unordered_map<double, double> mostFreqLineDistancePerFontSize;
 
   /** The most frequent word height in this document. */
   double mostFreqWordHeight = 0;
@@ -656,6 +665,8 @@ class PdfDocument {
   /** The most frequent line indent in this document. */
   // double mostFreqLineIndent = 0;
   double mostFreqLineLeftMargin = 0;
+
+  string pdfFilePath;
 };
 
 #endif  // PDFDOCUMENT_H_

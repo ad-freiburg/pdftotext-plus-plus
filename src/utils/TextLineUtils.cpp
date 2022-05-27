@@ -200,3 +200,106 @@ bool text_line_utils::computeHasPrevLineCapacity(const PdfTextLine* line) {
   // TODO: Parameterize the 2.
   return math_utils::larger(line->prevLine->rightMargin, firstWordWidth, 2 * line->doc->avgGlyphWidth);
 }
+
+// _________________________________________________________________________________________________
+void text_line_utils::computeTextLineIndentHierarchies(const PdfPage* page) {
+  stack<PdfTextLine*> lineStack;
+  PdfTextLine* prevLine = nullptr;
+  for (auto* segment : page->segments) {
+    for (auto* line : segment->lines) {
+      // Compute the actual line distance.
+      if (prevLine) {
+        double actualLineDistance = 0;
+        switch(line->position->rotation) {
+          case 0:
+          case 1:
+            actualLineDistance = line->position->getRotUpperY() - prevLine->position->getRotLowerY();
+            break;
+          case 2:
+          case 3:
+            actualLineDistance = prevLine->position->getRotLowerY() - line->position->getRotUpperY();
+            break;
+        }
+        if (math_utils::larger(abs(actualLineDistance), max(10.0, 3 * line->doc->mostFreqLineDistance))) {
+          lineStack = stack<PdfTextLine*>();
+        }
+      }
+      prevLine = line;
+
+      while (!lineStack.empty()) {
+        if (!math_utils::larger(lineStack.top()->position->leftX, line->position->leftX, line->doc->avgGlyphWidth)) {
+          break;
+        }
+        lineStack.pop();
+      }
+
+      if (lineStack.empty()) {
+        lineStack.push(line);
+        continue;
+      }
+
+      // pair<double, double> xOverlapRatios = computeXOverlapRatios(lineStack.top(), line);
+      // double maxXOVerlapRatio = max(xOverlapRatios.first, xOverlapRatios.second);
+      // if (maxXOVerlapRatio > 0) {
+      if (lineStack.top()->position->lowerY < line->position->lowerY) {
+        if (math_utils::equal(lineStack.top()->position->leftX, line->position->leftX, line->doc->avgGlyphWidth)) {
+          lineStack.top()->nextSiblingTextLine = line;
+          line->prevSiblingTextLine = lineStack.top();
+          line->parentTextLine = lineStack.top()->parentTextLine;
+          lineStack.pop();
+          lineStack.push(line);
+          continue;
+        }
+
+        if (math_utils::smaller(lineStack.top()->position->leftX, line->position->leftX, line->doc->avgGlyphWidth)) {
+          line->parentTextLine = lineStack.top();
+
+          lineStack.push(line);
+          continue;
+        }
+      }
+    }
+  }
+}
+
+// _________________________________________________________________________________________________
+void text_line_utils::computePotentialFootnoteLabels(const PdfTextLine* line,
+      unordered_set<string>* result) {
+  assert(line);
+
+  // Iterate through the glyphs of the word and merge each adjacent superscripts which are
+  // positioned before the word (we don't want to consider superscript that are positioned
+  // behind the word). Consider each merged superscript string as a potential footnote marker.
+  // TODO: We do not store the info about whether a superscript is positioned before or after
+  // a word. As a workaround, consider a superscript as part of a potential footnote marker
+  // only when a non-subscript and non-superscript was already seen.
+  for (const auto* word : line->words) {
+    bool nonSubSuperscriptSeen = false;
+    string label;
+    for (const auto* glyph : word->glyphs) {
+      if (!nonSubSuperscriptSeen && !glyph->isSubscript && !glyph->isSuperscript) {
+        nonSubSuperscriptSeen = true;
+        continue;
+      }
+      if (!nonSubSuperscriptSeen) {
+        continue;
+      }
+
+      bool isLabel = glyph->isSuperscript && !glyph->text.empty() && isalnum(glyph->text[0]);
+      isLabel |= !glyph->text.empty() && FOOTNOTE_LABEL_ALPHABET.find(glyph->text[0]) != string::npos;
+
+      if (!isLabel) {
+        if (!label.empty()) {
+          result->insert(label);
+          label.clear();
+        }
+        continue;
+      }
+
+      label += glyph->text;
+    }
+    if (!label.empty()) {
+      result->insert(label);
+    }
+  }
+}

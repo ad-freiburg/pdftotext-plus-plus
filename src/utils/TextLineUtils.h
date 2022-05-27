@@ -9,6 +9,8 @@
 #ifndef TEXT_LINE_UTILS_H_
 #define TEXT_LINE_UTILS_H_
 
+#include <regex>
+
 #include "../PdfDocument.h"
 
 using namespace std;
@@ -40,6 +42,8 @@ const regex ITEM_LABEL_REGEXES[] = {
   regex("^PACS\\s+", regex_constants::icase)
 };
 
+const std::string FOOTNOTE_LABEL_ALPHABET = "*∗†‡?";
+
 // =================================================================================================
 
 namespace text_line_utils {
@@ -54,6 +58,9 @@ bool computeIsPrefixedByFootnoteLabel(const PdfTextLine* line, const unordered_s
     potentialFootnoteLabels=nullptr);
 bool computeHasPrevLineCapacity(const PdfTextLine* line);
 
+void computeTextLineIndentHierarchies(const PdfPage* page);
+
+void computePotentialFootnoteLabels(const PdfTextLine* line, unordered_set<string>* result);
 }
 
 #endif  // TEXT_LINE_H_

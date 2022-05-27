@@ -7,12 +7,15 @@
  */
 
 #include <cmath>  // fabs
-#include <iostream>  // std::cout
+#include <iostream>  // cout
 
+#include "./utils/MathUtils.h"
 #include "./utils/Utils.h"
 
 #include "./PdfDocument.h"
 #include "./PdfDocumentStatisticsCalculator.h"
+
+using namespace std;
 
 // _________________________________________________________________________________________________
 PdfDocumentStatisticsCalculator::PdfDocumentStatisticsCalculator(PdfDocument* doc) {
@@ -25,9 +28,9 @@ PdfDocumentStatisticsCalculator::~PdfDocumentStatisticsCalculator() = default;
 // _________________________________________________________________________________________________
 void PdfDocumentStatisticsCalculator::computeGlyphStatistics() const {
   // A mapping of font sizes to their frequencies, for computing the most frequent font size.
-  std::unordered_map<double, int> fontSizeFreqs;
+  unordered_map<double, int> fontSizeFreqs;
   // A mapping of font names to their frequencies, for computing the most frequent font name.
-  std::unordered_map<std::string, int> fontNameFreqs;
+  unordered_map<string, int> fontNameFreqs;
 
   // The sum of glyph widths and heights, for computing the average glyph width/height.
   double sumWidths = 0;
@@ -65,7 +68,7 @@ void PdfDocumentStatisticsCalculator::computeGlyphStatistics() const {
   _doc->mostFreqFontSize = mostFreqFontSize;
 
   // Compute the most frequent font name.
-  std::string mostFreqFontName;
+  string mostFreqFontName;
   int mostFreqFontNameCount = 0;
   for (const auto& pair : fontNameFreqs) {
     if (pair.second > mostFreqFontNameCount) {
@@ -82,15 +85,15 @@ void PdfDocumentStatisticsCalculator::computeGlyphStatistics() const {
 
 // _________________________________________________________________________________________________
 void PdfDocumentStatisticsCalculator::computeWordStatistics() const {
-  std::unordered_map<double, int> xDistanceFreqs;
+  unordered_map<double, int> xDistanceFreqs;
   // A mapping of vertical word distances, for computing the most frequent vertical word distance.
   // This is used to estimate the most frequent line distance, needed to define a minimum gap
   // height on page segmentation (text line detection comes after page segmentation, that's why
   // we estimate the the most frequent line distance based on words instead of computing it
   // exactly from text lines).
-  std::unordered_map<double, int> yDistanceFreqs;
+  unordered_map<double, int> yDistanceFreqs;
   // A mapping of word heights to their frequencies, for computing the most freq. word height.
-  std::unordered_map<double, int> wordHeightFreqs;
+  unordered_map<double, int> wordHeightFreqs;
 
   // For computing the most frequent line distance, identify line breaks between two words by
   // iterating through the words of the document in extraction order and inspecting (previous word,
@@ -108,8 +111,8 @@ void PdfDocumentStatisticsCalculator::computeWordStatistics() const {
           continue;
         }
 
-        std::pair<double, double> yOverlapRatios = computeYOverlapRatios(prevWord, currWord);
-        double maxYOverlap = std::max(yOverlapRatios.first, yOverlapRatios.second);
+        pair<double, double> yOverlapRatios = computeYOverlapRatios(prevWord, currWord);
+        double maxYOverlap = max(yOverlapRatios.first, yOverlapRatios.second);
 
         // Count the horizontal distance.
         if (maxYOverlap > 0.5) {
@@ -168,87 +171,78 @@ void PdfDocumentStatisticsCalculator::computeWordStatistics() const {
 
 // _________________________________________________________________________________________________
 void PdfDocumentStatisticsCalculator::computeLineStatistics() const {
-  // A mapping of line indentation frequencies, for computing the most freq. line indentation.
-  std::unordered_map<double, int> lineIndentFreqs;
-  // A mapping of line gaps to their frequencies, for computing the most freq. line gap.
-  std::unordered_map<double, int> lineGapFreqs;
+  // A mapping of line distances to their frequencies, for computing the most freq. line distance.
+  unordered_map<double, int> lineDistanceFreqs;
+  unordered_map<double, unordered_map<double, int>> lineDistanceFreqsPerFontSize;
 
-  for (const auto* page : _doc->pages) {
-    for (const auto* segment : page->segments) {
-      for (size_t i = 0; i < segment->lines.size(); i++) {
-        PdfTextLine* prevLine = i > 0 ? segment->lines.at(i - 1) : nullptr;
+  // Iterate through the text lines and consider (prev. line, curr line) pairs.
+  // Compute the vertical distance between both lines and count the distances.
+  for (auto* page : _doc->pages) {
+    for (auto* segment : page->segments) {
+      for (size_t i = 1; i < segment->lines.size(); i++) {
+        PdfTextLine* prevLine = segment->lines.at(i - 1);
         PdfTextLine* currLine = segment->lines.at(i);
-        PdfTextLine* nextLine = i < segment->lines.size() - 1 ? segment->lines.at(i + 1) : nullptr;
 
-        if (!prevLine || prevLine->position->wMode != 0 || prevLine->position->rotation != 0) {
+        if (!prevLine || !currLine) {
           continue;
         }
 
-        if (!currLine || currLine->position->wMode != 0 || currLine->position->rotation != 0) {
+        // Ignore the lines if they are positioned on different pages.
+        if (prevLine->position->pageNum != currLine->position->pageNum) {
           continue;
         }
 
-        if (!nextLine || nextLine->position->wMode != 0 || nextLine->position->rotation != 0) {
+        // Ignore the lines if their writing mode differ.
+        if (prevLine->position->wMode != 0 || currLine->position->wMode != 0) {
           continue;
         }
 
-        if (prevLine->fontName != _doc->mostFreqFontName
-            || prevLine->fontSize != _doc->mostFreqFontSize) {
+        // Ignore the lines if their rotation differ.
+        if (prevLine->position->rotation != 0 || currLine->position->rotation != 0) {
           continue;
         }
 
-        if (currLine->fontName != _doc->mostFreqFontName
-            || currLine->fontSize != _doc->mostFreqFontSize) {
-          continue;
+        // Compute the line distance and count it.
+        // TODO: Explain why baseBBox is used here.
+        double lineDistance = round(currLine->baseBBoxUpperY - prevLine->baseBBoxLowerY, 1);
+        lineDistance = max(0.0, lineDistance);
+        lineDistanceFreqs[lineDistance]++;
+
+        // For computing line distances per font size, ignore the lines if their font sizes differ.
+        double prevFontSize = round(prevLine->fontSize, 1);
+        double currFontSize = round(currLine->fontSize, 1);
+        if (math_utils::equal(prevFontSize, currFontSize, 0.01)) {
+          lineDistanceFreqsPerFontSize[currFontSize][lineDistance]++;
         }
-
-        if (nextLine->fontName != _doc->mostFreqFontName
-            || nextLine->fontSize != _doc->mostFreqFontSize) {
-          continue;
-        }
-
-        // Compute the vertical gap between the current line and the previous line.
-        double gap = std::max(0.0, round(currLine->position->upperY - prevLine->position->lowerY, 1));
-        lineGapFreqs[gap]++;
-
-        // Check if the line is indented compared to the previous line and next line.
-        double xOffsetCurrLine = currLine->position->leftX - prevLine->position->leftX;
-        double xOffsetNextLine = nextLine->position->leftX - prevLine->position->leftX;
-
-        if (xOffsetCurrLine < _doc->avgGlyphWidth) {
-          continue;
-        }
-
-        if (fabs(xOffsetNextLine) > _doc->avgGlyphWidth) {
-          continue;
-        }
-
-        double indent = static_cast<double>(static_cast<int>(xOffsetCurrLine * 10.)) / 10.;
-
-        lineIndentFreqs[indent]++;
       }
     }
   }
 
-  // Compute the most frequent line gap.
-  double mostFreqLineGap = 0;
-  int mostFreqLineGapCount = 0;
-  for (const auto& pair : lineGapFreqs) {
-    if (pair.second > mostFreqLineGapCount) {
-      mostFreqLineGap = pair.first;
-      mostFreqLineGapCount = pair.second;
+  // Compute the most frequent line distance.
+  int mostFreqLineDistanceFreq = 0;
+  for (const auto& pair : lineDistanceFreqs) {
+    if (pair.second > mostFreqLineDistanceFreq) {
+      _doc->mostFreqLineDistance = pair.first;
+      mostFreqLineDistanceFreq = pair.second;
     }
   }
-  _doc->mostFreqLineGap = mostFreqLineGap;
 
-  // // Compute the most frequent line indentation.
-  // double mostFreqLineIndent = 0;
-  // int mostFreqLineIndentCount = 0;
-  // for (const auto& pair : lineIndentFreqs) {
-  //   if (pair.second > mostFreqLineIndentCount) {
-  //     mostFreqLineIndent = pair.first;
-  //     mostFreqLineIndentCount = pair.second;
-  //   }
-  // }
-  // _doc->mostFreqLineIndent = mostFreqLineIndent;
+  // Compute the most frequent line distances per font size.
+  unordered_map<double, int> mostFreqLineDistanceCountPerFontSize;
+  for (const auto& doubleMapPair : lineDistanceFreqsPerFontSize) {
+    const double fontSize = doubleMapPair.first;
+    const unordered_map<double, int>& lineDistanceFreqs = doubleMapPair.second;
+    for (const auto& doubleIntPair : lineDistanceFreqs) {
+      double lineDistance = doubleIntPair.first;
+      double count = doubleIntPair.second;
+      int mostFreqCount = 0;
+      if (mostFreqLineDistanceCountPerFontSize.count(fontSize) > 0) {
+        mostFreqCount = mostFreqLineDistanceCountPerFontSize.at(fontSize);
+      }
+      if (count > mostFreqCount) {
+        _doc->mostFreqLineDistancePerFontSize[fontSize] = lineDistance;
+        mostFreqLineDistanceCountPerFontSize[fontSize] = count;
+      }
+    }
+  }
 }

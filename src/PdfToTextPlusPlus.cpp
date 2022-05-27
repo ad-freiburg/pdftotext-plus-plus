@@ -74,6 +74,8 @@ int PdfToTextPlusPlus::process(const std::string& pdfFilePath, PdfDocument* doc,
     timings->push_back(timingLoading);
   }
 
+  doc->pdfFilePath = pdfFilePath;
+
   if (!pdfDoc->isOk()) {
     return 1;
   }
@@ -166,18 +168,18 @@ int PdfToTextPlusPlus::process(const std::string& pdfFilePath, PdfDocument* doc,
   end = high_resolution_clock::now();
   auto timeDetectTextLines = duration_cast<milliseconds>(end - start).count();
 
-  // Compute statistics about the line, for example: the most frequent line indentation.
-  start = high_resolution_clock::now();
-  statistician.computeLineStatistics();
-  end = high_resolution_clock::now();
-  timeComputeStatistics = duration_cast<milliseconds>(end - start).count();
-
   // Detect sub- and superscripts.
   start = high_resolution_clock::now();
   SubSuperScriptsDetector scriptsDetector(doc);
   scriptsDetector.detect();
   end = high_resolution_clock::now();
   auto timeDetectSubSuperScripts = duration_cast<milliseconds>(end - start).count();
+
+  // Compute statistics about the line, for example: the most frequent line indentation.
+  start = high_resolution_clock::now();
+  statistician.computeLineStatistics();
+  end = high_resolution_clock::now();
+  timeComputeStatistics = duration_cast<milliseconds>(end - start).count();
 
   if (timings) {
     Timing timingSegmentPages("Segment pages", timeSegmentPages);

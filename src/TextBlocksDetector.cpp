@@ -32,28 +32,23 @@
 
 #include "./PdfDocument.h"
 #include "./TextBlocksDetector.h"
-#include "./utils/LogUtils.h"
-#include "./utils/Utils.h"
-#include "./utils/PdfElementUtils.h"
-#include "./utils/TextLineUtils.h"
 #include "./utils/MathUtils.h"
+#include "./utils/LogUtils.h"
+#include "./utils/PdfElementUtils.h"
+#include "./utils/TextBlockUtils.h"
+#include "./utils/TextLineUtils.h"
+#include "./utils/Utils.h"
 
 using namespace std;
 
 // =================================================================================================
 
-const std::string FOOTNOTE_LABEL_ALPHABET = "*∗†‡?";
-const std::string FORMULA_ID_ALPHABET = "=+";
 const unordered_set<string> lastNamePrefixes = { "van", "von", "de" };
 
 // _________________________________________________________________________________________________
 TextBlocksDetector::TextBlocksDetector(PdfDocument* doc, bool debug, int debugPageFilter) {
-  _doc = doc;
   _log = new Logger(debug ? DEBUG : INFO, debugPageFilter);
-
-  _log->debug() << "=======================================" << endl;
-  _log->debug() << "\033[1mDEBUG MODE | Detecting Text Blocks\033[0m" << endl;
-  _log->debug() << " └─ debug page filter: " << debugPageFilter << endl;
+  _doc = doc;
 }
 
 // _________________________________________________________________________________________________
@@ -67,62 +62,46 @@ void TextBlocksDetector::detect() {
     return;
   }
 
-  if (_doc->pages.empty()) {
-    return;
-  }
+  _log->debug() << "=======================================" << endl;
+  _log->debug() << BOLD << "Text Block Detection - DEBUG MODE" << OFF << endl;
 
-  // Compute some statistics needed for detecting text blocks.
-  // TODO: Compute this in the statistician.
-  computeMostFreqTextLineDistance();
-
-  // Detect the preliminary text blocks.
+  // Detect preliminary text blocks.
   for (auto* page : _doc->pages) {
     for (auto* segment : page->segments) {
-      vector<PdfTextLine*> currBlockLines;
+      vector<PdfTextLine*> currentBlockLines;
       for (auto* line : segment->lines) {
         if (startsPreliminaryBlock(line)) {
-          if (!currBlockLines.empty()) {
-            createTextBlock(currBlockLines, &segment->blocks);
-            currBlockLines.clear();
+          if (!currentBlockLines.empty()) {
+            createTextBlock(segment, currentBlockLines, &segment->blocks);
+            currentBlockLines.clear();
           }
         }
-        currBlockLines.push_back(line);
+        currentBlockLines.push_back(line);
       }
-      if (!currBlockLines.empty()) {
-        createTextBlock(currBlockLines, &segment->blocks);
+      if (!currentBlockLines.empty()) {
+        createTextBlock(segment, currentBlockLines, &segment->blocks);
       }
     }
   }
 
-  // ===XXX===
-
-  computeTextBlockTrimBoxes();
-  computeTextLineIndentHierarchies();
-  computeTextLineMargins();
-  computeHangingIndents();
+  // computeTextLineMargins();
 
   for (auto* page : _doc->pages) {
-    // Compute the potential footnote markers.
-    unordered_set<string> potentialFootnoteMarkers;
-    computePotentialFootnoteMarkers(page, &potentialFootnoteMarkers);
-
     for (auto* segment : page->segments) {
       for (auto* block : segment->blocks) {
-        double percNoRightMarginLines = computePercentageNoRightMarginLines(block);
-        bool isCentered = computeIsCentered(block);
-
         vector<PdfTextLine*> currBlockLines;
         for (auto* line : block->lines) {
-          if (startsBlock(line, &potentialFootnoteMarkers, block->hangingIndent,
-              percNoRightMarginLines, isCentered) && !currBlockLines.empty()) {
-            createTextBlock(currBlockLines, &page->blocks);
+          text_line_utils::computePotentialFootnoteLabels(line, &_potentialFootnoteLabels);
+
+          if (startsBlock(block, line) && !currBlockLines.empty()) {
+            createTextBlock(segment, currBlockLines, &page->blocks);
             currBlockLines.clear();
           }
 
           currBlockLines.push_back(line);
         }
         if (!currBlockLines.empty()) {
-          createTextBlock(currBlockLines, &page->blocks);
+          createTextBlock(segment, currBlockLines, &page->blocks);
         }
       }
     }
@@ -204,9 +183,8 @@ bool TextBlocksDetector::startsPreliminaryBlock(const PdfTextLine* line) const {
 }
 
 // _________________________________________________________________________________________________
-bool TextBlocksDetector::startsBlock(const PdfTextLine* line,
-      const unordered_set<string>* potentialFootnoteLabels, double hangingIndent,
-      double percNoRightMarginLines, bool isCentered) {
+bool TextBlocksDetector::startsBlock(const PdfTextBlock* pBlock, const PdfTextLine* line) {
+  assert(pBlock);
 
   if (!line) {
     return false;
@@ -256,7 +234,7 @@ bool TextBlocksDetector::startsBlock(const PdfTextLine* line,
   }
 
   // Check if the block of which the line is a part of is centered.
-  res = startsBlock_centered(line, isCentered);
+  res = startsBlock_centered(pBlock, line);
   if (res == Trool::True) {
     return true;
   } else if (res == Trool::False) {
@@ -264,7 +242,7 @@ bool TextBlocksDetector::startsBlock(const PdfTextLine* line,
   }
 
   // Check for enumeration items.
-  res = startsBlock_item(line, isCentered, potentialFootnoteLabels);
+  res = startsBlock_item(pBlock, line);
   if (res == Trool::True) {
     return true;
   } else if (res == Trool::False) {
@@ -280,7 +258,7 @@ bool TextBlocksDetector::startsBlock(const PdfTextLine* line,
   }
 
   // Check hanging indent.
-  res = startsBlock_hangingIndent(line, hangingIndent);
+  res = startsBlock_hangingIndent(pBlock, line);
   if (res == Trool::True) {
     return true;
   } else if (res == Trool::False) {
@@ -288,7 +266,7 @@ bool TextBlocksDetector::startsBlock(const PdfTextLine* line,
   }
 
   // Check indentation.
-  res = startsBlock_indent(line, percNoRightMarginLines);
+  res = startsBlock_indent(line);
   if (res == Trool::True) {
     return true;
   } else if (res == Trool::False) {
@@ -299,500 +277,9 @@ bool TextBlocksDetector::startsBlock(const PdfTextLine* line,
   return false;
 }
 
-// =================================================================================================
-// Methods to compute some statistics.
-
 // _________________________________________________________________________________________________
-void TextBlocksDetector::computeMostFreqTextLineDistance() {
-  unordered_map<double, int> lineDistanceCounts;
-  unordered_map<double, unordered_map<double, int>> lineDistanceCountsPerFontSize;
-
-  // Iterate through the text lines and consider (prev. line, curr line) pairs.
-  // Compute the vertical distance between both lines and count the distances.
-  for (auto* page : _doc->pages) {
-    for (auto* segment : page->segments) {
-      for (size_t i = 1; i < segment->lines.size(); i++) {
-        PdfTextLine* prevLine = segment->lines.at(i - 1);
-        PdfTextLine* currLine = segment->lines.at(i);
-
-        if (!prevLine || !currLine) {
-          continue;
-        }
-
-        // Ignore the lines if they are positioned on different pages.
-        if (prevLine->position->pageNum != currLine->position->pageNum) {
-          continue;
-        }
-
-        // Ignore the lines if their writing mode differ.
-        if (prevLine->position->wMode != 0 || currLine->position->wMode != 0) {
-          continue;
-        }
-
-        // Ignore the lines if their rotation differ.
-        if (prevLine->position->rotation != 0 || currLine->position->rotation != 0) {
-          continue;
-        }
-
-        // Compute the line distance and count it.
-        // TODO: Explain why baseBBox is used here.
-        double lineDistance = round(currLine->baseBBoxUpperY - prevLine->baseBBoxLowerY, 1);
-        lineDistance = max(0.0, lineDistance);
-        lineDistanceCounts[lineDistance]++;
-
-        // For computing line distances per font size, ignore the lines if their font sizes differ.
-        double prevFontSize = round(prevLine->fontSize, 1);
-        double currFontSize = round(currLine->fontSize, 1);
-        if (math_utils::equal(prevFontSize, currFontSize, 0.01)) {
-          lineDistanceCountsPerFontSize[currFontSize][lineDistance]++;
-        }
-      }
-    }
-  }
-
-  // Compute the most frequent line distance.
-  int mostFreqLineDistanceCount = 0;
-  for (const auto& pair : lineDistanceCounts) {
-    if (pair.second > mostFreqLineDistanceCount) {
-      _mostFreqLineDistance = pair.first;
-      mostFreqLineDistanceCount = pair.second;
-    }
-  }
-
-  // Compute the most frequent line distances per font size.
-  unordered_map<double, int> mostFreqLineDistanceCountPerFontSize;
-  for (const auto& doubleMapPair : lineDistanceCountsPerFontSize) {
-    const double fontSize = doubleMapPair.first;
-    const unordered_map<double, int>& lineDistanceFreqs = doubleMapPair.second;
-    for (const auto& doubleIntPair : lineDistanceFreqs) {
-      double lineDistance = doubleIntPair.first;
-      double count = doubleIntPair.second;
-      int mostFreqCount = 0;
-      if (mostFreqLineDistanceCountPerFontSize.count(fontSize) > 0) {
-        mostFreqCount = mostFreqLineDistanceCountPerFontSize.at(fontSize);
-      }
-      if (count > mostFreqCount) {
-        _mostFreqLineDistancePerFontSize[fontSize] = lineDistance;
-        mostFreqLineDistanceCountPerFontSize[fontSize] = count;
-      }
-    }
-  }
-}
-
-// _________________________________________________________________________________________________
-void TextBlocksDetector::computeTextLineMargins() {
-  // A mapping of left margins to their frequencies, for computing the most freq. left margin.
-  unordered_map<double, int> leftMarginFreqs;
-  unordered_map<double, int> rightMarginFreqs;
-  double numZeroRightMarginTextLines = 0;
-  double numBodyTextLines = 0;
-
-  for (auto* page : _doc->pages) {
-    for (auto* segment : page->segments) {
-      for (size_t i = 0; i < segment->blocks.size(); i++) {
-        PdfTextBlock* prevBlock = i > 0 ? segment->blocks.at(i - 1) : nullptr;
-        PdfTextBlock* currBlock = segment->blocks.at(i);
-        PdfTextBlock* nextBlock = i < segment->blocks.size() - 1 ? segment->blocks.at(i + 1) : nullptr;
-
-        // Enlarge short text blocks that consists of two lines.
-        double blockTrimRightX = currBlock->trimRightX;
-        if (currBlock->lines.size() == 2) {
-          double leftMargin = currBlock->position->leftX - segment->position->leftX;
-          double rightMargin = segment->position->rightX - currBlock->position->rightX;
-          double isCentered = math_utils::equal(leftMargin, rightMargin, _doc->avgGlyphWidth);
-          if (!isCentered) {
-            if (prevBlock) { blockTrimRightX = max(blockTrimRightX, prevBlock->trimRightX); }
-            if (nextBlock) { blockTrimRightX = max(blockTrimRightX, nextBlock->trimRightX); }
-          }
-        }
-
-        for (size_t j = 0; j < currBlock->lines.size(); j++) {
-          PdfTextLine* prevLine = j > 0 ? currBlock->lines.at(j - 1) : nullptr;
-          PdfTextLine* currLine = currBlock->lines.at(j);
-          PdfTextLine* nextLine = j < currBlock->lines.size() - 1 ? currBlock->lines.at(j + 1) : nullptr;
-
-          // double trimLeftX = max(segment->trimLeftX, block->position->leftX);
-          // double trimRightX = min(segment->trimRightX, block->position->rightX);
-          // double trimRightX = segment->trimRightX;
-          currLine->leftMargin = round(currLine->position->leftX - currBlock->trimLeftX);
-          currLine->rightMargin = round(blockTrimRightX - currLine->position->rightX);
-
-          // Make sure that the indent is measured only for lines from body text paragraphs.
-          // Reason: Lines from the bibliography could have other indents.
-          if (prevLine) {
-            if (prevLine->fontName != _doc->mostFreqFontName ||
-                  !math_utils::equal(prevLine->fontSize, _doc->mostFreqFontSize, 1)) {
-              continue;
-            }
-          }
-          if (currLine) {
-            if (currLine->fontName != _doc->mostFreqFontName ||
-                  !math_utils::equal(currLine->fontSize, _doc->mostFreqFontSize, 1)) {
-              continue;
-            }
-          }
-          if (nextLine) {
-            if (nextLine->fontName != _doc->mostFreqFontName ||
-                  !math_utils::equal(nextLine->fontSize, _doc->mostFreqFontSize, 1)) {
-              continue;
-            }
-          }
-
-          // Count the number of justified text lines.
-          if (math_utils::equal(currLine->rightMargin, 0, _doc->avgGlyphWidth)) {
-            numZeroRightMarginTextLines++;
-          }
-          numBodyTextLines++;
-
-          double prevLineLeftMargin = 0.0;
-          if (prevLine) {
-            prevLineLeftMargin = prevLine->leftMargin;
-          }
-
-          double nextLineLeftMargin = 0.0;
-          if (nextLine) {
-            nextLineLeftMargin = round(nextLine->position->getRotLeftX() - currBlock->position->getRotLeftX());
-          }
-
-          if (!math_utils::equal(prevLineLeftMargin, 0, _doc->avgGlyphWidth)) {
-            continue;
-          }
-
-          if (!math_utils::equal(nextLineLeftMargin, 0, _doc->avgGlyphWidth)) {
-            continue;
-          }
-
-          // We are only interested in left margins > 0.
-          if (smaller(currLine->leftMargin, _doc->avgGlyphWidth)) {
-            continue;
-          }
-
-          leftMarginFreqs[currLine->leftMargin]++;
-          rightMarginFreqs[currLine->rightMargin]++;
-        }
-      }
-    }
-  }
-
-  // Compute the most frequent left margin.
-  double mostFreqLineLeftMargin = 0;
-  int mostFreqLineLeftMarginCount = 0;
-  for (const auto& pair : leftMarginFreqs) {
-    if (pair.second > mostFreqLineLeftMarginCount) {
-      mostFreqLineLeftMargin = pair.first;
-      mostFreqLineLeftMarginCount = pair.second;
-    }
-  }
-  _mostFreqLineLeftMargin = mostFreqLineLeftMargin;
-
-  // Compute the most frequent right margin.
-  double mostFreqLineRightMargin = 0;
-  int mostFreqLineRightMarginCount = 0;
-  for (const auto& pair : rightMarginFreqs) {
-    if (pair.second > mostFreqLineRightMarginCount) {
-      mostFreqLineRightMargin = pair.first;
-      mostFreqLineRightMarginCount = pair.second;
-    }
-  }
-  _mostFreqLineRightMargin = mostFreqLineRightMargin;
-
-  // Compute the percentage of body text lines with right margin = 0.
-  _percZeroRightMarginTextLines = numBodyTextLines > 0 ? numZeroRightMarginTextLines / numBodyTextLines : 0;
-}
-
-// _________________________________________________________________________________________________
-void TextBlocksDetector::computeTextBlockTrimBoxes() const {
-  for (auto* page : _doc->pages) {
-    for (auto* segment : page->segments) {
-      // Compute the most frequent rightX coordinates among the text lines in the segment.
-      unordered_map<double, int> rightXFreqs;
-
-      for (auto* block : segment->blocks) {
-        block->trimLeftX = block->position->leftX;
-        block->trimUpperY = block->position->upperY;
-        block->trimRightX = block->position->rightX;
-        block->trimLowerY = block->position->lowerY;
-
-        for (auto* line : block->lines) {
-          double rightX = round(line->position->getRotRightX());
-          rightXFreqs[rightX]++;
-        }
-      }
-
-      double mostFreqRightX = 0;
-      int mostFreqRightXCount = 0;
-      for (const auto& pair : rightXFreqs) {
-        if (pair.second > mostFreqRightXCount) {
-          mostFreqRightX = pair.first;
-          mostFreqRightXCount = pair.second;
-        }
-      }
-
-      double numLines = segment->lines.size();
-      double mostFreqRightXRatio = mostFreqRightXCount / numLines;
-
-      if (mostFreqRightXRatio < 0.5) {
-        continue;
-      }
-
-      for (auto* block : segment->blocks) {
-        block->trimRightX = min(block->position->rightX, mostFreqRightX);
-      }
-    }
-  }
-}
-
-// _________________________________________________________________________________________________
-void TextBlocksDetector::computeTextLineIndentHierarchies() {
-  for (auto* page : _doc->pages) {
-    stack<PdfTextLine*> lineStack;
-    PdfTextLine* prevLine = nullptr;
-    for (auto* segment : page->segments) {
-      for (auto* block : segment->blocks) {
-        for (auto* line : block->lines) {
-          // Compute the actual line distance.
-          if (prevLine) {
-            double actualLineDistance = 0;
-            switch(line->position->rotation) {
-              case 0:
-              case 1:
-                actualLineDistance = line->position->getRotUpperY() - prevLine->position->getRotLowerY();
-                break;
-              case 2:
-              case 3:
-                actualLineDistance = prevLine->position->getRotLowerY() - line->position->getRotUpperY();
-                break;
-            }
-            if (larger(abs(actualLineDistance), max(10.0, 3 * _mostFreqLineDistance))) {
-              lineStack = stack<PdfTextLine*>();
-            }
-          }
-          prevLine = line;
-
-          while (!lineStack.empty()) {
-            if (!larger(lineStack.top()->position->leftX, line->position->leftX, _doc->avgGlyphWidth)) {
-              break;
-            }
-            lineStack.pop();
-          }
-
-          if (lineStack.empty()) {
-            lineStack.push(line);
-            continue;
-          }
-
-          // pair<double, double> xOverlapRatios = computeXOverlapRatios(lineStack.top(), line);
-          // double maxXOVerlapRatio = max(xOverlapRatios.first, xOverlapRatios.second);
-          // if (maxXOVerlapRatio > 0) {
-          if (lineStack.top()->position->lowerY < line->position->lowerY) {
-            if (math_utils::equal(lineStack.top()->position->leftX, line->position->leftX, _doc->avgGlyphWidth)) {
-              lineStack.top()->nextSiblingTextLine = line;
-              line->prevSiblingTextLine = lineStack.top();
-              line->parentTextLine = lineStack.top()->parentTextLine;
-              lineStack.pop();
-              lineStack.push(line);
-              continue;
-            }
-
-            if (smaller(lineStack.top()->position->leftX, line->position->leftX, _doc->avgGlyphWidth)) {
-              line->parentTextLine = lineStack.top();
-
-              lineStack.push(line);
-              continue;
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
-// _________________________________________________________________________________________________
-void TextBlocksDetector::computeHangingIndents() const {
-  for (auto* page : _doc->pages) {
-    for (auto* segment : page->segments) {
-      for (auto* block : segment->blocks) {
-        // Compute the most frequent left margin > 0.
-        int numLines = 0;
-        int numLeftMarginLines = 0;
-        unordered_map<double, int> leftMarginCounts;
-        for (const auto* line : block->lines) {
-          if (line->text.size() < 3) { continue; }
-          if (larger(line->leftMargin, 0, _doc->avgGlyphWidth)) {
-            leftMarginCounts[line->leftMargin]++;
-            numLeftMarginLines++;
-          }
-          numLines++;
-        }
-        double mostFreqLeftMargin = 0.0;
-        int mostFreqLeftMarginCount = 0;
-        for (const auto& pair : leftMarginCounts) {
-          if (pair.second > mostFreqLeftMarginCount) {
-            mostFreqLeftMargin = pair.first;
-            mostFreqLeftMarginCount = pair.second;
-          }
-        }
-
-        // Abort if there are no more than two lines.
-        if (numLines <= 1) {
-          continue;
-        }
-
-        // Abort if there are no lines with leftMargin > 0.
-        if (numLeftMarginLines == 0) {
-          continue;
-        }
-
-        // Abort if less than 50% of the indented lines are indented by the same level.
-        if (mostFreqLeftMarginCount <= 0.5 * numLeftMarginLines) {
-          continue;
-        }
-
-        bool isFirstLineIndented = false;
-        bool isFirstLineShort = false;
-        bool isAllOtherLinesIndented = true;
-        int numLowercasedNotIndentedLines = 0;
-        int numLowercasedIndentedLines = 0;
-        int numNotIndentedLines = 0;
-        int numIndentedLines = 0;
-
-        for (size_t i = 0; i < block->lines.size(); i++) {
-          const PdfTextLine* line = block->lines[i];
-
-          if (line->text.size() < 3) { continue; }
-
-          bool isCentered = math_utils::equal(line->leftMargin, line->rightMargin, _doc->avgGlyphWidth) &&
-              larger(line->leftMargin, _doc->avgGlyphWidth, 0);
-          bool isNotIndented = math_utils::equal(line->leftMargin, 0, _doc->avgGlyphWidth);
-          bool isIndented = math_utils::equal(line->leftMargin, mostFreqLeftMargin, _doc->avgGlyphWidth);
-          bool isLower = !line->text.empty() && islower(line->text[0]);
-          bool startsWithLastNamePrefix = lastNamePrefixes.count(line->words[0]->text) > 0;
-
-          if (isCentered) {
-            continue;
-          }
-
-          if (i == 0) {
-            isFirstLineIndented = isIndented;
-            isFirstLineShort = larger(line->rightMargin, 0, 4 * _doc->avgGlyphWidth);
-          } else {
-            isAllOtherLinesIndented &= isIndented;
-          }
-
-          if (isLower && !startsWithLastNamePrefix && isNotIndented) {
-            numLowercasedNotIndentedLines++;
-          }
-          if (isLower && isIndented) {
-            numLowercasedIndentedLines++;
-          }
-          if (isIndented) {
-            numIndentedLines++;
-          }
-          if (isNotIndented) {
-            numNotIndentedLines++;
-          }
-        }
-
-        if (numIndentedLines == 0) {
-          continue;
-        }
-
-        // The block is *not* in hanging indent format if there is at least one non-indented line
-        // that starts with a lowercase character.
-        if (numLowercasedNotIndentedLines > 0) {
-          continue;
-        }
-
-        // The block is in hanging indent format if the first line is not indented, but all other
-        // lines. This should identify single enumeration items, e.g., in the format:
-        // Dynamics: The low energy behavior of
-        //    a physical system depends on its
-        //    dynamics.
-        if (!isFirstLineIndented && !isFirstLineShort && isAllOtherLinesIndented) {
-          block->hangingIndent = mostFreqLeftMargin;
-          continue;
-        }
-
-        // The block is in hanging indent format if all non-indented lines start with an uppercase
-        // character and if the number of non-indented lines exceed a certain threshold.
-        if (numNotIndentedLines >= 10 && numLowercasedNotIndentedLines == 0) {
-          block->hangingIndent = mostFreqLeftMargin;
-          continue;
-        }
-
-        // The block is in hanging indent format if there is at least one indented line that start
-        // with a lowercase character.
-        if (numLines >= 4 && numLowercasedIndentedLines > 0) {
-          block->hangingIndent = mostFreqLeftMargin;
-          continue;
-        }
-      }
-    }
-  }
-}
-
-// _________________________________________________________________________________________________
-double TextBlocksDetector::computePercentageNoRightMarginLines(const PdfTextBlock* block) const {
-  double numLines = 0;
-  double numNoRightMarginLines = 0;
-  for (const auto* line : block->lines) {
-    if (math_utils::equal(line->rightMargin, 0, _doc->avgGlyphWidth)) {
-      numNoRightMarginLines++;
-    }
-    numLines++;
-  }
-  return numLines > 0 ? numNoRightMarginLines / numLines : 0;
-}
-
-// _________________________________________________________________________________________________
-void TextBlocksDetector::computePotentialFootnoteMarkers(const PdfPage* page,
-      unordered_set<string>* footnoteMarkers) const {
-  for (auto* segment : page->segments) {
-    for (const auto* line : segment->lines) {
-      for (const auto* word : line->words) {
-        // Iterate through the glyphs of the word and merge each adjacent superscripts which are
-        // positioned before the word (we don't want to consider superscript that are positioned
-        // behind the word). Consider each merged superscript string as a potential footnote marker.
-        // TODO: We do not store the info about whether a superscript is positioned before or after
-        // a word. As a workaround, consider a superscript as part of a potential footnote marker
-        // only when a non-subscript and non-superscript was already seen.
-        bool nonSubSuperscriptSeen = false;
-        string footnoteMarker;
-        for (const auto* glyph : word->glyphs) {
-          if (!nonSubSuperscriptSeen && !glyph->isSubscript && !glyph->isSuperscript) {
-            nonSubSuperscriptSeen = true;
-            continue;
-          }
-          if (!nonSubSuperscriptSeen) {
-            continue;
-          }
-
-          bool isMarker = glyph->isSuperscript && !glyph->text.empty() && isalnum(glyph->text[0]);
-          isMarker |= !glyph->text.empty() && FOOTNOTE_LABEL_ALPHABET.find(glyph->text[0]) != string::npos;
-
-          if (!isMarker) {
-            if (!footnoteMarker.empty()) {
-              footnoteMarkers->insert(footnoteMarker);
-              footnoteMarker.clear();
-            }
-            continue;
-          }
-
-          footnoteMarker += glyph->text;
-        }
-        if (!footnoteMarker.empty()) {
-          footnoteMarkers->insert(footnoteMarker);
-        }
-      }
-    }
-  }
-}
-
-// =================================================================================================
-
-// _________________________________________________________________________________________________
-void TextBlocksDetector::createTextBlock(const vector<PdfTextLine*>& lines,
-    vector<PdfTextBlock*>* blocks) {
+void TextBlocksDetector::createTextBlock(const PdfPageSegment* segment,
+    const vector<PdfTextLine*>& lines, vector<PdfTextBlock*>* blocks) {
   // Do nothing if no words are given.
   if (lines.size() == 0) {
     return;
@@ -819,6 +306,11 @@ void TextBlocksDetector::createTextBlock(const vector<PdfTextLine*>& lines,
     block->position->upperY = min(block->position->upperY, lineMinY);
     block->position->rightX = max(block->position->rightX, lineMaxX);
     block->position->lowerY = max(block->position->lowerY, lineMaxY);
+
+    block->trimLeftX = std::max(block->position->leftX, segment->trimLeftX);
+    block->trimUpperY = std::max(block->position->upperY, segment->trimUpperY);
+    block->trimRightX = std::min(block->position->rightX, segment->trimRightX);
+    block->trimLowerY = std::min(block->position->lowerY, segment->trimLowerY);
 
     // Count the font names and font sizes, for computing the most frequent font name / font size.
     fontNameFreqs[currLine->fontName]++;
@@ -879,139 +371,22 @@ void TextBlocksDetector::createTextBlock(const vector<PdfTextLine*>& lines,
   // Set the rank.
   block->rank = blocks->size();
 
+  block->isCentered = text_block_utils::computeIsCentered(block);
+
+  if (blocks->size() > 0) {
+    PdfTextBlock* prevBlock = blocks->at(blocks->size() - 1);
+    prevBlock->nextBlock = block;
+    block->prevBlock = prevBlock;
+  }
+  block->segment = segment;
+
+  text_block_utils::computeTextLineMargins(block);
+  block->hangingIndent = text_block_utils::computeHangingIndent(block);
+
   blocks->push_back(block);
 }
 
 // =================================================================================================
-
-// _________________________________________________________________________________________________
-bool TextBlocksDetector::computeIsCentered(const PdfTextBlock* block) const {
-  bool hasLineWithLargeMarginNoFormula = false;
-  int numLinesNoMargin = 0;
-
-  for (size_t i = 1; i < block->lines.size(); i++) {
-    const PdfTextLine* prevLine = block->lines[i - 1];
-    const PdfTextLine* currLine = block->lines[i];
-
-    pair<double, double> ratios = computeXOverlapRatios(prevLine, currLine);
-    double maxXOverlapRatio = max(ratios.first, ratios.second);
-
-    if (smaller(maxXOverlapRatio, 1, 0.01)) {
-      return false;
-    }
-
-    double leftXOffset = abs(prevLine->position->leftX - currLine->position->leftX);
-    double rightXOffset = abs(prevLine->position->rightX - currLine->position->rightX);
-    bool isEqualOffset = math_utils::equal(leftXOffset, rightXOffset, 2 * _doc->avgGlyphWidth);
-
-    if (!isEqualOffset) {
-      return false;
-    }
-
-    bool isLargeLeftXOffset = larger(leftXOffset, 0, 2 * _doc->avgGlyphWidth);
-    bool isLargeRightXOffset = larger(rightXOffset, 0, 2 * _doc->avgGlyphWidth);
-    bool isLargeXOffset = isLargeLeftXOffset || isLargeRightXOffset;
-    bool prevIsFormula = false;
-    for (char c : FORMULA_ID_ALPHABET) {
-      if (prevLine->text.find(c) != string::npos) {
-        prevIsFormula = true;
-        break;
-      }
-    }
-    bool currIsFormula = false;
-    for (char c : FORMULA_ID_ALPHABET) {
-      if (currLine->text.find(c) != string::npos) {
-        currIsFormula = true;
-        break;
-      }
-    }
-
-    if (isLargeXOffset && !prevIsFormula && !currIsFormula) {
-      hasLineWithLargeMarginNoFormula = true;
-    } else {
-      numLinesNoMargin++;
-    }
-  }
-  return hasLineWithLargeMarginNoFormula && numLinesNoMargin <= 5;
-}
-
-// _________________________________________________________________________________________________
-bool TextBlocksDetector::isCenteredBlock(const PdfTextLine* prevLine, const PdfTextLine* currLine,
-    bool verbose) const {
-
-
-  if (!prevLine) {
-    return false;
-  }
-
-  if (!currLine) {
-    return false;
-  }
-
-  // The previous and current line is considered to be a part of a centered block, when all of the
-  // following requirements are true:
-
-  // (1) The differences between the leftX values is equal to the differences of the rightX values.
-  double leftXOffset = abs(prevLine->position->leftX - currLine->position->leftX);
-  double rightXOffset = abs(prevLine->position->rightX - currLine->position->rightX);
-  bool isEqualOffset = math_utils::equal(leftXOffset, rightXOffset, 2 * _doc->avgGlyphWidth);
-
-
-
-
-  // (2) One of the following values is larger than 0: the left margin or the right margin of the
-  // previous or current line; leftXOffset, rightXOffset. This requirement exists to not
-  // accidentally consider two text lines that are actually justified (for which requirement 1 is
-  // also true) to be part of a centered block.
-  bool isLargePrevLeftMargin = larger(prevLine->leftMargin, 0, _doc->avgGlyphWidth);
-  bool isLargePrevRightMargin = larger(prevLine->rightMargin, 0, _doc->avgGlyphWidth);
-  bool isLargeCurrLeftMargin = larger(currLine->leftMargin, 0, _doc->avgGlyphWidth);
-  bool isLargeCurrRightMargin = larger(currLine->rightMargin, 0, _doc->avgGlyphWidth);
-  bool isLargePrevMargin = isLargePrevLeftMargin || isLargePrevRightMargin;
-  bool isLargeCurrMargin = isLargeCurrLeftMargin || isLargeCurrRightMargin;
-  bool isLargeMargin = isLargePrevMargin || isLargeCurrMargin;
-  bool isLargeLeftXOffset = larger(leftXOffset, 0, _doc->avgGlyphWidth);
-  bool isLargeRightXOffset = larger(rightXOffset, 0, _doc->avgGlyphWidth);
-  bool isLargeXOffset = isLargeLeftXOffset || isLargeRightXOffset;
-
-  // (3) The height of the previous line and current line is almost the same. This requirement
-  // exists to not accidentally consider a centered formula and a subsequent text line, which is
-  // actually part of a justified block, to be part of a centered block.
-  // TODO: This assumes that the height of formulas are larger than the height of text lines, which
-  // is not true in any case.
-  double prevLineHeight = prevLine->position->getHeight();
-  double currLineHeight = currLine->position->getHeight();
-  bool isSameHeight = math_utils::equal(prevLineHeight, currLineHeight, 0.25 * _doc->mostFreqWordHeight);
-
-  bool isCentered = isEqualOffset && (isLargeMargin || isLargeXOffset) && isSameHeight;
-
-  if (verbose) {
-    int p = currLine->position->pageNum;
-    _log->debug(p) << "Checking for centered block..." << endl;
-    _log->trace(p) << " └─ leftXOffset: " << leftXOffset << endl;
-    _log->trace(p) << " └─ rightXOffset: " << rightXOffset << endl;
-    _log->debug(p) << " └─ isEqualOffset: " << isEqualOffset << endl;
-    _log->trace(p) << " └─ isLargePrevLeftMargin: " << isLargePrevLeftMargin << endl;
-    _log->trace(p) << " └─ isLargePrevRightMargin: " << isLargePrevRightMargin << endl;
-    _log->trace(p) << " └─ isLargeCurrLeftMargin: " << isLargeCurrLeftMargin << endl;
-    _log->trace(p) << " └─ isLargeCurrRightMargin: " << isLargeCurrRightMargin << endl;
-    _log->trace(p) << " └─ isLargePrevMargin: " << isLargePrevMargin << endl;
-    _log->trace(p) << " └─ isLargeCurrMargin: " << isLargeCurrMargin << endl;
-    _log->trace(p) << " └─ isLargeMargin: " << isLargeMargin << endl;
-    _log->trace(p) << " └─ isLargeLeftXOffset: " << isLargeLeftXOffset << endl;
-    _log->trace(p) << " └─ isLargeRightXOffset: " << isLargeRightXOffset << endl;
-    _log->debug(p) << " └─ isLargeXOffset: " << isLargeXOffset << endl;
-    _log->trace(p) << " └─ prevLine.height: " << prevLineHeight << endl;
-    _log->trace(p) << " └─ currLine.height: " << currLineHeight << endl;
-    _log->trace(p) << " └─ _doc->mostFreqWordHeight: " << _doc->mostFreqWordHeight << endl;
-    _log->debug(p) << " └─ isSameHeight: " << isSameHeight << endl;
-    _log->debug(p) << "is centered block: " << isCentered << endl;
-  }
-
-  return isCentered;
-}
-
-
 
 // _________________________________________________________________________________________________
 Trool TextBlocksDetector::startsBlock_sameFigure(const PdfTextLine* line, bool verbose) const {
@@ -1147,11 +522,11 @@ Trool TextBlocksDetector::startsBlock_lineDistance(const PdfTextLine* line, doub
   // Compute the expected line distance.
   double fontSize = round(line->fontSize, FONT_SIZE_PREC);
   double expectedLineDistance = 0;
-  if (_mostFreqLineDistancePerFontSize.count(fontSize) > 0) {
-    double eld = _mostFreqLineDistancePerFontSize.at(fontSize);
+  if (_doc->mostFreqLineDistancePerFontSize.count(fontSize) > 0) {
+    double eld = _doc->mostFreqLineDistancePerFontSize.at(fontSize);
     expectedLineDistance = max(expectedLineDistance, eld);
   }
-  expectedLineDistance = max(expectedLineDistance, _mostFreqLineDistance);
+  expectedLineDistance = max(expectedLineDistance, _doc->mostFreqLineDistance);
 
   // Compute the actual line distance.
   double actualLineDistance = text_line_utils::computeTextLineDistance(line->prevLine, line);
@@ -1235,8 +610,9 @@ Trool TextBlocksDetector::startsBlock_lineDistanceIncrease(const PdfTextLine* li
 }
 
 // _________________________________________________________________________________________________
-Trool TextBlocksDetector::startsBlock_centered(const PdfTextLine* line, bool isCentered,
+Trool TextBlocksDetector::startsBlock_centered(const PdfTextBlock* block, const PdfTextLine* line,
       bool verbose) const {
+  assert(block);
   assert(line);
 
   // Check if the line is the first line of an enumeration item. This should primarily detect
@@ -1247,11 +623,11 @@ Trool TextBlocksDetector::startsBlock_centered(const PdfTextLine* line, bool isC
   int p = line->position->pageNum;
   if (verbose) {
     _log->debug(p) << BLUE << "Is the preliminary block centered?" << OFF << endl;
-    _log->debug(p) << " └─ block.isCentered: " << isCentered << endl;
+    _log->debug(p) << " └─ block.isCentered: " << block->isCentered << endl;
     _log->debug(p) << " └─ line.isFirstLineOfItem: " << isFirstLineOfItem << endl;
   }
 
-  if (!isCentered) {
+  if (!block->isCentered) {
     return Trool::None;
   }
 
@@ -1269,8 +645,9 @@ Trool TextBlocksDetector::startsBlock_centered(const PdfTextLine* line, bool isC
 }
 
 // _________________________________________________________________________________________________
-Trool TextBlocksDetector::startsBlock_item(const PdfTextLine* line, bool isCentered,
-      const unordered_set<string>* fnLabels, bool verbose) const {
+Trool TextBlocksDetector::startsBlock_item(const PdfTextBlock* block, const PdfTextLine* line,
+      bool verbose) const {
+  assert(block);
   assert(line);
 
   if (line->words.empty()) {
@@ -1278,10 +655,10 @@ Trool TextBlocksDetector::startsBlock_item(const PdfTextLine* line, bool isCente
   }
 
   // The line starts a new block if it is the first line of an enumeration item.
-  bool isPrevFirstLine = text_line_utils::computeIsFirstLineOfItem(line->prevLine, fnLabels);
-  bool isCurrFirstLine = text_line_utils::computeIsFirstLineOfItem(line, fnLabels);
-  bool isPrevContLine = text_line_utils::computeIsContinuationLineOfItem(line->prevLine, fnLabels);
-  bool isCurrContLine = text_line_utils::computeIsContinuationLineOfItem(line, fnLabels);
+  bool isPrevFirstLine = text_line_utils::computeIsFirstLineOfItem(line->prevLine, &_potentialFootnoteLabels);
+  bool isCurrFirstLine = text_line_utils::computeIsFirstLineOfItem(line, &_potentialFootnoteLabels);
+  bool isPrevContLine = text_line_utils::computeIsContinuationLineOfItem(line->prevLine, &_potentialFootnoteLabels);
+  bool isCurrContLine = text_line_utils::computeIsContinuationLineOfItem(line, &_potentialFootnoteLabels);
   bool isPrevPartOfItem = isPrevFirstLine || isPrevContLine;
   bool isCurrPartOfItem = isCurrFirstLine || isCurrContLine;
   double xOffset = element_utils::computeLeftXOffset(line->prevLine, line);
@@ -1306,7 +683,7 @@ Trool TextBlocksDetector::startsBlock_item(const PdfTextLine* line, bool isCente
   if (isCurrContLine) {
     _log->debug(p) << BLUE << " yes, is continuation of item" << OFF << endl;
 
-    if (isCentered) {
+    if (block->isCentered) {
       _log->debug(p) << BLUE << " + block is centered (continues block)." << OFF << endl;
       return Trool::False;
     } else if (hasPrevLineCapacity) {
@@ -1397,28 +774,29 @@ Trool TextBlocksDetector::startsBlock_emphasized(const PdfTextLine* line, bool v
 }
 
 // _________________________________________________________________________________________________
-Trool TextBlocksDetector::startsBlock_hangingIndent(const PdfTextLine* line, double hangingIndent,
-      bool verbose) const {
+Trool TextBlocksDetector::startsBlock_hangingIndent(const PdfTextBlock* block,
+      const PdfTextLine* line, bool verbose) const {
+  assert(block);
   assert(line);
 
-  if (hangingIndent <= 0.0) {
+  if (block->hangingIndent <= 0.0) {
     return Trool::None;
   }
 
   // TODO
-  bool isPrevNotIndented = math_utils::smaller(line->prevLine->leftMargin, hangingIndent, _doc->avgGlyphWidth);
-  bool isCurrNotIndented = math_utils::smaller(line->leftMargin, hangingIndent, _doc->avgGlyphWidth);
-  bool isPrevIndented = math_utils::equal(line->prevLine->leftMargin, hangingIndent, _doc->avgGlyphWidth);
-  bool isCurrIndented = math_utils::equal(line->leftMargin, hangingIndent, _doc->avgGlyphWidth);
-  bool isPrevMoreIndented = math_utils::larger(line->prevLine->leftMargin, hangingIndent, _doc->avgGlyphWidth);
-  bool isCurrMoreIndented = math_utils::larger(line->leftMargin, hangingIndent, _doc->avgGlyphWidth);
+  bool isPrevNotIndented = math_utils::smaller(line->prevLine->leftMargin, block->hangingIndent, _doc->avgGlyphWidth);
+  bool isCurrNotIndented = math_utils::smaller(line->leftMargin, block->hangingIndent, _doc->avgGlyphWidth);
+  bool isPrevIndented = math_utils::equal(line->prevLine->leftMargin, block->hangingIndent, _doc->avgGlyphWidth);
+  bool isCurrIndented = math_utils::equal(line->leftMargin, block->hangingIndent, _doc->avgGlyphWidth);
+  bool isPrevMoreIndented = math_utils::larger(line->prevLine->leftMargin, block->hangingIndent, _doc->avgGlyphWidth);
+  bool isCurrMoreIndented = math_utils::larger(line->leftMargin, block->hangingIndent, _doc->avgGlyphWidth);
   double xOffset = element_utils::computeLeftXOffset(line->prevLine, line);
   bool hasPrevLineCapacity = text_line_utils::computeHasPrevLineCapacity(line);
 
   int p = line->position->pageNum;
   if (verbose) {
     _log->debug(p) << "Is line part of a block in hanging indent?" << endl;
-    _log->debug(p) << " └─ hangingIndent: " << hangingIndent << endl;
+    _log->debug(p) << " └─ block.hangingIndent: " << block->hangingIndent << endl;
     _log->debug(p) << " └─ prevLine.leftMargin:     " << line->prevLine->leftMargin << endl;
     _log->debug(p) << " └─ prevLine.isNotIndented:  " << isPrevIndented << endl;
     _log->debug(p) << " └─ prevLine.isIndented:     " << isPrevNotIndented << endl;
@@ -1478,8 +856,7 @@ Trool TextBlocksDetector::startsBlock_hangingIndent(const PdfTextLine* line, dou
 }
 
 // _________________________________________________________________________________________________
-Trool TextBlocksDetector::startsBlock_indent(const PdfTextLine* line, double percNoRightMarginLines,
-      bool verbose) const {
+Trool TextBlocksDetector::startsBlock_indent(const PdfTextLine* line, bool verbose) const {
   assert(line);
 
   // TODO
@@ -1527,11 +904,7 @@ Trool TextBlocksDetector::startsBlock_indent(const PdfTextLine* line, double per
     return Trool::True;
   }
 
-  if (percNoRightMarginLines >= 0.75 && larger(line->prevLine->rightMargin, 0, 5 * _doc->avgGlyphWidth)) {
-    return Trool::True;
-  }
-
-  if (_percZeroRightMarginTextLines > 0.5 && larger(line->prevLine->rightMargin, 0, 10 * _doc->avgGlyphWidth)) {
+  if (smaller(line->prevLine->position->rightX, line->position->rightX, 5 * _doc->avgGlyphWidth)) {
     return Trool::True;
   }
 
