@@ -24,6 +24,8 @@ bool computeIsCentered(const PdfTextBlock* block);
 double computeHangingIndent(const PdfTextBlock* block);
 void computeTextLineMargins(const PdfTextBlock* block);
 
+void createTextBlock(const vector<PdfTextLine*>& lines, vector<PdfTextBlock*>* blocks);
+
 }
 
 #endif  // TEXTBLOCKUTILS_H_

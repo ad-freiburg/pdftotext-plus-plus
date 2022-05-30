@@ -12,6 +12,7 @@
 #include "./MathUtils.h"
 #include "./PdfElementUtils.h"
 #include "./TextBlockUtils.h"
+#include "./Utils.h"
 
 using namespace std;
 
@@ -217,4 +218,115 @@ void text_block_utils::computeTextLineMargins(const PdfTextBlock* block) {
     currLine->leftMargin = round(currLine->position->leftX - block->trimLeftX);
     currLine->rightMargin = round(blockTrimRightX - currLine->position->rightX);
   }
+}
+
+// _________________________________________________________________________________________________
+void text_block_utils::createTextBlock(const vector<PdfTextLine*>& lines,
+      vector<PdfTextBlock*>* blocks) {
+  // Do nothing if no words are given.
+  if (lines.empty()) {
+    return;
+  }
+
+  PdfTextBlock* block = new PdfTextBlock();
+  block->id = createRandomString(8, "tb-");
+  block->doc = lines[0]->doc;
+
+  unordered_map<string, int> fontNameFreqs;
+  unordered_map<double, int> fontSizeFreqs;
+  const PdfPageSegment* segment = lines[0]->segment;
+
+  for (size_t i = 0; i < lines.size(); i++) {
+    PdfTextLine* prevLine = i > 0 ? lines[i-1] : nullptr;
+    PdfTextLine* currLine = lines[i];
+    PdfTextLine* nextLine = i < lines.size() - 1 ? lines[i+1] : nullptr;
+
+    double lineMinX = min(currLine->position->leftX, currLine->position->rightX);
+    double lineMinY = min(currLine->position->upperY, currLine->position->lowerY);
+    double lineMaxX = max(currLine->position->leftX, currLine->position->rightX);
+    double lineMaxY = max(currLine->position->upperY, currLine->position->lowerY);
+
+    // Update the x,y-coordinates.
+    block->position->leftX = min(block->position->leftX, lineMinX);
+    block->position->upperY = min(block->position->upperY, lineMinY);
+    block->position->rightX = max(block->position->rightX, lineMaxX);
+    block->position->lowerY = max(block->position->lowerY, lineMaxY);
+
+    block->trimLeftX = std::max(block->position->leftX, segment->trimLeftX);
+    block->trimUpperY = std::max(block->position->upperY, segment->trimUpperY);
+    block->trimRightX = std::min(block->position->rightX, segment->trimRightX);
+    block->trimLowerY = std::min(block->position->lowerY, segment->trimLowerY);
+
+    // Count the font names and font sizes, for computing the most frequent font name / font size.
+    fontNameFreqs[currLine->fontName]++;
+    fontSizeFreqs[currLine->fontSize]++;
+
+    currLine->prevLine = prevLine;
+    currLine->nextLine = nextLine;
+  }
+
+  // Compute and set the most frequent font name.
+  int mostFreqFontNameCount = 0;
+  for (const auto& pair : fontNameFreqs) {
+    if (pair.second > mostFreqFontNameCount) {
+      block->fontName = pair.first;
+      mostFreqFontNameCount = pair.second;
+    }
+  }
+
+  // Compute and set the most frequent font size.
+  int mostFreqFontSizeCount = 0;
+  for (const auto& pair : fontSizeFreqs) {
+    if (pair.second > mostFreqFontSizeCount) {
+      block->fontSize = pair.first;
+      mostFreqFontSizeCount = pair.second;
+    }
+  }
+
+  // Set the page number.
+  block->position->pageNum = lines[0]->position->pageNum;
+
+  // Set the writing mode.
+  block->position->wMode = lines[0]->position->wMode;
+
+  // Set the rotation value.
+  block->position->rotation = lines[0]->position->rotation;
+
+  // Set the text.
+  for (size_t i = 0; i < lines.size(); i++) {
+    auto* line = lines.at(i);
+    for (size_t j = 0; j < line->words.size(); j++) {
+      auto* word = line->words.at(j);
+      block->text += word->text;
+      if (j < line->words.size() - 1) {
+        block->text += " ";
+      }
+    }
+    if (i < lines.size() - 1) {
+      block->text += " ";
+    }
+
+    line->block = block;
+  }
+
+  block->isEmphasized = text_element_utils::computeIsEmphasized(block);
+
+  block->lines = lines;
+
+  // Set the rank.
+  block->rank = blocks->size();
+
+  block->isCentered = text_block_utils::computeIsCentered(block);
+
+  if (blocks->size() > 0) {
+    PdfTextBlock* prevBlock = blocks->at(blocks->size() - 1);
+    prevBlock->nextBlock = block;
+    block->prevBlock = prevBlock;
+  }
+  block->segment = segment;
+
+  text_block_utils::computeTextLineMargins(block);
+  block->hangingIndent = text_block_utils::computeHangingIndent(block);
+
+  blocks->push_back(block);
 }

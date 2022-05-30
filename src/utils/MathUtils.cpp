@@ -36,6 +36,6 @@ bool math_utils::equalOrSmaller(double d1, double d2, double delta) {
 }
 
 // _________________________________________________________________________________________________
-bool math_utils::between(double d, double low, double up) {
-  return math_utils::equalOrLarger(d, low, 0.0001) && math_utils::equalOrSmaller(d, up, 0.0001);
+bool math_utils::between(double d, double low, double up, double delta) {
+  return math_utils::equalOrLarger(d, low, delta) && math_utils::equalOrSmaller(d, up, delta);
 }

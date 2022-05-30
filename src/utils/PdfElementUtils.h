@@ -35,7 +35,7 @@ bool computeHasEqualLowerY(const PdfElement* elem1, const PdfElement* elem2, dou
 
 double computeLeftXOffset(const PdfElement* elem1, const PdfElement* elem2);
 
-PdfFigure* overlapsFigure(const PdfElement* element, const std::vector<PdfFigure*>& figures,
+PdfFigure* computeOverlapsFigure(const PdfElement* element, const std::vector<PdfFigure*>& figures,
     double minXOverlapRatio = 0.5, double minYOverlapRatio = 0.5);
 
 }

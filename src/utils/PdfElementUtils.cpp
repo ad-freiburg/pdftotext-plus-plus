@@ -47,7 +47,7 @@ std::pair<double, double> element_utils::computeYOverlapRatios(const PdfElement*
 }
 
 // _________________________________________________________________________________________________
-PdfFigure* element_utils::overlapsFigure(const PdfElement* elem,
+PdfFigure* element_utils::computeOverlapsFigure(const PdfElement* elem,
       const std::vector<PdfFigure*>& figures, double minXOverlapRatio, double minYOverlapRatio) {
 
   for (auto* figure : figures) {
