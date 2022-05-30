@@ -51,7 +51,7 @@ namespace text_line_utils {
 double computeTextLineDistance(const PdfTextLine* prevLine, const PdfTextLine* line);
 bool computeIsFirstLineOfItem(const PdfTextLine* line, const unordered_set<string>*
     potentialFootnoteLabels=nullptr);
-bool computeIsContinuationLineOfItem(const PdfTextLine* line, const unordered_set<string>*
+bool computeIsContinuationOfItem(const PdfTextLine* line, const unordered_set<string>*
     potentialFootnoteLabels=nullptr);
 bool computeIsPrefixedByItemLabel(const PdfTextLine* line);
 bool computeIsPrefixedByFootnoteLabel(const PdfTextLine* line, const unordered_set<string>*

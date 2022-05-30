@@ -107,7 +107,7 @@ bool text_line_utils::computeIsFirstLineOfItem(const PdfTextLine* line,
 }
 
 // _________________________________________________________________________________________________
-bool text_line_utils::computeIsContinuationLineOfItem(const PdfTextLine* line,
+bool text_line_utils::computeIsContinuationOfItem(const PdfTextLine* line,
       const unordered_set<string>* potentialFootnoteLabels) {
   assert(line);
 
@@ -117,7 +117,7 @@ bool text_line_utils::computeIsContinuationLineOfItem(const PdfTextLine* line,
   }
 
   return text_line_utils::computeIsFirstLineOfItem(parentLine, potentialFootnoteLabels)
-      || text_line_utils::computeIsContinuationLineOfItem(parentLine, potentialFootnoteLabels);
+      || text_line_utils::computeIsContinuationOfItem(parentLine, potentialFootnoteLabels);
 }
 
 // _________________________________________________________________________________________________

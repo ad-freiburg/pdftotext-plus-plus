@@ -32,32 +32,31 @@ class TextBlocksDetector {
 
   bool startsBlock(const PdfTextBlock* block, const PdfTextLine* line);
 
-  void createTextBlock(const PdfPageSegment* segment, const vector<PdfTextLine*>& lines, vector<PdfTextBlock*>* blocks);
+  void createTextBlock(const vector<PdfTextLine*>& lines, vector<PdfTextBlock*>* blocks);
 
 
   PdfDocument* _doc;
 
-  unordered_set<string> _potentialFootnoteLabels;
+  unordered_set<string> _potentialFnLabels;
 
   Logger* _log;
 
 
   // ===============================================================================================
 
-  Trool startsBlock_sameFigure(const PdfTextLine* line, bool verbose=true) const;
-  Trool startsBlock_rotation(const PdfTextLine* line, bool verbose=true) const;
-  Trool startsBlock_wMode(const PdfTextLine* line, bool verbose=true) const;
-  Trool startsBlock_fontSize(const PdfTextLine* line, double maxDelta=1.0, bool verbose=true) const;
+  Trool startsBlock_existsPrevLine(const PdfTextLine* line) const;
+  Trool startsBlock_sameFigure(const PdfTextLine* line) const;
+  Trool startsBlock_rotation(const PdfTextLine* line) const;
+  Trool startsBlock_wMode(const PdfTextLine* line) const;
+  Trool startsBlock_fontSize(const PdfTextLine* line, double maxDelta=1.0) const;
   Trool startsBlock_lineDistance(const PdfTextLine* line, double minTolerance=1.0,
-      double toleranceFactor=0.1, bool verbose=true) const;
-  Trool startsBlock_lineDistanceIncrease(const PdfTextLine* line, double toleranceFactor=0.5,
-      bool verbose=true) const;
-  Trool startsBlock_centered(const PdfTextBlock* block, const PdfTextLine* line, bool verbose=true) const;
-  Trool startsBlock_item(const PdfTextBlock* block, const PdfTextLine* line, bool verbose=true) const;
-  Trool startsBlock_emphasized(const PdfTextLine* line, bool verbose=true) const;
-  Trool startsBlock_hangingIndent(const PdfTextBlock* block, const PdfTextLine* line,
-      bool verbose=true) const;
-  Trool startsBlock_indent(const PdfTextLine* line, bool verbose=true) const;
+      double toleranceFactor=0.1) const;
+  Trool startsBlock_increasedLineDistance(const PdfTextLine* line, double toleranceFactor=0.5) const;
+  Trool startsBlock_centered(const PdfTextBlock* block, const PdfTextLine* line) const;
+  Trool startsBlock_item(const PdfTextBlock* block, const PdfTextLine* line) const;
+  Trool startsBlock_emphasized(const PdfTextLine* line) const;
+  Trool startsBlock_hangingIndent(const PdfTextBlock* block, const PdfTextLine* line) const;
+  Trool startsBlock_indent(const PdfTextLine* line) const;
 };
 
 #endif  // TEXTBLOCKDETECTOR_H_
