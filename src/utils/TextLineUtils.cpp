@@ -74,7 +74,7 @@ bool text_line_utils::computeIsFirstLineOfItem(const PdfTextLine* line,
 
   PdfWord* firstWord = line->words[0];
 
-  const PdfTextLine* prevSibling = line->prevSiblingTextLine;
+  const PdfTextLine* prevSibling = line->prevSiblingLine;
   if (prevSibling && !prevSibling->words.empty()) {
     PdfWord* prevFirstWord = prevSibling->words[0];
     bool prevIsPrefixedByItemLabel = text_line_utils::computeIsPrefixedByItemLabel(prevSibling);
@@ -86,7 +86,7 @@ bool text_line_utils::computeIsFirstLineOfItem(const PdfTextLine* line,
     }
   }
 
-  const PdfTextLine* nextSibling = line->nextSiblingTextLine;
+  const PdfTextLine* nextSibling = line->nextSiblingLine;
   if (nextSibling && !nextSibling->words.empty()) {
     PdfWord* nextFirstWord = nextSibling->words[0];
     bool nextIsPrefixedByItemLabel = text_line_utils::computeIsPrefixedByItemLabel(nextSibling);
@@ -111,7 +111,7 @@ bool text_line_utils::computeIsContinuationOfItem(const PdfTextLine* line,
       const unordered_set<string>* potentialFootnoteLabels) {
   assert(line);
 
-  const PdfTextLine* parentLine = line->parentTextLine;
+  const PdfTextLine* parentLine = line->parentLine;
   if (!parentLine) {
     return false;
   }
@@ -243,16 +243,16 @@ void text_line_utils::computeTextLineIndentHierarchies(const PdfPage* page) {
       // if (maxXOVerlapRatio > 0) {
       if (lineStack.top()->position->lowerY < line->position->lowerY) {
         if (math_utils::equal(lineStack.top()->position->leftX, line->position->leftX, line->doc->avgGlyphWidth)) {
-          lineStack.top()->nextSiblingTextLine = line;
-          line->prevSiblingTextLine = lineStack.top();
-          line->parentTextLine = lineStack.top()->parentTextLine;
+          lineStack.top()->nextSiblingLine = line;
+          line->prevSiblingLine = lineStack.top();
+          line->parentLine = lineStack.top()->parentLine;
           lineStack.pop();
           lineStack.push(line);
           continue;
         }
 
         if (math_utils::smaller(lineStack.top()->position->leftX, line->position->leftX, line->doc->avgGlyphWidth)) {
-          line->parentTextLine = lineStack.top();
+          line->parentLine = lineStack.top();
 
           lineStack.push(line);
           continue;

@@ -459,9 +459,9 @@ class PdfTextLine : public PdfTextElement {
    */
   const PdfPageSegment* segment = nullptr;
 
-  const PdfTextLine* prevSiblingTextLine = nullptr;
-  const PdfTextLine* nextSiblingTextLine = nullptr;
-  const PdfTextLine* parentTextLine = nullptr;
+  const PdfTextLine* prevSiblingLine = nullptr;
+  const PdfTextLine* nextSiblingLine = nullptr;
+  const PdfTextLine* parentLine = nullptr;
 
   /**
    * This method returns a string representation of this line for debugging purposes.
