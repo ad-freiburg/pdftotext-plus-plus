@@ -27,7 +27,7 @@ TextLinesDetector::TextLinesDetector(PdfDocument* doc, bool debug, int debugPage
 
   _log->debug() << "=======================================" << endl;
   _log->debug() << "\033[1mDEBUG MODE | Detecting Text Lines\033[0m" << endl;
-  _log->debug() << " └─ debug page filter: " << debugPageFilter << endl;
+  _log->debug() << " ─ debug page filter: " << debugPageFilter << endl;
 }
 
 // _________________________________________________________________________________________________
@@ -294,7 +294,7 @@ void TextLinesDetector::detect() {
       segment->trimLowerY = get<3>(trimBox);
     }
 
-    text_lines_utils::computeTextLineIndentHierarchies(page);
+    text_lines_utils::computeTextLineHierarchies(page);
   }
 }
 

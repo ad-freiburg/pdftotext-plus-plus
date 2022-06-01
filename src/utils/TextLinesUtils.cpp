@@ -7,6 +7,7 @@
  */
 
 #include <regex>
+#include <iostream>
 #include <unordered_set>
 
 #include "./MathUtils.h"
@@ -23,28 +24,26 @@ double text_lines_utils::computeTextLineDistance(const PdfTextLine* l1, const Pd
   assert(l1->position->rotation == l2->position->rotation);
   assert(l1->position->wMode == l2->position->wMode);
 
-  // We do not know if l1 is positioned above or below l2, so compute the min/max upperY/lowerY.
-  // Here is an example illustrating which values are computed:
-  // ----------------  <- minUpperY
-  // The first line
-  // ----------------  <- minLowerY
-  // ----------------  <- maxUpperY
-  // The second line
-  // ----------------  <- maxLowerY
-  double minUpperY = std::min(l1->position->getRotUpperY(), l2->position->getRotUpperY());
-  double maxUpperY = std::max(l1->position->getRotUpperY(), l2->position->getRotUpperY());
-  double minLowerY = std::min(l1->position->getRotLowerY(), l2->position->getRotLowerY());
-  double maxLowerY = std::max(l1->position->getRotLowerY(), l2->position->getRotLowerY());
+  // Determine which of the two lines is the first line (which of the two is positioned "above" the
+  // other by checking which of the two lines has the lower upperY value.
+  const PdfTextLine* upperLine;
+  const PdfTextLine* lowerLine;
+  if (l1->position->upperY < l2->position->upperY) {
+    upperLine = l1;
+    lowerLine = l2;
+  } else {
+    upperLine = l2;
+    lowerLine = l1;
+  }
 
-  // The line distance is the vertical gap between the two lines.
   switch(l1->position->rotation) {
     case 0:
     case 1:
     default:
-      return maxUpperY - minLowerY;
+      return lowerLine->position->upperY - upperLine->position->lowerY;
     case 2:
     case 3:
-      return maxLowerY - minUpperY;
+      return upperLine->position->lowerY - lowerLine->position->upperY;
   }
 }
 
@@ -72,8 +71,8 @@ bool text_lines_utils::computeIsFirstLineOfItem(const PdfTextLine* line,
   // (4) the distance between the previous and current line is <= 0
   // (5) the previous line does not end with a sentence delimiter
   // (6) the previous and current line have the same leftX value.
-  // This should avoid to detect lines that are actually not part of a footnote but occasionally
-  // starts with a footnote label as a footnote. Example: 0901.4737, page 11.
+  // This should avoid to detect lines that occasionally start with a footnote label, but that are
+  // actually not part of a footnote, as a footnote. Example: 0901.4737, page 11.
   if (line->prevLine) {
     bool isPrevPrefixedByLabel = text_lines_utils::computeIsPrefixedByItemLabel(line->prevLine);
     bool hasEqualFont = text_element_utils::computeHasEqualFont(line->prevLine, line);
@@ -91,7 +90,7 @@ bool text_lines_utils::computeIsFirstLineOfItem(const PdfTextLine* line,
 
   // Check if there is a previous sibling line. The current line is the first line of an item
   // if the previous sibling line is also prefixed by an item label and if it exhibits the same
-  // font and font size like the current line.
+  // font and font size as the current line.
   const PdfTextLine* prevSibling = line->prevSiblingLine;
   if (prevSibling && !prevSibling->words.empty()) {
     PdfWord* firstWord = line->words[0];
@@ -106,7 +105,7 @@ bool text_lines_utils::computeIsFirstLineOfItem(const PdfTextLine* line,
 
   // Check if there is a next sibling line. The current line is the first line of an item if the
   // next sibling line is also prefixed by an item label and if it exhibits the same font and font
-  // size like the current line.
+  // size as the current line.
   const PdfTextLine* nextSibling = line->nextSiblingLine;
   if (nextSibling && !nextSibling->words.empty()) {
     PdfWord* firstWord = line->words[0];
@@ -132,11 +131,14 @@ bool text_lines_utils::computeIsContinuationOfItem(const PdfTextLine* line,
       const unordered_set<string>* potentialFootnoteLabels) {
   assert(line);
 
+  // The line is not a continuation of an item (a footnote) if it does not have a parent line.
   const PdfTextLine* parentLine = line->parentLine;
   if (!parentLine) {
     return false;
   }
 
+  // The line is a continuation of an item (a footnote) if the parent line is the first line or a
+  // continuation of an item (a footnote).
   return text_lines_utils::computeIsFirstLineOfItem(parentLine, potentialFootnoteLabels)
       || text_lines_utils::computeIsContinuationOfItem(parentLine, potentialFootnoteLabels);
 }
@@ -145,19 +147,21 @@ bool text_lines_utils::computeIsContinuationOfItem(const PdfTextLine* line,
 bool text_lines_utils::computeIsPrefixedByItemLabel(const PdfTextLine* line) {
   assert(line);
 
+  // The line is not prefixed by an enumeration item label if it does not contain any words.
   const std::vector<PdfWord*>& words = line->words;
   if (words.empty()) {
     return false;
   }
 
+  // The line is not prefixed by an enumeration item label if the first word is empty.
   const std::vector<PdfGlyph*>& firstWordGlyphs = words[0]->glyphs;
   if (firstWordGlyphs.empty()) {
     return false;
   }
 
-  // The line is prefixed by an item label if the first glyph is superscripted and it is contained
-  // in our alphabet we defined for identifying superscripted item labels.
-  // TODO: Instead of analyzing only the first glyph, should we analyze the first *word*? This
+  // The line is prefixed by an enumeration item label if the first glyph is superscripted and if
+  // it is contained in our alphabet we defined for identifying superscripted item labels.
+  // TODO: Instead of analyzing only the first glyph, we should analyze the first *word*. This
   // would identify also lines that are prefixed by something like "a)".
   PdfGlyph* firstGlyph = firstWordGlyphs[0];
   string firstGlyphStr = firstGlyph->text;
@@ -165,8 +169,8 @@ bool text_lines_utils::computeIsPrefixedByItemLabel(const PdfTextLine* line) {
     return true;
   }
 
-  // The line is also prefixed by an item label if it matches one of our regexes we defined for
-  // identifying item labels.
+  // The line is prefixed by an enumeration item label if it matches one of our regexes we defined
+  // for identifying item labels.
   smatch m;
   for (const auto& regex : ITEM_LABEL_REGEXES) {
     if (regex_search(line->text, m, regex)) {
@@ -182,11 +186,14 @@ bool text_lines_utils::computeIsPrefixedByFootnoteLabel(const PdfTextLine* line,
       const unordered_set<string>* potentialFootnoteLabels) {
   assert(line);
 
+  // The line is not prefixed by a footnote label if it does not contain any words.
   const std::vector<PdfWord*>& words = line->words;
   if (words.empty()) {
     return false;
   }
 
+  // Compute the superscripted prefix of the line, that is: the concatenation of all superscripted
+  // characters in front of the line.
   const PdfWord* firstWord = words[0];
   string superScriptPrefix;
   for (const auto* glyph : firstWord->glyphs) {
@@ -196,88 +203,126 @@ bool text_lines_utils::computeIsPrefixedByFootnoteLabel(const PdfTextLine* line,
     superScriptPrefix += glyph->text;
   }
 
+  // If potentialFootnoteLabels is specified, it must contain the superscripted prefix.
   if (potentialFootnoteLabels) {
     return potentialFootnoteLabels->count(superScriptPrefix) > 0;
   }
 
+  // The superscripted prefix must not be empty.
   return !superScriptPrefix.empty();
 }
 
 // _________________________________________________________________________________________________
-bool text_lines_utils::computeHasPrevLineCapacity(const PdfTextLine* line) {
+bool text_lines_utils::computeHasPrevLineCapacity(const PdfTextLine* line, double toleranceFactor) {
   assert(line);
 
+  // The previous line has of course no capacity if there is no previous line.
   if (!line->prevLine) {
     return false;
   }
 
+  // The previous line has no capacity if the given line does not contain any words.
   if (line->words.empty()) {
     return false;
   }
 
-  const PdfWord* firstWord = line->words[0];
-  double firstWordWidth = firstWord->position->getWidth();
+  // Compute the width of the first word of the given line.
+  double firstWordWidth = line->words[0]->position->getWidth();
 
-  // TODO: Parameterize the 2.
-  return math_utils::larger(line->prevLine->rightMargin, firstWordWidth, 2 * line->doc->avgGlyphWidth);
+  // The previous line has capacity if its right margin is larger than the width of the first word
+  // of the given line, under consideration of a tolerance.
+  double tolerance = toleranceFactor * line->doc->avgGlyphWidth;
+  return math_utils::larger(line->prevLine->rightMargin, firstWordWidth, tolerance);
 }
 
+
 // _________________________________________________________________________________________________
-void text_lines_utils::computeTextLineIndentHierarchies(const PdfPage* page) {
+void text_lines_utils::computeTextLineHierarchies(const PdfPage* page) {
+  assert(page);
+
+  // Do nothing if the page does not contain any segments.
+  if (page->segments.empty()) {
+    return;
+  }
+
+  const double MAX_LINE_DIST = 10.0;
+  const double LEFT_X_OFFSET_TOLERANCE = page->segments[0]->doc->avgGlyphWidth;
+
+  // Maintain a stack to keep track of the parent and sibling lines.
   stack<PdfTextLine*> lineStack;
+
+  // Iterate through the lines and determine the parent line and the sibling lines for each.
   PdfTextLine* prevLine = nullptr;
   for (auto* segment : page->segments) {
     for (auto* line : segment->lines) {
-      // Compute the actual line distance.
+      // Empty the stack if the distance between the line and the previous line is larger than the
+      // threshold. This should prevent to consider a line to be the parent line or a sibling line
+      // of another line when the distance between the lines is too large.
       if (prevLine) {
-        double actualLineDistance = 0;
-        switch(line->position->rotation) {
-          case 0:
-          case 1:
-            actualLineDistance = line->position->getRotUpperY() - prevLine->position->getRotLowerY();
-            break;
-          case 2:
-          case 3:
-            actualLineDistance = prevLine->position->getRotLowerY() - line->position->getRotUpperY();
-            break;
-        }
-        if (math_utils::larger(abs(actualLineDistance), max(10.0, 3 * line->doc->mostFreqLineDistance))) {
-          lineStack = stack<PdfTextLine*>();
+        bool hasSameRotation = prevLine->position->rotation == line->position->rotation;
+        bool hasSameWMode = prevLine->position->wMode == line->position->wMode;
+        if (hasSameRotation && hasSameWMode) {
+          double absLineDistance = abs(text_lines_utils::computeTextLineDistance(prevLine, line));
+          if (math_utils::larger(absLineDistance, MAX_LINE_DIST)) {
+            lineStack = stack<PdfTextLine*>();
+          }
         }
       }
       prevLine = line;
 
+      // Remove all lines from the stack with a larger leftX value than the current line, because
+      // they can't be a parent line or any sibling line of the current line.
       while (!lineStack.empty()) {
-        if (!math_utils::larger(lineStack.top()->position->leftX, line->position->leftX, line->doc->avgGlyphWidth)) {
+        double topStackLeftX = lineStack.top()->position->leftX;
+        double lineLeftX = line->position->leftX;
+        if (!math_utils::larger(topStackLeftX, lineLeftX, LEFT_X_OFFSET_TOLERANCE)) {
           break;
         }
         lineStack.pop();
       }
 
+      // If the stack is empty, the current line does not have any parent line or sibling lines.
+      // Push the line to the stack.
       if (lineStack.empty()) {
         lineStack.push(line);
         continue;
       }
 
-      // pair<double, double> xOverlapRatios = computeXOverlapRatios(lineStack.top(), line);
-      // double maxXOVerlapRatio = max(xOverlapRatios.first, xOverlapRatios.second);
-      // if (maxXOVerlapRatio > 0) {
-      if (lineStack.top()->position->lowerY < line->position->lowerY) {
-        if (math_utils::equal(lineStack.top()->position->leftX, line->position->leftX, line->doc->avgGlyphWidth)) {
-          lineStack.top()->nextSiblingLine = line;
-          line->prevSiblingLine = lineStack.top();
-          line->parentLine = lineStack.top()->parentLine;
-          lineStack.pop();
-          lineStack.push(line);
-          continue;
-        }
+      // Ignore the current line if its lowerY value is smaller than the lowerY value of the
+      // topmost line in the stack (that is: if the current line is positioned above the topmost
+      // line in). This should prevent to consider a line to be the parent line or a sibling
+      // line of a line in a different column.
+      double topStackLowerY = lineStack.top()->position->lowerY;
+      double lineLowerY = line->position->lowerY;
+      if (math_utils::equalOrLarger(topStackLowerY, lineLowerY)) {
+        continue;
+      }
 
-        if (math_utils::smaller(lineStack.top()->position->leftX, line->position->leftX, line->doc->avgGlyphWidth)) {
-          line->parentLine = lineStack.top();
+      // Check if the topmost line in the stack has the same leftX value than the current line
+      // (under consideration of the given tolerance). If so, the following is true:
+      // (1) the current line is the next sibling line of the topmost line in the stack
+      // (2) the topmost line in the stack is the previous sibling line of the current line.
+      // (3) the parent line of the topmost line in the stack is also the parent line of the
+      //     current line.
+      double topStackLeftX = lineStack.top()->position->leftX;
+      double lineLeftX = line->position->leftX;
+      if (math_utils::equal(topStackLeftX, lineLeftX, LEFT_X_OFFSET_TOLERANCE)) {
+        lineStack.top()->nextSiblingLine = line;
+        line->prevSiblingLine = lineStack.top();
+        line->parentLine = lineStack.top()->parentLine;
+        lineStack.pop();
+        lineStack.push(line);
+        continue;
+      }
 
-          lineStack.push(line);
-          continue;
-        }
+      // Check if the topmost line in the stack has a smaller leftX value than the current line
+      // (under consideration of the given tolerance). If so, the topmost line in the stack is the
+      // parent line of the current line.
+      if (math_utils::smaller(topStackLeftX, lineLeftX, LEFT_X_OFFSET_TOLERANCE)) {
+        line->parentLine = lineStack.top();
+
+        lineStack.push(line);
+        continue;
       }
     }
   }
@@ -331,14 +376,14 @@ bool text_lines_utils::computeIsCentered(const PdfTextLine* line1, const PdfText
   assert(line1);
   assert(line2);
 
-  // The lines are not centered when neither the first line nor the second line is fully
+  // The lines are not centered when neither the first line nor the second line is completely
   // overlapped horizontally by the respective other line.
   double maxXOverlapRatio = element_utils::computeMaxXOverlapRatio(line1, line2);
   if (math_utils::smaller(maxXOverlapRatio, 1, 0.01)) {
     return false;
   }
 
-  // The lines are not centered when when the leftX-offset and the rightX-offset between the lines
+  // The lines are not centered when the leftX-offset and the rightX-offset between the lines
   // is not equal).
   double absLeftXOffset = abs(element_utils::computeLeftXOffset(line1, line2));
   double absRightXOffset = abs(element_utils::computeRightXOffset(line1, line2));
