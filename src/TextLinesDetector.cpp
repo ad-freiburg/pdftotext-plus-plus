@@ -16,7 +16,7 @@
 #include "./utils/LogUtils.h"
 #include "./utils/Utils.h"
 #include "./utils/PageSegmentUtils.h"
-#include "./utils/TextLineUtils.h"
+#include "./utils/TextLinesUtils.h"
 
 using namespace std;
 
@@ -294,7 +294,7 @@ void TextLinesDetector::detect() {
       segment->trimLowerY = get<3>(trimBox);
     }
 
-    text_line_utils::computeTextLineIndentHierarchies(page);
+    text_lines_utils::computeTextLineIndentHierarchies(page);
   }
 }
 

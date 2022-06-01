@@ -15,7 +15,7 @@
 #include "./MathUtils.h"
 #include "./PdfElementUtils.h"
 #include "./TextBlocksUtils.h"
-#include "./TextLineUtils.h"
+#include "./TextLinesUtils.h"
 #include "./Utils.h"
 
 using std::pair;
@@ -56,7 +56,7 @@ bool text_blocks_utils::computeIsTextLinesCentered(const PdfTextBlock* block) {
 
     // The lines in the block are not centered when there is at least one line which is not
     // centered compared to the previous line.
-    bool isCentered = text_line_utils::computeIsCentered(prevLine, currLine, XOFFSET_THRESH_FACTOR);
+    bool isCentered = text_lines_utils::computeIsCentered(prevLine, currLine, XOFFSET_THRESH_FACTOR);
     if (!isCentered) {
       return false;
     }
@@ -232,7 +232,7 @@ double text_blocks_utils::computeHangingIndent(const PdfTextBlock* block) {
       isFirstLineIndented = isIndented;
     }
     if (i == 1) {
-      hasFirstLineCapacity = text_line_utils::computeHasPrevLineCapacity(line);
+      hasFirstLineCapacity = text_lines_utils::computeHasPrevLineCapacity(line);
     }
     if (i > 0) {
       isAllOtherLinesIndented &= isIndented;

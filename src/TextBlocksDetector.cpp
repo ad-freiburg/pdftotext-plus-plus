@@ -21,7 +21,7 @@
 #include "./utils/MathUtils.h"
 #include "./utils/PdfElementUtils.h"
 #include "./utils/TextBlocksUtils.h"
-#include "./utils/TextLineUtils.h"
+#include "./utils/TextLinesUtils.h"
 #include "./utils/Utils.h"
 
 using std::string;
@@ -69,7 +69,7 @@ void TextBlocksDetector::detect() {
           // Detect potential footnote labels in the line (= superscripted numbers and/or
           // characters). This is needed to detect the start of footnotes (we want to detect each
           // footnote as a separate block).
-          text_line_utils::computePotentialFootnoteLabels(line, &_potentialFnLabels);
+          text_lines_utils::computePotentialFootnoteLabels(line, &_potentialFnLabels);
 
           if (startsBlock(block, line) && !currentBlockLines.empty()) {
             text_blocks_utils::createTextBlock(currentBlockLines, &page->blocks);
@@ -403,7 +403,7 @@ Trool TextBlocksDetector::startsBlock_lineDistance(const PdfTextLine* line, doub
   expectedLineDistance = max(expectedLineDistance, _doc->mostFreqLineDistance);
 
   // Compute the actual line distance.
-  double actualLineDistance = text_line_utils::computeTextLineDistance(prevLine, line);
+  double actualLineDistance = text_lines_utils::computeTextLineDistance(prevLine, line);
   actualLineDistance = round(actualLineDistance, LINE_DIST_PREC);
 
   double lineDistanceDiff = actualLineDistance - expectedLineDistance;
@@ -450,11 +450,11 @@ Trool TextBlocksDetector::startsBlock_increasedLineDistance(const PdfTextLine* l
   int p = line->position->pageNum;
 
   // Compute the distance between the previous but one line and the previous line.
-  double prevDistance = text_line_utils::computeTextLineDistance(prevPrevLine, prevLine);
+  double prevDistance = text_lines_utils::computeTextLineDistance(prevPrevLine, prevLine);
   prevDistance = round(prevDistance, LINE_DIST_PREC);
 
   // Compute the distance between the previous line and the current line.
-  double distance = text_line_utils::computeTextLineDistance(prevLine, line);
+  double distance = text_lines_utils::computeTextLineDistance(prevLine, line);
   distance = round(distance, LINE_DIST_PREC);
 
   // Compute the tolerance.
@@ -483,7 +483,7 @@ Trool TextBlocksDetector::startsBlock_centered(const PdfTextBlock* pBlock, const
   assert(line);
 
   // Check if the line is the first line of an enumeration item.
-  bool isFirstLineOfItem = text_line_utils::computeIsFirstLineOfItem(line);
+  bool isFirstLineOfItem = text_lines_utils::computeIsFirstLineOfItem(line);
 
   int p = line->position->pageNum;
   _log->debug(p) << BLUE << "Is the line part of a centered block?" << OFF << endl;
@@ -513,14 +513,14 @@ Trool TextBlocksDetector::startsBlock_item(const PdfTextBlock* pBlock, const Pdf
   int p = line->position->pageNum;
   PdfTextLine* prevLine = line->prevLine;
 
-  bool isPrevFirstLine = text_line_utils::computeIsFirstLineOfItem(prevLine, &_potentialFnLabels);
-  bool isCurrFirstLine = text_line_utils::computeIsFirstLineOfItem(line, &_potentialFnLabels);
-  bool isPrevContLine = text_line_utils::computeIsContinuationOfItem(prevLine, &_potentialFnLabels);
-  bool isCurrContLine = text_line_utils::computeIsContinuationOfItem(line, &_potentialFnLabels);
+  bool isPrevFirstLine = text_lines_utils::computeIsFirstLineOfItem(prevLine, &_potentialFnLabels);
+  bool isCurrFirstLine = text_lines_utils::computeIsFirstLineOfItem(line, &_potentialFnLabels);
+  bool isPrevContLine = text_lines_utils::computeIsContinuationOfItem(prevLine, &_potentialFnLabels);
+  bool isCurrContLine = text_lines_utils::computeIsContinuationOfItem(line, &_potentialFnLabels);
   bool isPrevPartOfItem = isPrevFirstLine || isPrevContLine;
   bool isCurrPartOfItem = isCurrFirstLine || isCurrContLine;
   double leftXOffset = element_utils::computeLeftXOffset(prevLine, line);
-  bool hasPrevLineCapacity = text_line_utils::computeHasPrevLineCapacity(line);
+  bool hasPrevLineCapacity = text_lines_utils::computeHasPrevLineCapacity(line);
   double leftXOffsetToleranceLow = leftXOffsetToleranceFactorLow * _doc->avgGlyphWidth;
   double leftXOffsetToleranceHigh = leftXOffsetToleranceFactorHigh * _doc->avgGlyphWidth;
 
@@ -666,7 +666,7 @@ Trool TextBlocksDetector::startsBlock_hangingIndent(const PdfTextBlock* pBlock,
   bool isPrevMoreIndented = math_utils::larger(prevLeftMargin, hangingIndent, _doc->avgGlyphWidth);
   bool isCurrMoreIndented = math_utils::larger(currLeftMargin, hangingIndent, _doc->avgGlyphWidth);
   double leftXOffset = element_utils::computeLeftXOffset(prevLine, line);
-  bool hasPrevLineCapacity = text_line_utils::computeHasPrevLineCapacity(line);
+  bool hasPrevLineCapacity = text_lines_utils::computeHasPrevLineCapacity(line);
   double leftXOffsetToleranceLow = leftXOffsetToleranceFactorLow * _doc->avgGlyphWidth;
   double leftXOffsetToleranceHigh = leftXOffsetToleranceFactorHigh * _doc->avgGlyphWidth;
 
@@ -772,7 +772,7 @@ Trool TextBlocksDetector::startsBlock_indent(const PdfTextLine* line,
   bool isPrevMoreIndented = math_utils::larger(prevLeftMargin, indentTolHigh);
   bool isCurrMoreIndented = math_utils::larger(currLeftMargin, indentTolHigh);
   double absLeftXOffset = abs(element_utils::computeLeftXOffset(prevLine, line));
-  bool hasPrevLineCapacity = text_line_utils::computeHasPrevLineCapacity(line);
+  bool hasPrevLineCapacity = text_lines_utils::computeHasPrevLineCapacity(line);
 
   _log->debug(p) << BLUE <<  "Is the line indented?" << OFF << endl;
   _log->debug(p) << " └─ prevLine.leftMargin:     " << prevLeftMargin << endl;
