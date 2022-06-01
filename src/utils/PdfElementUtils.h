@@ -25,8 +25,12 @@ const double naan = std::numeric_limits<double>::quiet_NaN();
 namespace element_utils {
 
 std::pair<double, double> computeOverlapRatios(double s1, double e1, double s2, double e2);
+
 std::pair<double, double> computeXOverlapRatios(const PdfElement* elem1, const PdfElement* elem2);
+double computeMaxXOverlapRatio(const PdfElement* elem1, const PdfElement* elem2);
+
 std::pair<double, double> computeYOverlapRatios(const PdfElement* elem1, const PdfElement* elem2);
+double computeMaxYOverlapRatio(const PdfElement* elem1, const PdfElement* elem2);
 
 bool computeHasEqualLeftX(const PdfElement* elem1, const PdfElement* elem2, double tolerance=naan);
 bool computeHasEqualUpperY(const PdfElement* elem1, const PdfElement* elem2, double tolerance=naan);
@@ -34,6 +38,7 @@ bool computeHasEqualRightX(const PdfElement* elem1, const PdfElement* elem2, dou
 bool computeHasEqualLowerY(const PdfElement* elem1, const PdfElement* elem2, double tolerance=naan);
 
 double computeLeftXOffset(const PdfElement* elem1, const PdfElement* elem2);
+double computeRightXOffset(const PdfElement* elem1, const PdfElement* elem2);
 
 PdfFigure* computeOverlapsFigure(const PdfElement* element, const std::vector<PdfFigure*>& figures,
     double minXOverlapRatio = 0.5, double minYOverlapRatio = 0.5);

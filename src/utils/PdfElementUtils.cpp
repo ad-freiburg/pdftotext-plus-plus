@@ -40,10 +40,22 @@ std::pair<double, double> element_utils::computeXOverlapRatios(const PdfElement*
 }
 
 // _________________________________________________________________________________________________
+double element_utils::computeMaxXOverlapRatio(const PdfElement* elem1, const PdfElement* elem2) {
+  pair<double, double> ratios = element_utils::computeXOverlapRatios(elem1, elem2);
+  return max(ratios.first, ratios.second);
+}
+
+// _________________________________________________________________________________________________
 std::pair<double, double> element_utils::computeYOverlapRatios(const PdfElement* element1,
       const PdfElement* element2) {
   return element_utils::computeOverlapRatios(element1->position->upperY, element1->position->lowerY,
       element2->position->upperY, element2->position->lowerY);
+}
+
+// _________________________________________________________________________________________________
+double element_utils::computeMaxYOverlapRatio(const PdfElement* elem1, const PdfElement* elem2) {
+  pair<double, double> ratios = element_utils::computeYOverlapRatios(elem1, elem2);
+  return max(ratios.first, ratios.second);
 }
 
 // _________________________________________________________________________________________________
@@ -107,6 +119,13 @@ double element_utils::computeLeftXOffset(const PdfElement* elem1, const PdfEleme
   assert(elem1);
   assert(elem2);
   return elem1->position->leftX - elem2->position->leftX;
+}
+
+// _________________________________________________________________________________________________
+double element_utils::computeRightXOffset(const PdfElement* elem1, const PdfElement* elem2) {
+  assert(elem1);
+  assert(elem2);
+  return elem1->position->rightX - elem2->position->rightX;
 }
 
 // _________________________________________________________________________________________________

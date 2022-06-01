@@ -303,3 +303,28 @@ void text_line_utils::computePotentialFootnoteLabels(const PdfTextLine* line,
     }
   }
 }
+
+// _________________________________________________________________________________________________
+bool text_line_utils::computeIsCentered(const PdfTextLine* line1, const PdfTextLine* line2,
+      double xOffsetToleranceFactor) {
+  assert(line1);
+  assert(line2);
+
+  // The lines are not centered when neither the first line nor the second line is fully
+  // overlapped horizontally by the respective other line.
+  double maxXOverlapRatio = element_utils::computeMaxXOverlapRatio(line1, line2);
+  if (math_utils::smaller(maxXOverlapRatio, 1, 0.01)) {
+    return false;
+  }
+
+  // The lines are not centered when when the leftX-offset and the rightX-offset between the lines
+  // is not equal).
+  double absLeftXOffset = abs(element_utils::computeLeftXOffset(line1, line2));
+  double absRightXOffset = abs(element_utils::computeRightXOffset(line1, line2));
+  double tolerance = xOffsetToleranceFactor * line1->doc->avgGlyphWidth;
+  if (!math_utils::equal(absLeftXOffset, absRightXOffset, tolerance)) {
+    return false;
+  }
+
+  return true;
+}

@@ -18,6 +18,7 @@
 const std::string sentenceDelimiterAlphabet = "?!.);";
 const int FONT_SIZE_PREC = 1;
 const int LINE_DIST_PREC = 1;
+const int LEFT_MARGIN_PREC = 0;
 
 enum Trool { None = -1, False, True };
 

@@ -9,13 +9,15 @@
 #ifndef TEXTBLOCKSDETECTOR_H_
 #define TEXTBLOCKSDETECTOR_H_
 
+#include <string>
+#include <unordered_set>
 #include <vector>
 
 #include "./utils/Utils.h"
 #include "./utils/LogUtils.h"
 #include "./PdfDocument.h"
 
-using namespace std;
+using std::string;
 
 // =================================================================================================
 
@@ -72,7 +74,7 @@ class TextBlocksDetector {
    *    debug information produced while detecting the text blocks is outputted, no matter on which
    *    pages the text blocks are located.
    */
-  TextBlocksDetector(PdfDocument* doc, bool debug=false, int debugPageFilter=-1);
+  explicit TextBlocksDetector(PdfDocument* doc, bool debug = false, int debugPageFilter = -1);
 
   /**
    * The deconstructor.
@@ -205,7 +207,7 @@ class TextBlocksDetector {
    *    Trool::False if the line does *not* start a block;
    *    Trool::None if this method couldn't decide whether the line starts a block.
    */
-  Trool startsBlock_fontSize(const PdfTextLine* line, double tolerance=1.0) const;
+  Trool startsBlock_fontSize(const PdfTextLine* line, double tolerance = 1.0) const;
 
   /**
    * This method checks whether the given line starts a block because its distance to the previous
@@ -233,8 +235,8 @@ class TextBlocksDetector {
    *    Trool::False if the line does *not* start a block;
    *    Trool::None if this method couldn't decide whether the line starts a block.
    */
-  Trool startsBlock_lineDistance(const PdfTextLine* line, double minTolerance=1.0,
-      double toleranceFactor=0.1) const;
+  Trool startsBlock_lineDistance(const PdfTextLine* line, double minTolerance = 1.0,
+      double toleranceFactor = 0.1) const;
 
   /**
    * This method checks whether the given line starts a block because the line distance between
@@ -257,7 +259,8 @@ class TextBlocksDetector {
    *    Trool::False if the line does *not* start a block;
    *    Trool::None if this method couldn't decide whether the line starts a block.
    */
-  Trool startsBlock_increasedLineDistance(const PdfTextLine* line, double toleranceFactor=.5) const;
+  Trool startsBlock_increasedLineDistance(const PdfTextLine* line,
+      double toleranceFactor = 0.5) const;
 
   /**
    * This method checks whether the given line starts a block because the given preliminary
@@ -328,7 +331,7 @@ class TextBlocksDetector {
    *    Trool::None if this method couldn't decide whether the line starts a block.
    */
   Trool startsBlock_item(const PdfTextBlock* pBlock, const PdfTextLine* line,
-      double leftXOffsetToleranceFactorLow=-1, double leftXOffsetToleranceFactorHigh=6) const;
+      double leftXOffsetToleranceFactorLow = -1, double leftXOffsetToleranceFactorHigh = 6) const;
 
   /**
    * This method checks whether the given line does *not* introduce a block because the line and
@@ -381,7 +384,8 @@ class TextBlocksDetector {
    *    Trool::None if this method couldn't decide whether the line starts a block.
    */
   Trool startsBlock_hangingIndent(const PdfTextBlock* pBlock, const PdfTextLine* line,
-      double leftXOffsetToleranceFactorLow=-1, double leftXOffsetToleranceFactorHigh=3) const;
+      double leftXOffsetToleranceFactorLow = -1.0,
+      double leftXOffsetToleranceFactorHigh = 3.0) const;
 
   /**
    * This method checks whether the given line starts a block because the given block
@@ -414,8 +418,8 @@ class TextBlocksDetector {
    *    Trool::False if the line does not start a text block;
    *    Trool::None if it is unknown whether or not the text line starts a text block.
    */
-  Trool startsBlock_indent(const PdfTextLine* line, double indentToleranceFactorLow=1.0,
-      double indentToleranceFactorHigh=6.0) const;
+  Trool startsBlock_indent(const PdfTextLine* line, double indentToleranceFactorLow = 1.0,
+      double indentToleranceFactorHigh = 6.0) const;
 
   // ===============================================================================================
 

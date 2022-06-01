@@ -61,6 +61,9 @@ bool computeHasPrevLineCapacity(const PdfTextLine* line);
 void computeTextLineIndentHierarchies(const PdfPage* page);
 
 void computePotentialFootnoteLabels(const PdfTextLine* line, unordered_set<string>* result);
+
+bool computeIsCentered(const PdfTextLine* line1, const PdfTextLine* line2,
+    double xOffsetToleranceFactor=1.0);
 }
 
 #endif  // TEXT_LINE_H_

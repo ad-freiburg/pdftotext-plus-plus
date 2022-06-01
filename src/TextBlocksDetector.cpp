@@ -6,10 +6,12 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
+#include <algorithm>  // max
 #include <cmath>
 #include <iostream>
 #include <regex>
 #include <stack>
+#include <string>
 #include <vector>
 
 #include "./PdfDocument.h"
@@ -18,11 +20,11 @@
 #include "./utils/LogUtils.h"
 #include "./utils/MathUtils.h"
 #include "./utils/PdfElementUtils.h"
-#include "./utils/TextBlockUtils.h"
+#include "./utils/TextBlocksUtils.h"
 #include "./utils/TextLineUtils.h"
 #include "./utils/Utils.h"
 
-using namespace std;
+using std::string;
 
 // _________________________________________________________________________________________________
 TextBlocksDetector::TextBlocksDetector(PdfDocument* doc, bool debug, int debugPageFilter) {
@@ -47,13 +49,13 @@ void TextBlocksDetector::detect() {
       vector<PdfTextLine*> currentBlockLines;
       for (auto* line : segment->lines) {
         if (startsPreliminaryBlock(line) && !currentBlockLines.empty()) {
-          text_block_utils::createTextBlock(currentBlockLines, &segment->blocks);
+          text_blocks_utils::createTextBlock(currentBlockLines, &segment->blocks);
           currentBlockLines.clear();
         }
         currentBlockLines.push_back(line);
       }
       if (!currentBlockLines.empty()) {
-        text_block_utils::createTextBlock(currentBlockLines, &segment->blocks);
+        text_blocks_utils::createTextBlock(currentBlockLines, &segment->blocks);
       }
     }
   }
@@ -70,13 +72,13 @@ void TextBlocksDetector::detect() {
           text_line_utils::computePotentialFootnoteLabels(line, &_potentialFnLabels);
 
           if (startsBlock(block, line) && !currentBlockLines.empty()) {
-            text_block_utils::createTextBlock(currentBlockLines, &page->blocks);
+            text_blocks_utils::createTextBlock(currentBlockLines, &page->blocks);
             currentBlockLines.clear();
           }
           currentBlockLines.push_back(line);
         }
         if (!currentBlockLines.empty()) {
-          text_block_utils::createTextBlock(currentBlockLines, &page->blocks);
+          text_blocks_utils::createTextBlock(currentBlockLines, &page->blocks);
         }
       }
     }
