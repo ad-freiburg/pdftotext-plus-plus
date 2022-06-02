@@ -11,31 +11,31 @@
 # include "./MathUtils.h"
 
 // _________________________________________________________________________________________________
-bool math_utils::equal(double d1, double d2, double delta) {
-  return fabs(d1 - d2) <= delta;
+bool math_utils::equal(double d1, double d2, double tolerance) {
+  return fabs(d1 - d2) <= tolerance;
 }
 
 // _________________________________________________________________________________________________
-bool math_utils::larger(double d1, double d2, double delta) {
-  return d1 - d2 > delta;
+bool math_utils::larger(double d1, double d2, double tolerance) {
+  return d1 > d2 + tolerance;
 }
 
 // _________________________________________________________________________________________________
-bool math_utils::equalOrLarger(double d1, double d2, double delta) {
-  return math_utils::equal(d1, d2, delta) || math_utils::larger(d1, d2, delta);
+bool math_utils::smaller(double d1, double d2, double tolerance) {
+  return d1 < d2 - tolerance;
 }
 
 // _________________________________________________________________________________________________
-bool math_utils::smaller(double d1, double d2, double delta) {
-  return d1 - d2 < -1 * delta;
+bool math_utils::equalOrLarger(double d1, double d2, double tolerance) {
+  return d1 >= d2 - tolerance;
 }
 
 // _________________________________________________________________________________________________
-bool math_utils::equalOrSmaller(double d1, double d2, double delta) {
-  return math_utils::equal(d1, d2, delta) || math_utils::smaller(d1, d2, delta);
+bool math_utils::equalOrSmaller(double d1, double d2, double tolerance) {
+  return d1 <= d2 + tolerance;
 }
 
 // _________________________________________________________________________________________________
-bool math_utils::between(double d, double low, double up, double delta) {
-  return math_utils::equalOrLarger(d, low, delta) && math_utils::equalOrSmaller(d, up, delta);
+bool math_utils::between(double d, double low, double up, double tol) {
+  return math_utils::equalOrLarger(d, low, tol) && math_utils::equalOrSmaller(d, up, tol);
 }
