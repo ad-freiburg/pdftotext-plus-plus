@@ -15,7 +15,7 @@
 #include "./TextLinesDetector.h"
 #include "./utils/LogUtils.h"
 #include "./utils/Utils.h"
-#include "./utils/PageSegmentUtils.h"
+#include "./utils/PageSegmentsUtils.h"
 #include "./utils/TextLinesUtils.h"
 
 using namespace std;

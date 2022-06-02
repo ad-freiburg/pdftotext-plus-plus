@@ -6,7 +6,7 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include <cmath>
+#include <cmath>  // min, max
 #include <vector>
 
 #include "../PdfDocument.h"
@@ -16,18 +16,24 @@
 // _________________________________________________________________________________________________
 std::pair<double, double> element_utils::computeOverlapRatios(double s1, double e1,
       double s2, double e2) {
+  // Compute the length of the first interval.
   double min1 = std::min(s1, e1);
   double max1 = std::max(s1, e1);
+  double length1 = max1 - min1;
+
+  // Compute the length of the second interval.
   double min2 = std::min(s2, e2);
   double max2 = std::max(s2, e2);
-  double height1 = max1 - min1;
-  double height2 = max2 - min2;
+  double length2 = max2 - min2;
 
+  // Compute the length of the overlap.
   double minMax = std::min(max1, max2);
   double maxMin = std::max(min1, min2);
   double overlapLength = std::max(0.0, minMax - maxMin);
-  double overlapRatio1 = height1 > 0 ? overlapLength / height1 : 0;
-  double overlapRatio2 = height2 > 0 ? overlapLength / height2 : 0;
+
+  // Compute the overlap ratios.
+  double overlapRatio1 = length1 > 0 ? overlapLength / length1 : 0;
+  double overlapRatio2 = length2 > 0 ? overlapLength / length2 : 0;
 
   return std::make_pair(overlapRatio1, overlapRatio2);
 }
@@ -35,8 +41,14 @@ std::pair<double, double> element_utils::computeOverlapRatios(double s1, double 
 // _________________________________________________________________________________________________
 std::pair<double, double> element_utils::computeXOverlapRatios(const PdfElement* element1,
       const PdfElement* element2) {
-  return element_utils::computeOverlapRatios(element1->position->rightX, element1->position->leftX,
-      element2->position->rightX, element2->position->leftX);
+  assert(element1);
+  assert(element2);
+  double s1 = element1->position->rightX;
+  double e1 = element1->position->leftX;
+  double s2 = element2->position->rightX;
+  double e2 = element2->position->leftX;
+
+  return element_utils::computeOverlapRatios(s1, e1, s2, e2);
 }
 
 // _________________________________________________________________________________________________
@@ -48,8 +60,13 @@ double element_utils::computeMaxXOverlapRatio(const PdfElement* elem1, const Pdf
 // _________________________________________________________________________________________________
 std::pair<double, double> element_utils::computeYOverlapRatios(const PdfElement* element1,
       const PdfElement* element2) {
-  return element_utils::computeOverlapRatios(element1->position->upperY, element1->position->lowerY,
-      element2->position->upperY, element2->position->lowerY);
+  assert(element1);
+  assert(element2);
+  double s1 = element1->position->upperY;
+  double e1 = element1->position->lowerY;
+  double s2 = element2->position->upperY;
+  double e2 = element2->position->lowerY;
+  return element_utils::computeOverlapRatios(s1, e1, s2, e2);
 }
 
 // _________________________________________________________________________________________________
@@ -59,28 +76,10 @@ double element_utils::computeMaxYOverlapRatio(const PdfElement* elem1, const Pdf
 }
 
 // _________________________________________________________________________________________________
-PdfFigure* element_utils::computeOverlapsFigure(const PdfElement* elem,
-      const std::vector<PdfFigure*>& figures, double minXOverlapRatio, double minYOverlapRatio) {
-
-  for (auto* figure : figures) {
-    std::pair<double, double> xOverlapRatios = element_utils::computeXOverlapRatios(elem, figure);
-    std::pair<double, double> yOverlapRatios = element_utils::computeYOverlapRatios(elem, figure);
-
-    if (xOverlapRatios.first > minXOverlapRatio && yOverlapRatios.first > minYOverlapRatio) {
-      return figure;
-    }
-  }
-
-  return nullptr;
-}
-
-// _________________________________________________________________________________________________
 bool element_utils::computeHasEqualLeftX(const PdfElement* elem1, const PdfElement* elem2,
       double tolerance) {
   assert(elem1);
   assert(elem2);
-  assert(elem1->doc == elem2->doc);
-  if (std::isnan(tolerance)) { tolerance = elem1->doc->avgGlyphWidth; }
   return math_utils::equal(elem1->position->leftX, elem2->position->leftX, tolerance);
 }
 
@@ -89,8 +88,6 @@ bool element_utils::computeHasEqualUpperY(const PdfElement* elem1, const PdfElem
       double tolerance) {
   assert(elem1);
   assert(elem2);
-  assert(elem1->doc == elem2->doc);
-  if (std::isnan(tolerance)) { tolerance = elem1->doc->avgGlyphHeight; }
   return math_utils::equal(elem1->position->upperY, elem2->position->upperY, tolerance);
 }
 
@@ -99,8 +96,6 @@ bool element_utils::computeHasEqualRightX(const PdfElement* elem1, const PdfElem
       double tolerance) {
   assert(elem1);
   assert(elem2);
-  assert(elem1->doc == elem2->doc);
-  if (std::isnan(tolerance)) { tolerance = elem1->doc->avgGlyphWidth; }
   return math_utils::equal(elem1->position->rightX, elem2->position->rightX, tolerance);
 }
 
@@ -109,8 +104,6 @@ bool element_utils::computeHasEqualLowerY(const PdfElement* elem1, const PdfElem
       double tolerance) {
   assert(elem1);
   assert(elem2);
-  assert(elem1->doc == elem2->doc);
-  if (std::isnan(tolerance)) { tolerance = elem1->doc->avgGlyphHeight; }
   return math_utils::equal(elem1->position->lowerY, elem2->position->lowerY, tolerance);
 }
 
@@ -129,19 +122,37 @@ double element_utils::computeRightXOffset(const PdfElement* elem1, const PdfElem
 }
 
 // _________________________________________________________________________________________________
-bool text_element_utils::computeHasEqualFont(const PdfTextElement* elem1,
-      const PdfTextElement* elem2) {
-  assert(elem1);
-  assert(elem2);
-  return elem1->fontName == elem2->fontName;
+PdfFigure* element_utils::computeOverlapsFigure(const PdfElement* elem,
+      const std::vector<PdfFigure*>& figures, double minXOverlapRatio, double minYOverlapRatio) {
+
+  for (auto* figure : figures) {
+    std::pair<double, double> xOverlapRatios = element_utils::computeXOverlapRatios(elem, figure);
+    std::pair<double, double> yOverlapRatios = element_utils::computeYOverlapRatios(elem, figure);
+
+    // Check if the figure fulfills the required minimum overlap ratios.
+    if (xOverlapRatios.first > minXOverlapRatio && yOverlapRatios.first > minYOverlapRatio) {
+      return figure;
+    }
+  }
+
+  return nullptr;
+}
+
+// =================================================================================================
+
+// _________________________________________________________________________________________________
+bool text_element_utils::computeHasEqualFont(const PdfTextElement* e1, const PdfTextElement* e2) {
+  assert(e1);
+  assert(e2);
+  return e1->fontName == e2->fontName;
 }
 
 // _________________________________________________________________________________________________
-bool text_element_utils::computeHasEqualFontSize(const PdfTextElement* elem1,
-    const PdfTextElement* elem2, double tolerance) {
-  assert(elem1);
-  assert(elem2);
-  return math_utils::equal(elem1->fontSize, elem2->fontSize, tolerance);
+bool text_element_utils::computeHasEqualFontSize(const PdfTextElement* e1, const PdfTextElement* e2,
+      double tolerance) {
+  assert(e1);
+  assert(e2);
+  return math_utils::equal(e1->fontSize, e2->fontSize, tolerance);
 }
 
 // _________________________________________________________________________________________________
@@ -173,7 +184,7 @@ bool text_element_utils::computeIsEmphasized(const PdfTextElement* element) {
 
   // The element is emphasized if ...
 
-  // ... its font size is significantly larger than the most frequent font size in the document.
+  // ... its font size is larger than the most frequent font size in the document.
   // TODO: Parameterize the 0.5
   if (element->fontSize - element->doc->mostFreqFontSize > 0.5) {
     return true;
@@ -191,7 +202,7 @@ bool text_element_utils::computeIsEmphasized(const PdfTextElement* element) {
   }
 
   // ... it contains at least one alphabetic character and all alphabetic characters are
-  // upper case.
+  // in uppercase.
   bool containsAlpha = false;
   bool isAllAlphaUpper = true;
   for (size_t j = 0; j < element->text.size(); j++) {

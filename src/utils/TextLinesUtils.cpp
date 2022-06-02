@@ -63,6 +63,8 @@ bool text_lines_utils::computeIsFirstLineOfItem(const PdfTextLine* line,
     return false;
   }
 
+  double avgGlyphWidth = line->doc->avgGlyphWidth;
+
   // EXPERIMENTAL: The line is not the first line of a footnote when all of the following
   // requirements are fulfilled:
   // (1) the previous line is not prefixed by an item label;
@@ -80,7 +82,7 @@ bool text_lines_utils::computeIsFirstLineOfItem(const PdfTextLine* line,
     double distance = text_lines_utils::computeTextLineDistance(line->prevLine, line);
     bool hasNegativeDistance = math_utils::equalOrSmaller(distance, 0);
     bool hasSentenceDelim = text_element_utils::computeEndsWithSentenceDelimiter(line->prevLine);
-    bool hasEqualLeftX = element_utils::computeHasEqualLeftX(line->prevLine, line);
+    bool hasEqualLeftX = element_utils::computeHasEqualLeftX(line->prevLine, line, avgGlyphWidth);
 
     if (!isPrevPrefixedByLabel && hasEqualFont && hasEqualFontSize && hasNegativeDistance
           && !hasSentenceDelim && hasEqualLeftX) {
