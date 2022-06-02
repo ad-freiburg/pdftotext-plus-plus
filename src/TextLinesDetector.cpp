@@ -14,6 +14,8 @@
 #include "./PdfDocument.h"
 #include "./TextLinesDetector.h"
 #include "./utils/LogUtils.h"
+#include "./utils/MathUtils.h"
+#include "./utils/PdfElementUtils.h"
 #include "./utils/Utils.h"
 #include "./utils/PageSegmentsUtils.h"
 #include "./utils/TextLinesUtils.h"
@@ -102,7 +104,7 @@ void TextLinesDetector::detect() {
         }
 
         double rotation = word->position->rotation;
-        double lowerY = round(word->position->getRotLowerY(), 1);
+        double lowerY = math_utils::round(word->position->getRotLowerY(), 1);
         clusters[rotation][lowerY].push_back(word);
         _log->debug(p) << " └─ cluster: (" << rotation << ", " << lowerY << ")" << endl;
 
@@ -203,7 +205,7 @@ void TextLinesDetector::detect() {
             double prevLineYOverlap = 0.0;
             if (prevLine) {
               prevLineXGap = computeHorizontalGap(prevLine, currLine);
-              std::pair<double, double> yOverlapRatios = computeYOverlapRatios(prevLine, currLine);
+              std::pair<double, double> yOverlapRatios = element_utils::computeYOverlapRatios(prevLine, currLine);
               prevLineYOverlap = max(yOverlapRatios.first, yOverlapRatios.second);
             }
             _log->debug(p) << " └─ prevLine.xGap: " << prevLineXGap << endl;
@@ -214,7 +216,7 @@ void TextLinesDetector::detect() {
             double nextLineYOverlap = 0.0;
             if (nextLine) {
               nextLineXGap = computeHorizontalGap(currLine, nextLine);
-              std::pair<double, double> yOverlapRatios = computeYOverlapRatios(currLine, nextLine);
+              std::pair<double, double> yOverlapRatios = element_utils::computeYOverlapRatios(currLine, nextLine);
               nextLineYOverlap = max(yOverlapRatios.first, yOverlapRatios.second);
             }
             _log->debug(p) << " └─ nextLine.xGap: " << nextLineXGap << endl;
@@ -234,8 +236,8 @@ void TextLinesDetector::detect() {
             _log->debug(p) << " └─ nextLineThreshold: " << nextLineThreshold << endl;
 
             // Check if to merge the previous line with the current line.
-            if (larger(prevLineYOverlap, nextLineYOverlap, 0.001)) {
-              if (equalOrLarger(prevLineYOverlap, prevLineThreshold, 0.001)) {
+            if (math_utils::larger(prevLineYOverlap, nextLineYOverlap, 0.001)) {
+              if (math_utils::equalOrLarger(prevLineYOverlap, prevLineThreshold, 0.001)) {
                 mergeTextLines(prevLine, currLine);
                 merged = true;
 

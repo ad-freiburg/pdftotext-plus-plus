@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "../PdfDocument.h"
+#include "./Utils.h"
 
 // =================================================================================================
 
@@ -303,7 +304,7 @@ bool computeHasEqualFont(const PdfTextElement* element1, const PdfTextElement* e
  *    True if the given elements exhibit (approximately) the same font size, false otherwise.
  */
 bool computeHasEqualFontSize(const PdfTextElement* element1, const PdfTextElement* element2,
-    double tolerance=1);
+    double tolerance=FS_EQUAL_TOLERANCE);
 
 /**
  * This method returns true if the text of the given element ends with a sentence delimiter (that

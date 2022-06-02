@@ -4,6 +4,7 @@
 //
 // Modified under the Poppler project - http://poppler.freedesktop.org
 
+#include <cmath>  // round
 #include <chrono>  // std::chrono::high_resolution_clock, etc.
 #include <cstring>
 #include <iomanip>  // setw, setprecision
@@ -14,6 +15,7 @@
 #include <poppler/GlobalParams.h>
 
 #include "./utils/LogUtils.h"
+#include "./utils/MathUtils.h"
 #include "./utils/parseargs.h"
 #include "./utils/Utils.h"
 #include "PdfToTextPlusPlus.h"
@@ -320,7 +322,7 @@ int main(int argc, char *argv[]) {
       std::string prefix = " * " + timing.description + ":";
       std::cout << std::left << std::setw(25) << prefix;
       std::cout << std::right << std::setw(4) << timing.time << " ms ";
-      std::cout << "(" << round(timing.time / static_cast<double>(timeTotal) * 100, 1) << "%)";
+      std::cout << "(" << math_utils::round(timing.time / static_cast<double>(timeTotal) * 100, 1) << "%)";
       std::cout << std::endl;
     }
   }

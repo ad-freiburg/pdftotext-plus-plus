@@ -10,6 +10,7 @@
 #include <iostream>  // cout
 
 #include "./utils/MathUtils.h"
+#include "./utils/PdfElementUtils.h"
 #include "./utils/Utils.h"
 
 #include "./PdfDocument.h"
@@ -79,8 +80,8 @@ void PdfDocumentStatisticsCalculator::computeGlyphStatistics() const {
   _doc->mostFreqFontName = mostFreqFontName;
 
   // Compute the average glyph-width and -height.
-  _doc->avgGlyphWidth = round(sumWidths / static_cast<double>(numGlyphs), 1);
-  _doc->avgGlyphHeight = round(sumHeights / static_cast<double>(numGlyphs), 1);
+  _doc->avgGlyphWidth = math_utils::round(sumWidths / static_cast<double>(numGlyphs), 1);
+  _doc->avgGlyphHeight = math_utils::round(sumHeights / static_cast<double>(numGlyphs), 1);
 }
 
 // _________________________________________________________________________________________________
@@ -111,19 +112,19 @@ void PdfDocumentStatisticsCalculator::computeWordStatistics() const {
           continue;
         }
 
-        pair<double, double> yOverlapRatios = computeYOverlapRatios(prevWord, currWord);
+        pair<double, double> yOverlapRatios = element_utils::computeYOverlapRatios(prevWord, currWord);
         double maxYOverlap = max(yOverlapRatios.first, yOverlapRatios.second);
 
         // Count the horizontal distance.
         if (maxYOverlap > 0.5) {
           double xd = currWord->position->getRotLeftX() - prevWord->position->getRotRightX();
-          xd = round(xd, 1);
+          xd = math_utils::round(xd, 1);
           xDistanceFreqs[xd]++;
         }
 
         if (maxYOverlap == 0) {
           double yd = currWord->position->getRotUpperY() - prevWord->position->getRotLowerY();
-          yd = round(yd, 1);
+          yd = math_utils::round(yd, 1);
           yDistanceFreqs[yd]++;
         }
       }
@@ -204,13 +205,13 @@ void PdfDocumentStatisticsCalculator::computeLineStatistics() const {
 
         // Compute the line distance and count it.
         // TODO: Explain why baseBBox is used here.
-        double lineDistance = round(currLine->baseBBoxUpperY - prevLine->baseBBoxLowerY, 1);
+        double lineDistance = math_utils::round(currLine->baseBBoxUpperY - prevLine->baseBBoxLowerY, 1);
         lineDistance = max(0.0, lineDistance);
         lineDistanceFreqs[lineDistance]++;
 
         // For computing line distances per font size, ignore the lines if their font sizes differ.
-        double prevFontSize = round(prevLine->fontSize, 1);
-        double currFontSize = round(currLine->fontSize, 1);
+        double prevFontSize = math_utils::round(prevLine->fontSize, 1);
+        double currFontSize = math_utils::round(currLine->fontSize, 1);
         if (math_utils::equal(prevFontSize, currFontSize, 0.01)) {
           lineDistanceFreqsPerFontSize[currFontSize][lineDistance]++;
         }

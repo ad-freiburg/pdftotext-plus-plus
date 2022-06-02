@@ -31,7 +31,7 @@ tuple<double, double, double, double> page_segment_utils::computeTrimBox(
   // Compute the most frequent rightX value among the text lines.
   unordered_map<double, int> rightXFreqs;
   for (auto* line : segment->lines) {
-    double rightX = round(line->position->getRotRightX());
+    double rightX = math_utils::round(line->position->getRotRightX());
     rightXFreqs[rightX]++;
   }
   double mostFreqRightX = 0;

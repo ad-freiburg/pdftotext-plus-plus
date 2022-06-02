@@ -16,6 +16,7 @@
 #include "./PdfDocument.h"
 #include "./PageSegmentator.h"
 #include "./utils/LogUtils.h"
+#include "./utils/PdfElementUtils.h"
 #include "./utils/Utils.h"
 #include "./XYCut.h"
 
@@ -220,7 +221,7 @@ void PageSegmentator::chooseXCuts(const std::vector<PdfElement*>& elements,
       // XXXXXXXXX | XXXXXXXXXX
       // XXXXXXXXX | XXXXXXXXXX
 
-      std::pair<double, double> ratios = computeYOverlapRatios(wordLeft, wordRight);
+      std::pair<double, double> ratios = element_utils::computeYOverlapRatios(wordLeft, wordRight);
 
       if (!silent) {
         _log->debug(p) << "Checking contiguousness..." << std::endl;

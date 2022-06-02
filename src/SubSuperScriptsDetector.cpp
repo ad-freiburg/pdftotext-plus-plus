@@ -10,6 +10,7 @@
 #include <iostream>
 #include <vector>
 
+#include "./utils/MathUtils.h"
 #include "./utils/Utils.h"
 #include "./PdfDocument.h"
 #include "./SubSuperScriptsDetector.h"
@@ -30,7 +31,7 @@ void SubSuperScriptsDetector::detect() const {
         for (auto* word : line->words) {
           for (auto* glyph : word->glyphs) {
             // Identify superscripts.
-            if (smaller(glyph->fontSize, _doc->mostFreqFontSize, 0.9)) {
+            if (math_utils::smaller(glyph->fontSize, _doc->mostFreqFontSize, 0.9)) {
               if (glyph->base < line->base) {
                 glyph->isSuperscript = true;
                 continue;

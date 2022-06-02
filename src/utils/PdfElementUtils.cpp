@@ -12,6 +12,7 @@
 #include "../PdfDocument.h"
 #include "./MathUtils.h"
 #include "./PdfElementUtils.h"
+#include "./Utils.h"
 
 // _________________________________________________________________________________________________
 std::pair<double, double> element_utils::computeOverlapRatios(double s1, double e1,
@@ -43,11 +44,11 @@ std::pair<double, double> element_utils::computeXOverlapRatios(const PdfElement*
       const PdfElement* element2) {
   assert(element1);
   assert(element2);
+
   double s1 = element1->position->rightX;
   double e1 = element1->position->leftX;
   double s2 = element2->position->rightX;
   double e2 = element2->position->leftX;
-
   return element_utils::computeOverlapRatios(s1, e1, s2, e2);
 }
 
@@ -62,6 +63,7 @@ std::pair<double, double> element_utils::computeYOverlapRatios(const PdfElement*
       const PdfElement* element2) {
   assert(element1);
   assert(element2);
+
   double s1 = element1->position->upperY;
   double e1 = element1->position->lowerY;
   double s2 = element2->position->upperY;
@@ -179,25 +181,29 @@ bool text_element_utils::computeStartsWithUpper(const PdfTextElement* elem) {
 
 // _________________________________________________________________________________________________
 bool text_element_utils::computeIsEmphasized(const PdfTextElement* element) {
+  assert(element);
+
   const PdfFontInfo* docFontInfo = element->doc->fontInfos.at(element->doc->mostFreqFontName);
   const PdfFontInfo* elementFontInfo = element->doc->fontInfos.at(element->fontName);
 
   // The element is emphasized if ...
 
+  double mostFreqFontSize = element->doc->mostFreqFontSize;
+
   // ... its font size is larger than the most frequent font size in the document.
-  // TODO: Parameterize the 0.5
-  if (element->fontSize - element->doc->mostFreqFontSize > 0.5) {
+  if (math_utils::larger(element->fontSize, mostFreqFontSize, FS_EQUAL_TOLERANCE)) {
     return true;
   }
 
   // ... its font weight is larger than the most frequent font weight.
-  if (element->fontSize - element->doc->mostFreqFontSize >= -1
-      && elementFontInfo->weight - docFontInfo->weight > 100) {
+  if (math_utils::equalOrLarger(element->fontSize, mostFreqFontSize, FS_EQUAL_TOLERANCE)
+      && math_utils::larger(elementFontInfo->weight, docFontInfo->weight, 100)) {
     return true;
   }
 
   // ... it is printed in italics.
-  if (element->fontSize - element->doc->mostFreqFontSize >= -1 && elementFontInfo->isItalic) {
+  if (math_utils::equalOrLarger(element->fontSize, mostFreqFontSize, FS_EQUAL_TOLERANCE)
+      && elementFontInfo->isItalic) {
     return true;
   }
 

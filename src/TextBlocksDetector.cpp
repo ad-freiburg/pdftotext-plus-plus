@@ -394,7 +394,7 @@ Trool TextBlocksDetector::startsBlock_lineDistance(const PdfTextLine* line, doub
   PdfTextLine* prevLine = line->prevLine;
 
   // Compute the expected line distance.
-  double fontSize = round(line->fontSize, FONT_SIZE_PREC);
+  double fontSize = math_utils::round(line->fontSize, FONT_SIZE_PREC);
   double expectedLineDistance = 0;
   if (_doc->mostFreqLineDistancePerFontSize.count(fontSize) > 0) {
     double eld = _doc->mostFreqLineDistancePerFontSize.at(fontSize);
@@ -404,7 +404,7 @@ Trool TextBlocksDetector::startsBlock_lineDistance(const PdfTextLine* line, doub
 
   // Compute the actual line distance.
   double actualLineDistance = text_lines_utils::computeTextLineDistance(prevLine, line);
-  actualLineDistance = round(actualLineDistance, LINE_DIST_PREC);
+  actualLineDistance = math_utils::round(actualLineDistance, LINE_DIST_PREC);
 
   double lineDistanceDiff = actualLineDistance - expectedLineDistance;
 
@@ -451,11 +451,11 @@ Trool TextBlocksDetector::startsBlock_increasedLineDistance(const PdfTextLine* l
 
   // Compute the distance between the previous but one line and the previous line.
   double prevDistance = text_lines_utils::computeTextLineDistance(prevPrevLine, prevLine);
-  prevDistance = round(prevDistance, LINE_DIST_PREC);
+  prevDistance = math_utils::round(prevDistance, LINE_DIST_PREC);
 
   // Compute the distance between the previous line and the current line.
   double distance = text_lines_utils::computeTextLineDistance(prevLine, line);
-  distance = round(distance, LINE_DIST_PREC);
+  distance = math_utils::round(distance, LINE_DIST_PREC);
 
   // Compute the tolerance.
   double tolerance = toleranceFactor * _doc->mostFreqWordHeight;

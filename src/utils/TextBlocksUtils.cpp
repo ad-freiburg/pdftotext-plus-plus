@@ -294,8 +294,8 @@ void text_blocks_utils::computeTextLineMargins(const PdfTextBlock* block) {
   }
 
   for (auto* line : block->lines) {
-    line->leftMargin = round(line->position->leftX - block->trimLeftX);
-    line->rightMargin = round(blockTrimRightX - line->position->rightX);
+    line->leftMargin = math_utils::round(line->position->leftX - block->trimLeftX);
+    line->rightMargin = math_utils::round(blockTrimRightX - line->position->rightX);
   }
 }
 

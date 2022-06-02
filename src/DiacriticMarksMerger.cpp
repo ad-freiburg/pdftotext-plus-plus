@@ -13,6 +13,7 @@
 #include <poppler/GlobalParams.h>
 
 #include "./utils/LogUtils.h"
+#include "./utils/MathUtils.h"
 #include "./utils/Utils.h"
 #include "./DiacriticMarksMerger.h"
 
@@ -125,7 +126,7 @@ void DiacriticMarksMerger::merge() {
       _log->debug(p) << " └─ x-overlap current/next glyph: " << nextOverlapX << std::endl;
 
       // Skip the glyph if both overlaps are equal to zero.
-      if (equal(prevOverlapX, 0, 0.1) && equal(nextOverlapX, 0, 0.1)) {
+      if (math_utils::equal(prevOverlapX, 0, 0.1) && math_utils::equal(nextOverlapX, 0, 0.1)) {
         _log->debug(p) << "\033[1mSkipping glyph (both overlaps == 0).\033[0m" << std::endl;
         continue;
       }

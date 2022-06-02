@@ -20,6 +20,7 @@
 
 #include "./utils/GlyphMap.h"
 #include "./utils/LogUtils.h"
+#include "./utils/MathUtils.h"
 #include "./utils/Utils.h"
 
 
@@ -273,10 +274,10 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   double nextTrm[6];
   concat(tdXtm, ctm, nextTrm);
 
-  double x0 = round(trm[4], 1);
-  double y0 = round(trm[5], 1);
-  double x1 = round(nextTrm[4], 1);
-  double y1 = round(nextTrm[5], 1);
+  double x0 = math_utils::round(trm[4], 1);
+  double y0 = math_utils::round(trm[5], 1);
+  double x1 = math_utils::round(nextTrm[4], 1);
+  double y1 = math_utils::round(nextTrm[5], 1);
   double transformedFontSize = state->getTransformedFontSize();
 
   // Compute the ascent, that is: the maximum extent of the font above the base line.
@@ -441,8 +442,8 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   _log->debug(_p) << " └─ clipbox: leftX: " << clipLeftX << "; upperY: " << clipUpperY
       << "; rightX: " << clipRightX << "; lowerY: " << clipLowerY << std::endl;
 
-  if (equal(clipLeftX, _page->clipLeftX, 0.1) && equal(clipUpperY, _page->clipUpperY, 0.1)
-        && equal(clipRightX, _page->clipRightX, 0.1) && equal(clipLowerY, _page->clipLowerY, 0.1)) {
+  if (math_utils::equal(clipLeftX, _page->clipLeftX, 0.1) && math_utils::equal(clipUpperY, _page->clipUpperY, 0.1)
+        && math_utils::equal(clipRightX, _page->clipRightX, 0.1) && math_utils::equal(clipLowerY, _page->clipLowerY, 0.1)) {
     _page->glyphs.push_back(glyph);
     _log->debug(_p) << "\033[1mAppended glyph to page.\033[0m" << std::endl;
     return;
@@ -450,8 +451,8 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
 
   // Iterate through the figures to check if there is a figure with the same current clipbox.
   for (auto* fig : _page->figures) {
-    if (equal(clipLeftX, fig->clipLeftX, 0.1) && equal(clipUpperY, fig->clipUpperY, 0.1)
-        && equal(clipRightX, fig->clipRightX, 0.1) && equal(clipLowerY, fig->clipLowerY, 0.1)) {
+    if (math_utils::equal(clipLeftX, fig->clipLeftX, 0.1) && math_utils::equal(clipUpperY, fig->clipUpperY, 0.1)
+        && math_utils::equal(clipRightX, fig->clipRightX, 0.1) && math_utils::equal(clipLowerY, fig->clipLowerY, 0.1)) {
       // Update the bounding box of the figure.
       fig->position->leftX = std::min(fig->position->leftX, glyph->position->leftX);
       fig->position->upperY = std::min(fig->position->upperY, glyph->position->upperY);
@@ -555,16 +556,16 @@ void TextOutputDev::stroke(GfxState* state) {
   // clipbox is equal to the page's clipbox, append the shape to `page->shapes`.
   // Otherwise, append the shape to `figure->shapes`, where `figure` is the `PdfFigure` object
   // related to the current clipbox. If no such object exists yet, create it.
-  if (equal(clipLeftX, _page->clipLeftX, 0.1) && equal(clipUpperY, _page->clipUpperY, 0.1)
-        && equal(clipRightX, _page->clipRightX, 0.1) && equal(clipLowerY, _page->clipLowerY, 0.1)) {
+  if (math_utils::equal(clipLeftX, _page->clipLeftX, 0.1) && math_utils::equal(clipUpperY, _page->clipUpperY, 0.1)
+        && math_utils::equal(clipRightX, _page->clipRightX, 0.1) && math_utils::equal(clipLowerY, _page->clipLowerY, 0.1)) {
     _page->shapes.push_back(shape);
     _log->debug(_p) << "\033[1mAppended shape to page.\033[0m" << std::endl;
     return;
   }
 
   for (auto* fig : _page->figures) {
-    if (equal(clipLeftX, fig->clipLeftX, 0.1) && equal(clipUpperY, fig->clipUpperY, 0.1)
-        && equal(clipRightX, fig->clipRightX, 0.1) && equal(clipLowerY, fig->clipLowerY, 0.1)) {
+    if (math_utils::equal(clipLeftX, fig->clipLeftX, 0.1) && math_utils::equal(clipUpperY, fig->clipUpperY, 0.1)
+        && math_utils::equal(clipRightX, fig->clipRightX, 0.1) && math_utils::equal(clipLowerY, fig->clipLowerY, 0.1)) {
       // Update the bounding box of the figure.
       fig->position->leftX = std::min(fig->position->leftX, shape->position->leftX);
       fig->position->upperY = std::min(fig->position->upperY, shape->position->upperY);

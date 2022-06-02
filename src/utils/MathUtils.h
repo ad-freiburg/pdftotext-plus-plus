@@ -126,6 +126,19 @@ bool equalOrSmaller(double d1, double d2, double tolerance = 0.0001);
  */
 bool between(double d, double lower, double upper, double tolerance = 0.0001);
 
+/**
+ * This method rounds the given double value to <numDecimals> precision after the decimal point.
+ *
+ * @param d
+ *    The value to round.
+ * @param numDecimals
+ *    The precision.
+ *
+ * @return
+ *    The rounded value.
+ */
+double round(double d, int numDecimals = 0);
+
 }  // namespace math_utils
 
 #endif  // MATHUTILS_H_

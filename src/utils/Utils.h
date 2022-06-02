@@ -14,15 +14,16 @@
 
 #include "../PdfDocument.h"
 
-
-const std::string sentenceDelimiterAlphabet = "?!.);";
 const int FONT_SIZE_PREC = 1;
 const int LINE_DIST_PREC = 1;
 const int LEFT_MARGIN_PREC = 0;
+const double FS_EQUAL_TOLERANCE = 1;
+
+// =================================================================================================
 
 enum Trool { None = -1, False, True };
 
-
+// =================================================================================================
 
 /**
  * Splits the given text (given as a std::wstring) into words.
@@ -58,7 +59,7 @@ void splitIntoWords(const std::string& text, std::vector<std::string>* words);
  *
  * @return The substring.
  */
-std::string utf8_substr(const std::string& str, unsigned int start, unsigned int len);
+// std::string utf8_substr(const std::string& str, unsigned int start, unsigned int len);
 
 /**
  * This method is the equivalent of `std::string::length()` for UTF-8 encoded strings (for which
@@ -70,7 +71,7 @@ std::string utf8_substr(const std::string& str, unsigned int start, unsigned int
  *
  * @return The length of the string.
  */
-size_t utf8_length(const std::string& str);
+// size_t utf8_length(const std::string& str);
 
 // =================================================================================================
 
@@ -104,38 +105,9 @@ std::string escapeJson(const std::string& str);
 
 // =================================================================================================
 
-bool equal(double d1, double d2, double delta = 0.5);
-
-bool larger(double d1, double d2, double delta = 0.5);
-
-bool equalOrLarger(double d1, double d2, double delta = 0.5);
-
-bool smaller(double d1, double d2, double delta = 0.5);
-
-bool equalOrSmaller(double d1, double d2, double delta = 0.5);
-
-bool between(double d, double low, double up);
-
-bool contains(const PdfElement* element1, const PdfElement* element2, double delta = 0.5);
-
-std::pair<double, double> computeXOverlapRatios(const PdfElement* element1,
-    const PdfElement* element2);
-std::pair<double, double> computeYOverlapRatios(const PdfElement* element1,
-    const PdfElement* element2);
-std::pair<double, double> computeOverlapRatios(double s1, double e1, double s2, double e2);
-
 double computeHorizontalGap(const PdfElement* element1, const PdfElement* element2);
 double computeVerticalGap(const PdfElement* element1, const PdfElement* element2);
 
-double min(std::pair<double, double> pair);
-double max(std::pair<double, double> pair);
-
 // =================================================================================================
-
-bool endsWithSentenceDelimiter(const std::string& str);
-bool startsWithUpper(const std::string& str);
-bool startsWithLower(const std::string& str);
-
-double round(double d, int numDecimals);
 
 #endif  // UTILS_H_

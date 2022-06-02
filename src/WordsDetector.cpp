@@ -9,7 +9,9 @@
 #include <algorithm>  // std::min, std::max
 #include <limits> // std::numeric_limits
 
+#include "./utils/MathUtils.h"
 #include "./utils/LogUtils.h"
+#include "./utils/PdfElementUtils.h"
 #include "./utils/Utils.h"
 #include "./WordsDetector.h"
 #include "./PdfDocument.h"
@@ -255,7 +257,7 @@ bool WordsDetector::startsWord(const PdfGlyph* prevGlyph, const PdfGlyph* currGl
   // the percentage of the length of the vertical overlap in relation to the glyph's height.
   // The second double denotes denotes the percentage of the length of the vertical overlap in
   // relation to the word's height.
-  std::pair<double, double> ratios = computeOverlapRatios(glyphMinY, glyphMaxY, wordMinY, wordMaxY);
+  std::pair<double, double> ratios = element_utils::computeOverlapRatios(glyphMinY, glyphMaxY, wordMinY, wordMaxY);
   _log->debug(p) << " └─ overlapRatios: " << ratios.first << ", " << ratios.second << std::endl;
 
   if (ratios.first < 0.5 && ratios.second < 0.5) {
@@ -350,9 +352,9 @@ void WordsDetector::mergeStackedMathSymbols(PdfPage* page) const {
         << "; \033[1mrightX:\033[0m " << otherWord->position->rightX
         << "; \033[1mlowerY:\033[0m " << otherWord->position->lowerY << std::endl;
 
-      std::pair<double, double> xOverlapRatios = computeXOverlapRatios(word, otherWord);
+      std::pair<double, double> xOverlapRatios = element_utils::computeXOverlapRatios(word, otherWord);
       double maxOverlapRatio = std::max(xOverlapRatios.first, xOverlapRatios.second);
-      bool isSmallerFontSize = smaller(otherWord->fontSize, word->fontSize, 1);
+      bool isSmallerFontSize = math_utils::smaller(otherWord->fontSize, word->fontSize, 1);
 
       _log->debug(p) << " └─ word.maxOverlapRatio: " << maxOverlapRatio << std::endl;
       _log->debug(p) << " └─ word.hasSmallerFontSize: " << isSmallerFontSize << std::endl;
@@ -383,9 +385,9 @@ void WordsDetector::mergeStackedMathSymbols(PdfPage* page) const {
         << "; \033[1mrightX:\033[0m " << otherWord->position->rightX
         << "; \033[1mlowerY:\033[0m " << otherWord->position->lowerY << std::endl;
 
-      std::pair<double, double> xOverlapRatios = computeXOverlapRatios(word, otherWord);
+      std::pair<double, double> xOverlapRatios = element_utils::computeXOverlapRatios(word, otherWord);
       double maxOverlapRatio = std::max(xOverlapRatios.first, xOverlapRatios.second);
-      bool isSmallerFontSize = smaller(otherWord->fontSize, word->fontSize, 1);
+      bool isSmallerFontSize = math_utils::smaller(otherWord->fontSize, word->fontSize, 1);
 
       _log->debug(p) << " └─ word.maxOverlapRatio: " << maxOverlapRatio << std::endl;
       _log->debug(p) << " └─ word.hasSmallerFontSize: " << isSmallerFontSize << std::endl;
