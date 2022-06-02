@@ -332,38 +332,59 @@ void text_lines_utils::computeTextLineHierarchies(const PdfPage* page) {
 void text_lines_utils::computePotentialFootnoteLabels(const PdfTextLine* line,
       unordered_set<string>* result) {
   assert(line);
+  assert(result);
 
-  // Iterate through the glyphs of the word and merge each adjacent superscripts which are
-  // positioned before the word (we don't want to consider superscript that are positioned
-  // behind the word). Consider each merged superscript string as a potential footnote marker.
+  // Iterate through the glyphs of the word. For each glyph, check if it is a label that potentially
+  // reference a footnote, that is: if it is a superscipted alphanumerical or if it occurs in our
+  // alphabet we defined to identify special footnote labels. Merge each consecutive glyph that
+  // is part of such a label and that are positioned behind the word (we don't want to consider
+  // labels that are positioned in front of a word, since footnote labels are unlikely
+  // to be positioned behind words).
   // TODO: We do not store the info about whether a superscript is positioned before or after
   // a word. As a workaround, consider a superscript as part of a potential footnote marker
   // only when a non-subscript and non-superscript was already seen.
   for (const auto* word : line->words) {
-    bool nonSubSuperscriptSeen = false;
     string label;
+    bool nonSubSuperscriptSeen = false;
     for (const auto* glyph : word->glyphs) {
+      // Ignore sub- and superscripts that are positioned before the word.
       if (!nonSubSuperscriptSeen && !glyph->isSubscript && !glyph->isSuperscript) {
         nonSubSuperscriptSeen = true;
         continue;
       }
+      // Ignore the glyph when no glyph which is not a subscript and superscript was seen yet.
       if (!nonSubSuperscriptSeen) {
         continue;
       }
-
-      bool isLabel = glyph->isSuperscript && !glyph->text.empty() && isalnum(glyph->text[0]);
-      isLabel |= !glyph->text.empty() && FOOTNOTE_LABEL_ALPHABET.find(glyph->text[0]) != string::npos;
-
-      if (!isLabel) {
-        if (!label.empty()) {
-          result->insert(label);
-          label.clear();
-        }
+      // Ignore the glyph when it does not contain any text.
+      if (glyph->text.empty()) {
         continue;
       }
 
-      label += glyph->text;
+      // The glyph is part of a potential footnote label when it occurs in our alphabet we defined
+      // to identify special (= non-alphanumerical) footnote labels.
+      bool isLabel = SPECIAL_FOOTNOTE_LABELS_ALPHABET.find(glyph->text[0]) != string::npos;
+
+      // The glyph is also a potential footnote label when it is a superscripted alphanumerical.
+      if (glyph->isSuperscript && isalnum(glyph->text[0])) {
+        isLabel = true;
+      }
+
+      // When the glyph is part of a potential footnote label, add it to the current label string.
+      if (isLabel) {
+        label += glyph->text;
+        continue;
+      }
+
+      // Otherwise the end of a potential label is reached. When the current label string is not
+      // empty, append it to the result list.
+      if (!label.empty()) {
+        result->insert(label);
+        label.clear();
+      }
     }
+
+    // Don't forget to add the last label string to the result list (if it is not empty).
     if (!label.empty()) {
       result->insert(label);
     }

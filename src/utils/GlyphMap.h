@@ -1,5 +1,5 @@
 /**
- * Copyright 2021, University of Freiburg,
+ * Copyright 2022, University of Freiburg,
  * Chair of Algorithms and Data Structures.
  * Author: Claudius Korzen <korzen@cs.uni-freiburg.de>.
  *
@@ -9,9 +9,15 @@
 #ifndef GLYPHMAP_H_
 #define GLYPHMAP_H_
 
-#include <unordered_map>
 #include <string>
+#include <unordered_map>
+#include <utility>  // make_pair
 
+/**
+ * A mapping of glyph names to their respective Unicode codepoints and string representations.
+ * It is needed because for some glyphs, some PDFs only provide the glyph names but not the
+ * respective Unicode character (usually due to a missing or broken encoding).
+ */
 const std::unordered_map<std::string, std::pair<unsigned int, std::string>> glyphMap = {
   { "summationdisplay", std::make_pair(0x2211, "\u2211") },
   { "summationssdisplay", std::make_pair(0x2211, "\u2211") },

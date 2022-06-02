@@ -42,7 +42,7 @@ const regex ITEM_LABEL_REGEXES[] = {
   regex("^PACS\\s+", regex_constants::icase)
 };
 
-const std::string FOOTNOTE_LABEL_ALPHABET = "*∗†‡?";
+const std::string SPECIAL_FOOTNOTE_LABELS_ALPHABET = "*∗†‡§‖¶?";
 
 // =================================================================================================
 
@@ -241,9 +241,27 @@ bool computeHasPrevLineCapacity(const PdfTextLine* line, double toleranceFactor 
 void computeTextLineHierarchies(const PdfPage* page);
 
 /**
- * This method computes the potential footnote labels contained in the given line and appends it to
- * the given vector.
+ * This method computes potential footnote labels contained in the given line and appends it to
+ * the given set.
  *
+ * This method is primarily used by the text block detector, for detecting the first text lines of
+ * footnotes. The motivation is the following: the first line of a footnote is usually prefixed by
+ * a label that consists of a superscripted character or number, or a special symbol like:
+ * *, †, ‡, §, ‖, ¶. However, a PDF can contain text lines which occasionally starts with such a
+ * label, although they are not an actual part of a footnote. THe consequence is that lines are
+ * mistakenly detected as footnotes.
+ *
+ * One observation is that the label of a footnote usually occurs a second time in the body text
+ * of the document (this is for referencing the footnote at a certain position in the body text).
+ * We use this fact and scan the given line for labels (that is: superscripted numbers and the
+ * special symbols mentioned above) that potentially reference a footnote. On detecting footnotes,
+ * we consider a line to be the start of a footnote only when it is prefixed by text that occurs in
+ * the computed set of potential footnote labels.
+ *
+ * @param line
+ *    The line to process.
+ * @param result
+ *    The set to which the detected potential footnote labels should be appended.
  */
 void computePotentialFootnoteLabels(const PdfTextLine* line, unordered_set<string>* result);
 

@@ -1,17 +1,23 @@
 /**
- * Copyright 2021, University of Freiburg,
+ * Copyright 2022, University of Freiburg,
  * Chair of Algorithms and Data Structures.
  * Author: Claudius Korzen <korzen@cs.uni-freiburg.de>.
  *
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include <chrono>
-#include <iomanip>
-#include <iostream>
+#include <chrono>    // timestamp
+#include <iomanip>   // setw, setfill
+#include <iostream>  // cout
 #include <sstream>
+#include <string>
+#include <utility>   // move
 
 #include "./LogUtils.h"
+
+using std::ostream;
+using std::string;
+using std::stringstream;
 
 static NullStream nullStr;
 
@@ -32,71 +38,77 @@ void Logger::setPageFilter(int pageFilter) {
 }
 
 // _________________________________________________________________________________________________
-std::ostream& Logger::trace(int page) {
+ostream& Logger::trace(int page) {
   return log(LogLevel::TRACE, page);
 }
 
 // _________________________________________________________________________________________________
-std::ostream& Logger::debug(int page) {
+ostream& Logger::debug(int page) {
   return log(LogLevel::DEBUG, page);
 }
 
 // _________________________________________________________________________________________________
-std::ostream& Logger::info(int page) {
+ostream& Logger::info(int page) {
   return log(LogLevel::INFO, page);
 }
 
 // _________________________________________________________________________________________________
-std::ostream& Logger::warn(int page) {
+ostream& Logger::warn(int page) {
   return log(LogLevel::WARN, page);
 }
 
 // _________________________________________________________________________________________________
-std::ostream& Logger::error(int page) {
+ostream& Logger::error(int page) {
   return log(LogLevel::ERROR, page);
 }
 
 // _________________________________________________________________________________________________
-std::ostream& Logger::log(LogLevel logLevel, int page) {
-  if (_logLevel < logLevel) {
+ostream& Logger::log(LogLevel logLevel, int pageNum) {
+  // Ignore the messages sent to the stream if the given log level is smaller than _logLevel.
+  if (_logLevel > logLevel) {
     return nullStr;
   }
 
-  if (_pageFilter > 0 && page > 0 && _pageFilter != page) {
+  // Ignore the messages sent to the stream _pageFilter is set, the given page number is set,
+  // but the page number is not equal to _pageFilter.
+  if (_pageFilter > 0 && pageNum > 0 && _pageFilter != pageNum) {
     return nullStr;
   }
 
-  std::string logLevelStr;
+  // Prepend the log message with the current timestamp and the name of the logging level (each
+  // logging level in another color).
+  stringstream logLevelStr;
   switch (logLevel) {
     case TRACE:
-      logLevelStr = "\033[35;1mDEBUG:\033[0m"; // magenta + bold
+      logLevelStr << BOLD << MAGENTA << "TRACE:" << OFF;
       break;
     case DEBUG:
-      logLevelStr = "\033[32;1mDEBUG:\033[0m"; // green + bold
+      logLevelStr << BOLD << GREEN << "DEBUG:" << OFF;
       break;
     case INFO:
-      logLevelStr = "\033[34;1mINFO: \033[0m";  // blue + bold
+      logLevelStr << BOLD << BLUE << "INFO:" << OFF;
       break;
     case WARN:
-      logLevelStr = "\033[33;1mWARN: \033[0m";  // yellow + bold
+      logLevelStr << BOLD << YELLOW << "WARN:" << OFF;
       break;
     case ERROR:
-      logLevelStr = "\033[31;1mERROR:\033[0m";  // red + bold
+      logLevelStr << BOLD << RED << "ERROR:" << OFF;
       break;
     default:
       break;
   }
 
-  return std::cout << Logger::getTimeStamp() << "\t- " << logLevelStr << " ";
+  return std::cout << Logger::getTimeStamp() << "\t- " << std::move(logLevelStr).str() << " ";
 }
 
 // _________________________________________________________________________________________________
-std::string Logger::getTimeStamp() {
+string Logger::getTimeStamp() {
+  // This code is stolen from https://stackoverflow.com/questions/17223096.
   auto now = std::chrono::system_clock::now();
   auto in_time_t = std::chrono::system_clock::to_time_t(now);
   auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
 
-  std::stringstream ss;
+  stringstream ss;
   ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X") << '.'
      << std::setw(3) << std::setfill('0') << ms.count();
   return std::move(ss).str();
