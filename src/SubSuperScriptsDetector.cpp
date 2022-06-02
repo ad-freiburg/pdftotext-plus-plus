@@ -11,7 +11,6 @@
 #include <vector>
 
 #include "./utils/MathUtils.h"
-#include "./utils/Utils.h"
 #include "./PdfDocument.h"
 #include "./SubSuperScriptsDetector.h"
 

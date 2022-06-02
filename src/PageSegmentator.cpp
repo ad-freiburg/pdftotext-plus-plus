@@ -17,7 +17,7 @@
 #include "./PageSegmentator.h"
 #include "./utils/LogUtils.h"
 #include "./utils/PdfElementUtils.h"
-#include "./utils/Utils.h"
+#include "./utils/StringUtils.h"
 #include "./XYCut.h"
 
 const int maxNumCuttingElements = 1;
@@ -509,7 +509,7 @@ void PageSegmentator::createPageSegment(const std::vector<PdfElement*>& elements
   }
 
   PdfPageSegment* segment = new PdfPageSegment();
-  segment->id = createRandomString(8, "ps-");
+  segment->id = string_utils::createRandomString(8, "ps-");
   segment->doc = _doc;
 
   // Set the page number.

@@ -14,6 +14,7 @@
 #include <string>
 #include <vector>
 
+#include "./Constants.h"
 #include "./PdfDocument.h"
 #include "./TextBlocksDetector.h"
 
@@ -22,7 +23,7 @@
 #include "./utils/PdfElementUtils.h"
 #include "./utils/TextBlocksUtils.h"
 #include "./utils/TextLinesUtils.h"
-#include "./utils/Utils.h"
+#include "./utils/Trool.h"
 
 using std::string;
 
@@ -403,7 +404,7 @@ Trool TextBlocksDetector::startsBlock_lineDistance(const PdfTextLine* line, doub
   expectedLineDistance = max(expectedLineDistance, _doc->mostFreqLineDistance);
 
   // Compute the actual line distance.
-  double actualLineDistance = text_lines_utils::computeTextLineDistance(prevLine, line);
+  double actualLineDistance = element_utils::computeVerticalGap(prevLine, line);
   actualLineDistance = math_utils::round(actualLineDistance, LINE_DIST_PREC);
 
   double lineDistanceDiff = actualLineDistance - expectedLineDistance;
@@ -450,11 +451,11 @@ Trool TextBlocksDetector::startsBlock_increasedLineDistance(const PdfTextLine* l
   int p = line->position->pageNum;
 
   // Compute the distance between the previous but one line and the previous line.
-  double prevDistance = text_lines_utils::computeTextLineDistance(prevPrevLine, prevLine);
+  double prevDistance = element_utils::computeVerticalGap(prevPrevLine, prevLine);
   prevDistance = math_utils::round(prevDistance, LINE_DIST_PREC);
 
   // Compute the distance between the previous line and the current line.
-  double distance = text_lines_utils::computeTextLineDistance(prevLine, line);
+  double distance = element_utils::computeVerticalGap(prevLine, line);
   distance = math_utils::round(distance, LINE_DIST_PREC);
 
   // Compute the tolerance.

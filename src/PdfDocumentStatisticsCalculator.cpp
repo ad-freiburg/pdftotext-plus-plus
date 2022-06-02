@@ -11,7 +11,6 @@
 
 #include "./utils/MathUtils.h"
 #include "./utils/PdfElementUtils.h"
-#include "./utils/Utils.h"
 
 #include "./PdfDocument.h"
 #include "./PdfDocumentStatisticsCalculator.h"

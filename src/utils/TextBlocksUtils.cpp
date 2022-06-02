@@ -14,9 +14,9 @@
 
 #include "./MathUtils.h"
 #include "./PdfElementUtils.h"
+#include "./StringUtils.h"
 #include "./TextBlocksUtils.h"
 #include "./TextLinesUtils.h"
-#include "./Utils.h"
 
 using std::pair;
 using std::string;
@@ -306,7 +306,7 @@ void text_blocks_utils::createTextBlock(const vector<PdfTextLine*>& lines,
   assert(blocks);
 
   PdfTextBlock* block = new PdfTextBlock();
-  block->id = createRandomString(8, "tb-");
+  block->id = string_utils::createRandomString(8, "tb-");
 
   // Set the reference to the document.
   block->doc = lines[0]->doc;

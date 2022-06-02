@@ -13,8 +13,9 @@
 #include <unordered_set>
 #include <vector>
 
-#include "./utils/Utils.h"
 #include "./utils/LogUtils.h"
+#include "./utils/Trool.h"
+
 #include "./PdfDocument.h"
 
 using std::string;

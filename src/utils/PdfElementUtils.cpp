@@ -9,10 +9,73 @@
 #include <cmath>  // min, max
 #include <vector>
 
+#include "../Constants.h"
 #include "../PdfDocument.h"
+
 #include "./MathUtils.h"
 #include "./PdfElementUtils.h"
-#include "./Utils.h"
+
+// _________________________________________________________________________________________________
+double element_utils::computeHorizontalGap(const PdfElement* element1, const PdfElement* element2) {
+  assert(element1);
+  assert(element2);
+  assert(element1->position->pageNum == element2->position->pageNum);
+  assert(element1->position->rotation == element2->position->rotation);
+  assert(element1->position->wMode == element2->position->wMode);
+
+  // Determine which of the two elements is the first element (which of the two is positioned
+  // to the left of the other) by checking which of the two elements has the lower leftX value.
+  const PdfElement* leftElement;
+  const PdfElement* rightElement;
+  if (element1->position->leftX < element2->position->leftX) {
+    leftElement = element1;
+    rightElement = element2;
+  } else {
+    leftElement = element2;
+    rightElement = element1;
+  }
+
+  switch(element1->position->rotation) {
+    case 0:
+    case 1:
+    default:
+      return rightElement->position->leftX - leftElement->position->rightX;
+    case 2:
+    case 3:
+      return leftElement->position->rightX - rightElement->position->leftX;
+  }
+}
+
+// _________________________________________________________________________________________________
+double element_utils::computeVerticalGap(const PdfElement* element1, const PdfElement* element2) {
+  assert(element1);
+  assert(element2);
+  assert(element1->position->pageNum == element2->position->pageNum);
+  assert(element1->position->rotation == element2->position->rotation);
+  assert(element1->position->wMode == element2->position->wMode);
+
+  // Determine which of the two elements is the first element (which of the two is positioned
+  // "above" the other) by checking which of the two elements has the lower upperY value.
+  const PdfElement* upperElement;
+  const PdfElement* lowerElement;
+  if (element1->position->upperY < element2->position->upperY) {
+    upperElement = element1;
+    lowerElement = element2;
+  } else {
+    upperElement = element2;
+    lowerElement = element1;
+  }
+
+  switch(element1->position->rotation) {
+    case 0:
+    case 1:
+    default:
+      return lowerElement->position->upperY - upperElement->position->lowerY;
+    case 2:
+    case 3:
+      return upperElement->position->lowerY - lowerElement->position->upperY;
+  }
+}
 
 // _________________________________________________________________________________________________
 std::pair<double, double> element_utils::computeOverlapRatios(double s1, double e1,

@@ -17,7 +17,6 @@
 #include "./utils/LogUtils.h"
 #include "./utils/MathUtils.h"
 #include "./utils/parseargs.h"
-#include "./utils/Utils.h"
 #include "PdfToTextPlusPlus.h"
 
 #include "./serializers/JsonlSerializer.h"

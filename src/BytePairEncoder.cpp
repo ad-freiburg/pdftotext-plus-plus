@@ -13,7 +13,7 @@
 #include <vector>
 
 #include "./BytePairEncoder.h"
-#include "./utils/Utils.h"
+#include "./utils/StringUtils.h"
 
 
 // _________________________________________________________________________________________________
@@ -31,7 +31,7 @@ void BytePairEncoder::encode(const std::wstring& text, size_t targetLength, std:
   // Split the text into words. For example, split "This is some text" into
   // ["This", "is", "some", "text"].
   std::vector<std::wstring> words;
-  splitIntoWords(text, &words);
+  string_utils::splitIntoWords(text, &words);
 
   // Iterate through the words and encode each word using byte pair encoding.
   for (auto& word : words) {

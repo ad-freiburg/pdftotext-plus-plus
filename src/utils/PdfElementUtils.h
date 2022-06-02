@@ -12,8 +12,8 @@
 #include <limits>
 #include <vector>
 
+#include "../Constants.h"
 #include "../PdfDocument.h"
-#include "./Utils.h"
 
 // =================================================================================================
 
@@ -26,6 +26,34 @@ const std::string SENTENCE_DELIMITER_ALPHABET = "?!.);";
 // =================================================================================================
 
 namespace element_utils {
+
+double computeHorizontalGap(const PdfElement* element1, const PdfElement* element2);
+
+/** TODO
+ * This method computes the (vertical) distance between the two given text lines.
+ *
+ * It first checks which of the two text lines is positioned "above" the other by checking which
+ * of the two lines has the minimum upperY value. Let l1 be positioned above l2. The vertical line
+ * distance is computed as: l2.upperY - l1.lowerY. Here is an example illustrating which distance
+ * is computed exactly:
+ *
+ *           ----------------
+ *           The first line
+ * lowerY -> ----------------  ┐
+ *                             |<- computed distance
+ * upperY -> ----------------  ┘
+ *           The second line
+ *           ----------------
+ *
+ * @param l1
+ *    The first line to process.
+ * @param l2
+ *    The second line to process.
+ *
+ * @return
+ *    The vertical line distance between l1 and l2.
+ */
+double computeVerticalGap(const PdfElement* element1, const PdfElement* element2);
 
 /**
  * This method computes the overlap ratios between the interval [s1, e1] and [s2, e2]. The returned

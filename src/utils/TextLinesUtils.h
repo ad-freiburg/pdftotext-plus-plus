@@ -48,32 +48,6 @@ const std::string SPECIAL_FOOTNOTE_LABELS_ALPHABET = "*∗†‡§‖¶?";
 
 namespace text_lines_utils {
 
-/**
- * This method computes the (vertical) distance between the two given text lines.
- *
- * It first checks which of the two text lines is positioned "above" the other by checking which
- * of the two lines has the minimum upperY value. Let l1 be positioned above l2. The vertical line
- * distance is computed as: l2.upperY - l1.lowerY. Here is an example illustrating which distance
- * is computed exactly:
- *
- *           ----------------
- *           The first line
- * lowerY -> ----------------  ┐
- *                             |<- computed distance
- * upperY -> ----------------  ┘
- *           The second line
- *           ----------------
- *
- * @param l1
- *    The first line to process.
- * @param l2
- *    The second line to process.
- *
- * @return
- *    The vertical line distance between l1 and l2.
- */
-double computeTextLineDistance(const PdfTextLine* l1, const PdfTextLine* l2);
-
 // =================================================================================================
 
 /**

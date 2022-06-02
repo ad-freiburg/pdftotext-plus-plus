@@ -13,7 +13,7 @@
 
 #include "./JsonlSerializer.h"
 #include "../PdfDocument.h"
-#include "../utils/Utils.h"
+#include "../utils/StringUtils.h"
 
 // _________________________________________________________________________________________________
 JsonlSerializer::JsonlSerializer(PdfDocument* doc, bool serializePages, bool serializeGlyphs,
@@ -128,7 +128,7 @@ void JsonlSerializer::serializeGlyphs(const std::vector<PdfGlyph*>& glyphs, std:
       << "\"type-3\": " << (fontInfo->isType3 ? "true" : "false") << ", "
       << "\"color\": [" << g->color[0] << "," << g->color[1] << "," << g->color[2] << "],"
       << "\"opacity\": " << g->opacity << ", "
-      << "\"text\": \"" << escapeJson(text) << "\", "
+      << "\"text\": \"" << string_utils::escapeJson(text) << "\", "
       << "\"word\": \"" << wordId << "\", "
       << "\"block\": \"" << blockId << "\", "
       << "\"origin\": \"pdftotext++\""
@@ -189,7 +189,7 @@ void JsonlSerializer::serializeWords(const std::vector<PdfWord*>& words, std::os
       << "\"maxY\": " << word->position->lowerY << ", "
       << "\"font\": \"" << word->fontName << "\", "
       << "\"fontSize\": " << word->fontSize << ", "
-      << "\"text\": \"" << escapeJson(word->text) << "\", "
+      << "\"text\": \"" << string_utils::escapeJson(word->text) << "\", "
       << "\"block\": \"" << blockId << "\", "
       << "\"origin\": \"pdftotext++\""
       << "}"
@@ -212,7 +212,7 @@ void JsonlSerializer::serializeTextBlocks(const std::vector<PdfTextBlock*>& bloc
       << "\"maxY\": " << block->position->lowerY << ", "
       << "\"font\": \"" << block->fontName << "\", "
       << "\"fontSize\": " << block->fontSize << ", "
-      << "\"text\": \"" << escapeJson(block->text) << "\", "
+      << "\"text\": \"" << string_utils::escapeJson(block->text) << "\", "
       << "\"role\": \"" << block->role << "\", "
       << "\"origin\": \"pdftotext++\""
       << "}"

@@ -17,37 +17,6 @@
 using namespace std;
 
 // _________________________________________________________________________________________________
-double text_lines_utils::computeTextLineDistance(const PdfTextLine* l1, const PdfTextLine* l2) {
-  assert(l1);
-  assert(l2);
-  assert(l1->position->pageNum == l2->position->pageNum);
-  assert(l1->position->rotation == l2->position->rotation);
-  assert(l1->position->wMode == l2->position->wMode);
-
-  // Determine which of the two lines is the first line (which of the two is positioned "above" the
-  // other by checking which of the two lines has the lower upperY value.
-  const PdfTextLine* upperLine;
-  const PdfTextLine* lowerLine;
-  if (l1->position->upperY < l2->position->upperY) {
-    upperLine = l1;
-    lowerLine = l2;
-  } else {
-    upperLine = l2;
-    lowerLine = l1;
-  }
-
-  switch(l1->position->rotation) {
-    case 0:
-    case 1:
-    default:
-      return lowerLine->position->upperY - upperLine->position->lowerY;
-    case 2:
-    case 3:
-      return upperLine->position->lowerY - lowerLine->position->upperY;
-  }
-}
-
-// _________________________________________________________________________________________________
 bool text_lines_utils::computeIsFirstLineOfItem(const PdfTextLine* line,
       const unordered_set<string>* potentialFootnoteLabels) {
   assert(line);
@@ -79,7 +48,7 @@ bool text_lines_utils::computeIsFirstLineOfItem(const PdfTextLine* line,
     bool isPrevPrefixedByLabel = text_lines_utils::computeIsPrefixedByItemLabel(line->prevLine);
     bool hasEqualFont = text_element_utils::computeHasEqualFont(line->prevLine, line);
     bool hasEqualFontSize = text_element_utils::computeHasEqualFontSize(line->prevLine, line);
-    double distance = text_lines_utils::computeTextLineDistance(line->prevLine, line);
+    double distance = element_utils::computeVerticalGap(line->prevLine, line);
     bool hasNegativeDistance = math_utils::equalOrSmaller(distance, 0);
     bool hasSentenceDelim = text_element_utils::computeEndsWithSentenceDelimiter(line->prevLine);
     bool hasEqualLeftX = element_utils::computeHasEqualLeftX(line->prevLine, line, avgGlyphWidth);
@@ -264,7 +233,7 @@ void text_lines_utils::computeTextLineHierarchies(const PdfPage* page) {
         bool hasSameRotation = prevLine->position->rotation == line->position->rotation;
         bool hasSameWMode = prevLine->position->wMode == line->position->wMode;
         if (hasSameRotation && hasSameWMode) {
-          double absLineDistance = abs(text_lines_utils::computeTextLineDistance(prevLine, line));
+          double absLineDistance = abs(element_utils::computeVerticalGap(prevLine, line));
           if (math_utils::larger(absLineDistance, MAX_LINE_DIST)) {
             lineStack = stack<PdfTextLine*>();
           }

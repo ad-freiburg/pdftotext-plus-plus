@@ -10,7 +10,7 @@
 #include <iostream>
 #include <vector>
 
-#include "./utils/Utils.h"
+#include "./utils/StringUtils.h"
 #include "./PdfDocument.h"
 #include "./XYCut.h"
 
@@ -114,7 +114,7 @@ bool xCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc chooseC
 
     if (gapWidth >= minGapWidth) {
       Cut* cut = new Cut(CutDir::X);
-      cut->id = createRandomString(3);
+      cut->id = string_utils::createRandomString(3);
       cut->posInElements = pos;
       cut->elementBefore = elementLargestRightX;
       cut->elementAfter = element;
@@ -137,7 +137,7 @@ bool xCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc chooseC
 
         if (gapWidth >= minGapWidth) {
           Cut* cut = new Cut(CutDir::X);
-          cut->id = createRandomString(3);
+          cut->id = string_utils::createRandomString(3);
           cut->posInElements = pos;
           cut->elementBefore = elementSecondLargestRightX;
           cut->elementAfter = element;
@@ -236,7 +236,7 @@ bool yCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc chooseC
 
     if (gapHeight > minGapHeight) {
       Cut* cut = new Cut(CutDir::Y);
-      cut->id = createRandomString(3);
+      cut->id = string_utils::createRandomString(3);
       cut->posInElements = pos;
       cut->elementBefore = elementLargestLowerY;
       cut->elementAfter = element;

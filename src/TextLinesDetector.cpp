@@ -16,7 +16,7 @@
 #include "./utils/LogUtils.h"
 #include "./utils/MathUtils.h"
 #include "./utils/PdfElementUtils.h"
-#include "./utils/Utils.h"
+#include "./utils/StringUtils.h"
 #include "./utils/PageSegmentsUtils.h"
 #include "./utils/TextLinesUtils.h"
 
@@ -204,7 +204,7 @@ void TextLinesDetector::detect() {
             double prevLineXGap = 0.0;
             double prevLineYOverlap = 0.0;
             if (prevLine) {
-              prevLineXGap = computeHorizontalGap(prevLine, currLine);
+              prevLineXGap = element_utils::computeHorizontalGap(prevLine, currLine);
               std::pair<double, double> yOverlapRatios = element_utils::computeYOverlapRatios(prevLine, currLine);
               prevLineYOverlap = max(yOverlapRatios.first, yOverlapRatios.second);
             }
@@ -215,7 +215,7 @@ void TextLinesDetector::detect() {
             double nextLineXGap = 0.0;
             double nextLineYOverlap = 0.0;
             if (nextLine) {
-              nextLineXGap = computeHorizontalGap(currLine, nextLine);
+              nextLineXGap = element_utils::computeHorizontalGap(currLine, nextLine);
               std::pair<double, double> yOverlapRatios = element_utils::computeYOverlapRatios(currLine, nextLine);
               nextLineYOverlap = max(yOverlapRatios.first, yOverlapRatios.second);
             }
@@ -308,7 +308,7 @@ void TextLinesDetector::createTextLine(const vector<PdfWord*>& words,
   }
 
   PdfTextLine* line = new PdfTextLine();
-  line->id = createRandomString(8, "line-");
+  line->id = string_utils::createRandomString(8, "line-");
   line->doc = _doc;
 
   // Set the segment.

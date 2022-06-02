@@ -19,7 +19,6 @@
 
 #include "./BytePairEncoder.h"
 #include "./SemanticRolesPredictor.h"
-#include "./utils/Utils.h"
 
 using tensorflow::SessionOptions;
 using tensorflow::RunOptions;

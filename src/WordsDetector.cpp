@@ -12,7 +12,7 @@
 #include "./utils/MathUtils.h"
 #include "./utils/LogUtils.h"
 #include "./utils/PdfElementUtils.h"
-#include "./utils/Utils.h"
+#include "./utils/StringUtils.h"
 #include "./WordsDetector.h"
 #include "./PdfDocument.h"
 
@@ -408,7 +408,7 @@ void WordsDetector::mergeStackedMathSymbols(PdfPage* page) const {
 void WordsDetector::createWord(const std::vector<PdfGlyph*>& glyphs, std::vector<PdfWord*>* words)
     const {
   PdfWord* word = new PdfWord();
-  word->id = createRandomString(8, "w-");
+  word->id = string_utils::createRandomString(8, "w-");
   word->doc = _doc;
 
   // Iteratively compute the text, the x,y-coordinates of the bounding box, and the font info.
