@@ -8,7 +8,7 @@
 
 #include <chrono>    // timestamp
 #include <iomanip>   // setw, setfill
-#include <iostream>  // cout
+#include <iostream>  // cout, ostream
 #include <sstream>
 #include <string>
 #include <utility>   // move

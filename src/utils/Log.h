@@ -9,8 +9,7 @@
 #ifndef LOG_H_
 #define LOG_H_
 
-#include <iostream>
-#include <memory>
+#include <iostream>  // ostream
 #include <string>
 
 using std::ostream;

@@ -15,6 +15,9 @@
 #include "../Constants.h"
 #include "../PdfDocument.h"
 
+using std::pair;
+using std::vector;
+
 // =================================================================================================
 
 namespace element_utils {
@@ -109,7 +112,7 @@ double computeVerticalGap(const PdfElement* e1, const PdfElement* e2);
  *    A pair of doubles representing the percentages of the intervals which are overlapped by
  *    the respective other interval.
  */
-std::pair<double, double> computeOverlapRatios(double s1, double e1, double s2, double e2);
+pair<double, double> computeOverlapRatios(double s1, double e1, double s2, double e2);
 
 /**
  * This method computes the horizontal overlap ratios between the two given elements, that is:
@@ -127,7 +130,7 @@ std::pair<double, double> computeOverlapRatios(double s1, double e1, double s2, 
  *    A pair of doubles representing the percentages of the elements which are overlapped
  *    horizontally by the respective other element.
  */
-std::pair<double, double> computeXOverlapRatios(const PdfElement* elem1, const PdfElement* elem2);
+pair<double, double> computeXOverlapRatios(const PdfElement* elem1, const PdfElement* elem2);
 
 /**
  * This method computes the vertical overlap ratios between the two given elements, that is:
@@ -145,7 +148,7 @@ std::pair<double, double> computeXOverlapRatios(const PdfElement* elem1, const P
  *    A pair of doubles representing the percentages of the elements which are overlapped
  *    vertically by the respective other element.
  */
-std::pair<double, double> computeYOverlapRatios(const PdfElement* elem1, const PdfElement* elem2);
+pair<double, double> computeYOverlapRatios(const PdfElement* elem1, const PdfElement* elem2);
 
 /**
  * This method computes the maximum horizontal overlap ratio between the two given elements, that
@@ -319,7 +322,7 @@ double computeRightXOffset(const PdfElement* elem1, const PdfElement* elem2);
  *    The first figure in the given vector which fulfills the given minimum overlap ratios, or
  *    nullptr if there is no such figure.
  */
-PdfFigure* computeOverlapsFigure(const PdfElement* element, const std::vector<PdfFigure*>& figures,
+PdfFigure* computeOverlapsFigure(const PdfElement* element, const vector<PdfFigure*>& figures,
     double minXOverlapRatio = 0.5, double minYOverlapRatio = 0.5);
 
 }  // namespace element_utils

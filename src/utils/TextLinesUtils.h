@@ -129,6 +129,9 @@ bool computeIsPrefixedByItemLabel(const PdfTextLine* line);
  *
  * @param line
  *    The line to process.
+* @param potentialFootnoteLabels
+ *    The set of potential footnote labels, passed to the computeIsFirstLineOfItem() method. See
+ *    the comment given for this method for more information about this parameter.
  *
  * @return
  *    True if the line is prefixed by an enumeration label, false otherwise.
