@@ -6,17 +6,27 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
+#include <cassert>
 #include <iomanip>  // std::setw, std::setfill
 #include <sstream>
 #include <string>
+#include <utility>  // std::move
 #include <vector>
+
+#include "../Constants.h"
 
 #include "./StringUtils.h"
 
+using std::string;
+using std::vector;
+using std::wstring;
+
 // _________________________________________________________________________________________________
-void string_utils::splitIntoWords(const std::wstring& text, std::vector<std::wstring>* words) {
+void string_utils::splitIntoWords(const wstring& text, vector<wstring>* words) {
+  assert(words);
+
   size_t n = text.length();
-  const std::wstring delimiters = L" \t\r\n\f\v";
+  const wstring delimiters = L" \t\r\n\f\v";  // TODO(korzen): Move this to Constants.h
   size_t start = text.find_first_not_of(delimiters);
 
   while (start < n) {
@@ -28,9 +38,11 @@ void string_utils::splitIntoWords(const std::wstring& text, std::vector<std::wst
 }
 
 // _________________________________________________________________________________________________
-void string_utils::splitIntoWords(const std::string& text, std::vector<std::string>* words) {
+void string_utils::splitIntoWords(const string& text, vector<string>* words) {
+  assert(words);
+
   size_t n = text.length();
-  const std::string delimiters = " \t\r\n\f\v";
+  const string delimiters = " \t\r\n\f\v";  // TODO(korzen): Move this to Constants.h
   size_t start = text.find_first_not_of(delimiters);
 
   while (start < n) {
@@ -42,13 +54,15 @@ void string_utils::splitIntoWords(const std::string& text, std::vector<std::stri
 }
 
 // _________________________________________________________________________________________________
-std::string string_utils::createRandomString(size_t len, const std::string& prefix) {
-  static const char alphanum[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-  std::string tmp_s = prefix;
+string string_utils::createRandomString(size_t len, const string& prefix) {
+  // Append the prefix.
+  string tmp_s = prefix;
   tmp_s.reserve(prefix.length() + len);
 
+  // Append <len>-many random characters from our alphabet of alphanumerical characters.
+  int alphabetSize = sizeof(ALPHA_NUM_ALPHABET);
   for (size_t i = 0; i < len; i++) {
-    tmp_s += alphanum[rand() % (sizeof(alphanum) - 1)];
+    tmp_s += ALPHA_NUM_ALPHABET[rand() % (alphabetSize - 1)];
   }
 
   return tmp_s;
@@ -57,8 +71,8 @@ std::string string_utils::createRandomString(size_t len, const std::string& pref
 // =================================================================================================
 
 // _________________________________________________________________________________________________
-std::string string_utils::escapeJson(const std::string& str) {
-  // This code is stolen from https://stackoverflow.com/questions/7724448
+string string_utils::escapeJson(const string& str) {
+  // Disclaimer: this code is stolen from https://stackoverflow.com/questions/7724448
   std::stringstream o;
   for (size_t i = 0; i < str.size(); i++) {
     switch (str[i]) {
@@ -91,5 +105,5 @@ std::string string_utils::escapeJson(const std::string& str) {
         }
     }
   }
-  return o.str();
+  return std::move(o).str();
 }

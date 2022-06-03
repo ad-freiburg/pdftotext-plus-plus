@@ -12,43 +12,51 @@
 #include <string>
 #include <vector>
 
+using std::string;
+using std::vector;
+using std::wstring;
+
+// =================================================================================================
+
 namespace string_utils {
 
 /**
- * This method splits the given text (given as a std::wstring) into words and appends the words
- * to the given vector.
+ * This method splits the given text (given as a wstring) into words and appends the words to the
+ * given vector.
  *
  * @param text
  *   The text to split into words.
  * @param words
  *   The vector to which the computed words should be appended.
  */
-void splitIntoWords(const std::wstring& text, std::vector<std::wstring>* words);
+void splitIntoWords(const wstring& text, vector<wstring>* words);
 
 /**
- * This method splits the given text (given as a std::string) into words and append the words to
- * the given vector.
+ * This method splits the given text (given as a string) into words and appends the words to the
+ * given vector.
  *
  * @param text
  *   The text to split into words.
  * @param words
  *   The vector to which the computed words should be appended.
  */
-void splitIntoWords(const std::string& text, std::vector<std::string>* words);
+void splitIntoWords(const string& text, vector<string>* words);
 
 /**
- * This method creates a random string of the given length that consists of alpha-numerical
- * characters and that starts with the given prefix. It is used to, for example, create unique ids
- * for the extracted text elements.
+ * This method creates a random string of the given length, consisting of alpha-numerical
+ * characters. Prepends the given prefix to the created string.
+ *
+ * This method is used to, for example, create unique ids for extracted text elements.
  *
  * @param len
  *    The length of the string to create.
  * @param prefix
- *    The prefix.
+ *    The prefix to prepend to the string.
  *
- * @return The created string.
+ * @return
+ *    The created string.
  */
-std::string createRandomString(size_t len, const std::string& prefix = "");
+string createRandomString(size_t len, const string& prefix = "");
 
 /**
  * This method escapes the given string to a valid JSON string. For example, it escapes double-
@@ -60,7 +68,7 @@ std::string createRandomString(size_t len, const std::string& prefix = "");
  * @return
  *    The escaped string.
  */
-std::string escapeJson(const std::string& str);
+string escapeJson(const string& str);
 
 }  // namespace string_utils
 

@@ -19,6 +19,13 @@ const double FONTSIZE_EQUAL_TOLERANCE = 1;
 // =================================================================================================
 
 /**
+ * The characters we consider to be alphanumerical. Used by, for example, the
+ * string_utils::createRandomString() method.
+ */
+const char* const ALPHA_NUM_ALPHABET =
+    "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+/**
  * The characters we consider to be a sentence delimiter. Used by, for example, the
  * text_element_utils::computeEndsWithSentenceDelimiter() method.
  */
