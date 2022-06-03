@@ -18,9 +18,9 @@
 #include "./PdfDocument.h"
 #include "./TextBlocksDetector.h"
 
-#include "./utils/LogUtils.h"
+#include "./utils/Log.h"
 #include "./utils/MathUtils.h"
-#include "./utils/PdfElementUtils.h"
+#include "./utils/PdfElementsUtils.h"
 #include "./utils/TextBlocksUtils.h"
 #include "./utils/TextLinesUtils.h"
 #include "./utils/Trool.h"

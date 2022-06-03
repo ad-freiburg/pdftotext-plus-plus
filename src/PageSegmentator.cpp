@@ -15,8 +15,8 @@
 
 #include "./PdfDocument.h"
 #include "./PageSegmentator.h"
-#include "./utils/LogUtils.h"
-#include "./utils/PdfElementUtils.h"
+#include "./utils/Log.h"
+#include "./utils/PdfElementsUtils.h"
 #include "./utils/StringUtils.h"
 #include "./XYCut.h"
 

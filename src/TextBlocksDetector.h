@@ -13,7 +13,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include "./utils/LogUtils.h"
+#include "./utils/Log.h"
 #include "./utils/Trool.h"
 
 #include "./PdfDocument.h"

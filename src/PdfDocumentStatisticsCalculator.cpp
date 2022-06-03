@@ -10,7 +10,7 @@
 #include <iostream>  // cout
 
 #include "./utils/MathUtils.h"
-#include "./utils/PdfElementUtils.h"
+#include "./utils/PdfElementsUtils.h"
 
 #include "./PdfDocument.h"
 #include "./PdfDocumentStatisticsCalculator.h"

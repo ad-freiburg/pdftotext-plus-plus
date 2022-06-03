@@ -6,9 +6,10 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
+#include <cassert>  // assert
 #include <cmath>  // fabs
 
-# include "./MathUtils.h"
+#include "./MathUtils.h"
 
 // _________________________________________________________________________________________________
 bool math_utils::equal(double d1, double d2, double tolerance) {
@@ -42,10 +43,12 @@ bool math_utils::between(double d, double low, double up, double tol) {
 
 // _________________________________________________________________________________________________
 double math_utils::round(double d, int numDecimals) {
+  assert(numDecimals >= 0);
+
   if (numDecimals == 0) {
     return std::round(d);
+  } else {
+    double divisor = 10.0 * numDecimals;
+    return static_cast<double>(static_cast<int>(d * divisor)) / divisor;
   }
-
-  double divisor = 10.0 * numDecimals;
-  return static_cast<double>(static_cast<int>(d * divisor)) / divisor;
 }

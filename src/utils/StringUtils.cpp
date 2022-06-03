@@ -6,7 +6,7 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include <iomanip> // std::setw, std::setfill
+#include <iomanip>  // std::setw, std::setfill
 #include <sstream>
 #include <string>
 #include <vector>
@@ -85,7 +85,7 @@ std::string string_utils::escapeJson(const std::string& str) {
         break;
       default:
         if ('\x00' <= str[i] && str[i] <= '\x1f') {
-          o << "\\u" << std::hex << std::setw(4) << std::setfill('0') << (int) str[i];
+          o << "\\u" << std::hex << std::setw(4) << std::setfill('0') << static_cast<int>(str[i]);
         } else {
           o << str[i];
         }

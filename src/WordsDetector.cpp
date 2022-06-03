@@ -10,8 +10,8 @@
 #include <limits> // std::numeric_limits
 
 #include "./utils/MathUtils.h"
-#include "./utils/LogUtils.h"
-#include "./utils/PdfElementUtils.h"
+#include "./utils/Log.h"
+#include "./utils/PdfElementsUtils.h"
 #include "./utils/StringUtils.h"
 #include "./WordsDetector.h"
 #include "./PdfDocument.h"

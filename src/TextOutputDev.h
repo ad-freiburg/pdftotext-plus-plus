@@ -18,7 +18,7 @@
 #include <poppler/GfxState.h>
 #include <poppler/OutputDev.h>
 
-#include "./utils/LogUtils.h"
+#include "./utils/Log.h"
 #include "./PdfDocument.h"
 
 

@@ -19,7 +19,7 @@
 #include "./TextOutputDev.h"
 
 #include "./utils/GlyphMap.h"
-#include "./utils/LogUtils.h"
+#include "./utils/Log.h"
 #include "./utils/MathUtils.h"
 #include "./utils/StringUtils.h"
 

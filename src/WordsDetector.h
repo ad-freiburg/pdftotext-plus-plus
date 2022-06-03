@@ -12,7 +12,7 @@
 #include <limits>  // std::numeric_limits
 #include <vector>  // std::vector
 
-#include "./utils/LogUtils.h"
+#include "./utils/Log.h"
 #include "./PdfDocument.h"
 
 // =================================================================================================

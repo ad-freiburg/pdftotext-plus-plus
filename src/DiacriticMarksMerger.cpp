@@ -12,7 +12,7 @@
 
 #include <poppler/GlobalParams.h>
 
-#include "./utils/LogUtils.h"
+#include "./utils/Log.h"
 #include "./utils/MathUtils.h"
 #include "./DiacriticMarksMerger.h"
 

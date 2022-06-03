@@ -6,15 +6,19 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include <regex>
 #include <iostream>
+#include <regex>
+#include <string>
 #include <unordered_set>
+#include <vector>
+#include <stack>
 
 #include "./MathUtils.h"
-#include "./PdfElementUtils.h"
+#include "./PdfElementsUtils.h"
 #include "./TextLinesUtils.h"
 
-using namespace std;
+using std::string;
+using std::unordered_set;
 
 // _________________________________________________________________________________________________
 bool text_lines_utils::computeIsFirstLineOfItem(const PdfTextLine* line,
@@ -132,11 +136,11 @@ bool text_lines_utils::computeIsPrefixedByItemLabel(const PdfTextLine* line) {
 
   // The line is prefixed by an enumeration item label if the first glyph is superscripted and if
   // it is contained in our alphabet we defined for identifying superscripted item labels.
-  // TODO: Instead of analyzing only the first glyph, we should analyze the first *word*. This
-  // would identify also lines that are prefixed by something like "a)".
-  PdfGlyph* firstGlyph = firstWordGlyphs[0];
-  string firstGlyphStr = firstGlyph->text;
-  if (firstGlyph->isSuperscript && SUPER_ITEM_LABEL_ALPHABET.find(firstGlyphStr) != string::npos) {
+  // TODO(korzen): Instead of analyzing only the first glyph, we should analyze the first *word*.
+  // This would identify also lines that are prefixed by something like "a)".
+  PdfGlyph* glyph = firstWordGlyphs[0];
+  string glyphStr = glyph->text;
+  if (glyph->isSuperscript && strstr(SUPER_ITEM_LABEL_ALPHABET, glyphStr.c_str()) != nullptr) {
     return true;
   }
 
@@ -311,8 +315,8 @@ void text_lines_utils::computePotentialFootnoteLabels(const PdfTextLine* line,
   // is part of such a label and that are positioned behind the word (we don't want to consider
   // labels that are positioned in front of a word, since footnote labels are unlikely
   // to be positioned behind words).
-  // TODO: We do not store the info about whether a superscript is positioned before or after
-  // a word. As a workaround, consider a superscript as part of a potential footnote marker
+  // TODO(korzen): We do not store the info about whether a superscript is positioned before or
+  // after a word. As a workaround, consider a superscript as part of a potential footnote marker
   // only when a non-subscript and non-superscript was already seen.
   for (const auto* word : line->words) {
     string label;
@@ -334,7 +338,7 @@ void text_lines_utils::computePotentialFootnoteLabels(const PdfTextLine* line,
 
       // The glyph is part of a potential footnote label when it occurs in our alphabet we defined
       // to identify special (= non-alphanumerical) footnote labels.
-      bool isLabel = SPECIAL_FOOTNOTE_LABELS_ALPHABET.find(glyph->text[0]) != string::npos;
+      bool isLabel = strchr(SPECIAL_FOOTNOTE_LABELS_ALPHABET, glyph->text[0]) != nullptr;
 
       // The glyph is also a potential footnote label when it is a superscripted alphanumerical.
       if (glyph->isSuperscript && isalnum(glyph->text[0])) {

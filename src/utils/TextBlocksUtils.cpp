@@ -13,7 +13,7 @@
 #include <vector>
 
 #include "./MathUtils.h"
-#include "./PdfElementUtils.h"
+#include "./PdfElementsUtils.h"
 #include "./StringUtils.h"
 #include "./TextBlocksUtils.h"
 #include "./TextLinesUtils.h"
@@ -56,8 +56,8 @@ bool text_blocks_utils::computeIsTextLinesCentered(const PdfTextBlock* block) {
 
     // The lines in the block are not centered when there is at least one line which is not
     // centered compared to the previous line.
-    bool isCentered = text_lines_utils::computeIsCentered(prevLine, currLine, XOFFSET_THRESH_FACTOR);
-    if (!isCentered) {
+    bool centered = text_lines_utils::computeIsCentered(prevLine, currLine, XOFFSET_THRESH_FACTOR);
+    if (!centered) {
       return false;
     }
 

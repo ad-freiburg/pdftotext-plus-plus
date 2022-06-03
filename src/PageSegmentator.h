@@ -12,7 +12,7 @@
 #include <string>
 #include <vector>
 
-#include "./utils/LogUtils.h"
+#include "./utils/Log.h"
 #include "./PdfDocument.h"
 
 

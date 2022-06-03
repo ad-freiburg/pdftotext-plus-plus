@@ -10,6 +10,8 @@
 #define TEXTLINESUTILS_H_
 
 #include <regex>
+#include <string>
+#include <unordered_set>
 
 #include "../PdfDocument.h"
 
@@ -18,7 +20,7 @@ using std::string;
 // =================================================================================================
 
 // The characters which we consider to be a valid part of a superscripted item label.
-const string SUPER_ITEM_LABEL_ALPHABET = "*∗abcdefghijklmnopqrstuvwxyz01234567890()";
+const char* const SUPER_ITEM_LABEL_ALPHABET = "*∗abcdefghijklmnopqrstuvwxyz01234567890()";
 
 // Some regular expressions to find item labels.
 const regex ITEM_LABEL_REGEXES[] = {
@@ -42,7 +44,7 @@ const regex ITEM_LABEL_REGEXES[] = {
   regex("^PACS\\s+", regex_constants::icase)
 };
 
-const std::string SPECIAL_FOOTNOTE_LABELS_ALPHABET = "*∗†‡§‖¶?";
+const char* const SPECIAL_FOOTNOTE_LABELS_ALPHABET = "*∗†‡§‖¶?";
 
 // =================================================================================================
 
@@ -79,7 +81,7 @@ namespace text_lines_utils {
  *    otherwise.
  */
 bool computeIsFirstLineOfItem(const PdfTextLine* line,
-    const unordered_set<string>* potentialFootnoteLabels=nullptr);
+    const unordered_set<string>* potentialFootnoteLabels = nullptr);
 
 /**
  * This method returns true if the given line is a continuation line of an enumeration item or of
@@ -101,7 +103,7 @@ bool computeIsFirstLineOfItem(const PdfTextLine* line,
  *    otherwise.
  */
 bool computeIsContinuationOfItem(const PdfTextLine* line,
-    const unordered_set<string>* potentialFootnoteLabels=nullptr);
+    const unordered_set<string>* potentialFootnoteLabels = nullptr);
 
 // =================================================================================================
 
@@ -134,7 +136,7 @@ bool computeIsPrefixedByItemLabel(const PdfTextLine* line);
  *    True if the line is prefixed by an enumeration label, false otherwise.
  */
 bool computeIsPrefixedByFootnoteLabel(const PdfTextLine* line, const unordered_set<string>*
-    potentialFootnoteLabels=nullptr);
+    potentialFootnoteLabels = nullptr);
 
 // =================================================================================================
 
@@ -266,7 +268,7 @@ void computePotentialFootnoteLabels(const PdfTextLine* line, unordered_set<strin
  *    false otherwise.
  */
 bool computeIsCentered(const PdfTextLine* line1, const PdfTextLine* line2,
-    double xOffsetToleranceFactor=1.0);
+    double xOffsetToleranceFactor = 1.0);
 
 }  // namespace text_lines_utils
 

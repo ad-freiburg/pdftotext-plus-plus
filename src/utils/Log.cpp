@@ -13,8 +13,9 @@
 #include <string>
 #include <utility>   // move
 
-#include "./LogUtils.h"
+#include "./Log.h"
 
+using std::move;
 using std::ostream;
 using std::string;
 using std::stringstream;
@@ -38,39 +39,41 @@ void Logger::setPageFilter(int pageFilter) {
 }
 
 // _________________________________________________________________________________________________
-ostream& Logger::trace(int page) {
+ostream& Logger::trace(int page) const {
   return log(LogLevel::TRACE, page);
 }
 
 // _________________________________________________________________________________________________
-ostream& Logger::debug(int page) {
+ostream& Logger::debug(int page) const {
   return log(LogLevel::DEBUG, page);
 }
 
 // _________________________________________________________________________________________________
-ostream& Logger::info(int page) {
+ostream& Logger::info(int page) const {
   return log(LogLevel::INFO, page);
 }
 
 // _________________________________________________________________________________________________
-ostream& Logger::warn(int page) {
+ostream& Logger::warn(int page) const {
   return log(LogLevel::WARN, page);
 }
 
 // _________________________________________________________________________________________________
-ostream& Logger::error(int page) {
+ostream& Logger::error(int page) const {
   return log(LogLevel::ERROR, page);
 }
 
 // _________________________________________________________________________________________________
-ostream& Logger::log(LogLevel logLevel, int pageNum) {
-  // Ignore the messages sent to the stream if the given log level is smaller than _logLevel.
+ostream& Logger::log(LogLevel logLevel, int pageNum) const {
+  // Forward the messages sent to the stream to /dev/null (= do not print the messages to the
+  // console), if the given log level is smaller than _logLevel.
   if (_logLevel > logLevel) {
     return nullStr;
   }
 
-  // Ignore the messages sent to the stream _pageFilter is set, the given page number is set,
-  // but the page number is not equal to _pageFilter.
+  // Forward the messages sent to the stream to /dev/null (= do not print the messages to the
+  // console) if _pageFilter is set and the given page number is set, but the page number is not
+  // equal to _pageFilter.
   if (_pageFilter > 0 && pageNum > 0 && _pageFilter != pageNum) {
     return nullStr;
   }
@@ -98,12 +101,12 @@ ostream& Logger::log(LogLevel logLevel, int pageNum) {
       break;
   }
 
-  return std::cout << Logger::getTimeStamp() << "\t- " << std::move(logLevelStr).str() << " ";
+  return std::cout << Logger::getTimeStamp() << "\t- " << logLevelStr.str() << " ";
 }
 
 // _________________________________________________________________________________________________
 string Logger::getTimeStamp() {
-  // This code is stolen from https://stackoverflow.com/questions/17223096.
+  // Disclaimer: this code is stolen from https://stackoverflow.com/questions/17223096.
   auto now = std::chrono::system_clock::now();
   auto in_time_t = std::chrono::system_clock::to_time_t(now);
   auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
@@ -111,5 +114,5 @@ string Logger::getTimeStamp() {
   stringstream ss;
   ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X") << '.'
      << std::setw(3) << std::setfill('0') << ms.count();
-  return std::move(ss).str();
+  return move(ss).str();
 }

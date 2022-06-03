@@ -21,8 +21,8 @@
 
 ========================================================================*/
 
-#ifndef PARSEARGS_H
-#define PARSEARGS_H
+#ifndef PARSEARGS_H_
+#define PARSEARGS_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,8 +31,7 @@ extern "C" {
 /*
  * Argument kinds.
  */
-typedef enum
-{
+typedef enum {
     argFlag, /* flag (present / not-present) */
     /*   [val: bool *]             */
     argInt, /* integer arg    */
@@ -54,8 +53,7 @@ typedef enum
 /*
  * Argument descriptor.
  */
-typedef struct
-{
+typedef struct {
     const char *arg; /* the command line switch */
     ArgKind kind; /* kind of arg */
     void *val; /* place to store value */
@@ -85,4 +83,4 @@ extern bool isFP(const char *s);
 }
 #endif
 
-#endif
+#endif  // PARSEARGS_H_

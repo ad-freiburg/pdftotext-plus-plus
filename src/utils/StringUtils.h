@@ -48,7 +48,7 @@ void splitIntoWords(const std::string& text, std::vector<std::string>* words);
  *
  * @return The created string.
  */
-std::string createRandomString(size_t len, const std::string& prefix="");
+std::string createRandomString(size_t len, const std::string& prefix = "");
 
 /**
  * This method escapes the given string to a valid JSON string. For example, it escapes double-
@@ -64,4 +64,4 @@ std::string escapeJson(const std::string& str);
 
 }  // namespace string_utils
 
-#endif  // #define STRINGUTILS_H_
+#endif  // STRINGUTILS_H_
