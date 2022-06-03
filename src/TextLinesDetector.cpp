@@ -296,7 +296,7 @@ void TextLinesDetector::detect() {
       segment->trimLowerY = get<3>(trimBox);
     }
 
-    text_lines_utils::computeTextLineHierarchies(page);
+    text_lines_utils::computeTextLineHierarchy(page);
   }
 }
 

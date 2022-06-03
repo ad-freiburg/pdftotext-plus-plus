@@ -19,9 +19,6 @@ using std::string;
 
 // =================================================================================================
 
-// The characters which we consider to be a valid part of a superscripted item label.
-const char* const SUPER_ITEM_LABEL_ALPHABET = "*∗abcdefghijklmnopqrstuvwxyz01234567890()";
-
 // Some regular expressions to find item labels.
 const regex ITEM_LABEL_REGEXES[] = {
   // A regex to find item labels of form "• ", or "- ", or "+ ", etc.
@@ -44,20 +41,16 @@ const regex ITEM_LABEL_REGEXES[] = {
   regex("^PACS\\s+", regex_constants::icase)
 };
 
-const char* const SPECIAL_FOOTNOTE_LABELS_ALPHABET = "*∗†‡§‖¶?";
-
 // =================================================================================================
 
 namespace text_lines_utils {
-
-// =================================================================================================
 
 /**
  * This method returns true if the given text line is the first line of an enumeration item or of
  * a footnote.
  *
- * For the returned value to be true, the line must be prefixed by an item label
- * (that is: computeIsPrefixedByItemLabel(line) must return true) and one of the following further
+ * For the returned value to be true, the line must be prefixed by an item label (that is:
+ * computeIsPrefixedByItemLabel(line) must return true) and one of the following further
  * requirements must be fulfilled:
  * (1) If the given line has a previous sibling line (stored in line.prevSibling), it is also
  *     prefixed by an item label, and it exhibits the same font and font size as the given line;
@@ -92,6 +85,11 @@ bool computeIsFirstLineOfItem(const PdfTextLine* line,
  * line.parentLine), which is either the first line of an item (resp. footnote), or also the
  * continuation of an item (resp. footnote).
  *
+ * TODO: The assumption here is that the continuation line of an item or footnote is indented
+ * compared to the first line of the item (otherwise, the continuation does not have a parent line).
+ * This is however not always the case (there are items where the continuation lines are not
+ * intended).
+ *
  * @param line
  *    The line to process.
  * @param potentialFootnoteLabels
@@ -99,7 +97,7 @@ bool computeIsFirstLineOfItem(const PdfTextLine* line,
  *    the comment given for this method for more information about this parameter.
  *
  * @return
- *    True if the given line is a continuation of an enumeration item or a footnote, false
+ *    True if the given line is a continuation line of an enumeration item or a footnote, false
  *    otherwise.
  */
 bool computeIsContinuationOfItem(const PdfTextLine* line,
@@ -125,7 +123,7 @@ bool computeIsPrefixedByItemLabel(const PdfTextLine* line);
  * This method returns true if the given line is prefixed by a footnote label.
  *
  * For the returned value to be true, all of the following requirements must be fulfilled:
- * (1) The given line must start with one or more superscripted characters.
+ * (1) The given line starts with one or more superscripted characters.
  * (2) If 'potentialFootnoteLabels' is specified, it must contain the superscripted prefix (= the
  *     concatenation of all superscripted characters in front of the line).
  *
@@ -146,10 +144,10 @@ bool computeIsPrefixedByFootnoteLabel(const PdfTextLine* line, const unordered_s
  * line (or: if the right margin of the previous line is larger than the width of the first word
  * of the given line + some extra space for an additional whitespace).
  *
- * We primarily use this method to detect text block boundaries and forced line breaks. If this
- * method returns true, we assume that the given line and its previous line do not belong to the
- * same text bloc, because when the previous line has capacity, we see no other reason why the
- * first word of the given line is not placed at the end of the previous line.
+ * This method is primarily used to detect text block boundaries and forced line breaks. If this
+ * method returns true, it is assumed that the given line and its previous line do not belong to
+ * the same text block, because otherwise the first word of the given line could have been placed
+ * at the end of the previous line.
  *
  * @param line
  *    The line to process.
@@ -191,7 +189,7 @@ bool computeHasPrevLineCapacity(const PdfTextLine* line, double toleranceFactor 
  *   (c) the line distance between L and M is smaller than a given threshold.
  *   (d) L.lowerY < M.lowerY (meaning that M must be positioned below L).
  *
- * The following illustrates the different line types on an example:
+ * Here is an example which helps to understand the different line types:
  *
  * Aarseth S J 1999 PASP 111 1333            (1)
  * Amaro-Seoane P, Gair J R, Freitag M,      (2)
@@ -202,19 +200,27 @@ bool computeHasPrevLineCapacity(const PdfTextLine* line, double toleranceFactor 
  *   Li C, Lovelace G, Mandel I and Thorne   (7)
  *     K S 2007 PRL 99 201102                (8)
  *
- * Line 1:  parent: -        ; prev sibling: -        ; next sibling: line (2)
- * Line 2:  parent: -        ; prev sibling: line (1) ; next sibling: line (6)
- * Line 3:  parent: line (2) ; prev sibling: -        ; next sibling: line (4)
- * Line 4:  parent: line (2) ; prev sibling: line (3) ; next sibling: line (5)
- * Line 5:  parent: line (2) ; prev sibling: line (4) ; next sibling: -
- * Line 6:  parent: -        ; prev sibling: line (2) ; next sibling: -
- * Line 7:  parent: line (6) ; prev sibling: -        ; next sibling: -
- * Line 8:  parent: line (7) ; prev sibling: -        ; next sibling: -
+ * Line (1):  parent: -        ; prev sibling: -        ; next sibling: line (2)
+ * Line (2):  parent: -        ; prev sibling: line (1) ; next sibling: line (6)
+ * Line (3):  parent: line (2) ; prev sibling: -        ; next sibling: line (4)
+ * Line (4):  parent: line (2) ; prev sibling: line (3) ; next sibling: line (5)
+ * Line (5):  parent: line (2) ; prev sibling: line (4) ; next sibling: -
+ * Line (6):  parent: -        ; prev sibling: line (2) ; next sibling: -
+ * Line (7):  parent: line (6) ; prev sibling: -        ; next sibling: -
+ * Line (8):  parent: line (7) ; prev sibling: -        ; next sibling: -
  *
- * Note in particular that line (5) is not a previous sibling of line (7) because there is line (6)
- * in between with a smaller leftX than line (5) and line (7).
+ * The entry for line (3) in the above listing is to be read as follows:
+ *  - "The parent line of line (3) is line (2)";
+ *  - "Line (3) has no previous sibling line."
+ *  - "The next sibling line of line (3) is line (4)."
+ *
+ * The reason why line (5) is not a previous sibling of line (7) is that there is line (6)
+ * in between, which have a smaller leftX than line (5) and line (7).
+ *
+ * @param page
+ *    The page to process.
  */
-void computeTextLineHierarchies(const PdfPage* page);
+void computeTextLineHierarchy(const PdfPage* page);
 
 /**
  * This method computes potential footnote labels contained in the given line and appends it to
@@ -224,8 +230,8 @@ void computeTextLineHierarchies(const PdfPage* page);
  * footnotes. The motivation is the following: the first line of a footnote is usually prefixed by
  * a label that consists of a superscripted character or number, or a special symbol like:
  * *, †, ‡, §, ‖, ¶. However, a PDF can contain text lines which occasionally starts with such a
- * label, although they are not an actual part of a footnote. THe consequence is that lines are
- * mistakenly detected as footnotes.
+ * label, although they are not an actual part of a footnote. A possible consequence is that lines
+ * which are not an actual part of a footnote are mistakenly detected as footnotes.
  *
  * One observation is that the label of a footnote usually occurs a second time in the body text
  * of the document (this is for referencing the footnote at a certain position in the body text).
@@ -245,8 +251,9 @@ void computePotentialFootnoteLabels(const PdfTextLine* line, unordered_set<strin
  * This method returns true if the given lines are centered compared to each other.
  *
  * For the returned value to be true, all of the following requirements must be fulfilled:
- * (1) One of the lines must completely overlap the respective other line horizontally (otherwise
- *     the lines are not centered)
+ * (1) One of the lines must completely overlap the respective other line horizontally, that is:
+ *     one of the values returned by element_utils::computeXOverlapRatios(line.prevLine, line) must
+ *     be equal to 1.
  * (2) The leftX offset (= line1.leftX - line2.leftX) and the rightX offset (= line1.rightX -
  *     line2.rightX) must be equal, under consideration of a tolerance computed by using the given
  *     factor.
@@ -264,7 +271,7 @@ void computePotentialFootnoteLabels(const PdfTextLine* line, unordered_set<strin
  *    equal.
  *
  * @return
- *    True, if the two given lines are centered with respect to the requirments mentioned above,
+ *    True, if the two given lines are centered with respect to the requirements mentioned above,
  *    false otherwise.
  */
 bool computeIsCentered(const PdfTextLine* line1, const PdfTextLine* line2,

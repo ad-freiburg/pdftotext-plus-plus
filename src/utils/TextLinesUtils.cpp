@@ -6,12 +6,13 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include <iostream>
 #include <regex>
 #include <string>
 #include <unordered_set>
 #include <vector>
 #include <stack>
+
+#include "../Constants.h"
 
 #include "./MathUtils.h"
 #include "./PdfElementsUtils.h"
@@ -19,6 +20,7 @@
 
 using std::string;
 using std::unordered_set;
+using std::vector;
 
 // _________________________________________________________________________________________________
 bool text_lines_utils::computeIsFirstLineOfItem(const PdfTextLine* line,
@@ -43,11 +45,11 @@ bool text_lines_utils::computeIsFirstLineOfItem(const PdfTextLine* line,
   // (1) the previous line is not prefixed by an item label;
   // (2) the previous line and the current line have the same font;
   // (3) the previous line and the current line have the same font size;
-  // (4) the distance between the previous and current line is <= 0
-  // (5) the previous line does not end with a sentence delimiter
+  // (4) the distance between the previous and current line is <= 0;
+  // (5) the previous line does not end with a sentence delimiter;
   // (6) the previous and current line have the same leftX.
   // This should avoid to detect lines that occasionally start with a footnote label, but that are
-  // actually not part of a footnote, as a footnote. Example: 0901.4737, page 11.
+  // actually not part of a footnote, as a footnote. Example: 0901.4737, page 11 ("25Mg and 26Mg..")
   if (line->prevLine) {
     bool isPrevPrefixedByLabel = text_lines_utils::computeIsPrefixedByItemLabel(line->prevLine);
     bool hasEqualFont = text_element_utils::computeHasEqualFont(line->prevLine, line);
@@ -65,7 +67,7 @@ bool text_lines_utils::computeIsFirstLineOfItem(const PdfTextLine* line,
 
   // Check if there is a previous sibling line. The current line is the first line of an item
   // if the previous sibling line is also prefixed by an item label and if it exhibits the same
-  // font and font size as the current line.
+  // font and font size as the given line.
   const PdfTextLine* prevSibling = line->prevSiblingLine;
   if (prevSibling && !prevSibling->words.empty()) {
     PdfWord* firstWord = line->words[0];
@@ -123,13 +125,13 @@ bool text_lines_utils::computeIsPrefixedByItemLabel(const PdfTextLine* line) {
   assert(line);
 
   // The line is not prefixed by an enumeration item label if it does not contain any words.
-  const std::vector<PdfWord*>& words = line->words;
+  const vector<PdfWord*>& words = line->words;
   if (words.empty()) {
     return false;
   }
 
   // The line is not prefixed by an enumeration item label if the first word is empty.
-  const std::vector<PdfGlyph*>& firstWordGlyphs = words[0]->glyphs;
+  const vector<PdfGlyph*>& firstWordGlyphs = words[0]->glyphs;
   if (firstWordGlyphs.empty()) {
     return false;
   }
@@ -145,7 +147,7 @@ bool text_lines_utils::computeIsPrefixedByItemLabel(const PdfTextLine* line) {
   }
 
   // The line is prefixed by an enumeration item label if it matches one of our regexes we defined
-  // for identifying item labels.
+  // for identifying item labels. The matching parts must not be superscripted.
   smatch m;
   for (const auto& regex : ITEM_LABEL_REGEXES) {
     if (regex_search(line->text, m, regex)) {
@@ -162,7 +164,7 @@ bool text_lines_utils::computeIsPrefixedByFootnoteLabel(const PdfTextLine* line,
   assert(line);
 
   // The line is not prefixed by a footnote label if it does not contain any words.
-  const std::vector<PdfWord*>& words = line->words;
+  const vector<PdfWord*>& words = line->words;
   if (words.empty()) {
     return false;
   }
@@ -212,7 +214,7 @@ bool text_lines_utils::computeHasPrevLineCapacity(const PdfTextLine* line, doubl
 
 
 // _________________________________________________________________________________________________
-void text_lines_utils::computeTextLineHierarchies(const PdfPage* page) {
+void text_lines_utils::computeTextLineHierarchy(const PdfPage* page) {
   assert(page);
 
   // Do nothing if the page does not contain any segments.
@@ -220,8 +222,13 @@ void text_lines_utils::computeTextLineHierarchies(const PdfPage* page) {
     return;
   }
 
+  // ----------
+  // CONSTANTS
+
   const double MAX_LINE_DIST = 10.0;
   const double LEFT_X_OFFSET_TOLERANCE = page->segments[0]->doc->avgGlyphWidth;
+
+  // ----------
 
   // Maintain a stack to keep track of the parent and sibling lines.
   stack<PdfTextLine*> lineStack;
@@ -265,8 +272,8 @@ void text_lines_utils::computeTextLineHierarchies(const PdfPage* page) {
 
       // Ignore the current line if its lowerY is smaller than the lowerY of the
       // topmost line in the stack (that is: if the current line is positioned above the topmost
-      // line in). This should prevent to consider a line to be the parent line or a sibling
-      // line of a line in a different column.
+      // line in the stack). This should prevent to consider a line to be the parent line or a
+      // sibling line of a line in a different column.
       double topStackLowerY = lineStack.top()->position->lowerY;
       double lineLowerY = line->position->lowerY;
       if (math_utils::equalOrLarger(topStackLowerY, lineLowerY)) {
@@ -275,8 +282,8 @@ void text_lines_utils::computeTextLineHierarchies(const PdfPage* page) {
 
       // Check if the topmost line in the stack has the same leftX than the current line
       // (under consideration of the given tolerance). If so, the following is true:
-      // (1) the current line is the next sibling line of the topmost line in the stack
-      // (2) the topmost line in the stack is the previous sibling line of the current line.
+      // (1) the current line is the next sibling line of the topmost line in the stack;
+      // (2) the topmost line in the stack is the previous sibling line of the current line;
       // (3) the parent line of the topmost line in the stack is also the parent line of the
       //     current line.
       double topStackLeftX = lineStack.top()->position->leftX;
@@ -309,12 +316,12 @@ void text_lines_utils::computePotentialFootnoteLabels(const PdfTextLine* line,
   assert(line);
   assert(result);
 
-  // Iterate through the glyphs of the word. For each glyph, check if it is a label that potentially
-  // reference a footnote, that is: if it is a superscipted alphanumerical or if it occurs in our
-  // alphabet we defined to identify special footnote labels. Merge each consecutive glyph that
-  // is part of such a label and that are positioned behind the word (we don't want to consider
-  // labels that are positioned in front of a word, since footnote labels are unlikely
-  // to be positioned behind words).
+  // Iterate through the glyphs of the word. For each glyph, check if it is a label that
+  // potentially reference a footnote, that is: if it is a superscipted alphanumerical or if it
+  // occurs in our alphabet we defined to identify special footnote labels. Merge each consecutive
+  // glyph that is part of such a label and that are positioned behind the word (we don't want to
+  // consider labels that are positioned in front of a word, since footnote labels are usually
+  // positioned behind words).
   // TODO(korzen): We do not store the info about whether a superscript is positioned before or
   // after a word. As a workaround, consider a superscript as part of a potential footnote marker
   // only when a non-subscript and non-superscript was already seen.

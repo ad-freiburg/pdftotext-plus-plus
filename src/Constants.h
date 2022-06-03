@@ -42,6 +42,19 @@ const char* const SENTENCE_DELIMITER_ALPHABET = "?!.);";
 const char* const FORMULA_ID_ALPHABET = "=+";
 
 /**
+ * The characters which we consider to be a valid part of a superscripted item label. This is used
+ * by, for example, the text_lines_utils::computeIsPrefixedByItemLabel() method.
+ */
+const char* const SUPER_ITEM_LABEL_ALPHABET = "*∗abcdefghijklmnopqrstuvwxyz01234567890()";
+
+/**
+ * The characters which we consider, to be a valid footnote label (in addition to alphanumerical
+ * symbols). This is used by, for example, the text_lines_utils::computePotentialFootnoteLabels()
+ * method.
+ */
+const char* const SPECIAL_FOOTNOTE_LABELS_ALPHABET = "*∗†‡§‖¶?";
+
+/**
  * A set of common last name prefixes. This is used, for example, by
  * text_blocks_utils::computeHangingIndent(), for checking if a given block is in hanging indent
  * format. Normally, a block is not considered as a block in hanging indent when it contains one or
