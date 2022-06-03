@@ -62,7 +62,7 @@ class PageSegmentator {
    *   The index of the position in `elements` for which to decide whether or not it is a valid
    *   position to divide the elements by a x-cut.
    * @param closestElementLeft
-   *   The element in elements[0..cutPos] with the largest rightX value.
+   *   The element in elements[0..cutPos] with the largest rightX.
    *
    * @return True if the position between `closestElementLeft` and `elements[cutPos]` denotes a
    *   valid x-cut position, false otherwise.
@@ -80,7 +80,7 @@ class PageSegmentator {
   //  *   The index of the position in `elements` for which to decide whether or not it is a valid
   //  *   position to divide the elements by a semantic y-cut.
   //  * @param closestElementAbove
-  //  *   The element in elements[0..cutPos] with the largest lowerY value.
+  //  *   The element in elements[0..cutPos] with the largest lowerY.
   //  *
   //  * @return True if the position between `closestElementAbove` and `elements[cutPos]` denotes a
   //  *   valid semantic y-cut position, false otherwise.
@@ -100,7 +100,7 @@ class PageSegmentator {
    *   The index of the position in `elements` for which to decide whether or not it is a valid
    *   position to divide the elements by a y-cut.
    * @param closestElementAbove
-   *   The element in elements[0..cutPos] with the largest lowerY value.
+   *   The element in elements[0..cutPos] with the largest lowerY.
    *
    * @return True if the position between `closestElementAbove` and `elements[cutPos]` denotes a
    *   valid y-cut position, false otherwise.

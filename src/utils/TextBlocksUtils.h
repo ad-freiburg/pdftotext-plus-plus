@@ -9,25 +9,11 @@
 #ifndef TEXTBLOCKSUTILS_H_
 #define TEXTBLOCKSUTILS_H_
 
-#include <string>
-#include <unordered_set>
 #include <vector>
 
 #include "../PdfDocument.h"
 
-using std::string;
-using std::unordered_set;
-
-/**
- * A set of common last name prefixes. This is used for checking if a given block is in hanging
- * indent format. Normally, a block is not considered as a block in hanging indent when it contains
- * one or more unindented lines that start with a lowercase character. However, there are references
- * in hanging indent format that start with a (lowercased) last name prefix. To not accidentally
- * consider a block to be not in hanging indent format when it contains a line starting with
- * such prefix, we do not count a line as a lowercased line if it starts with a word contained in
- * this set.
- */
-const unordered_set<string> LAST_NAME_PREFIXES = { "van", "von", "de" };
+using std::vector;
 
 // =================================================================================================
 
@@ -42,17 +28,19 @@ namespace text_blocks_utils {
  *     NOTE: We consider a text line L as centered compared to another text line M, if:
  *      (a) the leftX offset (= L.leftX - M.leftX) is equal to the rightX offset
  *          (= L.rightX - M.rightX)
- *      (b) one line completely overlaps the other line horizontally
+ *      (b) one line completely overlaps the other line horizontally, that is: one of the values
+ *          returned by element_utils::computeXOverlapRatios(line.prevLine, line) is equal to 1;
  * (2) There is at least one line (which does not represent a display formula) for which the leftX
- *     offset (or rightX offset) is larger than a given threshold
- * (3) The number of justified text lines (lines with leftX offset == rightX offset == 0) is
- *     smaller than a given threshold.
+ *     offset (resp. rightX offset) is larger than a given threshold;
+ * (3) The number of justified text lines (that is: lines with leftX offset == rightX offset == 0)
+ *     is smaller than a given threshold.
  *
  * @param block
  *    The text block to process.
  *
  * @return
- *    True if the lines contained in the given text block are centered; false otherwise.
+ *    True if the lines contained in the given text block are centered with regard to the
+ *    requirements described above; false otherwise.
  */
 bool computeIsTextLinesCentered(const PdfTextBlock* block);
 
@@ -66,13 +54,13 @@ bool computeIsTextLinesCentered(const PdfTextBlock* block);
  * For the returned value to be > 0.0, all of the following requirements must be fulfilled:
  * (1) The block must contain at least two lines with a length larger than a threshold.
  * (2) The block must contain at least one indented line, that is: a line with a left margin equal
- *     to the most frequent left margin (which is computed among the lines in the block with a left
- *     margin larger than a threshold).
+ *     to the most frequent left margin (which is computed among the lines in the block that
+ *     exhibit a left margin larger than a threshold).
  * (3) The block does not contain any non-indented line that starts with a lowercase character.
  *
  * Additionally, one of the following requirements must be fulfilled:
  * (a) The first line is not indented, but all other lines, and the first line has no capacity.
- *     This should identify single enumeration items, e.g., in the format:
+ *     This should identify single enumeration items in the format:
  *       Dynamics: The low energy behavior of
  *         a physical system depends on its
  *         dynamics.
@@ -80,6 +68,10 @@ bool computeIsTextLinesCentered(const PdfTextBlock* block);
  *     with an uppercase character.
  * (c) There is at least one indented line that start with an uppercase character, and the number
  *     of lines exceeds a given threshold.
+ *
+ * NOTE: The given text block may be a preliminary text block (computed by the text block
+ * detector), meaning that it could contain multiple text blocks, which need to be split further
+ * in a subsequent step.
  *
  * @param block
  *    The text block to process.
@@ -90,10 +82,29 @@ bool computeIsTextLinesCentered(const PdfTextBlock* block);
 double computeHangingIndent(const PdfTextBlock* block);
 
 /**
- * This method computes the left and right margins of the text lines in the given block.
+ * This method iterates through the text lines of the given block (stored in block.lines),
+ * computes the left and right margins of each. Writes the computed left margin of text line L to
+ * L.leftMargin and the computed right margin to L.rightMargin.
  *
- * For a text line L and a text block B, the left margin of L is computed as: L.leftX - B.leftX.
- * The right margin is computed as: B.rightX - L.rightX.
+ * The left margin of the text line L in block B is the distance between the left boundary of B and
+ * the left boundary of L, that is: abs(L.leftX - B.trimLeftX).
+ * The right margin of L is the distance between the right boundary of L and the right boundary of
+ * B, that is: abs(B.trimRightX - L.rightX).
+ *
+ * TODO: The right margin of a text line is primarily used to check if the text line has capacity
+ * (see the comment of text_lines_utils::computeHasPrevLineCapacity() for information about how the
+ * capacity of a line is defined). There are text blocks that consists of only short lines
+ * (meaning that they are shorter than the lines in the same column). See the second block on page
+ * 2 in hep-ex0205091 for an example. For such blocks, the computed right margins of the text lines
+ * are smaller than they actually are. A frequent consequence is that it is assumed that the text
+ * lines have no capacity, although they actually do (because they are short, and there is enough
+ * space for some further text). So the correct way of computing the right margin would be to
+ * compute the distance between the right boundary of the text line and the "correct" right
+ * boundary of the column. However, finding the "correct" right boundary of the column is
+ * surprisingly difficult. One option is to use the largest rightX value of a line in the column.
+ * But there could be outlier lines, which extend beyond the actual column boundaries. Another
+ * option is to use the most frequent rightX among the lines in the column (this sounds promising
+ * and should be tried out).
  *
  * @param block
  *    The text block to process.

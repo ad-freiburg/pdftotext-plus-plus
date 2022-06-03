@@ -7,10 +7,11 @@
  */
 
 #include <algorithm>  // min
-#include <cmath>  // round
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+#include "../Constants.h"
 
 #include "./MathUtils.h"
 #include "./PdfElementsUtils.h"
@@ -21,6 +22,7 @@
 using std::pair;
 using std::string;
 using std::unordered_map;
+using std::vector;
 
 // _________________________________________________________________________________________________
 bool text_blocks_utils::computeIsTextLinesCentered(const PdfTextBlock* block) {
@@ -34,18 +36,18 @@ bool text_blocks_utils::computeIsTextLinesCentered(const PdfTextBlock* block) {
   // ----------
   // CONSTANTS
 
+  // TODO(korzen): Add these constants to the method's signature, for overwriting.
   const double XOFFSET_THRESH_FACTOR = 2.0;
   const int MAX_JUSTIFIED_LINES = 5;
   const double LARGE_XOFFSET_THRESHOLD = 2 * block->lines[0]->doc->avgGlyphWidth;
-  const string FORMULA_ID_ALPHABET = "=+";
 
   // ----------
   // VARIABLES
 
   // A boolean indicating whether or not the block contains a line (not representing a display
-  // formula) with a leftX offset (or rightX offset) larger than the threshold.
+  // formula) with a leftX offset (resp. rightX offset) larger than the threshold.
   bool hasNonFormulaWithLargeXOffset = false;
-  // The number of justified lines (= lines with leftX offset == rightX offset == 0).
+  // The number of justified lines (that is: lines with leftX offset == rightX offset == 0).
   int numJustifiedLines = 0;
 
   // ----------
@@ -62,16 +64,17 @@ bool text_blocks_utils::computeIsTextLinesCentered(const PdfTextBlock* block) {
     }
 
     // Check if the line or the previous line contains a formula.
+    const char* c;
     bool prevLineContainsFormula = false;
-    for (char c : FORMULA_ID_ALPHABET) {
-      if (prevLine->text.find(c) != string::npos) {
+    for (c = FORMULA_ID_ALPHABET; *c != '\0'; c++) {
+      if (prevLine->text.find(*c) != string::npos) {
         prevLineContainsFormula = true;
         break;
       }
     }
     bool currLineContainsFormula = false;
-    for (char c : FORMULA_ID_ALPHABET) {
-      if (currLine->text.find(c) != string::npos) {
+    for (c = FORMULA_ID_ALPHABET; *c != '\0'; c++) {
+      if (currLine->text.find(*c) != string::npos) {
         currLineContainsFormula = true;
         break;
       }
@@ -101,7 +104,7 @@ bool text_blocks_utils::computeIsTextLinesCentered(const PdfTextBlock* block) {
 double text_blocks_utils::computeHangingIndent(const PdfTextBlock* block) {
   assert(block);
 
-  // The block is not in hanging indent format if it contains less than two lines.
+  // The block is *not* in hanging indent format if it contains less than two lines.
   if (block->lines.size() < 2) {
     return 0.0;
   }
@@ -111,6 +114,7 @@ double text_blocks_utils::computeHangingIndent(const PdfTextBlock* block) {
   // ----------
   // CONSTANTS
 
+  // TODO(korzen): Add these constants to the method's signature, for overwriting.
   const double MIN_LINE_LENGTH = 3;
   const double MIN_LEFT_MARGIN = avgGlyphWidth;
   const int MIN_NUM_NON_INDENTED_LINES = 10;
@@ -123,7 +127,7 @@ double text_blocks_utils::computeHangingIndent(const PdfTextBlock* block) {
   int numLongLines = 0;
   // The number of lines with a left margin larger than the threshold.
   int numLargeLeftMarginLines = 0;
-  // The frequencies of the different left margins (larger than the threshold) of the lines.
+  // The frequencies of the different left margins which are larger than the threshold.
   unordered_map<double, int> largeLeftMarginFreqs;
   // The most frequent left margin among the lines with a left margin larger than the threshold.
   double mostFreqLargeLeftMargin = 0.0;
@@ -132,7 +136,7 @@ double text_blocks_utils::computeHangingIndent(const PdfTextBlock* block) {
   // A boolean indicating if the first line is indented (= if its left margin is equal to the most
   // frequent left margin).
   bool isFirstLineIndented = false;
-  // A boolean indicating if the first line is shorter than the others.
+  // A boolean indicating if the first line has capacity.
   bool hasFirstLineCapacity = false;
   // A boolean indicating if all lines except the first are indented.
   bool isAllOtherLinesIndented = true;
@@ -157,10 +161,11 @@ double text_blocks_utils::computeHangingIndent(const PdfTextBlock* block) {
     numLongLines++;
 
     // Ignore lines with a left margin smaller than the threshold.
-    if (math_utils::equalOrSmaller(line->leftMargin, MIN_LEFT_MARGIN)) {
+    double leftMargin = math_utils::round(line->leftMargin);
+    if (math_utils::equalOrSmaller(leftMargin, MIN_LEFT_MARGIN)) {
       continue;
     }
-    largeLeftMarginFreqs[line->leftMargin]++;
+    largeLeftMarginFreqs[leftMargin]++;
     numLargeLeftMarginLines++;
   }
 
@@ -172,13 +177,13 @@ double text_blocks_utils::computeHangingIndent(const PdfTextBlock* block) {
     }
   }
 
-  // The block is not in hanging indent format if it contains less than two lines with a length
+  // The block is *not* in hanging indent format if it contains less than two lines with a length
   // larger than the threshold.
   if (numLongLines < 2) {
     return 0.0;
   }
 
-  // The block is not in hanging indent format if the most frequent left margin does not occur in
+  // The block is *not* in hanging indent format if the most frequent left margin does not occur in
   // more than half of the indented lines.
   if (mostFreqLargeLeftMarginCount <= 0.5 * numLargeLeftMarginLines) {
     return 0.0;
@@ -219,15 +224,16 @@ double text_blocks_utils::computeHangingIndent(const PdfTextBlock* block) {
       numLowercasedIndentedLines++;
     }
 
-    // Count the number of non-indented lines that start with a lowercase.
+    // Count the number of non-indented lines that start with a lowercase and do not start with
+    // a lowercase last name prefix.
     bool startsWithLastNamePrefix = LAST_NAME_PREFIXES.count(line->words[0]->text) > 0;
     if (isLower && !startsWithLastNamePrefix && isNonIndented) {
       numLowercasedNonIndentedLines++;
     }
 
     // Check if the first line is indented.
-    // Check if the first line is short.
-    // Check if all lines except the first is indented.
+    // Check if the first line has capacity.
+    // Check if all lines except the first are indented.
     if (i == 0) {
       isFirstLineIndented = isIndented;
     }
@@ -239,7 +245,7 @@ double text_blocks_utils::computeHangingIndent(const PdfTextBlock* block) {
     }
   }
 
-  // The block is not in hanging indent format if it does not contain any indented lines.
+  // The block is *not* in hanging indent format if it does not contain any indented lines.
   if (numIndentedLines == 0) {
     return 0.0;
   }
@@ -281,7 +287,7 @@ void text_blocks_utils::computeTextLineMargins(const PdfTextBlock* block) {
   PdfTextBlock* prevBlock = block->prevBlock;
   PdfTextBlock* nextBlock = block->nextBlock;
 
-  // TODO(korzen): Enlarge short text blocks that consists of two lines.
+  // TODO(korzen): Enlarge text blocks consisting of short lines.
   double blockTrimRightX = block->trimRightX;
   if (block->lines.size() == 2) {
     double leftMargin = block->position->leftX - block->segment->position->leftX;
@@ -329,7 +335,7 @@ void text_blocks_utils::createTextBlock(const vector<PdfTextLine*>& lines,
   // Set the rank.
   block->rank = blocks->size();
 
-  // Compute the bounding boxes and count the different font names and font sizes.
+  // Compute the bounding box and the trim box and count the different font names and font sizes.
   unordered_map<string, int> fontNameFreqs;
   unordered_map<double, int> fontSizeFreqs;
   for (size_t i = 0; i < lines.size(); i++) {

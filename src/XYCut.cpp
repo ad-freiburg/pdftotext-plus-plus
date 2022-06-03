@@ -84,7 +84,7 @@ bool xCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc chooseC
     return false;
   }
 
-  // Sort the elements by their leftX-values.
+  // Sort the elements by their leftX values.
   std::vector<PdfElement*> sElements = elements;
   std::sort(sElements.begin(), sElements.end(), [](const PdfElement* e1, const PdfElement* e2) {
     return e1->position->leftX < e2->position->leftX;
@@ -209,7 +209,7 @@ bool yCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc chooseC
     return false;
   }
 
-  // Sort the elements by their upperY-values.
+  // Sort the elements by their upperY values.
   std::vector<PdfElement*> sElements = elements;
   std::sort(sElements.begin(), sElements.end(), [](const PdfElement* e1, const PdfElement* e2) {
     return e1->position->upperY < e2->position->upperY;

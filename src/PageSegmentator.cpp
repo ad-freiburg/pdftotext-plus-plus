@@ -287,7 +287,7 @@ void PageSegmentator::chooseXCuts(const std::vector<PdfElement*>& elements,
 
     double rightGroupMinX = cut->elementAfter->position->leftX;
     // TODO(korzen): The elements are sorted by leftX, so the last element isn't necessarily the
-    // element with the largest rightX value in the right group.
+    // element with the largest rightX in the right group.
     double rightGroupMaxX = elements[elements.size() - 1]->position->rightX;
     double rightGroupWidth = rightGroupMaxX - rightGroupMinX;
 

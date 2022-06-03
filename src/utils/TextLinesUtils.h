@@ -212,7 +212,7 @@ bool computeHasPrevLineCapacity(const PdfTextLine* line, double toleranceFactor 
  * Line 8:  parent: line (7) ; prev sibling: -        ; next sibling: -
  *
  * Note in particular that line (5) is not a previous sibling of line (7) because there is line (6)
- * in between with a smaller leftX value than line (5) and line (7).
+ * in between with a smaller leftX than line (5) and line (7).
  */
 void computeTextLineHierarchies(const PdfPage* page);
 

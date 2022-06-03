@@ -45,7 +45,7 @@ bool text_lines_utils::computeIsFirstLineOfItem(const PdfTextLine* line,
   // (3) the previous line and the current line have the same font size;
   // (4) the distance between the previous and current line is <= 0
   // (5) the previous line does not end with a sentence delimiter
-  // (6) the previous and current line have the same leftX value.
+  // (6) the previous and current line have the same leftX.
   // This should avoid to detect lines that occasionally start with a footnote label, but that are
   // actually not part of a footnote, as a footnote. Example: 0901.4737, page 11.
   if (line->prevLine) {
@@ -245,7 +245,7 @@ void text_lines_utils::computeTextLineHierarchies(const PdfPage* page) {
       }
       prevLine = line;
 
-      // Remove all lines from the stack with a larger leftX value than the current line, because
+      // Remove all lines from the stack with a larger leftX than the current line, because
       // they can't be a parent line or any sibling line of the current line.
       while (!lineStack.empty()) {
         double topStackLeftX = lineStack.top()->position->leftX;
@@ -263,7 +263,7 @@ void text_lines_utils::computeTextLineHierarchies(const PdfPage* page) {
         continue;
       }
 
-      // Ignore the current line if its lowerY value is smaller than the lowerY value of the
+      // Ignore the current line if its lowerY is smaller than the lowerY of the
       // topmost line in the stack (that is: if the current line is positioned above the topmost
       // line in). This should prevent to consider a line to be the parent line or a sibling
       // line of a line in a different column.
@@ -273,7 +273,7 @@ void text_lines_utils::computeTextLineHierarchies(const PdfPage* page) {
         continue;
       }
 
-      // Check if the topmost line in the stack has the same leftX value than the current line
+      // Check if the topmost line in the stack has the same leftX than the current line
       // (under consideration of the given tolerance). If so, the following is true:
       // (1) the current line is the next sibling line of the topmost line in the stack
       // (2) the topmost line in the stack is the previous sibling line of the current line.
@@ -290,7 +290,7 @@ void text_lines_utils::computeTextLineHierarchies(const PdfPage* page) {
         continue;
       }
 
-      // Check if the topmost line in the stack has a smaller leftX value than the current line
+      // Check if the topmost line in the stack has a smaller leftX than the current line
       // (under consideration of the given tolerance). If so, the topmost line in the stack is the
       // parent line of the current line.
       if (math_utils::smaller(topStackLeftX, lineLeftX, LEFT_X_OFFSET_TOLERANCE)) {
