@@ -71,7 +71,8 @@ extern bool parseArgs(const ArgDesc *args, int *argc, char *argv[]);
 /*
  * Print usage message, based on arg descriptor list.
  */
-extern void printUsage(const char *program, const char *otherArgs, const ArgDesc *args);
+extern void printHelpInfo(const char *programName, const char *posArgs, const ArgDesc *kwArgs,
+    const char *desc);
 
 /*
  * Check if a string is a valid integer or floating point number.

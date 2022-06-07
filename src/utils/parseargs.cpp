@@ -61,26 +61,40 @@ bool parseArgs(const ArgDesc *args, int *argc, char *argv[])
     return ok;
 }
 
-void printUsage(const char *program, const char *otherArgs, const ArgDesc *args)
+void printHelpInfo(const char *programName, const char *posArgs, const ArgDesc *kwArgs,
+    const char *desc)
 {
     const ArgDesc *arg;
     const char *typ;
     int w, w1;
 
+    if (programName) {
+      fprintf(stderr, "\033[1;34mHelp of %s\033[0m", programName);
+      fprintf(stderr, "\n\n");
+    }
+
+    if (desc) {
+      fprintf(stderr, "\033[1;34m%s\n\033[0m", "DESCRIPTION");
+      fprintf(stderr, "%s", desc);
+      fprintf(stderr, "\n\n");
+    }
+
     w = 0;
-    for (arg = args; arg->arg; ++arg) {
+    for (arg = kwArgs; arg->arg; ++arg) {
         if ((w1 = strlen(arg->arg)) > w)
             w = w1;
     }
 
-    fprintf(stderr, "Usage: %s [options]", program);
-    if (otherArgs)
-        fprintf(stderr, " %s", otherArgs);
-    fprintf(stderr, "\n");
+    fprintf(stderr, "\033[1;34m%s\n\033[0m", "USAGE");
+    fprintf(stderr, "%s [options]", programName);
+    if (posArgs)
+        fprintf(stderr, " %s", posArgs);
+    fprintf(stderr, "\n\n");
 
-    for (arg = args; arg->arg; ++arg) {
-        fprintf(stderr, "  %s", arg->arg);
-        w1 = 9 + w - strlen(arg->arg);
+    fprintf(stderr, "\033[1;34m%s\n\033[0m", "OPTIONS");
+    for (arg = kwArgs; arg->arg; ++arg) {
+        fprintf(stderr, " %s", arg->arg);
+        w1 = 3 + w - strlen(arg->arg);
         switch (arg->kind) {
         case argInt:
         case argIntDummy:

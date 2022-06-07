@@ -13,6 +13,7 @@
 
 #include "../Constants.h"
 
+#include "./Counter.h"
 #include "./MathUtils.h"
 #include "./PdfElementsUtils.h"
 #include "./StringUtils.h"
@@ -128,7 +129,7 @@ double text_blocks_utils::computeHangingIndent(const PdfTextBlock* block) {
   // The number of lines with a left margin larger than the threshold.
   int numLargeLeftMarginLines = 0;
   // The frequencies of the different left margins which are larger than the threshold.
-  unordered_map<double, int> largeLeftMarginFreqs;
+  DoubleCounter largeLeftMarginCounter;
   // The most frequent left margin among the lines with a left margin larger than the threshold.
   double mostFreqLargeLeftMargin = 0.0;
   // The number of lines exhibiting the most frequent left margin.
@@ -165,17 +166,14 @@ double text_blocks_utils::computeHangingIndent(const PdfTextBlock* block) {
     if (math_utils::equalOrSmaller(leftMargin, MIN_LEFT_MARGIN)) {
       continue;
     }
-    largeLeftMarginFreqs[leftMargin]++;
+    largeLeftMarginCounter[leftMargin]++;
     numLargeLeftMarginLines++;
   }
 
   // Compute the most freq left margin among the lines with a left margin larger than the threshold.
-  for (const auto& pair : largeLeftMarginFreqs) {
-    if (pair.second > mostFreqLargeLeftMarginCount) {
-      mostFreqLargeLeftMargin = pair.first;
-      mostFreqLargeLeftMarginCount = pair.second;
-    }
-  }
+  pair<double, double> mostFreqLargeLeftMarginPair = largeLeftMarginCounter.mostFreqAndCount();
+  mostFreqLargeLeftMargin = mostFreqLargeLeftMarginPair.first;
+  mostFreqLargeLeftMarginCount = mostFreqLargeLeftMarginPair.second;
 
   // The block is *not* in hanging indent format if it contains less than two lines with a length
   // larger than the threshold.
