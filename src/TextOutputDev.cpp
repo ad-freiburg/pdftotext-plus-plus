@@ -25,15 +25,15 @@
 
 
 // _________________________________________________________________________________________________
-TextOutputDev::TextOutputDev(bool parseEmbeddedFontFiles, PdfDocument* doc,
+TextOutputDev::TextOutputDev(bool noEmbeddedFontFilesParsing, PdfDocument* doc,
       bool debug, int debugPageFilter) {
-  _parseEmbeddedFontFiles = parseEmbeddedFontFiles;
+  _noEmbeddedFontFilesParsing = noEmbeddedFontFilesParsing;
   _doc = doc;
   _log = new Logger(debug ? DEBUG : INFO, debugPageFilter);
 
   _log->debug() << "=======================================" << std::endl;
   _log->debug() << "\033[1mDEBUG MODE | PDF Parsing\033[0m" << std::endl;
-  _log->debug() << " └─ parse font files:  " << parseEmbeddedFontFiles << std::endl;
+  _log->debug() << " └─ parse font files:  " << noEmbeddedFontFilesParsing << std::endl;
   _log->debug() << " └─ debug page filter: " << debugPageFilter << std::endl;
 }
 
@@ -87,7 +87,7 @@ void TextOutputDev::updateFont(GfxState* state) {
 
   // Check if the info about the current font was already computed. If not, compute it.
   if (_doc->fontInfos.count(fontName) == 0) {
-    _doc->fontInfos[fontName] = PdfFontInfo::create(state, _xref, _parseEmbeddedFontFiles);
+    _doc->fontInfos[fontName] = PdfFontInfo::create(state, _xref, !_noEmbeddedFontFilesParsing);
   }
   _fontInfo = _doc->fontInfos[fontName];
 

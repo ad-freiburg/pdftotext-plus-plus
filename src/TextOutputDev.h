@@ -34,7 +34,7 @@ class TextOutputDev : public OutputDev {
   /**
    * This constructor creates and initializes a new instance of this `TextOutputDev` class.
    *
-   * @param parseEmbeddedFontFiles
+   * @param noEmbeddedFontFilesParsing
    *   A boolean flag indicating whether or not to parse the font files embedded into the PDF.
    *   Setting this flag to true enables more accurate font information, for example: the weight of
    *   a font or the exact bounding boxes of the glyphs (without parsing the font files, the font
@@ -49,7 +49,7 @@ class TextOutputDev : public OutputDev {
    *   The number of the page to which the debug information should be reduced. If specified as a
    *   value > 0, only those messages that relate to the given page will be printed to the console.
    */
-  TextOutputDev(bool parseEmbeddedFontFiles, PdfDocument* doc, bool debug=false,
+  TextOutputDev(bool noEmbeddedFontFilesParsing, PdfDocument* doc, bool debug=false,
       int debugPageFilter=-1);
 
   /** The deconstructor. */
@@ -237,7 +237,7 @@ class TextOutputDev : public OutputDev {
   void concat(const double* m1, const double* m2, double* res) const;
 
   /** A boolean flag indicating whether or not to parse embedded font files. */
-  bool _parseEmbeddedFontFiles;
+  bool _noEmbeddedFontFilesParsing;
   /** The PDF document to process. */
   PdfDocument* _doc;
 

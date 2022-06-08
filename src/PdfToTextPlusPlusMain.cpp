@@ -43,7 +43,7 @@ static const char* programName = "pdftotext++";
 // The version number.
 static const char* version = "0.1";
 
-// The description to be displayed in the help message.
+// The description of this program to be displayed in the help message.
 static const char* description =
 "pdftotext++ extracts text from PDF files. It is an extension of Poppler's pdftotext\n"
 "(https://poppler.freedesktop.org/) and provides the following features useful for\n"
@@ -178,7 +178,7 @@ static const ArgDesc options[] = {
   { "--output-pages", argFlag, &outputPages, 0, "Instead of continuous text, output JSONL "
       "with all available information about the pages of the PDF file (e.g., the widths and "
       "heights)." },
-  { "--output-glyphs", argFlag, &outputGlyphs, 0, "Instead of continuous text, output "
+  { "--output-characters", argFlag, &outputGlyphs, 0, "Instead of continuous text, output "
       "JSONL with all available information about the glyphs in the PDF file (e.g., the positions "
       "and fonts)." },
   { "--output-figures", argFlag, &outputFigures, 0, "Instead of continuous text, output "
@@ -193,7 +193,7 @@ static const ArgDesc options[] = {
   { "--output-text-blocks", argFlag, &outputBlocks, 0, "Instead of continuous text, output "
       "JSONL with all available information about the text blocks in the PDF file (e.g., the "
       "positions and the fonts)." },
-  { "--visualize-glyphs", argFlag, &visualizeGlyphs, 0,
+  { "--visualize-characters", argFlag, &visualizeGlyphs, 0,
       "Add the bounding boxes of the detected glyphs to the visualization. Must be used together "
       "with --visualization-path." },
   { "--visualize-graphics", argFlag, &visualizeGraphics, 0,
@@ -341,7 +341,7 @@ int main(int argc, char* argv[]) {
   // Start the extraction process.
 
   PdfToTextPlusPlus engine(
-    !noEmbeddedFontFiles,
+    noEmbeddedFontFiles,
     noDehyphenation,
     parseMode,
     debugPdfParsing,
@@ -355,11 +355,19 @@ int main(int argc, char* argv[]) {
   PdfDocument doc;
   vector<Timing> timings;
 
+  int status = 0;
+  // TODO: Don't use the invalid argument exception; is currently thrown by SemanticRolesPredictor.
+  // Instead, use the exit code to check if something went wrong.
   try {
-    engine.process(pdfFilePathStr, &doc, &timings);
+    status = engine.process(pdfFilePathStr, &doc, &timings);
   } catch (const std::invalid_argument& ia) {
     std::cerr << "An error occurred: " << ia.what() << '\n';
     return 3;
+  }
+
+  // Abort if the exit code of pdftotext++ is > 0 (menaing that any error occurred).
+  if (status > 0) {
+    return status;
   }
 
   // Output the extraction result. If one of the --output-* options is used, output the text in

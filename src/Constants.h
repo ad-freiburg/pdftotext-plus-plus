@@ -21,6 +21,10 @@ const int LEFT_MARGIN_PREC = 0;
 const double EQUAL_TOLERANCE = 0.0001;
 const double FONTSIZE_EQUAL_TOLERANCE = 1;
 
+// The resolution in DPI.
+const double H_DPI = 72.0;
+const double V_DPI = 72.0;
+
 // =================================================================================================
 
 /**
