@@ -8,8 +8,8 @@
 
 #include <poppler/GlobalParams.h>
 
-#include <cmath>  // round
 #include <chrono>  // std::chrono::high_resolution_clock
+#include <cmath>  // round
 #include <iomanip>  // std::setw, std::setprecision
 #include <iostream>
 #include <locale>  // imbue
@@ -27,18 +27,24 @@
 #include "./PdfDocumentVisualizer.h"
 #include "./PdfToTextPlusPlus.h"
 
-using std::chrono::high_resolution_clock;
 using std::chrono::duration_cast;
+using std::chrono::high_resolution_clock;
 using std::chrono::milliseconds;
+using std::cout;
+using std::string;
+using std::vector;
 
 // =================================================================================================
 // Parameters.
 
-const char* programName = "pdftotext++";
+// The program name.
+static const char* programName = "pdftotext++";
 
-const char* version = "0.1";
+// The version number.
+static const char* version = "0.1";
 
-const char* description =
+// The description to be displayed in the help message.
+static const char* description =
 "pdftotext++ extracts text from PDF files. It is an extension of Poppler's pdftotext\n"
 "(https://poppler.freedesktop.org/) and provides the following features useful for\n"
 "applications like search, information retrieval or document analysis:\n\n"
@@ -85,7 +91,7 @@ const char* description =
 "      instance of the respective unit (e.g., one line per word if the unit is \"words\"), each\n"
 "      providing all available layout information about the instance. Here is an example line,\n"
 "      showing the general structure of a line and which information are provided for a word:\n"
-"      {\"type\": \"word\", \"page\": 9, \"minX\": 448.8, \"minY\": 635.9, \"maxX\": 459.4,\n"
+"      {\"type\": \"word\", \"page\": 9, \"minX\": 448.8, \"minY\": 635.9, \"maxX\": 459.4, ⮨\n"
 "        \"maxY\": 647.6, \"font\": \"RSEUZH+CMBX9\", \"fontSize\": 8.9, \"text\": \"panel\"}\n"
 "  Continuous text is the default format. To output the text in JSONL instead, you can use the\n"
 "  different --output-* options. Note that the --output-* options can be combined; for example,\n"
@@ -102,17 +108,20 @@ const char* description =
 "  Note that the --visualize-* options must be used in conjunction with --visualization-path;\n"
 "  otherwise, no visualization will be created.";
 
-const char* usage =
-"pdftotext++ [options] <pdf-file> <output-file>\n"
+// The usage.
+static const char* usage = "pdftotext++ [options] <pdf-file> <output-file>\n"
 "\n"
 "This processes the PDF file <pdf-file>. The extracted text is written to the file <output-file>.\n"
 "If <output-file> is specified as '-', the extracted text is printed to stdout.";
+
+// =================================================================================================
+// Options.
 
 static bool printVersion = false;
 static bool printHelp = false;
 static bool addControlCharacters = false;
 static bool addSemanticRoles = false;
-static bool noSubSuperscripts = false;
+static bool noScripts = false;
 static bool noEmbeddedFontFiles = false;
 static bool noDehyphenation = false;
 static bool parseMode = false;
@@ -121,7 +130,7 @@ static bool outputGlyphs = false;
 static bool outputFigures = false;
 static bool outputShapes = false;
 static bool outputWords = false;
-static bool outputTextBlocks = false;
+static bool outputBlocks = false;
 static bool visualizeGlyphs = false;
 static bool visualizeWords = false;
 static bool visualizeTextLines = false;
@@ -152,20 +161,20 @@ static const ArgDesc options[] = {
   { "--semantic-roles", argFlag, &addSemanticRoles, 0,
       "Prefix each text block by its semantic role in the continuous text. "
       "Has no effect when used together with one or more --output-* options." },
-  { "--no-scripts", argFlag, &noSubSuperscripts, 0,
+  { "--no-scripts", argFlag, &noScripts, 0,
       "Remove subscripted and superscripted characters from the continuous text. "
       "Has no effect when used together with one or more --output-* options." },
   { "--no-embedded-font-files", argFlag, &noEmbeddedFontFiles, 0,
       "Disable the parsing of embedded font files. The consequence is a faster extraction process, "
-      "but a less accurate extraction result." },
+      "but a lower accuracy of the extracted text." },
   { "--no-dehyphenation", argFlag, &noDehyphenation, 0,
       "Disable words dehyphenation. The consequence is that each part into which a hyphenated "
       "word is split will appear as a separate word in the continuous text and the JSONL." },
   { "--parse-mode", argFlag, &parseMode, 0,
-      "Activate a special mode that only parses the content streams of the PDF file for the "
-      "contained characters, figures, and shapes. It does not detect words, text lines, and text "
-      "blocks. To output the extracted elements, use the --output-characters, --output-figures\n"
-      "and --output-shapes options." },
+      "Activate a special mode that parses the content streams of the PDF file for characters, "
+      "figures, and shapes, and stops afterwards. It does not detect words, text lines, and text "
+      "blocks. To output the extracted elements, use --output-characters, --output-figures and/or "
+      "--output-shapes." },
   { "--output-pages", argFlag, &outputPages, 0, "Instead of continuous text, output JSONL "
       "with all available information about the pages of the PDF file (e.g., the widths and "
       "heights)." },
@@ -181,36 +190,36 @@ static const ArgDesc options[] = {
   { "--output-words", argFlag, &outputWords, 0, "Instead of continuous text, output JSONL "
       "with all available information about the words in the PDF file (e.g., the positions and "
       "the fonts)." },
-  { "--output-text-blocks", argFlag, &outputTextBlocks, 0, "Instead of continuous text, output "
+  { "--output-text-blocks", argFlag, &outputBlocks, 0, "Instead of continuous text, output "
       "JSONL with all available information about the text blocks in the PDF file (e.g., the "
       "positions and the fonts)." },
   { "--visualize-glyphs", argFlag, &visualizeGlyphs, 0,
-      "Add the bounding boxes of the glyphs to the visualization. Must be used together with "
-      "--visualization-path." },
-  { "--visualize-graphics", argFlag, &visualizeGraphics, 0,
-      "Add the bounding boxes of the graphics to the visualization. Must be used together with "
-      "--visualization-path." },
-  { "--visualize-figures", argFlag, &visualizeFigures, 0,
-      "Add the bounding boxes of the figures to the visualization. Must be used together with "
-      "--visualization-path." },
-  { "--visualize-shapes", argFlag, &visualizeShapes, 0,
-      "Add the bounding boxes of the shapes to the visualization. Must be used together with "
-      "--visualization-path." },
-  { "--visualize-words", argFlag, &visualizeWords, 0,
-      "Add the bounding boxes of the words to the visualization. Must be used together with "
-      "--visualization-path." },
-  { "--visualize-text-lines", argFlag, &visualizeTextLines, 0,
-      "Add the bounding boxes of the text lines to the visualization. Must be used together with "
-      "--visualization-path." },
-  { "--visualize-text-blocks", argFlag, &visualizeTextBlocks, 0,
-      "Add the bounding boxes and the semantic roles of the text blocks to the visualization. "
-      "Must be used together with --visualization-path." },
-  { "--visualize-segments", argFlag, &visualizePageSegments, 0,
-      "Add the bounding boxes of the page segments to the visualization. Must be used together "
+      "Add the bounding boxes of the detected glyphs to the visualization. Must be used together "
       "with --visualization-path." },
+  { "--visualize-graphics", argFlag, &visualizeGraphics, 0,
+      "Add the bounding boxes of the detected graphics to the visualization. Must be used "
+      "together with --visualization-path." },
+  { "--visualize-figures", argFlag, &visualizeFigures, 0,
+      "Add the bounding boxes of the detected figures to the visualization. Must be used together "
+      "with --visualization-path." },
+  { "--visualize-shapes", argFlag, &visualizeShapes, 0,
+      "Add the bounding boxes of the detected shapes to the visualization. Must be used together "
+      "with --visualization-path." },
+  { "--visualize-words", argFlag, &visualizeWords, 0,
+      "Add the bounding boxes of the detected words to the visualization. Must be used together "
+      "with --visualization-path." },
+  { "--visualize-text-lines", argFlag, &visualizeTextLines, 0,
+      "Add the bounding boxes of the detected text lines to the visualization. Must be used "
+      "together with --visualization-path." },
+  { "--visualize-text-blocks", argFlag, &visualizeTextBlocks, 0,
+      "Add the bounding boxes and the semantic roles of the detected text blocks to the "
+      "visualization. Must be used together with --visualization-path." },
+  { "--visualize-segments", argFlag, &visualizePageSegments, 0,
+      "Add the bounding boxes of the detected page segments to the visualization. Must be used "
+      "together with --visualization-path." },
   { "--visualize-reading-order", argFlag, &visualizeReadingOrder, 0,
-      "Add the reading order of the text blocks to the visualization. Must be used together with "
-      "--visualization-path." },
+      "Add the detected reading order of the text blocks to the visualization. Must be used "
+      "together with --visualization-path." },
   { "--visualize-text-block-cuts", argFlag, &visualizeBlockDetectionCuts, 0,
       "Add the XY-cuts made to detect the text blocks to the visualization. Must be used together "
       "with --visualization-path." },
@@ -234,7 +243,7 @@ static const ArgDesc options[] = {
   { "--debug-text-blocks-detection", argFlag, &debugTextBlocksDetection, 0,
       "Print the debug messages produced while detecting text blocks." },
   { "--debug-page-filter", argInt, &debugPageFilter, 0,
-      "When one or more of the --debug-* options is used, print only the debug messages "
+      "When one or more of the --debug-* options are used, print only the debug messages "
       "that are produced while processing the specified page. Note that the page numbers are "
       "1-based; so to print the debug messages produced while processing the first page, type "
       "\"--debug-page-filter 1\". " },
@@ -260,73 +269,78 @@ static const ArgDesc options[] = {
 // =================================================================================================
 // Print methods.
 
-// This method prints the usage information to stdout.
+/**
+ * This method prints the usage info (that is: the help info without the description) to stdout.
+ */
 void printUsageInfo() {
   printHelpInfo(programName, version, nullptr, usage, options);
 }
 
-// This method prints the help information (= description + usage information) to stdout.
+/**
+ * This method prints the help info (that is: a detailed description of the program, the usage
+ * info, and a description of the options) to stdout.
+ */
 void printHelpInfo() {
   printHelpInfo(programName, version, description, usage, options);
 }
 
-// This method prints the copyright and version information to stdout.
+/**
+ * This method prints the version info to stdout.
+ */
 void printVersionInfo() {
-  std::cout << "Version: " << version << std::endl;
+  cout << "Version: " << version << std::endl;
 }
 
 // =================================================================================================
 
-int main(int argc, char *argv[]) {
-  // Seed the random generator (needed to, for example, create random ids for the text elements).
+/**
+ * This method is the main method of pdftotext++. It is responsible for parsing the command line
+ * arguments, starting the extraction process and serializing and visualizing the extracted text.
+ */
+int main(int argc, char* argv[]) {
+  // Seed the random generator (needed to, for example, create the random ids of the text elements).
   srand((unsigned) time(NULL) * getpid());
 
   // Parse the command line arguments.
   bool ok = parseArgs(options, &argc, argv);
+
+  // Print the usage info if the command line arguments couldn't be parsed successfully.
   if (!ok) {
     printUsageInfo();
-    return 99;
+    return 1;
   }
 
-  // Print the help information if requested.
+  // Print the help info if requested by the user.
   if (printHelp) {
     printHelpInfo();
     return 0;
   }
 
-  // Print the version information if requested.
+  // Print the version info if requested by the user.
   if (printVersion) {
     printVersionInfo();
     return 0;
   }
 
-  if (argc < 2) {
+  // Print the usage info if not all required positional arguments were specified by the user.
+  if (argc < 3) {
     printUsageInfo();
-    return 98;
+    return 2;
   }
 
   // Initialize the global parameters, needed by Poppler.
   globalParams = std::make_unique<GlobalParams>();
 
-  // Get the specified path to the input PDF file.
-  std::string pdfFilePathStr(argv[1]);
+  // Obtain the path to the input PDF file.
+  string pdfFilePathStr(argv[1]);
 
-  // Get the specified path to the output file.
-  std::string outputFilePathStr;
-  if (argc > 2) {
-    outputFilePathStr = std::string(argv[2]);
-  }
-
-  // Print the usage information if no output file path is given.
-  if (outputFilePathStr.empty()) {
-    printUsageInfo();
-    return 99;
-  }
+  // Obtain the path to the output file (could be "-", if the output should be printed to stdout).
+  string outputFilePathStr(argv[2]);
 
   // ------------
-  // Run pdftotext++
+  // Start the extraction process.
 
-  PdfToTextPlusPlus pdfToTextPlusPlus(
+  PdfToTextPlusPlus engine(
     !noEmbeddedFontFiles,
     noDehyphenation,
     parseMode,
@@ -337,105 +351,81 @@ int main(int argc, char *argv[]) {
     debugTextLinesDetection,
     debugTextBlocksDetection,
     debugPageFilter);
+
   PdfDocument doc;
-  std::vector<Timing> timings;
+  vector<Timing> timings;
 
   try {
-    pdfToTextPlusPlus.process(pdfFilePathStr, &doc, &timings);
+    engine.process(pdfFilePathStr, &doc, &timings);
   } catch (const std::invalid_argument& ia) {
     std::cerr << "An error occurred: " << ia.what() << '\n';
-    return 1;
+    return 3;
   }
 
-  // ------------
-  // Serialize the extraction result.
-
+  // Output the extraction result. If one of the --output-* options is used, output the text in
+  // JSONL format. Otherwise, output the text as continuous text.
   auto start = high_resolution_clock::now();
-  if (outputPages || outputGlyphs || outputFigures || outputShapes || outputWords
-      || outputTextBlocks) {
+  if (outputPages || outputGlyphs || outputFigures || outputShapes || outputWords|| outputBlocks) {
     JsonlSerializer serializer(&doc,
       outputPages,
       outputGlyphs,
       outputFigures,
       outputShapes,
       outputWords,
-      outputTextBlocks);
+      outputBlocks);
     serializer.serialize(outputFilePathStr);
   } else {
     TextSerializer serializer(&doc,
       addControlCharacters,
       addSemanticRoles,
-      noSubSuperscripts);
+      noScripts);
     serializer.serialize(outputFilePathStr);
   }
   auto end = high_resolution_clock::now();
   Timing timingSerializeGlyphs("Serialize", duration_cast<milliseconds>(end - start).count());
   timings.push_back(timingSerializeGlyphs);
 
-  // ------------
   // Visualize the extraction result.
-
-  const std::string visualizeFilePathStr(visualizeFilePath);
+  const string visualizeFilePathStr(visualizeFilePath);
   if (!visualizeFilePathStr.empty()) {
     auto start = high_resolution_clock::now();
     PdfDocumentVisualizer visualizer(pdfFilePathStr);
-    if (visualizeGlyphs) {
-      visualizer.visualizeGlyphs(doc, blue);
-    }
-    if (visualizeFigures) {
-      visualizer.visualizeFigures(doc, blue);
-    }
-    if (visualizeShapes) {
-      visualizer.visualizeShapes(doc, blue);
-    }
-    if (visualizeGraphics) {
-      visualizer.visualizeGraphics(doc, blue);
-    }
-    if (visualizeWords) {
-      visualizer.visualizeWords(doc, blue);
-    }
-    if (visualizeTextLines) {
-      visualizer.visualizeTextLines(doc, blue);
-    }
-    if (visualizeTextBlocks) {
-      visualizer.visualizeTextBlocks(doc, red);
-    }
-    if (visualizePageSegments) {
-      visualizer.visualizePageSegments(doc, blue);
-    }
-    if (visualizeReadingOrder) {
-      visualizer.visualizeReadingOrder(doc, blue);
-    }
-    if (visualizeBlockDetectionCuts) {
-      visualizer.visualizeTextBlockDetectionCuts(doc, blue);
-    }
-    if (visualizeReadingOrderCuts) {
-      visualizer.visualizeReadingOrderCuts(doc, blue);
-    }
+    if (visualizeGlyphs) { visualizer.visualizeGlyphs(doc, blue); }
+    if (visualizeFigures) { visualizer.visualizeFigures(doc, blue); }
+    if (visualizeShapes) { visualizer.visualizeShapes(doc, blue); }
+    if (visualizeGraphics) { visualizer.visualizeGraphics(doc, blue); }
+    if (visualizeWords) { visualizer.visualizeWords(doc, blue); }
+    if (visualizeTextLines) { visualizer.visualizeTextLines(doc, blue); }
+    if (visualizeTextBlocks) { visualizer.visualizeTextBlocks(doc, red); }
+    if (visualizePageSegments) { visualizer.visualizePageSegments(doc, blue); }
+    if (visualizeReadingOrder) { visualizer.visualizeReadingOrder(doc, blue); }
+    if (visualizeBlockDetectionCuts) { visualizer.visualizeTextBlockDetectionCuts(doc, blue); }
+    if (visualizeReadingOrderCuts) { visualizer.visualizeReadingOrderCuts(doc, blue); }
     visualizer.save(visualizeFilePathStr);
     auto end = high_resolution_clock::now();
     Timing timingVisualizing("Visualize", duration_cast<milliseconds>(end - start).count());
     timings.push_back(timingVisualizing);
   }
 
+  // Print the running times needed by the different processing steps, if requested by the user.
   if (printRunningTimes) {
-    // Print the running timings.
-    std::cout.imbue(std::locale(""));  // Print the values with thousands separator.
-    std::cout << std::fixed;           // Print the values with a precision of one decimal point.
-    std::cout << std::setprecision(1);
+    // Print the values with thousands separator.
+    cout.imbue(std::locale(""));
+    // Print the values with a precision of one decimal point.
+    cout << std::fixed;
+    cout << std::setprecision(1);
 
     int64_t timeTotal = 0;
     for (const auto& timing : timings) { timeTotal += timing.time; }
-
-    std::cout << "\033[1m" << "Finished in " << timeTotal << " ms." << "\033[22m" << std::endl;
+    cout << "\033[1m" << "Finished in " << timeTotal << " ms." << "\033[22m" << std::endl;
 
     for (const auto& timing : timings) {
-      std::string prefix = " * " + timing.description + ":";
-      std::cout << std::left << std::setw(25) << prefix;
-      std::cout << std::right << std::setw(4) << timing.time << " ms ";
+      string prefix = " * " + timing.description + ":";
+      cout << std::left << std::setw(25) << prefix;
+      cout << std::right << std::setw(4) << timing.time << " ms ";
       double time = math_utils::round(timing.time / static_cast<double>(timeTotal) * 100, 1);
-      std::cout << "(" << time << "%)";
-      std::cout << std::endl;
+      cout << "(" << time << "%)";
+      cout << std::endl;
     }
   }
 
