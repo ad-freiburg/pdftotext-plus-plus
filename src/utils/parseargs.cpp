@@ -61,38 +61,39 @@ bool parseArgs(const ArgDesc *args, int *argc, char *argv[])
     return ok;
 }
 
-void printHelpInfo(const char *programName, const char *posArgs, const ArgDesc *kwArgs,
-    const char *desc)
-{
+void printHelpInfo(const char* programName, const char* version, const char* description,
+    const char* usage, const ArgDesc* options) {
+  if (programName) {
+    fprintf(stderr, "\033[1;34m%s\n\033[0m", "NAME");
+    fprintf(stderr, "%s (version %s)", programName, version);
+    fprintf(stderr, "\n\n");
+  }
+
+  if (description) {
+    fprintf(stderr, "\033[1;34m%s\n\033[0m", "DESCRIPTION");
+    fprintf(stderr, "%s", description);
+    fprintf(stderr, "\n\n");
+  }
+
+  if (usage) {
+    fprintf(stderr, "\033[1;34m%s\n\033[0m", "USAGE");
+    fprintf(stderr, "%s", usage);
+    fprintf(stderr, "\n\n");
+  }
+
+  if (options) {
     const ArgDesc *arg;
     const char *typ;
     int w, w1;
-
-    if (programName) {
-      fprintf(stderr, "\033[1;34mHelp of %s\033[0m", programName);
-      fprintf(stderr, "\n\n");
-    }
-
-    if (desc) {
-      fprintf(stderr, "\033[1;34m%s\n\033[0m", "DESCRIPTION");
-      fprintf(stderr, "%s", desc);
-      fprintf(stderr, "\n\n");
-    }
-
     w = 0;
-    for (arg = kwArgs; arg->arg; ++arg) {
-        if ((w1 = strlen(arg->arg)) > w)
-            w = w1;
+    for (arg = options; arg->arg; ++arg) {
+      if ((w1 = strlen(arg->arg)) > w) {
+        w = w1;
+      }
     }
-
-    fprintf(stderr, "\033[1;34m%s\n\033[0m", "USAGE");
-    fprintf(stderr, "%s [options]", programName);
-    if (posArgs)
-        fprintf(stderr, " %s", posArgs);
-    fprintf(stderr, "\n\n");
 
     fprintf(stderr, "\033[1;34m%s\n\033[0m", "OPTIONS");
-    for (arg = kwArgs; arg->arg; ++arg) {
+    for (arg = options; arg->arg; ++arg) {
         fprintf(stderr, " %s", arg->arg);
         w1 = 3 + w - strlen(arg->arg);
         switch (arg->kind) {
@@ -120,6 +121,7 @@ void printHelpInfo(const char *programName, const char *posArgs, const ArgDesc *
             fprintf(stderr, ": %s", arg->usage);
         fprintf(stderr, "\n");
     }
+  }
 }
 
 static const ArgDesc *findArg(const ArgDesc *args, char *arg)
