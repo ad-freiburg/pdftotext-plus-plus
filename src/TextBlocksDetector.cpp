@@ -98,18 +98,18 @@ bool TextBlocksDetector::startsPreliminaryBlock(const PdfTextLine* line) const {
 
   _log->debug(p) << "= (pre) =================" << endl;
   _log->debug(p) << BOLD << "Line: \"" << line->text << "\"" << OFF << endl;
-  _log->debug(p) << " └─ page:   " << line->position->pageNum << endl;
-  _log->debug(p) << " └─ leftX:  " << line->position->leftX << endl;
-  _log->debug(p) << " └─ upperY: " << line->position->upperY << endl;
-  _log->debug(p) << " └─ rightX: " << line->position->rightX << endl;
-  _log->debug(p) << " └─ lowerY: " << line->position->lowerY << endl;
+  _log->debug(p) << " └─ line.page:   " << line->position->pageNum << endl;
+  _log->debug(p) << " └─ line.leftX:  " << line->position->leftX << endl;
+  _log->debug(p) << " └─ line.upperY: " << line->position->upperY << endl;
+  _log->debug(p) << " └─ line.rightX: " << line->position->rightX << endl;
+  _log->debug(p) << " └─ line.lowerY: " << line->position->lowerY << endl;
 
   if (line->position->rotation != 0) {
-    _log->debug(p) << " └─ rotation:  " << line->position->rotation << endl;
-    _log->debug(p) << " └─ rotLeftX:  " << line->position->getRotLeftX() << endl;
-    _log->debug(p) << " └─ rotUpperY: " << line->position->getRotUpperY() << endl;
-    _log->debug(p) << " └─ rotRightX: " << line->position->getRotRightX() << endl;
-    _log->debug(p) << " └─ rotLowerY: " << line->position->getRotLowerY() << endl;
+    _log->debug(p) << " └─ line.rotation:  " << line->position->rotation << endl;
+    _log->debug(p) << " └─ line.rotLeftX:  " << line->position->getRotLeftX() << endl;
+    _log->debug(p) << " └─ line.rotUpperY: " << line->position->getRotUpperY() << endl;
+    _log->debug(p) << " └─ line.rotRightX: " << line->position->getRotRightX() << endl;
+    _log->debug(p) << " └─ line.rotLowerY: " << line->position->getRotLowerY() << endl;
   }
 
   _log->debug(p) << " └─ line.prevLine: " << prevLineStr << endl;

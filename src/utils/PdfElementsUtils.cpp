@@ -260,19 +260,19 @@ bool text_element_utils::computeIsEmphasized(const PdfTextElement* element) {
   // The element is emphasized if...
 
   // ... its font size is larger than the most frequent font size in the document.
-  if (math_utils::larger(element->fontSize, mostFreqFontSize, FONTSIZE_EQUAL_TOLERANCE)) {
+  if (math_utils::larger(element->fontSize, mostFreqFontSize, FS_EQUAL_TOLERANCE)) {
     return true;
   }
 
   // ... its font weight is larger than the most frequent font weight (and its font size is not
   // smaller than the most frequent font size).
-  if (math_utils::equalOrLarger(element->fontSize, mostFreqFontSize, FONTSIZE_EQUAL_TOLERANCE)
+  if (math_utils::equalOrLarger(element->fontSize, mostFreqFontSize, FS_EQUAL_TOLERANCE)
       && math_utils::larger(elementFontInfo->weight, docFontInfo->weight, 100)) {
     return true;
   }
 
   // ... it is printed in italics (and its font size is not smaller than the most freq font size).
-  if (math_utils::equalOrLarger(element->fontSize, mostFreqFontSize, FONTSIZE_EQUAL_TOLERANCE)
+  if (math_utils::equalOrLarger(element->fontSize, mostFreqFontSize, FS_EQUAL_TOLERANCE)
       && elementFontInfo->isItalic) {
     return true;
   }

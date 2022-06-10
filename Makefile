@@ -86,8 +86,8 @@ dataset: build-docker
 	@echo "\033[34;1mCreating output directory ...\033[0m"
 	mkdir -p -m 777 $(OUTPUT_DIR)
 
-	@echo "\033[34;1mRunning the Docker container ...\033[0m"
-	cd ${INPUT_DIR} && find . -name "*.pdf" | sed "s/.wc.pdf$$//" | xargs -I {} docker run --rm -v ${INPUT_DIR}:/input -v ${OUTPUT_DIR}:/output $(DOCKER_IMAGE) /input/{}.wc.pdf --serialize-pages --serialize-text-blocks --serialize-words "/output/{}.jsonl"
+	echo "\033[34;1mRunning the Docker container ...\033[0m"
+	cd ${INPUT_DIR} && find . -name "*.pdf" | sed "s/.wc.pdf$$//" | xargs -I {} docker run --rm -v ${INPUT_DIR}:/input -v ${OUTPUT_DIR}:/output $(DOCKER_IMAGE) /input/{}.wc.pdf --output-pages --output-text-blocks --output-words "/output/{}.jsonl"
 	echo "{ \"benchmarkName\": \"$(shell basename $(INPUT_DIR))\" }" > ${OUTPUT_DIR}/info.json
 
 # ==================================================================================================

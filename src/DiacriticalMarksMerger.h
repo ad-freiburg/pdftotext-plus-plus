@@ -6,17 +6,18 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#ifndef DIACRITICMARKSMERGER_H_
-#define DIACRITICMARKSMERGER_H_
+#ifndef DIACRITICALMARKSMERGER_H_
+#define DIACRITICALMARKSMERGER_H_
 
 #include <unordered_map>
 
 #include "./utils/Log.h"
+
 #include "./PdfDocument.h"
 
 // =================================================================================================
 
-// Diacritic marks exist in two variants: a "non-combining" variant and a "combining" variant.
+// Diacritical marks exist in two variants: a "non-combining" variant and a "combining" variant.
 // For example, for the grave accent ("`"), the non-combining variant is 0x0060 ("GRAVE ACCENT"),
 // and the combining variant is 0x0300 ("COMBINING GRAVE ACCENT"). In PDF, diacritic marks can
 // occur in both variants. But for merging, we need the combining variant. This map maps
@@ -64,14 +65,16 @@ static const std::unordered_map<unsigned int, unsigned int> combiningMap = {
 };
 
 /**
- * This class merges the characters with diacritic marks that are represented by two charss in the
- * PDF (the base char, for example "a", and the diacritic mark, for example "´", to a single
- * character.
+ * This class merges diacritical marks with their base characters.
+ *
+ * This is needed, because characters with diacritical marks can be represented by two characters.
+ * For example, the character "à" can be represented by the base character "a" and the
+ * combining diacritical mark "`".
  */
-class DiacriticMarksMerger {
+class DiacriticalMarksMerger {
  public:
   /**
-   * This constructor creates and initializes a new instance of this `DiacriticMarksMerger` class.
+   * This constructor creates and initializes a new instance of this class.
    *
    * @param doc
    *    The PDF document to process, with the characters extracted from the i-th page stored in
@@ -79,42 +82,42 @@ class DiacriticMarksMerger {
    * @param debug
    *   Whether or not this instance should print debug information to the console.
    * @param debugPageFilter
-   *   The number of the page to which the debug information should be reduced. If specified as a
-   *   value > 0, only those messages that relate to the given page will be printed to the console.
+   *   If set to a value > 0, only the debug messages produced while processing the
+   *   <debugPageFilter>-th page of the current PDF file will be printed to the console.
    */
-  DiacriticMarksMerger(PdfDocument* doc, bool debug=false, int debugPageFilter=-1);
+  explicit DiacriticalMarksMerger(PdfDocument* doc, bool debug = false, int debugPageFilter = -1);
 
   /** The deconstructor */
-  ~DiacriticMarksMerger();
+  ~DiacriticalMarksMerger();
 
   /**
    * This method merges each diacritic mark with its respective base character.
    *
-   * The basic approach is as follows: The characters of each page are iterated. For each character, it is
-   * checked whether or not it represents a diacritic mark. If so, the horizontal overlap with the
-   * respective previous and next character is computed. The diacritic mark is merged with the character
-   * yielding the larger horizontal overlap (if this overlap exceeds a certain threshold).
+   * The basic approach is as follows: The characters of each page are iterated. For each
+   * character, it is checked whether or not it represents a diacritic mark. If so, the horizontal
+   * overlap with the respective previous and next character is computed. The diacritic mark is
+   * then merged with the character yielding the larger horizontal overlap (if this overlap exceeds
+   * a certain threshold).
    *
    * Let `mark` be a diacritic mark and `base` the base character with which the diacritic mark
    * should be merged. The actual merging process is realized as follows:
    *  - `mark->isDiacriticMarkOfBaseChar` is set to `base`,
    *  - `base->isBaseCharOfDiacriticMark` is set to `mark`,
-   *  - `base->textWithDiacriticMark` is set to the string containing the character with diacritic
-   *     mark represented by a single character,
+   *  - `base->textWithDiacriticMark` is set to the string containing the character with the
+   *     diacritic mark represented by a single character,
    *  - `base->position` is updated to the bounding box surrounding both characters.
    *
-   * NOTE: The character representing the diacritic mark are *not* removed from the `page->characters`. If
-   *  you want to exclude the character from further processing, you need to check whether or not
-   *  `mark->isDiacriticMarkOfBaseChar` is set.
+   * NOTE: The character representing the diacritic mark is *not* removed from `page->characters`.
+   * If you want to exclude the character from further processing, you need to check whether or not
+   * `mark->isDiacriticMarkOfBaseChar` is set.
    */
-  void merge();
+  void process();
 
  private:
-  /** The PDF document to process. */
+  // The PDF document to process.
   PdfDocument* _doc;
-
-  /** The logger. */
+  // The logger.
   Logger* _log;
 };
 
-#endif  // DIACRITICMARKSMERGER_H_
+#endif  // DIACRITICALMARKSMERGER_H_

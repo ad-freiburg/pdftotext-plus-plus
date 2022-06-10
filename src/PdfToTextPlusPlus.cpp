@@ -16,9 +16,9 @@
 #include <vector>
 
 #include "./Constants.h"
-#include "./DiacriticMarksMerger.h"
+#include "./DiacriticalMarksMerger.h"
 #include "./PageSegmentator.h"
-#include "./PdfDocumentStatisticsCalculator.h"
+#include "./PdfStatisticsCalculator.h"
 #include "./PdfToTextPlusPlus.h"
 #include "./ReadingOrderDetector.h"
 #include "./SubSuperScriptsDetector.h"
@@ -100,9 +100,9 @@ int PdfToTextPlusPlus::process(const std::string& pdfFilePath, PdfDocument* doc,
   }
 
   // Compute some statistics about the characters, for example: the most frequent font size.
-  PdfDocumentStatisticsCalculator statistician(doc);
+  PdfStatisticsCalculator statistician(doc);
   start = high_resolution_clock::now();
-  statistician.computeCharStatistics();
+  statistician.computeCharacterStatistics();
   end = high_resolution_clock::now();
   auto timeComputeStatistics = duration_cast<milliseconds>(end - start).count();
   if (timings) {
@@ -112,8 +112,8 @@ int PdfToTextPlusPlus::process(const std::string& pdfFilePath, PdfDocument* doc,
 
   // Merge combining diacritical marks with their base characters.
   start = high_resolution_clock::now();
-  DiacriticMarksMerger dmm(doc, _debugDiacMarksMerging, _debugPageFilter);
-  dmm.merge();
+  DiacriticalMarksMerger dmm(doc, _debugDiacMarksMerging, _debugPageFilter);
+  dmm.process();
   end = high_resolution_clock::now();
   auto timeMergeDiacriticMarks = duration_cast<milliseconds>(end - start).count();
   if (timings) {
@@ -183,7 +183,7 @@ int PdfToTextPlusPlus::process(const std::string& pdfFilePath, PdfDocument* doc,
 
   // Compute some statistics about the text lines, for example: the most frequent line indentation.
   start = high_resolution_clock::now();
-  statistician.computeLineStatistics();
+  statistician.computeTextLineStatistics();
   end = high_resolution_clock::now();
   timeComputeStatistics = duration_cast<milliseconds>(end - start).count();
   if (timings) {

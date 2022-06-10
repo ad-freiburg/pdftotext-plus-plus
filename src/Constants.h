@@ -15,11 +15,12 @@
 // =================================================================================================
 
 const int FONT_SIZE_PREC = 1;
+const int COORDS_PREC = 1;
 const int LINE_DIST_PREC = 1;
 const int LEFT_MARGIN_PREC = 0;
 
 const double EQUAL_TOLERANCE = 0.0001;
-const double FONTSIZE_EQUAL_TOLERANCE = 1;
+const double FS_EQUAL_TOLERANCE = 1;
 
 // The resolution in DPI.
 const double H_DPI = 72.0;
