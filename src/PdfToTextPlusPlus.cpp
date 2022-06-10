@@ -80,7 +80,7 @@ int PdfToTextPlusPlus::process(const std::string& pdfFilePath, PdfDocument* doc,
   }
 
   // Parse the content streams of the PDF file for characters, figures and shapes.
-  TextOutputDev out(_noEmbeddedFontFilesParsing, doc, _debugPdfParsing, _debugPageFilter);
+  TextOutputDev out(!_noEmbeddedFontFilesParsing, doc, _debugPdfParsing, _debugPageFilter);
   start = high_resolution_clock::now();
   pdfDoc->displayPages(
     &out,
@@ -99,18 +99,18 @@ int PdfToTextPlusPlus::process(const std::string& pdfFilePath, PdfDocument* doc,
     timings->push_back(timingParsing);
   }
 
-  // Compute some statistics about the glyphs, for example: the most frequent font size.
+  // Compute some statistics about the characters, for example: the most frequent font size.
   PdfDocumentStatisticsCalculator statistician(doc);
   start = high_resolution_clock::now();
-  statistician.computeGlyphStatistics();
+  statistician.computeCharStatistics();
   end = high_resolution_clock::now();
   auto timeComputeStatistics = duration_cast<milliseconds>(end - start).count();
   if (timings) {
-    Timing timingComputeStatistics("Compute glyph stats", timeComputeStatistics);
+    Timing timingComputeStatistics("Compute character stats", timeComputeStatistics);
     timings->push_back(timingComputeStatistics);
   }
 
-  // Merge combining diacritical marks with their base glyphs.
+  // Merge combining diacritical marks with their base characters.
   start = high_resolution_clock::now();
   DiacriticMarksMerger dmm(doc, _debugDiacMarksMerging, _debugPageFilter);
   dmm.merge();

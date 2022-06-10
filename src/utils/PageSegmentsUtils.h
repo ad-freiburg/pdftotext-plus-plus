@@ -33,7 +33,7 @@ namespace page_segment_utils {
  * This should illustrate two segments, both contained in two different columns: the first segment
  * is build by the "AAA..." lines, the second segment is built by the "BBB..." and "XXX..." lines.
  * Note that the "XXX..." line extends beyond the actual boundary of the second segment, as all
- * other  lines in the second segment are actually justified and the "XXX..." line is longer than
+ * other lines in the second segment are actually justified and the "XXX..." line is longer than
  * the other lines. The trim box of the second segment is the bounding box around all "BBB..."
  * lines.
  *

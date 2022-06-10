@@ -20,25 +20,25 @@
 // A PDF can contain "stacked math symbols", which we want to merge to a single word (see the
 // preliminary comment of the `WordsDetector` class below for more information). The following
 // three sets are used to identify the base word of a stacked math symbol.
-// The first set contains the text of glyphs that are likely to be part of a base word of a stacked
-// math symbol. If a word contains a glyph that is part of this set, it is considered as the base
+// The first set contains the text of characters that are likely to be part of a base word of a stacked
+// math symbol. If a word contains a character that is part of this set, it is considered as the base
 // word of a stacked math symbol.
-// The second set contains the names of glyphs that are likely to be part of a base word of a
-// stacked math symbol. If a word contains a glyph with a name that is part of this set, it is
+// The second set contains the names of characters that are likely to be part of a base word of a
+// stacked math symbol. If a word contains a character with a name that is part of this set, it is
 // considered as the base word of a stacked math symbol (NOTE: this set was introduced because, in
 // some PDFs, the text of summation symbols do not contain a summation symbol, but some
-// weird symbols (e.g., a "?"), because of a missing encoding. The names of the glyphs are simply
+// weird symbols (e.g., a "?"), because of a missing encoding. The names of the characters are simply
 // an additional indicator for identifying the base word of a stacked math symbol).
 // The third set contains *words* that are likely to be the base part of stacked math symbols.
-static const std::unordered_set<std::string> stackedMathGlyphTexts = { "∑", "∏", "∫", "⊗" };
-static const std::unordered_set<std::string> stackedMathGlyphNames = { "summationdisplay",
+static const std::unordered_set<std::string> stackedMathCharTexts = { "∑", "∏", "∫", "⊗" };
+static const std::unordered_set<std::string> stackedMathCharNames = { "summationdisplay",
     "productdisplay", "integraldisplay", "circlemultiplydisplay" };
 static const std::unordered_set<std::string> stackedMathWords = { "sup", "lim" };
 
 // =================================================================================================
 
 /**
- * This class has two purposes: (a) given the glyphs extracted from a PDF document, detect the
+ * This class has two purposes: (a) given the characters extracted from a PDF document, detect the
  * words and (b) given the detected words, merge "stacked math symbols". Stacked math symbols are
  * math symbols that are positioned one above the other and logically belong together. A stacked
  * math symbol consist of a base word and one or more additional words. A typical example is the
@@ -78,9 +78,10 @@ class WordsDetector {
  private:
   /**
    * This method detects words in the given page. The basic procedure is as follows. It iterates
-   * the glyphs stored in `page->glyphs` in extraction order. For each glyph, it decides whether
-   * or not the glyph starts a new word, by analyzing different layout information of the glyphs.
-   * The detected words from the i-th page are appended to `_doc->pages[i]->words`.
+   * the characters stored in `page->characters` in extraction order. For each character, it
+   * decides whether or not the character starts a new word, by analyzing different layout
+   * information of the characters. The detected words from the i-th page are appended to
+   * `_doc->pages[i]->words`.
    *
    * @param page
    *    The page to process.
@@ -88,23 +89,23 @@ class WordsDetector {
   void detectWords(PdfPage* page);
 
   /**
-   * This method returns true if the given current glyph starts a new word, false otherwise.
-   * This decision is made based on analyzing different layout information of the glyphs.
+   * This method returns true if the given current character starts a new word, false otherwise.
+   * This decision is made based on analyzing different layout information of the characters.
    *
-   * @param prevGlyph
-   *   The previously processed glyph, if such exists; null otherwise.
-   * @param currGlyph
-   *   The glyph for which to decide whether or not it starts a new word.
+   * @param prevChar
+   *   The previously processed characters, if such exists; null otherwise.
+   * @param currChar
+   *   The characters for which to decide whether or not it starts a new word.
    *
    * @return
-   *    True if the given current glyph starts a new word, false otherwise.
+   *    True if the given current character starts a new word, false otherwise.
    */
-  bool startsWord(const PdfGlyph* prevGlyph, const PdfGlyph* currGlyph) const;
+  bool startsWord(const PdfCharacter* prevChar, const PdfCharacter* currChar) const;
 
   /**
    * This method merges stacked math symbols in the given page. It iterates through the words stored
    * in `page->words`. For each word, it checks whether it denotes the base word of a stacked math
-   * symbol (by looking up the glyphs of the word, and the word itself in the stackedMath*-sets
+   * symbol (by looking up the characters of the word, and the word itself in the stackedMath*-sets
    * above). If so, it checks whether the adjacents words horizontally overlap the base word.
    * If so, they are considered to be additional words of the stacked math symbol.
    * Let `base` the base word of a stacked math symbol and `other` be a word that is considered to
@@ -112,7 +113,7 @@ class WordsDetector {
    *  - `other` is added to `base->isBaseOfStackedMathSymbol` (which is a vector),
    *  - `other->isPartOfStackedWord` is set to `base`.
    *
-   * NOTE: The words that are merged with the base glyph are *not* removed from `page->words`. If
+   * NOTE: The words that are merged with the base character are *not* removed from `page->words`. If
    *  you want to exclude the word from further processing, you need to check whether or not
    *  `word->isPartOfStackedWord` is set.
    *
@@ -122,21 +123,21 @@ class WordsDetector {
   void mergeStackedMathSymbols(PdfPage* page) const;
 
   /**
-   * This method (a) creates a new `PdfWord` object from the given list of glyphs, (b) computes the
+   * This method (a) creates a new `PdfWord` object from the given list of characters, (b) computes the
    * respective layout information of the word and (c) appends the word to the given result list.
    *
-   * @param glyphs
-   *   The glyphs from which to create the word.
+   * @param chars
+   *   The characters from which to create the word.
    * @param words
    *   The vector to which the created word should be appended.
    */
-  void createWord(const std::vector<PdfGlyph*>& glyphs, std::vector<PdfWord*>* words) const;
+  void createWord(const std::vector<PdfCharacter*>& chars, std::vector<PdfWord*>* words) const;
 
   /** The document to process. */
   PdfDocument* _doc;
 
-  /** The glyphs of the current word, together with some word properties (e.g., bounding box). */
-  std::vector<PdfGlyph*> _currWordGlyphs;
+  /** The characters of the current word, together with some word properties (e.g., bounding box). */
+  std::vector<PdfCharacter*> _currWordChars;
   double _currWordMinX = std::numeric_limits<double>::max();
   double _currWordMinY = std::numeric_limits<double>::max();
   double _currWordMaxX = std::numeric_limits<double>::min();

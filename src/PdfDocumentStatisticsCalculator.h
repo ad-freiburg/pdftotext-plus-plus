@@ -14,7 +14,7 @@
 
 /**
  * This class computes document-wide statistics, for example: the most frequent font size among
- * the glyphs or the most frequent line distance.
+ * the characters or the most frequent line distance.
  */
 class PdfDocumentStatisticsCalculator {
  public:
@@ -29,13 +29,13 @@ class PdfDocumentStatisticsCalculator {
   ~PdfDocumentStatisticsCalculator();
 
   /**
-   * This method iterates through the glyphs of the document in order to compute statistics about
-   * the glyphs, for example: the most common font used among the glpyhs or the average glyph
-   * width and glyph height. The computed statistics will be written to the respective
-   * properties of the `PdfDocument`; for example, the average glyph width will be written to
-   * `_doc->avgGlyphWidth`.
+   * This method iterates through the characters of the document in order to compute statistics
+   * about the characters, for example: the most common font used among the glpyhs or the average
+   * character width and character height. The computed statistics will be written to the
+   * respective properties of the `PdfDocument`; for example, the average character width will be
+   * written to `_doc->avgCharWidth`.
    */
-  void computeGlyphStatistics() const;
+  void computeCharStatistics() const;
 
   /**
    * This method iterates through the words of the document in order to compute statistics about

@@ -43,8 +43,8 @@ class PdfFontInfo {
    * @param parseEmbeddedFontFiles
    *   A boolean flag indicating whether or not to parse the embedded font files for more accurate
    *   font information, for example: the weight of a font or the exact bounding boxes of the
-   *   glyphs. Setting this flag to true results in a faster extraction process but less accurate
-   *   extraction results.
+   *   characters. Setting this flag to true results in a faster extraction process but less
+   *   accurate extraction results.
    *
    * @return The created `PdfFontInfo` object
    */
@@ -100,7 +100,7 @@ class PdfFontInfo {
 
   /**
    * This method returns the font weight, that is: one of the values [100, 200, ..., 900] which
-   * describes the boldness of the font's glyphs. Here is the meaning of the different values:
+   * describes the boldness of the font's characters. Here is the meaning of the different values:
    *
    * 100: Extra Light or Ultra Light
    * 200: Light or Thin
@@ -125,8 +125,8 @@ class PdfFontInfo {
   double fontMatrix[6];
 
   /**
-   * A mapping of glyph names to bounding boxes (each given by its leftX, upperY, rightX, lowerY
-   * coordinates in glyph space).
+   * A mapping of character names to bounding boxes (each given by its leftX, upperY, rightX, lowerY
+   * coordinates in character space).
    */
   std::unordered_map<std::string, std::tuple<double, double, double, double>> glyphBoundingBoxes;
 };

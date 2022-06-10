@@ -16,7 +16,7 @@
 #include "./WordsDetector.h"
 #include "./PdfDocument.h"
 
-// The inter-glyph space width which will cause the detect() method to start a new word.
+// The inter-char space width which will cause the detect() method to start a new word.
 #define minWordBreakSpace 0.15
 
 using namespace std;
@@ -55,7 +55,7 @@ void WordsDetector::detect() {
     int p = page->pageNum;
     _log->debug(p) << "=======================================" << std::endl;
     _log->debug(p) << "\033[1mPROCESSING PAGE " << p << "\033[0m" << std::endl;
-    _log->debug(p) << " └─ # glyphs: " << page->glyphs.size() << std::endl;
+    _log->debug(p) << " └─ # characters: " << page->characters.size() << std::endl;
 
     detectWords(page);
     mergeStackedMathSymbols(page);
@@ -69,8 +69,8 @@ void WordsDetector::detectWords(PdfPage* page) {
     return;
   }
 
-  // Do nothing if the page does not contain any glyphs.
-  if (page->glyphs.empty()) {
+  // Do nothing if the page does not contain any characters.
+  if (page->characters.empty()) {
     return;
   }
 
@@ -79,35 +79,35 @@ void WordsDetector::detectWords(PdfPage* page) {
   _log->debug(p) << "=======================================" << std::endl;
   _log->debug(p) << "\033[1mDETECTING WORDS\033[0m" << std::endl;
 
-  // Iterate through the glyphs of the page in extraction order. For each glyph, decide whether or
-  // not the glyph starts a new word by analyzing different layout information.
-  PdfGlyph* prevGlyph = nullptr;
-  for (auto* glyph : page->glyphs) {
+  // Iterate through the characters of the page in extraction order. For each character, decide
+  // whether or not the character starts a new word by analyzing different layout information.
+  PdfCharacter* prevChar = nullptr;
+  for (auto* currChar : page->characters) {
     _log->debug(p) << "---------------------------------------" << std::endl;
-    _log->debug(p) << "\033[1mglyph: text:\033[0m \"" << glyph->text << "\""
-        << "; \033[1mpage:\033[0m " << glyph->position->pageNum
-        << "; \033[1mleftX:\033[0m " << glyph->position->leftX
-        << "; \033[1mupperY:\033[0m " << glyph->position->upperY
-        << "; \033[1mrightX:\033[0m " << glyph->position->rightX
-        << "; \033[1mlowerY:\033[0m " << glyph->position->lowerY << std::endl;
-    if (glyph->position->rotation != 0) {
-      _log->debug(p) << "\033[1mrot:\033[0m " << glyph->position->rotation
-          << "; \033[1mrotLeftX:\033[0m " << glyph->position->getRotLeftX()
-          << "; \033[1mrotUpperY:\033[0m " << glyph->position->getRotUpperY()
-          << "; \033[1mrotRightX:\033[0m " << glyph->position->getRotRightX()
-          << "; \033[1mrotLowerY:\033[0m " << glyph->position->getRotLowerY() << std::endl;
+    _log->debug(p) << "\033[1mchar: text:\033[0m \"" << currChar->text << "\""
+        << "; \033[1mpage:\033[0m " << currChar->position->pageNum
+        << "; \033[1mleftX:\033[0m " << currChar->position->leftX
+        << "; \033[1mupperY:\033[0m " << currChar->position->upperY
+        << "; \033[1mrightX:\033[0m " << currChar->position->rightX
+        << "; \033[1mlowerY:\033[0m " << currChar->position->lowerY << std::endl;
+    if (currChar->position->rotation != 0) {
+      _log->debug(p) << "\033[1mrot:\033[0m " << currChar->position->rotation
+          << "; \033[1mrotLeftX:\033[0m " << currChar->position->getRotLeftX()
+          << "; \033[1mrotUpperY:\033[0m " << currChar->position->getRotUpperY()
+          << "; \033[1mrotRightX:\033[0m " << currChar->position->getRotRightX()
+          << "; \033[1mrotLowerY:\033[0m " << currChar->position->getRotLowerY() << std::endl;
     }
 
     // Skip diacritic marks that were already merged with their base characters.
-    if (glyph->isDiacriticMarkOfBaseGlyph) {
-      _log->debug(p) << "\033[1mSkipping glyph (is diacritic mark).\033[0m" << std::endl;
+    if (currChar->isDiacriticMarkOfBaseChar) {
+      _log->debug(p) << "\033[1mSkipping char (is diacritic mark).\033[0m" << std::endl;
       continue;
     }
 
-    // Check if the glyph starts a new word. If so, create a word from the glyphs collected since
+    // Check if the char starts a new word. If so, create a word from the chars collected since
     // the last word delimiter and start a new word.
-    if (startsWord(prevGlyph, glyph) && !_currWordGlyphs.empty()) {
-      createWord(_currWordGlyphs, &page->words);
+    if (startsWord(prevChar, currChar) && !_currWordChars.empty()) {
+      createWord(_currWordChars, &page->words);
 
       PdfWord* word = page->words[page->words.size() - 1];
       _log->debug(p) << "\033[1mCreated word.\033[0m" << std::endl;
@@ -118,7 +118,7 @@ void WordsDetector::detectWords(PdfPage* page) {
       _log->debug(p) << " └─ word.rightX: " << word->position->rightX << std::endl;
       _log->debug(p) << " └─ word.lowerY: " << word->position->lowerY << std::endl;
 
-      _currWordGlyphs.clear();
+      _currWordChars.clear();
       _currWordMinX = numeric_limits<double>::max();
       _currWordMinY = numeric_limits<double>::max();
       _currWordMaxX = numeric_limits<double>::min();
@@ -126,19 +126,19 @@ void WordsDetector::detectWords(PdfPage* page) {
       _currWordMaxFontSize = 0;
     }
 
-    // Append the glyph to the current word.
-    _currWordGlyphs.push_back(glyph);
-    _currWordMinX = min(_currWordMinX, min(glyph->position->leftX, glyph->position->rightX));
-    _currWordMinY = min(_currWordMinY, min(glyph->position->lowerY, glyph->position->upperY));
-    _currWordMaxX = max(_currWordMaxX, max(glyph->position->leftX, glyph->position->rightX));
-    _currWordMaxY = max(_currWordMaxY, max(glyph->position->lowerY, glyph->position->upperY));
-    _currWordMaxFontSize = max(_currWordMaxFontSize, glyph->fontSize);
+    // Append the char to the current word.
+    _currWordChars.push_back(currChar);
+    _currWordMinX = min(_currWordMinX, min(currChar->position->leftX, currChar->position->rightX));
+    _currWordMinY = min(_currWordMinY, min(currChar->position->lowerY, currChar->position->upperY));
+    _currWordMaxX = max(_currWordMaxX, max(currChar->position->leftX, currChar->position->rightX));
+    _currWordMaxY = max(_currWordMaxY, max(currChar->position->lowerY, currChar->position->upperY));
+    _currWordMaxFontSize = max(_currWordMaxFontSize, currChar->fontSize);
 
-    prevGlyph = glyph;
+    prevChar = currChar;
   }
 
-  if (!_currWordGlyphs.empty()) {
-    createWord(_currWordGlyphs, &page->words);
+  if (!_currWordChars.empty()) {
+    createWord(_currWordChars, &page->words);
 
     PdfWord* word = page->words[page->words.size() - 1];
     _log->debug(p) << "\033[1mCreated word.\033[0m" << std::endl;
@@ -149,7 +149,7 @@ void WordsDetector::detectWords(PdfPage* page) {
     _log->debug(p) << " └─ word.rightX: " << word->position->rightX << std::endl;
     _log->debug(p) << " └─ word.lowerY: " << word->position->lowerY << std::endl;
 
-    _currWordGlyphs.clear();
+    _currWordChars.clear();
     _currWordMinX = numeric_limits<double>::max();
     _currWordMinY = numeric_limits<double>::max();
     _currWordMaxX = numeric_limits<double>::min();
@@ -159,105 +159,105 @@ void WordsDetector::detectWords(PdfPage* page) {
 }
 
 // _________________________________________________________________________________________________
-bool WordsDetector::startsWord(const PdfGlyph* prevGlyph, const PdfGlyph* currGlyph) const {
-  if (!currGlyph) {
+bool WordsDetector::startsWord(const PdfCharacter* prevChar, const PdfCharacter* currChar) const {
+  if (!currChar) {
     return false;
   }
 
-  int p = currGlyph->position->pageNum;
+  int p = currChar->position->pageNum;
 
-  if (!prevGlyph) {
-    _log->debug(p) << "\033[1mstarts new word (no previous glyph).\033[0m" << std::endl;
+  if (!prevChar) {
+    _log->debug(p) << "\033[1mstarts new word (no previous char).\033[0m" << std::endl;
     return true;
   }
 
   // ----------------
-  // The glyph starts a new word if it has another rotation than the previous glyph.
+  // The char starts a new word if it has another rotation than the previous char.
 
   _log->debug(p) << "Checking rotations..." << std::endl;
-  _log->debug(p) << " └─ prevGlyph.rotation: " << prevGlyph->position->rotation << std::endl;
-  _log->debug(p) << " └─ currGlyph.rotation: " << currGlyph->position->rotation << std::endl;
-  if (prevGlyph->position->rotation != currGlyph->position->rotation) {
+  _log->debug(p) << " └─ prevChar.rotation: " << prevChar->position->rotation << std::endl;
+  _log->debug(p) << " └─ currChar.rotation: " << currChar->position->rotation << std::endl;
+  if (prevChar->position->rotation != currChar->position->rotation) {
     _log->debug(p) << "\033[1mstarts new word (rotations differ).\033[0m" << std::endl;
     return true;
   }
 
   // ----------------
-  // The glyph starts a new word if it has another writing mode than the previous glyph.
+  // The char starts a new word if it has another writing mode than the previous char.
 
   _log->debug(p) << "Checking writing modes..." << std::endl;
-  _log->debug(p) << " └─ prevGlyph.wMode: " << prevGlyph->position->wMode << std::endl;
-  _log->debug(p) << " └─ currGlyph.wMode: " << currGlyph->position->wMode << std::endl;
-  if (prevGlyph->position->wMode != currGlyph->position->wMode) {
+  _log->debug(p) << " └─ prevChar.wMode: " << prevChar->position->wMode << std::endl;
+  _log->debug(p) << " └─ currChar.wMode: " << currChar->position->wMode << std::endl;
+  if (prevChar->position->wMode != currChar->position->wMode) {
     _log->debug(p) << "\033[1mstarts new word (writing modes differ).\033[0m" << std::endl;
     return true;
   }
 
   // ----------------
-  // The glyph starts a new word if the vertical overlap between the glyph and the current word
-  // is less than the half of the glyph's height, and less than the half of the word's height.
+  // The char starts a new word if the vertical overlap between the char and the current word
+  // is less than the half of the char's height, and less than the half of the word's height.
 
-  // The y-coordinates of the glyph and the current word, for computing the vertical overlap.
-  double glyphMinY, glyphMaxY, wordMinY, wordMaxY;
+  // The y-coordinates of the char and the current word, for computing the vertical overlap.
+  double charMinY, charMaxY, wordMinY, wordMaxY;
   // The boundaries of the left and right horizontal gap.
   double hGapLeftMinX, hGapLeftMaxX, hGapRightMinX, hGapRightMaxX;
 
   // TODO: Is there a more elegant way to compute the properties with respect to the rotation?
-  switch(currGlyph->position->rotation) {
+  switch(currChar->position->rotation) {
     case 0:
     default:
       hGapLeftMinX = _currWordMaxX;
-      hGapLeftMaxX = currGlyph->position->leftX;
-      hGapRightMinX = currGlyph->position->rightX;
+      hGapLeftMaxX = currChar->position->leftX;
+      hGapRightMinX = currChar->position->rightX;
       hGapRightMaxX = _currWordMinX;
-      glyphMinY = currGlyph->position->upperY;
-      glyphMaxY = currGlyph->position->lowerY;
+      charMinY = currChar->position->upperY;
+      charMaxY = currChar->position->lowerY;
       wordMinY = _currWordMinY;
       wordMaxY = _currWordMaxY;
       break;
     case 1:
       hGapLeftMinX = _currWordMaxY;
-      hGapLeftMaxX = currGlyph->position->upperY;
-      hGapRightMinX = currGlyph->position->lowerY;
+      hGapLeftMaxX = currChar->position->upperY;
+      hGapRightMinX = currChar->position->lowerY;
       hGapRightMaxX = _currWordMinY;
-      glyphMinY = currGlyph->position->leftX;
-      glyphMaxY = currGlyph->position->rightX;
+      charMinY = currChar->position->leftX;
+      charMaxY = currChar->position->rightX;
       wordMinY = _currWordMinX;
       wordMaxY = _currWordMaxX;
       break;
     case 2:
-      hGapLeftMinX = currGlyph->position->leftX;
+      hGapLeftMinX = currChar->position->leftX;
       hGapLeftMaxX = _currWordMinX;
       hGapRightMinX = _currWordMaxX;
-      hGapRightMaxX = currGlyph->position->rightX;
-      glyphMinY = currGlyph->position->upperY;
-      glyphMaxY = currGlyph->position->lowerY;
+      hGapRightMaxX = currChar->position->rightX;
+      charMinY = currChar->position->upperY;
+      charMaxY = currChar->position->lowerY;
       wordMinY = _currWordMinY;
       wordMaxY = _currWordMaxY;
       break;
     case 3:
-      hGapLeftMinX = currGlyph->position->lowerY;
+      hGapLeftMinX = currChar->position->lowerY;
       hGapLeftMaxX = _currWordMinY;
       hGapRightMinX = _currWordMaxY;
-      hGapRightMaxX = currGlyph->position->upperY;
-      glyphMinY = currGlyph->position->leftX;
-      glyphMaxY = currGlyph->position->rightX;
+      hGapRightMaxX = currChar->position->upperY;
+      charMinY = currChar->position->leftX;
+      charMaxY = currChar->position->rightX;
       wordMinY = _currWordMinX;
       wordMaxY = _currWordMaxX;
       break;
   }
 
   _log->debug(p) << "Checking vertical overlap with the current word ..." << std::endl;
-  _log->debug(p) << " └─ glyph.minY: " << glyphMinY << std::endl;
-  _log->debug(p) << " └─ glyph.maxY: " << glyphMaxY << std::endl;
+  _log->debug(p) << " └─ char.minY: " << charMinY << std::endl;
+  _log->debug(p) << " └─ char.maxY: " << charMaxY << std::endl;
   _log->debug(p) << " └─ word.minY: " << wordMinY << std::endl;
   _log->debug(p) << " └─ word.maxY: " << wordMaxY << std::endl;
 
   // Compute the overlap ratios. The return value is a pair of doubles. The first double denotes
-  // the percentage of the length of the vertical overlap in relation to the glyph's height.
+  // the percentage of the length of the vertical overlap in relation to the char's height.
   // The second double denotes denotes the percentage of the length of the vertical overlap in
   // relation to the word's height.
-  std::pair<double, double> ratios = element_utils::computeOverlapRatios(glyphMinY, glyphMaxY, wordMinY, wordMaxY);
+  std::pair<double, double> ratios = element_utils::computeOverlapRatios(charMinY, charMaxY, wordMinY, wordMaxY);
   _log->debug(p) << " └─ overlapRatios: " << ratios.first << ", " << ratios.second << std::endl;
 
   if (ratios.first < 0.5 && ratios.second < 0.5) {
@@ -266,7 +266,7 @@ bool WordsDetector::startsWord(const PdfGlyph* prevGlyph, const PdfGlyph* currGl
   }
 
   // ----------------
-  // The glyph starts a new word if the horizontal distance between the glyph and the current word
+  // The char starts a new word if the horizontal distance between the char and the current word
   // is "too large".
 
   _log->debug(p) << "Checking the horizontal distance to the current word ..." << std::endl;
@@ -315,12 +315,12 @@ void WordsDetector::mergeStackedMathSymbols(PdfPage* page) const {
 
     // Check if the word is the base word of a stacked math symbol.
     bool isBaseOfStackedMathSymbol = false;
-    for (auto* glyph : word->glyphs) {
-      if (stackedMathGlyphTexts.count(glyph->text) > 0) {
+    for (auto* ch : word->characters) {
+      if (stackedMathCharTexts.count(ch->text) > 0) {
         isBaseOfStackedMathSymbol = true;
         break;
       }
-      if (stackedMathGlyphNames.count(glyph->charName) > 0) {
+      if (stackedMathCharNames.count(ch->name) > 0) {
         isBaseOfStackedMathSymbol = true;
         break;
       }
@@ -405,7 +405,7 @@ void WordsDetector::mergeStackedMathSymbols(PdfPage* page) const {
 }
 
 // _________________________________________________________________________________________________
-void WordsDetector::createWord(const std::vector<PdfGlyph*>& glyphs, std::vector<PdfWord*>* words)
+void WordsDetector::createWord(const std::vector<PdfCharacter*>& chars, std::vector<PdfWord*>* words)
     const {
   PdfWord* word = new PdfWord();
   word->id = string_utils::createRandomString(8, "w-");
@@ -415,32 +415,32 @@ void WordsDetector::createWord(const std::vector<PdfGlyph*>& glyphs, std::vector
   std::string text;
   std::unordered_map<std::string, int> fontNameFreqs;
   std::unordered_map<double, int> fontSizeFreqs;
-  for (auto* glyph : glyphs) {
-    // double glyphMinX = std::min(glyph->position->leftX, glyph->position->rightX);
-    // double glyphMinY = std::min(glyph->position->upperY, glyph->position->lowerY);
-    // double glyphMaxX = std::max(glyph->position->leftX, glyph->position->rightX);
-    // double glyphMaxY = std::max(glyph->position->upperY, glyph->position->lowerY);
+  for (auto* ch : chars) {
+    // double charMinX = std::min(char->position->leftX, char->position->rightX);
+    // double charMinY = std::min(char->position->upperY, char->position->lowerY);
+    // double charMaxX = std::max(char->position->leftX, char->position->rightX);
+    // double charMaxY = std::max(char->position->upperY, char->position->lowerY);
 
     // Update the x,y-coordinates.
-    word->position->leftX = std::min(word->position->leftX, glyph->position->leftX);
-    word->position->upperY = std::min(word->position->upperY, glyph->position->upperY);
-    word->position->rightX = std::max(word->position->rightX, glyph->position->rightX);
-    word->position->lowerY = std::max(word->position->lowerY, glyph->position->lowerY);
+    word->position->leftX = std::min(word->position->leftX, ch->position->leftX);
+    word->position->upperY = std::min(word->position->upperY, ch->position->upperY);
+    word->position->rightX = std::max(word->position->rightX, ch->position->rightX);
+    word->position->lowerY = std::max(word->position->lowerY, ch->position->lowerY);
 
-    // Compose the text. If the glyph was merged with a diacritic mark, append the text with the
-    // diacitic mark. If the glyph is a diacritic mark which was merged with a base glyph, ignore
+    // Compose the text. If the char was merged with a diacritic mark, append the text with the
+    // diacitic mark. If the char is a diacritic mark which was merged with a base char, ignore
     // its text. Otherwise, append the normal text.
-    if (glyph->isBaseGlyphOfDiacriticMark) {
-      text += glyph->textWithDiacriticMark;
-    } else if (!glyph->isDiacriticMarkOfBaseGlyph) {
-      text += glyph->text;
+    if (ch->isBaseCharOfDiacriticMark) {
+      text += ch->textWithDiacriticMark;
+    } else if (!ch->isDiacriticMarkOfBaseChar) {
+      text += ch->text;
     }
 
     // Count the font names and font sizes, for computing the most frequent font name / font size.
-    fontNameFreqs[glyph->fontName]++;
-    fontSizeFreqs[glyph->fontSize]++;
+    fontNameFreqs[ch->fontName]++;
+    fontSizeFreqs[ch->fontSize]++;
 
-    glyph->word = word;
+    ch->word = word;
   }
 
   // Set the text.
@@ -465,19 +465,19 @@ void WordsDetector::createWord(const std::vector<PdfGlyph*>& glyphs, std::vector
   }
 
   // Set the page number.
-  word->position->pageNum = glyphs[0]->position->pageNum;
+  word->position->pageNum = chars[0]->position->pageNum;
 
   // Set the writing mode.
-  word->position->wMode = glyphs[0]->position->wMode;
+  word->position->wMode = chars[0]->position->wMode;
 
   // Set the rotation value.
-  word->position->rotation = glyphs[0]->position->rotation;
+  word->position->rotation = chars[0]->position->rotation;
 
   // Set the rank.
   word->rank = words->size();
 
-  // Set the glyphs.
-  word->glyphs = glyphs;
+  // Set the chars.
+  word->characters = chars;
 
   words->push_back(word);
 }

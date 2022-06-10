@@ -141,7 +141,7 @@ bool xCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc chooseC
           cut->posInElements = pos;
           cut->elementBefore = elementSecondLargestRightX;
           cut->elementAfter = element;
-          cut->cuttingElements.push_back(elementLargestRightX);
+          cut->overlappingElements.push_back(elementLargestRightX);
           cut->pageNum = element->position->pageNum;
           cut->x1 = gapX;
           cut->y1 = elementsMinY;

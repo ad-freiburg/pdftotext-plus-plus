@@ -83,16 +83,16 @@ PdfDocumentVisualizer::~PdfDocumentVisualizer() {
 }
 
 // _________________________________________________________________________________________________
-void PdfDocumentVisualizer::visualizeGlyphs(const PdfDocument& doc, const ColorScheme& cs) {
+void PdfDocumentVisualizer::visualizeCharacters(const PdfDocument& doc, const ColorScheme& cs) {
   for (const auto* page : doc.pages) {
-    drawGlyphBoundingBoxes(page->glyphs, cs);
+    drawCharBoundingBoxes(page->characters, cs);
   }
 }
 
 // _________________________________________________________________________________________________
-void PdfDocumentVisualizer::visualizeGlyphs(const std::vector<PdfGlyph*>& glyphs,
+void PdfDocumentVisualizer::visualizeCharacters(const std::vector<PdfCharacter*>& chars,
     const ColorScheme& cs) {
-  drawGlyphBoundingBoxes(glyphs, cs);
+  drawCharBoundingBoxes(chars, cs);
 }
 
 // _________________________________________________________________________________________________
@@ -246,10 +246,10 @@ void PdfDocumentVisualizer::save(const std::string& targetPath) {
 // =================================================================================================
 
 // _________________________________________________________________________________________________
-void PdfDocumentVisualizer::drawGlyphBoundingBoxes(const std::vector<PdfGlyph*>& glyphs,
+void PdfDocumentVisualizer::drawCharBoundingBoxes(const std::vector<PdfCharacter*>& characters,
     const ColorScheme& cs) {
-  for (const auto* glyph : glyphs) {
-    drawBoundingBox(glyph, cs);
+  for (const auto* ch : characters) {
+    drawBoundingBox(ch, cs);
   }
 }
 

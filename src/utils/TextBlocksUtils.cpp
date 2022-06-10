@@ -20,6 +20,7 @@
 #include "./TextBlocksUtils.h"
 #include "./TextLinesUtils.h"
 
+using std::min;
 using std::pair;
 using std::string;
 using std::unordered_map;
@@ -40,7 +41,7 @@ bool text_blocks_utils::computeIsTextLinesCentered(const PdfTextBlock* block) {
   // TODO(korzen): Add these constants to the method's signature, for overwriting.
   const double XOFFSET_THRESH_FACTOR = 2.0;
   const int MAX_JUSTIFIED_LINES = 5;
-  const double LARGE_XOFFSET_THRESHOLD = 2 * block->lines[0]->doc->avgGlyphWidth;
+  const double LARGE_XOFFSET_THRESHOLD = 2 * block->lines[0]->doc->avgCharWidth;
 
   // ----------
   // VARIABLES
@@ -110,14 +111,14 @@ double text_blocks_utils::computeHangingIndent(const PdfTextBlock* block) {
     return 0.0;
   }
 
-  double avgGlyphWidth = block->lines[0]->doc->avgGlyphWidth;
+  double avgCharWidth = block->lines[0]->doc->avgCharWidth;
 
   // ----------
   // CONSTANTS
 
   // TODO(korzen): Add these constants to the method's signature, for overwriting.
   const double MIN_LINE_LENGTH = 3;
-  const double MIN_LEFT_MARGIN = avgGlyphWidth;
+  const double MIN_LEFT_MARGIN = avgCharWidth;
   const int MIN_NUM_NON_INDENTED_LINES = 10;
   const int MIN_NUM_LONG_LINES = 4;
 
@@ -197,21 +198,21 @@ double text_blocks_utils::computeHangingIndent(const PdfTextBlock* block) {
     }
 
     // Ignore lines that are centered.
-    bool isEqualMargin = math_utils::equal(line->leftMargin, line->rightMargin, avgGlyphWidth);
-    bool isLargeMargin = math_utils::larger(line->leftMargin, avgGlyphWidth);
+    bool isEqualMargin = math_utils::equal(line->leftMargin, line->rightMargin, avgCharWidth);
+    bool isLargeMargin = math_utils::larger(line->leftMargin, avgCharWidth);
     bool isCentered = isEqualMargin && isLargeMargin;
     if (isCentered) {
       continue;
     }
 
     // Count the number of non-indented lines.
-    bool isNonIndented = math_utils::equal(line->leftMargin, 0, avgGlyphWidth);
+    bool isNonIndented = math_utils::equal(line->leftMargin, 0, avgCharWidth);
     if (isNonIndented) {
       numNonIndentedLines++;
     }
 
     // Count the number of indented lines.
-    bool isIndented = math_utils::equal(line->leftMargin, mostFreqLargeLeftMargin, avgGlyphWidth);
+    bool isIndented = math_utils::equal(line->leftMargin, mostFreqLargeLeftMargin, avgCharWidth);
     if (isIndented) {
       numIndentedLines++;
     }
@@ -282,15 +283,15 @@ double text_blocks_utils::computeHangingIndent(const PdfTextBlock* block) {
 void text_blocks_utils::computeTextLineMargins(const PdfTextBlock* block) {
   assert(block);
 
-  PdfTextBlock* prevBlock = block->prevBlock;
-  PdfTextBlock* nextBlock = block->nextBlock;
+  const PdfTextBlock* prevBlock = block->prevBlock;
+  const PdfTextBlock* nextBlock = block->nextBlock;
 
   // TODO(korzen): Enlarge text blocks consisting of short lines.
   double blockTrimRightX = block->trimRightX;
   if (block->lines.size() == 2) {
     double leftMargin = block->position->leftX - block->segment->position->leftX;
     double rightMargin = block->segment->position->rightX - block->position->rightX;
-    double isCentered = math_utils::equal(leftMargin, rightMargin, block->doc->avgGlyphWidth);
+    double isCentered = math_utils::equal(leftMargin, rightMargin, block->doc->avgCharWidth);
     if (!isCentered) {
       if (prevBlock) { blockTrimRightX = max(blockTrimRightX, prevBlock->trimRightX); }
       if (nextBlock) { blockTrimRightX = max(blockTrimRightX, nextBlock->trimRightX); }
@@ -412,7 +413,7 @@ void text_blocks_utils::createTextBlock(const vector<PdfTextLine*>& lines,
   block->isEmphasized = text_element_utils::computeIsEmphasized(block);
 
   // Compute and set the flag indicating whether or not the text lines in the block are centered.
-  block->isCentered = text_blocks_utils::computeIsTextLinesCentered(block);
+  block->isLinesCentered = text_blocks_utils::computeIsTextLinesCentered(block);
 
   // Compute the margins of the text lines in the block.
   text_blocks_utils::computeTextLineMargins(block);

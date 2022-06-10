@@ -26,33 +26,33 @@ PdfDocumentStatisticsCalculator::PdfDocumentStatisticsCalculator(PdfDocument* do
 PdfDocumentStatisticsCalculator::~PdfDocumentStatisticsCalculator() = default;
 
 // _________________________________________________________________________________________________
-void PdfDocumentStatisticsCalculator::computeGlyphStatistics() const {
+void PdfDocumentStatisticsCalculator::computeCharStatistics() const {
   // A mapping of font sizes to their frequencies, for computing the most frequent font size.
   unordered_map<double, int> fontSizeFreqs;
   // A mapping of font names to their frequencies, for computing the most frequent font name.
   unordered_map<string, int> fontNameFreqs;
 
-  // The sum of glyph widths and heights, for computing the average glyph width/height.
+  // The sum of char widths and heights, for computing the average char width/height.
   double sumWidths = 0;
   double sumHeights = 0;
 
-  // The number of glyphs seen.
-  int numGlyphs = 0;
+  // The number of characters seen.
+  int numChars = 0;
 
-  // Iterate through the glyphs of the document for computing the statistics about the glyphs.
+  // Iterate through the characters of the document for computing the characters statistics.
   for (const auto* page : _doc->pages) {
-    for (const auto* glyph : page->glyphs) {
-      fontSizeFreqs[glyph->fontSize]++;
-      fontNameFreqs[glyph->fontName]++;
+    for (const auto* ch : page->characters) {
+      fontSizeFreqs[ch->fontSize]++;
+      fontNameFreqs[ch->fontName]++;
 
-      sumWidths += glyph->position->getWidth();
-      sumHeights += glyph->position->getHeight();
-      numGlyphs++;
+      sumWidths += ch->position->getWidth();
+      sumHeights += ch->position->getHeight();
+      numChars++;
     }
   }
 
-  // Abort if no glyphs were seen.
-  if (numGlyphs == 0) {
+  // Abort if no characters were seen.
+  if (numChars == 0) {
     return;
   }
 
@@ -78,9 +78,9 @@ void PdfDocumentStatisticsCalculator::computeGlyphStatistics() const {
   }
   _doc->mostFreqFontName = mostFreqFontName;
 
-  // Compute the average glyph-width and -height.
-  _doc->avgGlyphWidth = math_utils::round(sumWidths / static_cast<double>(numGlyphs), 1);
-  _doc->avgGlyphHeight = math_utils::round(sumHeights / static_cast<double>(numGlyphs), 1);
+  // Compute the average character width and -height.
+  _doc->avgCharWidth = math_utils::round(sumWidths / static_cast<double>(numChars), 1);
+  _doc->avgCharHeight = math_utils::round(sumHeights / static_cast<double>(numChars), 1);
 }
 
 // _________________________________________________________________________________________________

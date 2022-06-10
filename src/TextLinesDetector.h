@@ -64,7 +64,7 @@ class TextLinesDetector {
    * @param words
    *   The vector to which the created text line should be appended.
    */
-  void createTextLine(const std::vector<PdfWord*>& words, const PdfPageSegment* segment,
+  void createTextLine(const std::vector<PdfWord*>& words, PdfPageSegment* segment,
       std::vector<PdfTextLine*>* lines) const;
 
   /**

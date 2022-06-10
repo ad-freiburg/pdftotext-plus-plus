@@ -16,11 +16,11 @@
 #include "../utils/StringUtils.h"
 
 // _________________________________________________________________________________________________
-JsonlSerializer::JsonlSerializer(PdfDocument* doc, bool serializePages, bool serializeGlyphs,
+JsonlSerializer::JsonlSerializer(PdfDocument* doc, bool serializePages, bool serializeChars,
       bool serializeFigures, bool serializeShapes, bool serializeWords, bool serializeTextBlocks) {
   _doc = doc;
   _serializePages = serializePages;
-  _serializeGlyphs = serializeGlyphs;
+  _serializeChars = serializeChars;
   _serializeFigures = serializeFigures;
   _serializeShapes = serializeShapes;
   _serializeWords = serializeWords;
@@ -65,8 +65,8 @@ void JsonlSerializer::serializeToStream(std::ostream& stream) {
     if (_serializePages) {
       serializePage(page, stream);
     }
-    if (_serializeGlyphs) {
-      serializeGlyphs(page->glyphs, stream);
+    if (_serializeChars) {
+      serializeChars(page->characters, stream);
     }
     if (_serializeFigures) {
       serializeFigures(page->figures, stream);
@@ -96,22 +96,22 @@ void JsonlSerializer::serializePage(const PdfPage* page, std::ostream& stream) {
 }
 
 // _________________________________________________________________________________________________
-void JsonlSerializer::serializeGlyphs(const std::vector<PdfGlyph*>& glyphs, std::ostream& stream) {
-  for (const auto* g : glyphs) {
-    if (g->isDiacriticMarkOfBaseGlyph) {
+void JsonlSerializer::serializeChars(const std::vector<PdfCharacter*>& chars, std::ostream& stream) {
+  for (const auto* g : chars) {
+    if (g->isDiacriticMarkOfBaseChar) {
       continue;
     }
 
     const PdfFontInfo* fontInfo = _doc->fontInfos.at(g->fontName);
-    std::string text = g->isBaseGlyphOfDiacriticMark ? g->textWithDiacriticMark : g->text;
+    std::string text = g->isBaseCharOfDiacriticMark ? g->textWithDiacriticMark : g->text;
 
     std::string wordId = g->word ? g->word->id : "";
     std::string blockId = g->word && g->word->line && g->word->line->block
         ? g->word->line->block->id : "";
 
-    // Serialize the glyph information.
+    // Serialize the character information.
     stream << "{"
-      << "\"type\": \"glyph\", "
+      << "\"type\": \"char\", "
       << "\"id\": \"" << g->id << "\", "
       << "\"rank\": " << g->rank << ", "
       << "\"page\": " << g->position->pageNum << ", "

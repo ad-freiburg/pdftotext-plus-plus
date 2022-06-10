@@ -193,7 +193,7 @@ void ReadingOrderDetector::choosePrimaryXCuts(const std::vector<PdfElement*>& el
       double height = nonTextLeft->position->getHeight();
       // The element must exceed a certain width; one end point must start in the left half of the
       // bounding box around the page elements; and the other end point in the right half.
-      if (height > 10 * _doc->avgGlyphHeight && upperY < pageElementsMid && lowerY > pageElementsMid) {
+      if (height > 10 * _doc->avgCharHeight && upperY < pageElementsMid && lowerY > pageElementsMid) {
         cut->isChosen = true;
         continue;
       }
@@ -205,7 +205,7 @@ void ReadingOrderDetector::choosePrimaryXCuts(const std::vector<PdfElement*>& el
       double height = nonTextRight->position->getHeight();
       // The element must exceed a certain width; one end point must start in the left half of the
       // bounding box around the page elements; and the other end point in the right half.
-      if (height > 10 * _doc->avgGlyphHeight && upperY < pageElementsMid && lowerY > pageElementsMid) {
+      if (height > 10 * _doc->avgCharHeight && upperY < pageElementsMid && lowerY > pageElementsMid) {
         cut->isChosen = true;
         continue;
       }
@@ -273,7 +273,7 @@ void ReadingOrderDetector::choosePrimaryYCuts(const std::vector<PdfElement*>& el
       double width = nonTextAbove->position->getWidth();
       // The element must exceed a certain width; one end point must start in the left half of the
       // bounding box around the page elements; and the other end point in the right half.
-      if (width > 10 * _doc->avgGlyphWidth && leftX < pageElementsMid && rightX > pageElementsMid) {
+      if (width > 10 * _doc->avgCharWidth && leftX < pageElementsMid && rightX > pageElementsMid) {
         cut->isChosen = true;
         continue;
       }
@@ -285,7 +285,7 @@ void ReadingOrderDetector::choosePrimaryYCuts(const std::vector<PdfElement*>& el
       double width = nonTextBelow->position->getWidth();
       // The element must exceed a certain width; one end point must start in the left half of the
       // bounding box around the page elements; and the other end point in the right half.
-      if (width > 10 * _doc->avgGlyphWidth && leftX < pageElementsMid && rightX > pageElementsMid) {
+      if (width > 10 * _doc->avgCharWidth && leftX < pageElementsMid && rightX > pageElementsMid) {
         cut->isChosen = true;
         continue;
       }

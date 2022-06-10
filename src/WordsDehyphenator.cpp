@@ -58,14 +58,3 @@ void WordsDehyphenator::dehyphenate() {
     }
   }
 }
-
-
-// _________________________________________________________________________________________________
-PdfWord::PdfWord(const PdfWord& word) {
-  text = word.text;
-  fontSize = word.fontSize;
-  fontName = word.fontName;
-  position->wMode = word.position->wMode;
-  position->rotation = word.position->rotation;
-  glyphs = word.glyphs;
-}

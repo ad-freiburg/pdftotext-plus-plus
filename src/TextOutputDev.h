@@ -9,48 +9,53 @@
 #ifndef TEXTOUTPUTDEV_H_
 #define TEXTOUTPUTDEV_H_
 
-#include <codecvt>
-#include <locale>  // std::wstring_convert
-#include <string>
-#include <unordered_map>
-#include <vector>
-
 #include <poppler/GfxState.h>
 #include <poppler/OutputDev.h>
 
+#include <codecvt>
+#include <locale>  // std::wstring_convert
+
 #include "./utils/Log.h"
+
 #include "./PdfDocument.h"
 
+// =================================================================================================
 
 /**
  * This class is an implementation of Poppler's OutputDev. It is responsible for (1) handling the
- * different events triggered by Poppler while parsing the PDF (for example: "start a new page", or
- * "draw a character", or "update font", or "draw an image", or "draw a shape") and (2) storing the
- * information required by pdftotext++ about, for example, the glyphs, figures and, shapes in form
- * of a `PdfDocument`.
+ * different events triggered by Poppler while parsing the content streams of a PDF (for example:
+ * "start a new page", or "draw a character", or "update font", or "draw a graphic", or "draw a
+ * shape") and (2) storing the information required by pdftotext++ about, for example,
+ * the characters, graphics, and shapes in form of a `PdfDocument`.
  */
 class TextOutputDev : public OutputDev {
  public:
   /**
-   * This constructor creates and initializes a new instance of this `TextOutputDev` class.
+   * This constructor creates and initializes a new instance of this class.
    *
    * @param noEmbeddedFontFilesParsing
-   *   A boolean flag indicating whether or not to parse the font files embedded into the PDF.
-   *   Setting this flag to true enables more accurate font information, for example: the weight of
-   *   a font or the exact bounding boxes of the glyphs (without parsing the font files, the font
-   *   weights are often 0 and the heights of the bounding boxes are guessed).
-   *   Setting this flag to false results in a faster extraction process, but less accurate
-   *   extraction results.
+   *   A boolean flag indicating whether or not to parse the font files embedded into the current
+   *   PDF file. Setting this parameter to true disables the parsing; setting it to false enables
+   *   the parsing. Parsing the font files can enable more accurate bounding boxes of the chars
+   *   (in particular, when the chars represent mathematical symbols). It also can enable more
+   *   correct information about the style of a font (for example, whether or not the font is a
+   *   bold font), for the following reason: actually, the PDF standard specifies several font
+   *   flags that describe the style of a font. These flags are however often not set, even if they
+   *   are supposed to be (for example, there is an isBold flag for a font, but this flag is often
+   *   not set, even if the font is actually a bold font). Instead, the missing information is
+   *   often stored in the embedded font file (if the font is actually embedded). The consequence
+   *   of disabling the parsing of the font files is a faster extraction process, but a lower
+   *   accuracy of the extracted text.
    * @param doc
-   *   The `PdfDocument` in which the extracted information should be stored.
+   *   The `PdfDocument` to which the extracted information should be stored.
    * @param debug
    *   Whether or not this instance should print debug information to the console.
    * @param debugPageFilter
-   *   The number of the page to which the debug information should be reduced. If specified as a
-   *   value > 0, only those messages that relate to the given page will be printed to the console.
+   *   If set to a value > 0, only the debug messages produced while processing the
+   *   <debugPageFilter>-th page of the current PDF file will be printed to the console.
    */
-  TextOutputDev(bool noEmbeddedFontFilesParsing, PdfDocument* doc, bool debug=false,
-      int debugPageFilter=-1);
+  TextOutputDev(bool noEmbeddedFontFilesParsing, PdfDocument* doc, bool debug = false,
+      int debugPageFilter = -1);
 
   /** The deconstructor. */
   ~TextOutputDev() override;
@@ -58,7 +63,8 @@ class TextOutputDev : public OutputDev {
  private:
   /**
    * This method returns true if this device uses upside-down coordinates (meaning that (0,0)
-   * is the top left corner of the page), and false otherwise.
+   * is the top left corner of the page), and false otherwise (meaning that (0,0) is the lower
+   * left corner of the page).
    *
    * @return True if this device uses upside-down coordinates; false otherwise.
    */
@@ -73,9 +79,9 @@ class TextOutputDev : public OutputDev {
   bool useDrawChar() override { return true; }
 
   /**
-   * This method returns true if this device uses beginType3Char()/endType3Char() to process glyphs
-   * printed in a Type-3 font. Otherwise it returns false, meaning that glyphs in Type-3 fonts will
-   * be drawn with the "normal" drawChar()/drawString() methods.
+   * This method returns true if this device uses beginType3Char()/endType3Char() to process
+   * characters printed in a Type-3 font. Otherwise it returns false, meaning that characters in
+   * Type-3 fonts will be drawn with the "normal" drawChar()/drawString() methods.
    *
    * @return True if this device uses beginType3Char()/endType3Char(); false otherwise.
    */
@@ -83,10 +89,9 @@ class TextOutputDev : public OutputDev {
 
   /**
    * This method returns true if this instance requires information about the non-text elements
-   * (like figures and shapes) contained in the PDF; false otherwise.
+   * (like graphics and shapes) contained in the PDF; false otherwise.
    *
-   * @return True if this instance requires requires information about the non-text elements, false
-   *    otherwise.
+   * @return True if this instance requires information about non-text elements, false otherwise.
    */
   bool needNonText() override { return true; }
 
@@ -99,7 +104,7 @@ class TextOutputDev : public OutputDev {
    * information in form of a `PdfPage` to `_doc->pages`.
    *
    * @param pageNum
-   *   The page number of the page.
+   *   The number of the page.
    * @param state
    *   The current graphics state.
    * @param xref
@@ -109,11 +114,11 @@ class TextOutputDev : public OutputDev {
 
   /**
    * This method handles the event "update the current font" by setting `_fontInfo` to the related
-   * `PdfFontInfo` object stored in `_doc->fontInfos`. If no such object does not exist yet, this
-   * method gathers all information required by pdftotext++ about the font (for example, the font
-   * name, or the information whether or not the font is a bold font or an italic font) from the
-   * `GfxFont` object stored in `state->getFont()`. The gathered font information is stored in
-   * form of a `PdfFontInfo` object and is written to `_doc->fontInfos`.
+   * `PdfFontInfo` object stored in `_doc->fontInfos` (providing further information about the font,
+   * for example: the font name, or whether or not the font is a bold font or an italic font). If
+   * no such object exists yet, this method gathers this font information from the `GfxFont` object
+   * stored in `state->getFont()`, stores it in a new `PdfFontInfo` object and writes it to
+   * `_doc->fontInfos[state->getFont()->getName()]`.
    *
    * @param state
    *   The current graphics state.
@@ -123,27 +128,27 @@ class TextOutputDev : public OutputDev {
   /**
    * This method handles the event "draw a character" by gathering all information required by
    * pdftotext++ about the character (for example, the position, the font, the font size, or
-   * the text). The information are stored in form of a `PdfGlyph` object, which is appended to
-   * `page->glyphs` if the current clipbox is equal to the page's clipbox or to `figure->glyphs`
-   * otherwise (`figure` is the `PdfFigure` object related to the current clipbox, if no such
-   * object exists, this method will create it).
+   * the text). The information is stored in form of a `PdfCharacter` object, which is appended to
+   * `page->characters` if the current clip box is equal to the page's clip box or to
+   * `figure->characters` otherwise (`figure` is the `PdfFigure` object related to the current
+   * clip box; if no such object exists yet, this method will create it).
    *
    * @param state
    *   The current graphics state.
    * @param x
-   *   The x-coordinate of the glyph's lower-left, given relatively to the page's upper left.
+   *   The x-coordinate of the character's lower-left.
    * @param y
-   *   The y-coordinate of the glyph's lower-left, given relatively to the page's upper left.
+   *   The y-coordinate of the character's lower-left.
    * @param dx
    *   The x-offset by which the cursor should be shifted after printing the character.
    * @param dy
    *   The y-offset by which the cursor should be shifted after printing the character.
    * @param originX
-   *   TODO
+   *   TODO: Not sure what this parameter means, it is introduced by Poppler.
    * @param originY
-   *   TODO
+   *   TODO: Not sure what this parameter means, it is introduced by Poppler.
    * @param c
-   *   The character code in the content stream.
+   *   The character code.
    * @param nBytes
    *   The number of bytes of the character (a character can consists of either 8-bit or 16-bit).
    * @param u
@@ -157,10 +162,10 @@ class TextOutputDev : public OutputDev {
 
   /**
    * This method handles the event "stroke a path" by gathering all information required
-   * by pdftotext++ about the path (for example, the position) and storing this information in
-   * form of a `PdfShape`. If the current clip box is equal to the page's clip box, the shape is
-   * added to `_page->shapes`. Otherwise, the shape is added to `figure->shapes`, where figure is
-   * the `PdfFigure` object associated with the current clip box.
+   * by pdftotext++ about the path (for example, the position and the stroking color) and storing
+   * this information in form of a `PdfShape`. If the current clip box is equal to the page's clip
+   * box, the shape is added to `_page->shapes`. Otherwise, the shape is added to `figure->shapes`,
+   * where figure is the `PdfFigure` object associated with the current clip box.
    * NOTE: Our assumption here is that each clip box, which is different to the page's clip box,
    * represents a separate figure and that all shapes (and text) falling into the same clip box
    * belong to the same figure. We create exactly one figure per clip box. This figure is created
@@ -182,31 +187,31 @@ class TextOutputDev : public OutputDev {
   void fill(GfxState* state) override;
 
   /**
-   * This method handles the event "draw an image mask" by invoking the `drawImage(state, width,
-   * height)` method described below.
+   * This method handles the event "draw an image mask" by invoking the `drawGraphic(state)` method
+   * below. See the comment given for this method for more information.
    */
   void drawImageMask(GfxState* state, Object* ref, Stream* str, int width, int height,
       bool invert, bool interpolate, bool inlineImg) override;
 
   /**
-   * This method handles the event "draw an image" by invoking the `drawImage(state, width, height)`
-   * method described below.
+   * This method handles the event "draw an image" by invoking the `drawGraphic(state)` method
+   * below. See the comment given for this method for more information.
    */
   void drawImage(GfxState* state, Object* ref, Stream* str, int width, int height,
       GfxImageColorMap* colorMap, bool interpolate, const int* maskColors,
       bool inlineImg) override;
 
   /**
-   * This method handles the event "draw a masked image" by invoking the `drawImage(state, width,
-   * height)` method described below.
+   * This method handles the event "draw a masked image" by invoking the `drawGraphic(state)`
+   * method below. See the comment given for this method for more information.
    */
   void drawMaskedImage(GfxState* state, Object* ref, Stream* str, int width, int height,
       GfxImageColorMap* colorMap, bool interpolate, Stream* maskStr, int maskWidth,
       int maskHeight, bool maskInvert, bool maskInterpolate) override;
 
   /**
-   * This method handles the event "draw a soft masked image" by invoking the `drawImage(state,
-   * width, height)` method described below.
+   * This method handles the event "draw a soft masked image" by invoking the `drawGraphic(state)`
+   * method below. See the comment given for this method for more information.
    */
   void drawSoftMaskedImage(GfxState* state, Object* ref, Stream* str, int width,
       int height, GfxImageColorMap* colorMap, bool interpolate, Stream* maskStr,
@@ -214,16 +219,16 @@ class TextOutputDev : public OutputDev {
       bool maskInterpolate) override;
 
   /**
-   * This method is a generic method to handle all events belonging to the `drawImageMask()`,
-   * `drawImage()`, `drawMaskedImage()`, and `drawSoftMaskedImage()` methods in the exact same way
-   * (it is internally invoked by each of the mentioned methods). It gathers all information
-   * required by pdftotext++ about the image (for example, the position) and stores this
-   * information in form of a `PdfFigure` to `page->figures`, where `page` denotes the current
-   * `PdfPage`.
+   * This method is a generic method to handle the events "draw an image mask", "draw an image"
+   * "draw a masked image", and "draw a soft masked image" in the exact same way. It gathers all
+   * information required by pdftotext++ about the image (for example, the position) and stores
+   * this information in form of a `PdfGraphic`. If the current clip box is equal to the page's
+   * clip box, the graphic is added to `_page->graphics`. Otherwise, the graphic is added to
+   * `figure->graphics`, where figure is the `PdfFigure` object associated with the current clip
+   * box.
    */
   void drawGraphic(GfxState* state);
 
- private:
   /**
    * This method multiplies the given transformation matrices and writes the result to `res`.
    *
@@ -236,27 +241,25 @@ class TextOutputDev : public OutputDev {
    */
   void concat(const double* m1, const double* m2, double* res) const;
 
-  /** A boolean flag indicating whether or not to parse embedded font files. */
-  bool _noEmbeddedFontFilesParsing;
-  /** The PDF document to process. */
+  // A boolean flag indicating whether or not to parse embedded font files.
+  bool _parseEmbeddedFontFiles;
+  // The PDF document to process.
   PdfDocument* _doc;
-
-  /** The current page to process. */
+  // The current page.
   PdfPage* _page;
-  /** The current page number. */
+  // The current page number.
   int _p;
-  /** The xref table of the current PDF page. */
+  // The xref table of the current page.
   XRef* _xref;
-  /** The information about the current font. */
+  // The information about the current font.
   PdfFontInfo* _fontInfo = nullptr;
-  /** The current font size. */
+  // The current font size.
   double _fontSize = 0.0;
-  /** The number of elements (glyphs, shapes, figures) already processed. */
+  // The number of elements (characters, shapes, graphics) already processed.
   int _numElements = 0;
-  /** An object that converts a std::string to std::wstring. */
+  // An object that converts a std::string to std::wstring.
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> _wStringConverter;
-
-  /** The logger. */
+  // The logger.
   Logger* _log;
 };
 

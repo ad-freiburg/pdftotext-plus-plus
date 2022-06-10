@@ -125,7 +125,7 @@ PdfFontInfo* PdfFontInfo::create(const GfxState* state, XRef* xref, bool parseEm
   if (parseEmbeddedFontFiles) {
     // Check if the font is embedded. If so, read the embedded font file. It can contains further
     // information about the font that are not read by pdftotext by default, for example: the font
-    // weight, the italicness, or the exact bounding boxes of the glyphs.
+    // weight, the italicness, or the exact bounding boxes of the characters.
     GfxFontLoc* fontLoc = state->getFont()->locateFont(xref, nullptr);
 
     if (fontLoc != nullptr) {

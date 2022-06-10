@@ -15,7 +15,10 @@
 
 #include "../PdfDocument.h"
 
+using std::max;
+using std::regex;
 using std::string;
+using std::unordered_set;
 
 // =================================================================================================
 
@@ -24,21 +27,21 @@ const regex ITEM_LABEL_REGEXES[] = {
   // A regex to find item labels of form "• ", or "- ", or "+ ", etc.
   regex("^(•|-|–|\\+)\\s+"),
   // A regex to find item labels of form "I. ", "II. ", "III. ", "IV. ", etc.
-  regex("^(X{0,1}(IX|IV|V?I{0,3}))\\.\\s+", regex_constants::icase),
+  regex("^(X{0,1}(IX|IV|V?I{0,3}))\\.\\s+", std::regex_constants::icase),
   // A regex to find item labels of form "(I)", "(II)", "(III)", "(IV) ", etc.
-  regex("^\\((X{0,1}(IX|IV|V?I{0,3}))\\)\\s+", regex_constants::icase),
+  regex("^\\((X{0,1}(IX|IV|V?I{0,3}))\\)\\s+", std::regex_constants::icase),
   // A regex to find item labels of form "a. ", "b. ", "c. ", etc.
   regex("^([a-z])\\.\\s+"),
   // A regex to find item labels of form "1. ", "2. ", "3. ", etc.
   regex("^([0-9]+)\\.\\s+"),
   // A regex to find item labels of form "(A) ", "(1) ", "(C1) ", "[1] ", "[2] ", etc.
-  regex("^(\\(|\\[)([a-z0-9][0-9]{0,2})(\\)|\\])\\s+", regex_constants::icase),
+  regex("^(\\(|\\[)([a-z0-9][0-9]{0,2})(\\)|\\])\\s+", std::regex_constants::icase),
   // A regex to find item labels of form "[Bu2] ", "[Ch] ", "[Enn2020] ", etc.
   regex("^(\\[)([A-Z][a-zA-Z0-9]{0,5})(\\])\\s+"),
   // A regex to find item labels of form "A) " or "1) " or "a1) ".
-  regex("^([a-z0-9][0-9]{0,1})\\)\\s+", regex_constants::icase),
+  regex("^([a-z0-9][0-9]{0,1})\\)\\s+", std::regex_constants::icase),
   // A regex to find item labels of form "PACS" (1011.5073).
-  regex("^PACS\\s+", regex_constants::icase)
+  regex("^PACS\\s+", std::regex_constants::icase)
 };
 
 // =================================================================================================
@@ -156,7 +159,7 @@ bool computeIsPrefixedByFootnoteLabel(const PdfTextLine* line, const unordered_s
  * @param toleranceFactor
  *    A factor that is used to compute a tolerance for comparing the right margin of the previous
  *    line with the width of the first word of the given line. The tolerance is computed as:
- *      <toleranceFactor> * doc.avgGlyphWidth.
+ *      <toleranceFactor> * doc.avgCharWidth.
  *    If the difference between the right margin and the word width is larger than this tolerance,
  *    the previous line is considered to have capacity. Otherwise, the previous line is considered
  *    to have *no* capacity.
@@ -184,7 +187,7 @@ bool computeHasPrevLineCapacity(const PdfTextLine* line, double toleranceFactor 
  *   (c) the line distance between L and M is smaller than a given threshold.
  *   (d) L.lowerY < M.lowerY (meaning that M must be positioned below L).
  *
- * - A next sibling text line is the nearest next text line that
+ * - Next Sibling Text Line: a text line L is the next sibling text line of text line M if:
  *   (a) L is the nearest next text line of M with L.leftX == M.leftX (under consideration
  *       of a small tolerance)
  *   (b) there is no other text line K between M and L with K.leftX < M.leftX.
@@ -267,7 +270,7 @@ void computePotentialFootnoteLabels(const PdfTextLine* line, unordered_set<strin
  * @param xOffsetToleranceFactor
  *    A factor that is used to compute a tolerance for comparing the leftX offset and rightX offset
  *    between the two lines. The tolerance is computed as follows:
- *      <xOffsetToleranceFactor> * doc->avgGlyphWidth
+ *      <xOffsetToleranceFactor> * doc->avgCharWidth
  *    If the difference between the leftX offset and the rightX offset is smaller than this
  *    threshold, the offsets are considered to be equal, otherwise they are considered to be not
  *    equal.

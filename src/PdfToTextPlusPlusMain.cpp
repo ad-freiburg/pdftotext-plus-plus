@@ -87,7 +87,7 @@ static const char* description =
 "      words of a text block separated by whitespaces and the text blocks separated by blank lines."
 "      \n"
 "  - \033[36mJSONL:\033[0m Contains the extracted text in a structured form, broken down by a\n"
-"      given text unit (e.g., \"glyphs\", \"words\", or \"blocks\"). It contains one line per\n"
+"      given text unit (e.g., \"characters\", \"words\", or \"blocks\"). It contains one line per\n"
 "      instance of the respective unit (e.g., one line per word if the unit is \"words\"), each\n"
 "      providing all available layout information about the instance. Here is an example line,\n"
 "      showing the general structure of a line and which information are provided for a word:\n"
@@ -126,12 +126,12 @@ static bool noEmbeddedFontFiles = false;
 static bool noDehyphenation = false;
 static bool parseMode = false;
 static bool outputPages = false;
-static bool outputGlyphs = false;
+static bool outputChars = false;
 static bool outputFigures = false;
 static bool outputShapes = false;
 static bool outputWords = false;
 static bool outputBlocks = false;
-static bool visualizeGlyphs = false;
+static bool visualizeChars = false;
 static bool visualizeWords = false;
 static bool visualizeTextLines = false;
 static bool visualizeTextBlocks = false;
@@ -178,9 +178,9 @@ static const ArgDesc options[] = {
   { "--output-pages", argFlag, &outputPages, 0, "Instead of continuous text, output JSONL "
       "with all available information about the pages of the PDF file (e.g., the widths and "
       "heights)." },
-  { "--output-characters", argFlag, &outputGlyphs, 0, "Instead of continuous text, output "
-      "JSONL with all available information about the glyphs in the PDF file (e.g., the positions "
-      "and fonts)." },
+  { "--output-characters", argFlag, &outputChars, 0, "Instead of continuous text, output "
+      "JSONL with all available information about the characters in the PDF file (e.g., the "
+      "positions and fonts)." },
   { "--output-figures", argFlag, &outputFigures, 0, "Instead of continuous text, output "
       "JSONL with all available information about the figures in the PDF file (e.g., the "
       "positions)." },
@@ -193,9 +193,9 @@ static const ArgDesc options[] = {
   { "--output-text-blocks", argFlag, &outputBlocks, 0, "Instead of continuous text, output "
       "JSONL with all available information about the text blocks in the PDF file (e.g., the "
       "positions and the fonts)." },
-  { "--visualize-characters", argFlag, &visualizeGlyphs, 0,
-      "Add the bounding boxes of the detected glyphs to the visualization. Must be used together "
-      "with --visualization-path." },
+  { "--visualize-characters", argFlag, &visualizeChars, 0,
+      "Add the bounding boxes of the detected characters to the visualization. Must be used "
+      "together with --visualization-path." },
   { "--visualize-graphics", argFlag, &visualizeGraphics, 0,
       "Add the bounding boxes of the detected graphics to the visualization. Must be used "
       "together with --visualization-path." },
@@ -373,10 +373,10 @@ int main(int argc, char* argv[]) {
   // Output the extraction result. If one of the --output-* options is used, output the text in
   // JSONL format. Otherwise, output the text as continuous text.
   auto start = high_resolution_clock::now();
-  if (outputPages || outputGlyphs || outputFigures || outputShapes || outputWords|| outputBlocks) {
+  if (outputPages || outputChars || outputFigures || outputShapes || outputWords|| outputBlocks) {
     JsonlSerializer serializer(&doc,
       outputPages,
-      outputGlyphs,
+      outputChars,
       outputFigures,
       outputShapes,
       outputWords,
@@ -390,15 +390,15 @@ int main(int argc, char* argv[]) {
     serializer.serialize(outputFilePathStr);
   }
   auto end = high_resolution_clock::now();
-  Timing timingSerializeGlyphs("Serialize", duration_cast<milliseconds>(end - start).count());
-  timings.push_back(timingSerializeGlyphs);
+  Timing timingSerializeChars("Serialize", duration_cast<milliseconds>(end - start).count());
+  timings.push_back(timingSerializeChars);
 
   // Visualize the extraction result.
   const string visualizeFilePathStr(visualizeFilePath);
   if (!visualizeFilePathStr.empty()) {
     auto start = high_resolution_clock::now();
     PdfDocumentVisualizer visualizer(pdfFilePathStr);
-    if (visualizeGlyphs) { visualizer.visualizeGlyphs(doc, blue); }
+    if (visualizeChars) { visualizer.visualizeCharacters(doc, blue); }
     if (visualizeFigures) { visualizer.visualizeFigures(doc, blue); }
     if (visualizeShapes) { visualizer.visualizeShapes(doc, blue); }
     if (visualizeGraphics) { visualizer.visualizeGraphics(doc, blue); }
@@ -428,7 +428,7 @@ int main(int argc, char* argv[]) {
     cout << "\033[1m" << "Finished in " << timeTotal << " ms." << "\033[22m" << std::endl;
 
     for (const auto& timing : timings) {
-      string prefix = " * " + timing.description + ":";
+      string prefix = " * " + timing.name + ":";
       cout << std::left << std::setw(25) << prefix;
       cout << std::right << std::setw(4) << timing.time << " ms ";
       double time = math_utils::round(timing.time / static_cast<double>(timeTotal) * 100, 1);

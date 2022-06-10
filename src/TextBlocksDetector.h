@@ -19,6 +19,7 @@
 #include "./PdfDocument.h"
 
 using std::string;
+using std::unordered_set;
 
 // =================================================================================================
 
@@ -318,8 +319,8 @@ class TextBlocksDetector {
    *    The second factor used to compute an interval into which the leftX-offset between the given
    *    line and its previous line must fall so that both lines are considered to be part of the
    *    same block. The interval is computed as:
-   *      [<leftXOffsetToleranceFactorLow> * _doc->avgGlyphWidth,
-   *       <rightXOffsetToleranceFactorHigh> * _doc->avgGlyphWidth]
+   *      [<leftXOffsetToleranceFactorLow> * _doc->avgCharWidth,
+   *       <rightXOffsetToleranceFactorHigh> * _doc->avgCharWidth]
    *    The leftX-offset between the line and its previous line is computed as:
    *       line.prevLine.leftX - line.leftX
    *    If the offset falls into the computed interval, the line and the previous line are
@@ -371,8 +372,8 @@ class TextBlocksDetector {
    *    The second factor used to compute an interval into which the leftX-offset between the given
    *    line and its previous line must fall so that both lines are considered to be part of the
    *    same block. The interval is computed as:
-   *      [<leftXOffsetToleranceFactorLow> * _doc->avgGlyphWidth,
-   *       <rightXOffsetToleranceFactorHigh> * _doc->avgGlyphWidth]
+   *      [<leftXOffsetToleranceFactorLow> * _doc->avgCharWidth,
+   *       <rightXOffsetToleranceFactorHigh> * _doc->avgCharWidth]
    *    The leftX-offset between the line and its previous line is computed as:
    *       line.prevLine.leftX - line.leftX
    *    If the offset falls into the computed interval, the line and the previous line are
@@ -406,8 +407,8 @@ class TextBlocksDetector {
    *    The second factor used to compute an interval into which the leftX-offset between the given
    *    line and its previous line must fall so that both lines are considered to be part of the
    *    same block. The interval is computed as:
-   *      [<leftXOffsetToleranceFactorLow> * _doc->avgGlyphWidth,
-   *       <rightXOffsetToleranceFactorHigh> * _doc->avgGlyphWidth]
+   *      [<leftXOffsetToleranceFactorLow> * _doc->avgCharWidth,
+   *       <rightXOffsetToleranceFactorHigh> * _doc->avgCharWidth]
    *    The leftX-offset is computed as:
    *       line.prevLine.leftX - line.leftX
    *    If the offset falls into the computed interval, the line and previous line is considered to

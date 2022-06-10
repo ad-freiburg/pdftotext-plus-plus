@@ -1,18 +1,18 @@
 /**
- * Copyright 2021, University of Freiburg,
+ * Copyright 2022, University of Freiburg,
  * Chair of Algorithms and Data Structures.
  * Author: Claudius Korzen <korzen@cs.uni-freiburg.de>.
  *
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include <iostream>  // std::cout
-#include <sstream>  // std::stringstream
-#include <tuple>  // std::make_tuple
-
-#include <goo/GooString.h>
+#include <sstream>
+#include <string>
 
 #include "./PdfDocument.h"
+
+using std::string;
+using std::stringstream;
 
 // =================================================================================================
 // Cut
@@ -22,18 +22,27 @@ Cut::Cut(const CutDir dirA) {
   dir = dirA;
 }
 
+// _________________________________________________________________________________________________
+Cut::~Cut() = default;
+
 // =================================================================================================
 // PdfPosition
 
 // _________________________________________________________________________________________________
+PdfPosition::PdfPosition() = default;
+
+// _________________________________________________________________________________________________
+PdfPosition::~PdfPosition() = default;
+
+// _________________________________________________________________________________________________
 double PdfPosition::getWidth() const {
   return rightX - leftX;
-};
+}
 
 // _________________________________________________________________________________________________
 double PdfPosition::getHeight() const {
   return lowerY - upperY;
-};
+}
 
 // _________________________________________________________________________________________________
 double PdfPosition::getRotLeftX() const {
@@ -48,7 +57,7 @@ double PdfPosition::getRotLeftX() const {
     case 3:
       return lowerY;
   }
-};
+}
 
 // _________________________________________________________________________________________________
 double PdfPosition::getRotUpperY() const {
@@ -63,7 +72,7 @@ double PdfPosition::getRotUpperY() const {
     case 3:
       return leftX;
   }
-};
+}
 
 // _________________________________________________________________________________________________
 double PdfPosition::getRotRightX() const {
@@ -78,7 +87,7 @@ double PdfPosition::getRotRightX() const {
     case 3:
       return upperY;
   }
-};
+}
 
 // _________________________________________________________________________________________________
 double PdfPosition::getRotLowerY() const {
@@ -93,7 +102,7 @@ double PdfPosition::getRotLowerY() const {
     case 3:
       return rightX;
   }
-};
+}
 
 // _________________________________________________________________________________________________
 double PdfPosition::getRotWidth() const {
@@ -106,7 +115,7 @@ double PdfPosition::getRotWidth() const {
     case 3:
       return getRotLeftX() - getRotRightX();
   }
-};
+}
 
 // _________________________________________________________________________________________________
 double PdfPosition::getRotHeight() const {
@@ -119,17 +128,19 @@ double PdfPosition::getRotHeight() const {
     case 2:
       return getRotUpperY() - getRotLowerY();
   }
-};
+}
 
 // _________________________________________________________________________________________________
-std::string PdfPosition::toString() const {
-  std::stringstream ss;
+string PdfPosition::toString() const {
+  stringstream ss;
   ss << "PdfPosition("
      << "page=" << pageNum << "; "
      << "leftX=" << leftX << "; "
      << "upperY=" << upperY << "; "
      << "rightX=" << rightX << "; "
-     << "lowerY=" << lowerY << ")";
+     << "lowerY=" << lowerY << "; "
+     << "rotation=" << rotation << "; "
+     << "wMode=" << wMode << "; ";
   return ss.str();
 }
 
@@ -139,12 +150,12 @@ std::string PdfPosition::toString() const {
 // _________________________________________________________________________________________________
 PdfElement::PdfElement() {
   position = new PdfPosition();
-};
+}
 
 // _________________________________________________________________________________________________
 PdfElement::~PdfElement() {
   delete position;
-};
+}
 
 // =================================================================================================
 // PdfTextElement
@@ -156,18 +167,27 @@ PdfTextElement::PdfTextElement() = default;
 PdfTextElement::~PdfTextElement() = default;
 
 // =================================================================================================
-// PdfGlyph
+// PdfNonTextElement
 
 // _________________________________________________________________________________________________
-PdfGlyph::PdfGlyph() = default;
+PdfNonTextElement::PdfNonTextElement() = default;
 
 // _________________________________________________________________________________________________
-PdfGlyph::~PdfGlyph() = default;
+PdfNonTextElement::~PdfNonTextElement() = default;
+
+// =================================================================================================
+// PdfCharacter
 
 // _________________________________________________________________________________________________
-std::string PdfGlyph::toString() const {
-  std::stringstream ss;
-  ss << "PdfGlyph("
+PdfCharacter::PdfCharacter() = default;
+
+// _________________________________________________________________________________________________
+PdfCharacter::~PdfCharacter() = default;
+
+// _________________________________________________________________________________________________
+string PdfCharacter::toString() const {
+  stringstream ss;
+  ss << "PdfCharacter("
      << "pos=" << position->toString() << "; "
      << "fontName=" << fontName << "; "
      << "fontSize=" << fontSize << "; "
@@ -185,85 +205,6 @@ std::string PdfGlyph::toString() const {
 }
 
 // =================================================================================================
-// PdfNonTextElement
-
-// _________________________________________________________________________________________________
-PdfNonTextElement::PdfNonTextElement() = default;
-
-// _________________________________________________________________________________________________
-PdfNonTextElement::~PdfNonTextElement() = default;
-
-// _________________________________________________________________________________________________
-std::string PdfNonTextElement::toString() const {
-  std::stringstream ss;
-  ss << "PdfNonTextElement(pos=" << position->toString() << ")";
-  return ss.str();
-}
-
-// =================================================================================================
-// PdfFigure
-
-// _________________________________________________________________________________________________
-PdfFigure::PdfFigure() = default;
-
-// _________________________________________________________________________________________________
-PdfFigure::~PdfFigure() {
-  // Delete the glyphs.
-  for (const auto* glyph : glyphs) {
-    delete glyph;
-  }
-
-  // Delete the glyphs.
-  for (const auto* shape : shapes) {
-    delete shape;
-  }
-
-  // Delete the graphics.
-  for (const auto* graphic : graphics) {
-    delete graphic;
-  }
-}
-
-// _________________________________________________________________________________________________
-std::string PdfFigure::toString() const {
-  std::stringstream ss;
-  ss << "PdfFigure(pos=" << position->toString() << ")";
-  return ss.str();
-}
-
-// =================================================================================================
-// PdfShape
-
-// _________________________________________________________________________________________________
-PdfShape::PdfShape() = default;
-
-// _________________________________________________________________________________________________
-PdfShape::~PdfShape() = default;
-
-// _________________________________________________________________________________________________
-std::string PdfShape::toString() const {
-  std::stringstream ss;
-  ss << "PdfShape(pos=" << position->toString() << ")";
-  return ss.str();
-}
-
-// =================================================================================================
-// PdfGraphic
-
-// _________________________________________________________________________________________________
-PdfGraphic::PdfGraphic() = default;
-
-// _________________________________________________________________________________________________
-PdfGraphic::~PdfGraphic() = default;
-
-// _________________________________________________________________________________________________
-std::string PdfGraphic::toString() const {
-  std::stringstream ss;
-  ss << "PdfGraphic(pos=" << position->toString() << ")";
-  return ss.str();
-}
-
-// =================================================================================================
 // PdfWord
 
 // _________________________________________________________________________________________________
@@ -271,12 +212,14 @@ PdfWord::PdfWord() = default;
 
 // _________________________________________________________________________________________________
 PdfWord::~PdfWord() {
-  if (isFirstPartOfHyphenatedWord != nullptr) { delete isFirstPartOfHyphenatedWord; }
+  // if (isFirstPartOfHyphenatedWord != nullptr) { delete isFirstPartOfHyphenatedWord; }
+  // if (isSecondPartOfHyphenatedWord != nullptr) { delete isSecondPartOfHyphenatedWord; }
+  // if (isPartOfStackedMathSymbol != nullptr) { delete isPartOfStackedMathSymbol; }
 }
 
 // _________________________________________________________________________________________________
-std::string PdfWord::toString() const {
-  std::stringstream ss;
+string PdfWord::toString() const {
+  stringstream ss;
   ss << "PdfWord("
      << "pos=" << position->toString() << "; "
      << "fontName=" << fontName << "; "
@@ -295,12 +238,13 @@ PdfTextLine::PdfTextLine() = default;
 PdfTextLine::~PdfTextLine() = default;
 
 // _________________________________________________________________________________________________
-std::string PdfTextLine::toString() const {
-  std::stringstream ss;
+string PdfTextLine::toString() const {
+  stringstream ss;
   ss << "PdfTextLine("
      << "text=\"" << text << "\"; "
      << "pos=" << position->toString() << "; "
      << "leftMargin=" << leftMargin << "; "
+     << "rightMargin=" << rightMargin << "; "
      << "fontName=" << fontName << "; "
      << "fontSize=" << fontSize << ")";
 
@@ -317,17 +261,82 @@ PdfTextBlock::PdfTextBlock() = default;
 PdfTextBlock::~PdfTextBlock() = default;
 
 // _________________________________________________________________________________________________
-std::string PdfTextBlock::toString() const {
-  std::stringstream ss;
+string PdfTextBlock::toString() const {
+  stringstream ss;
   ss << "PdfTextBlock("
      << "pos=" << position->toString() << "; "
      << "role=" << role << "; "
+     << "isCentered=" << isLinesCentered << "; "
+     << "isEmphasized=" << isEmphasized << "; "
      << "text=\"" << text << "\")";
   return ss.str();
 }
 
 // =================================================================================================
-// PdfPage
+// PdfFigure
+
+// _________________________________________________________________________________________________
+PdfFigure::PdfFigure() = default;
+
+// _________________________________________________________________________________________________
+PdfFigure::~PdfFigure() {
+  // Delete the characters.
+  for (const auto* character : characters) {
+    delete character;
+  }
+
+  // Delete the shapes.
+  for (const auto* shape : shapes) {
+    delete shape;
+  }
+
+  // Delete the graphics.
+  for (const auto* graphic : graphics) {
+    delete graphic;
+  }
+}
+
+// _________________________________________________________________________________________________
+string PdfFigure::toString() const {
+  stringstream ss;
+  ss << "PdfFigure(pos=" << position->toString() << ")";
+  return ss.str();
+}
+
+// =================================================================================================
+// PdfShape
+
+// _________________________________________________________________________________________________
+PdfShape::PdfShape() = default;
+
+// _________________________________________________________________________________________________
+PdfShape::~PdfShape() = default;
+
+// _________________________________________________________________________________________________
+string PdfShape::toString() const {
+  stringstream ss;
+  ss << "PdfShape(pos=" << position->toString() << ")";
+  return ss.str();
+}
+
+// =================================================================================================
+// PdfGraphic
+
+// _________________________________________________________________________________________________
+PdfGraphic::PdfGraphic() = default;
+
+// _________________________________________________________________________________________________
+PdfGraphic::~PdfGraphic() = default;
+
+// _________________________________________________________________________________________________
+string PdfGraphic::toString() const {
+  stringstream ss;
+  ss << "PdfGraphic(pos=" << position->toString() << ")";
+  return ss.str();
+}
+
+// =================================================================================================
+// PdfPageSegment
 
 // _________________________________________________________________________________________________
 PdfPageSegment::PdfPageSegment() = default;
@@ -341,8 +350,8 @@ PdfPageSegment::~PdfPageSegment() {
 }
 
 // _________________________________________________________________________________________________
-std::string PdfPageSegment::toString() const {
-  std::stringstream ss;
+string PdfPageSegment::toString() const {
+  stringstream ss;
   ss << "PdfPageSegment("
      << "pos=" << position->toString() << "; ";
   return ss.str();
@@ -356,9 +365,9 @@ PdfPage::PdfPage() = default;
 
 // _________________________________________________________________________________________________
 PdfPage::~PdfPage() {
-  // Delete the glyphs.
-  for (const auto* glyph : glyphs) {
-    delete glyph;
+  // Delete the characters.
+  for (const auto* character : characters) {
+    delete character;
   }
   // Delete the words.
   for (const auto* word : words) {
@@ -392,6 +401,16 @@ PdfPage::~PdfPage() {
   for (const auto* cut : readingOrderCuts) {
     delete cut;
   }
+}
+
+// _________________________________________________________________________________________________
+double PdfPage::getWidth() const {
+  return clipRightX - clipLeftX;
+}
+
+// _________________________________________________________________________________________________
+double PdfPage::getHeight() const {
+  return clipLowerY - clipUpperY;
 }
 
 // =================================================================================================

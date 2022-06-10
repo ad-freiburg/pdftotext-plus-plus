@@ -6,8 +6,8 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#ifndef GLYPHMAP_H_
-#define GLYPHMAP_H_
+#ifndef CHARMAP_H_
+#define CHARMAP_H_
 
 #include <string>
 #include <unordered_map>
@@ -21,11 +21,11 @@ using std::unordered_map;
 // =================================================================================================
 
 /**
- * A mapping of glyph names to the respective Unicode codepoints, and string representations.
- * This is needed because for some glyphs, some PDFs only provide the glyph names but not the
+ * A mapping of char names to the respective Unicode codepoints, and string representations.
+ * This is needed because for some chars, some PDFs only provide the char names but not the
  * respective Unicode character (for example, due to a missing or broken encoding).
  */
-const unordered_map<string, pair<unsigned int, string>> glyphMap = {
+const unordered_map<string, pair<unsigned int, string>> charMap = {
   { "summationdisplay", make_pair(0x2211, "\u2211") },
   { "summationssdisplay", make_pair(0x2211, "\u2211") },
   { "angbracketleft", make_pair(0x3008, "\u3008") },
@@ -162,4 +162,4 @@ const unordered_map<string, pair<unsigned int, string>> glyphMap = {
   { "vextendsingle", make_pair(0x2223, "\u2223") }
 };
 
-#endif  // GLYPHMAP_H_
+#endif  // CHARMAP_H_

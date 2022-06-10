@@ -230,8 +230,8 @@ void TextLinesDetector::detect() {
             // the threshold should be less restrictive. If the horizontal distance is large, the
             // threshold should be more restrictive.
             // TODO: Parameterize the values.
-            double prevLineThreshold = prevLineXGap < 3 * _doc->avgGlyphWidth ? 0.4 : 0.8;
-            double nextLineThreshold = nextLineXGap < 3 * _doc->avgGlyphWidth ? 0.4 : 0.8;
+            double prevLineThreshold = prevLineXGap < 3 * _doc->avgCharWidth ? 0.4 : 0.8;
+            double nextLineThreshold = nextLineXGap < 3 * _doc->avgCharWidth ? 0.4 : 0.8;
             _log->debug(p) << " └─ prevLineThreshold: " << prevLineThreshold << endl;
             _log->debug(p) << " └─ nextLineThreshold: " << nextLineThreshold << endl;
 
@@ -302,7 +302,7 @@ void TextLinesDetector::detect() {
 
 // _________________________________________________________________________________________________
 void TextLinesDetector::createTextLine(const vector<PdfWord*>& words,
-    const PdfPageSegment* segment, vector<PdfTextLine*>* lines) const {
+    PdfPageSegment* segment, vector<PdfTextLine*>* lines) const {
   if (words.empty()) {
     return;
   }
@@ -374,11 +374,11 @@ void TextLinesDetector::computeTextLineProperties(PdfTextLine* line) const {
     line->position->rightX = max(line->position->rightX, wordMaxX);
     line->position->lowerY = max(line->position->lowerY, wordMaxY);
 
-    // Compute the most frequent font name, font size and baseline among the glyphs.
-    for (const auto* glyph : word->glyphs) {
-      fontNameFreqs[glyph->fontName]++;
-      fontSizeFreqs[glyph->fontSize]++;
-      baseFreqs[glyph->base]++;
+    // Compute the most frequent font name, font size and baseline among the characters.
+    for (const auto* character : word->characters) {
+      fontNameFreqs[character->fontName]++;
+      fontSizeFreqs[character->fontSize]++;
+      baseFreqs[character->base]++;
     }
 
     // Append the text of the word, separated by whitespace

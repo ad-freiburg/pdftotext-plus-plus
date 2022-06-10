@@ -18,6 +18,8 @@
 #include "./PdfElementsUtils.h"
 #include "./TextLinesUtils.h"
 
+using std::smatch;
+using std::stack;
 using std::string;
 using std::unordered_set;
 using std::vector;
@@ -38,7 +40,7 @@ bool text_lines_utils::computeIsFirstLineOfItem(const PdfTextLine* line,
     return false;
   }
 
-  double avgGlyphWidth = line->doc->avgGlyphWidth;
+  double avgCharWidth = line->doc->avgCharWidth;
 
   // EXPERIMENTAL: The line is not the first line of a footnote when all of the following
   // requirements are fulfilled:
@@ -57,7 +59,7 @@ bool text_lines_utils::computeIsFirstLineOfItem(const PdfTextLine* line,
     double distance = element_utils::computeVerticalGap(line->prevLine, line);
     bool hasNegativeDistance = math_utils::equalOrSmaller(distance, 0);
     bool hasSentenceDelim = text_element_utils::computeEndsWithSentenceDelimiter(line->prevLine);
-    bool hasEqualLeftX = element_utils::computeHasEqualLeftX(line->prevLine, line, avgGlyphWidth);
+    bool hasEqualLeftX = element_utils::computeHasEqualLeftX(line->prevLine, line, avgCharWidth);
 
     if (!isPrevPrefixedByLabel && hasEqualFont && hasEqualFontSize && hasNegativeDistance
           && !hasSentenceDelim && hasEqualLeftX) {
@@ -131,18 +133,18 @@ bool text_lines_utils::computeIsPrefixedByItemLabel(const PdfTextLine* line) {
   }
 
   // The line is not prefixed by an enumeration item label if the first word is empty.
-  const vector<PdfGlyph*>& firstWordGlyphs = words[0]->glyphs;
-  if (firstWordGlyphs.empty()) {
+  const vector<PdfCharacter*>& firstWordChars = words[0]->characters;
+  if (firstWordChars.empty()) {
     return false;
   }
 
-  // The line is prefixed by an enumeration item label if the first glyph is superscripted and if
+  // The line is prefixed by an enumeration item label if the first char is superscripted and if
   // it is contained in our alphabet we defined for identifying superscripted item labels.
-  // TODO(korzen): Instead of analyzing only the first glyph, we should analyze the first *word*.
+  // TODO(korzen): Instead of analyzing only the first char, we should analyze the first *word*.
   // This would identify also lines that are prefixed by something like "a)".
-  PdfGlyph* glyph = firstWordGlyphs[0];
-  string glyphStr = glyph->text;
-  if (glyph->isSuperscript && strstr(SUPER_ITEM_LABEL_ALPHABET, glyphStr.c_str()) != nullptr) {
+  PdfCharacter* ch = firstWordChars[0];
+  string charStr = ch->text;
+  if (ch->isSuperscript && strstr(SUPER_ITEM_LABEL_ALPHABET, charStr.c_str()) != nullptr) {
     return true;
   }
 
@@ -173,11 +175,11 @@ bool text_lines_utils::computeIsPrefixedByFootnoteLabel(const PdfTextLine* line,
   // characters in front of the line.
   const PdfWord* firstWord = words[0];
   string superScriptPrefix;
-  for (const auto* glyph : firstWord->glyphs) {
-    if (!glyph->isSuperscript) {
+  for (const auto* ch : firstWord->characters) {
+    if (!ch->isSuperscript) {
       break;
     }
-    superScriptPrefix += glyph->text;
+    superScriptPrefix += ch->text;
   }
 
   // If potentialFootnoteLabels is specified, it must contain the superscripted prefix.
@@ -208,7 +210,7 @@ bool text_lines_utils::computeHasPrevLineCapacity(const PdfTextLine* line, doubl
 
   // The previous line has capacity if its right margin is larger than the width of the first word
   // of the given line, under consideration of a tolerance.
-  double tolerance = toleranceFactor * line->doc->avgGlyphWidth;
+  double tolerance = toleranceFactor * line->doc->avgCharWidth;
   return math_utils::larger(line->prevLine->rightMargin, firstWordWidth, tolerance);
 }
 
@@ -226,7 +228,7 @@ void text_lines_utils::computeTextLineHierarchy(const PdfPage* page) {
   // CONSTANTS
 
   const double MAX_LINE_DIST = 10.0;
-  const double LEFT_X_OFFSET_TOLERANCE = page->segments[0]->doc->avgGlyphWidth;
+  const double LEFT_X_OFFSET_TOLERANCE = page->segments[0]->doc->avgCharWidth;
 
   // ----------
 
@@ -316,11 +318,11 @@ void text_lines_utils::computePotentialFootnoteLabels(const PdfTextLine* line,
   assert(line);
   assert(result);
 
-  // Iterate through the glyphs of the word. For each glyph, check if it is a label that
+  // Iterate through the characters of the word. For each character, check if it is a label that
   // potentially reference a footnote, that is: if it is a superscipted alphanumerical or if it
   // occurs in our alphabet we defined to identify special footnote labels. Merge each consecutive
-  // glyph that is part of such a label and that are positioned behind the word (we don't want to
-  // consider labels that are positioned in front of a word, since footnote labels are usually
+  // character that is part of such a label and that are positioned behind the word (we don't want
+  // to consider labels that are positioned in front of a word, since footnote labels are usually
   // positioned behind words).
   // TODO(korzen): We do not store the info about whether a superscript is positioned before or
   // after a word. As a workaround, consider a superscript as part of a potential footnote marker
@@ -328,33 +330,34 @@ void text_lines_utils::computePotentialFootnoteLabels(const PdfTextLine* line,
   for (const auto* word : line->words) {
     string label;
     bool nonSubSuperscriptSeen = false;
-    for (const auto* glyph : word->glyphs) {
+    for (const auto* ch : word->characters) {
       // Ignore sub- and superscripts that are positioned before the word.
-      if (!nonSubSuperscriptSeen && !glyph->isSubscript && !glyph->isSuperscript) {
+      if (!nonSubSuperscriptSeen && !ch->isSubscript && !ch->isSuperscript) {
         nonSubSuperscriptSeen = true;
         continue;
       }
-      // Ignore the glyph when no glyph which is not a subscript and superscript was seen yet.
+      // Ignore the character when no subscript and superscript was seen yet.
       if (!nonSubSuperscriptSeen) {
         continue;
       }
-      // Ignore the glyph when it does not contain any text.
-      if (glyph->text.empty()) {
+      // Ignore the character when it does not contain any text.
+      if (ch->text.empty()) {
         continue;
       }
 
-      // The glyph is part of a potential footnote label when it occurs in our alphabet we defined
+      // The character is part of a potential footnote label when it occurs in our alphabet we defined
       // to identify special (= non-alphanumerical) footnote labels.
-      bool isLabel = strchr(SPECIAL_FOOTNOTE_LABELS_ALPHABET, glyph->text[0]) != nullptr;
+      bool isLabel = strchr(SPECIAL_FOOTNOTE_LABELS_ALPHABET, ch->text[0]) != nullptr;
 
-      // The glyph is also a potential footnote label when it is a superscripted alphanumerical.
-      if (glyph->isSuperscript && isalnum(glyph->text[0])) {
+      // The character is also a potential footnote label when it is a superscripted alphanumerical.
+      if (ch->isSuperscript && isalnum(ch->text[0])) {
         isLabel = true;
       }
 
-      // When the glyph is part of a potential footnote label, add it to the current label string.
+      // When the character is part of a potential footnote label, add it to the current label
+      // string.
       if (isLabel) {
-        label += glyph->text;
+        label += ch->text;
         continue;
       }
 
@@ -390,7 +393,7 @@ bool text_lines_utils::computeIsCentered(const PdfTextLine* line1, const PdfText
   // is not equal).
   double absLeftXOffset = abs(element_utils::computeLeftXOffset(line1, line2));
   double absRightXOffset = abs(element_utils::computeRightXOffset(line1, line2));
-  double tolerance = xOffsetToleranceFactor * line1->doc->avgGlyphWidth;
+  double tolerance = xOffsetToleranceFactor * line1->doc->avgCharWidth;
   if (!math_utils::equal(absLeftXOffset, absRightXOffset, tolerance)) {
     return false;
   }

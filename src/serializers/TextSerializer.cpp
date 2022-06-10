@@ -98,14 +98,14 @@ void TextSerializer::serializeToStream(std::ostream& outStream) {
           }
 
           if (word->isFirstPartOfHyphenatedWord) {
-            // TODO: Hyphenated words should be also processed glyph-wise.
+            // TODO: Hyphenated words should be also processed character-wise.
             outStream << word->isFirstPartOfHyphenatedWord->text;
           } else {
-            for (auto* glyph : word->glyphs) {
-              if (_excludeSubSuperscripts && (glyph->isSubscript || glyph->isSuperscript)) {
+            for (auto* ch : word->characters) {
+              if (_excludeSubSuperscripts && (ch->isSubscript || ch->isSuperscript)) {
                 continue;
               }
-              outStream << glyph->text;
+              outStream << ch->text;
             }
           }
 

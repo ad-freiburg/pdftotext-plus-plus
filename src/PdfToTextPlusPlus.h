@@ -47,15 +47,15 @@ class PdfToTextPlusPlus {
    *   A boolean flag indicating whether or not to parse the font files, embedded into the current
    *   PDF file, while parsing the content streams. Setting this parameter to true disables the
    *   parsing; setting it to false enables the parsing. Parsing the font files can enable more
-   *   accurate bounding boxes of the glyphs (in particular, when the glyphs represent mathematical
-   *   symbols). It also can enable more correct information about the style of a font (for example,
-   *   whether or not the font is a bold font), for the following reason: actually, the PDF standard
-   *   specifies several font flags that describe the style of a font. These flags are however often
-   *   not set, even if they are supposed to be (for example, there is an isBold flag for a font,
-   *   but this flag is often not set, even if the font is actually a bold font). Instead, the
-   *   missing information is often stored in the embedded font file (if the font is actually
-   *   embedded). The consequence of disabling the parsing of the font files is a faster extraction
-   *   process, but a lower accuracy of the extracted text.
+   *   accurate bounding boxes of the characters (in particular, when the characters represent
+   *   mathematical symbols). It also can enable more correct information about the style of a font
+   *   (for example, whether or not the font is a bold font), for the following reason: actually,
+   *   the PDF standard specifies several font flags that describe the style of a font. These flags
+   *   are however often not set, even if they are supposed to be (for example, there is an isBold
+   *   flag for a font, but this flag is often not set, even if the font is actually a bold font).
+   *   Instead, the missing information is often stored in the embedded font file (if the font is
+   *   actually embedded). The consequence of disabling the parsing of the font files is a faster
+   *   extraction process, but a lower accuracy of the extracted text.
    * @param noWordsDehyphenation
    *   A boolean flag indicating whether or not to disable words dehyphenation. Setting this
    *   parameter to true disables words dehpyhenation; setting it to false enables it. Disabling
@@ -67,8 +67,8 @@ class PdfToTextPlusPlus {
    *   afterwards. Words, text lines, and text blocks are *not* detected. Setting this parameter to
    *   true enables the parsing mode, setting it to false disables the parsing mode.
    *   NOTE: This mode was introduced for the benchmark generator that needs information about the
-   *   the contained glyphs (e.g., the position, text and color) for assembling the true words,
-   *   text blocks, etc. based on the color of the glyphs.
+   *   the contained characters (e.g., the position, text and color) for assembling the true words,
+   *   text blocks, etc. based on the color of the characters.
    * @param debugPdfParsing
    *  A boolean flag indicating whether or not to print the debug messages, produced while parsing
    *  the content streams of the current PDF file, to the console.

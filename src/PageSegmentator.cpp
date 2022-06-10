@@ -144,31 +144,31 @@ void PageSegmentator::chooseXCuts(const std::vector<PdfElement*>& elements,
       _log->debug(p) << " └─ cut.posInElements: " << cut->posInElements << std::endl;
       _log->debug(p) << " └─ cut.elementBefore: " << cut->elementBefore->toString() << std::endl;
       _log->debug(p) << " └─ cut.elementAfter: " << cut->elementAfter->toString() << std::endl;
-      _log->debug(p) << " └─ # cutting elements: " << cut->cuttingElements.size() << std::endl;
+      _log->debug(p) << " └─ # cutting elements: " << cut->overlappingElements.size() << std::endl;
     }
 
     if (!silent) {
       _log->debug(p) << "Checking gap height / gap width ratio..." << std::endl;
       _log->debug(p) << " └─ cut.gapWidth: " << cut->gapWidth << std::endl;
       _log->debug(p) << " └─ cut.gapHeight: " << cut->gapHeight << std::endl;
-      _log->debug(p) << " └─ _doc->avgGlyphHeight: " << _doc->avgGlyphHeight << std::endl;
-      _log->debug(p) << " └─ _doc->avgGlyphWidth: " << _doc->avgGlyphWidth << std::endl;
+      _log->debug(p) << " └─ _doc->avgCharHeight: " << _doc->avgCharHeight << std::endl;
+      _log->debug(p) << " └─ _doc->avgCharWidth: " << _doc->avgCharWidth << std::endl;
     }
 
 
-    if (cut->cuttingElements.size() > 0) {
+    if (cut->overlappingElements.size() > 0) {
       // Only allow cutting elements when the number of elements exceeds a threshold.
       if (elements.size() < 500) {
         continue;
       }
 
       bool x = false;
-      for (PdfElement* element : cut->cuttingElements) {
-        if (cut->y2 - element->position->lowerY < 5 * _doc->avgGlyphHeight) {
+      for (PdfElement* element : cut->overlappingElements) {
+        if (cut->y2 - element->position->lowerY < 5 * _doc->avgCharHeight) {
           x = true;
           break;
         }
-        if (element->position->upperY - cut->y1 < 5 * _doc->avgGlyphHeight) {
+        if (element->position->upperY - cut->y1 < 5 * _doc->avgCharHeight) {
           x = true;
         }
       }
@@ -179,11 +179,11 @@ void PageSegmentator::chooseXCuts(const std::vector<PdfElement*>& elements,
 
     // Check if the elements are words, by casting them to `PdfWord` objects.
     // An object will be null, if it is not a word.
-    PdfWord* wordLeft = dynamic_cast<PdfWord*>(cut->elementBefore);
-    PdfWord* wordRight = dynamic_cast<PdfWord*>(cut->elementAfter);
+    const PdfWord* wordLeft = dynamic_cast<const PdfWord*>(cut->elementBefore);
+    const PdfWord* wordRight = dynamic_cast<const PdfWord*>(cut->elementAfter);
 
-      double hThreshold = 3 * _doc->avgGlyphHeight;
-      double wThreshold = 3 * _doc->avgGlyphWidth;
+      double hThreshold = 3 * _doc->avgCharHeight;
+      double wThreshold = 3 * _doc->avgCharWidth;
       if (!silent) {
         _log->debug(p) << "h/w threshold: " << hThreshold << ", " << wThreshold << std::endl;
       }
@@ -195,8 +195,8 @@ void PageSegmentator::chooseXCuts(const std::vector<PdfElement*>& elements,
         continue;
       }
 
-      hThreshold = 6 * _doc->avgGlyphHeight;
-      wThreshold = 2 * _doc->avgGlyphWidth;
+      hThreshold = 6 * _doc->avgCharHeight;
+      wThreshold = 2 * _doc->avgCharWidth;
       if (!silent) {
         _log->debug(p) << "h/w threshold: " << hThreshold << ", " << wThreshold << std::endl;
       }
@@ -266,7 +266,7 @@ void PageSegmentator::chooseXCuts(const std::vector<PdfElement*>& elements,
 
     // Compute the index of the closest element on the right side of the last chosen cut
     // (0 if no cut was chosen yet). This will be used to compute minX of the left group.
-    PdfElement* prevElementRight = prevChosenCut ? prevChosenCut->elementAfter : elements[0];
+    const PdfElement* prevElementRight = prevChosenCut ? prevChosenCut->elementAfter : elements[0];
     double leftGroupMinX = prevElementRight->position->leftX;
     double leftGroupMaxX = cut->elementBefore->position->rightX;
     double leftGroupWidth = leftGroupMaxX - leftGroupMinX;
@@ -275,10 +275,10 @@ void PageSegmentator::chooseXCuts(const std::vector<PdfElement*>& elements,
       _log->debug(p) << "Checking left group width..." << std::endl;
       _log->debug(p) << " └─ prevElementRight: " << prevElementRight->toString() << std::endl;
       _log->debug(p) << " └─ leftGroup.width: " << leftGroupWidth << std::endl;
-      _log->debug(p) << " └─ threshold: " << 10 * _doc->avgGlyphWidth << std::endl;
+      _log->debug(p) << " └─ threshold: " << 10 * _doc->avgCharWidth << std::endl;
     }
 
-    if (leftGroupWidth < 10 * _doc->avgGlyphWidth) {
+    if (leftGroupWidth < 10 * _doc->avgCharWidth) {
       if (!silent) {
         _log->debug(p) << "\033[1mCut not chosen (left group width too small).\033[0m" << std::endl;
       }
@@ -294,10 +294,10 @@ void PageSegmentator::chooseXCuts(const std::vector<PdfElement*>& elements,
     if (!silent) {
       _log->debug(p) << "Checking right group width..." << std::endl;
       _log->debug(p) << " └─ rightGroup.width: " << rightGroupWidth << std::endl;
-      _log->debug(p) << " └─ threshold: " << 10 * _doc->avgGlyphWidth << std::endl;
+      _log->debug(p) << " └─ threshold: " << 10 * _doc->avgCharWidth << std::endl;
     }
 
-    if (rightGroupWidth < 10 * _doc->avgGlyphWidth) {
+    if (rightGroupWidth < 10 * _doc->avgCharWidth) {
       if (!silent) {
         _log->debug(p) << "\033[1mCut not chosen (right group width too small).\033[0m" << std::endl;
       }
@@ -311,11 +311,11 @@ void PageSegmentator::chooseXCuts(const std::vector<PdfElement*>& elements,
     // bars or absolute value bars).
     // const PdfNonTextElement* nonTextLeft = dynamic_cast<const PdfNonTextElement*>(elementLeft);
     // const PdfNonTextElement* nonTextRight = dynamic_cast<const PdfNonTextElement*>(elementRight);
-    // if (nonTextLeft && nonTextLeft->position->getHeight() > 2 * _doc->avgGlyphHeight) {
+    // if (nonTextLeft && nonTextLeft->position->getHeight() > 2 * _doc->avgCharHeight) {
     //   cutIndices->push_back(i);
     //   continue;
     // }
-    // if (nonTextRight && nonTextRight->position->getHeight() > 2 * _doc->avgGlyphHeight) {
+    // if (nonTextRight && nonTextRight->position->getHeight() > 2 * _doc->avgCharHeight) {
     //   cutIndices->push_back(i);
     //   continue;
     // }

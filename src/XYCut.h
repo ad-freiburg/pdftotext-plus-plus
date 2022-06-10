@@ -43,7 +43,7 @@ typedef std::function<void(const std::vector<PdfElement*>& elements, std::vector
 
 /**
  * TODO This method recursively divides the given elements, which can consist of text elements (like
- * glyphs or words) and non-text elements (like figures and shapes) into (sub-)groups.
+ * characters or words) and non-text elements (like figures and shapes) into (sub-)groups.
  * At each recursion step, it tries to first divide the elements by vertical lines (also called
  * "x-cuts") and then by horizontal lines (also called "y-cuts"). This process is repeated
  * recursively until no group can be divided further by an x-cut or y-cut.

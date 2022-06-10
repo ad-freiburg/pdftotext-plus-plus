@@ -23,7 +23,7 @@
  * { "id": "14c3x", "rank": 12, "page": 2, "leftX": 12.4, "minY": 42.1, "rightX": 64.1,
  *   "font": "Arial", "fontSize": 12, "text": "Hello ...", "word" "p2322" }
  *
- *  The property "word" provides the id of the parent word of a glyph.
+ *  The property "word" provides the id of the parent word of a character.
  */
 class JsonlSerializer {
  public:
@@ -33,7 +33,7 @@ class JsonlSerializer {
    * @param doc
    *   The document to process.
    */
-  explicit JsonlSerializer(PdfDocument* doc, bool serializePages, bool serializeGlyphs,
+  explicit JsonlSerializer(PdfDocument* doc, bool serializePages, bool serializeChars,
       bool serializeFigures, bool serializeShapes, bool serializeWords, bool serializeTextBlocks);
 
   /** The deconstructor. */
@@ -60,7 +60,7 @@ class JsonlSerializer {
 
   void serializePage(const PdfPage* page, std::ostream& stream);
 
-  void serializeGlyphs(const std::vector<PdfGlyph*>& glyphs, std::ostream& stream);
+  void serializeChars(const std::vector<PdfCharacter*>& chars, std::ostream& stream);
 
   void serializeFigures(const std::vector<PdfFigure*>& figs, std::ostream& stream);
 
@@ -76,8 +76,8 @@ class JsonlSerializer {
   /** Whether to serialize the pages. **/
   bool _serializePages;
 
-  /** Whether to serialize the glyphs. **/
-  bool _serializeGlyphs;
+  /** Whether to serialize the characters. **/
+  bool _serializeChars;
 
   /** Whether to serialize the figures. **/
   bool _serializeFigures;

@@ -28,26 +28,26 @@ void SubSuperScriptsDetector::detect() const {
     for (auto* segment : page->segments) {
       for (auto* line : segment->lines) {
         for (auto* word : line->words) {
-          for (auto* glyph : word->glyphs) {
+          for (auto* character : word->characters) {
             // Identify superscripts.
-            if (math_utils::smaller(glyph->fontSize, _doc->mostFreqFontSize, 0.9)) {
-              if (glyph->base < line->base) {
-                glyph->isSuperscript = true;
+            if (math_utils::smaller(character->fontSize, _doc->mostFreqFontSize, 0.9)) {
+              if (character->base < line->base) {
+                character->isSuperscript = true;
                 continue;
               }
 
               // Identify subscripts.
-              if (glyph->base > line->base) {
-                glyph->isSubscript = true;
+              if (character->base > line->base) {
+                character->isSubscript = true;
                 continue;
               }
             }
 
             // Compute the bounding box of the line, with sub- and superscripts ignored.
-            line->baseBBoxLeftX = std::min(line->baseBBoxLeftX, glyph->position->leftX);
-            line->baseBBoxUpperY = std::min(line->baseBBoxUpperY, glyph->position->upperY);
-            line->baseBBoxRightX = std::max(line->baseBBoxRightX, glyph->position->rightX);
-            line->baseBBoxLowerY = std::max(line->baseBBoxLowerY, glyph->position->lowerY);
+            line->baseBBoxLeftX = std::min(line->baseBBoxLeftX, character->position->leftX);
+            line->baseBBoxUpperY = std::min(line->baseBBoxUpperY, character->position->upperY);
+            line->baseBBoxRightX = std::max(line->baseBBoxRightX, character->position->rightX);
+            line->baseBBoxLowerY = std::max(line->baseBBoxLowerY, character->position->lowerY);
           }
         }
       }

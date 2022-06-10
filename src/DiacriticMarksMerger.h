@@ -64,8 +64,8 @@ static const std::unordered_map<unsigned int, unsigned int> combiningMap = {
 };
 
 /**
- * This class merges the characters with diacritic marks that are represented by two glyphs in the
- * PDF (the base glyph, for example "a", and the diacritic mark, for example "´", to a single
+ * This class merges the characters with diacritic marks that are represented by two charss in the
+ * PDF (the base char, for example "a", and the diacritic mark, for example "´", to a single
  * character.
  */
 class DiacriticMarksMerger {
@@ -74,8 +74,8 @@ class DiacriticMarksMerger {
    * This constructor creates and initializes a new instance of this `DiacriticMarksMerger` class.
    *
    * @param doc
-   *    The PDF document to process, with the glyphs extracted from the i-th page stored in
-   *    doc->pages[i]->glyphs.
+   *    The PDF document to process, with the characters extracted from the i-th page stored in
+   *    doc->pages[i]->characters.
    * @param debug
    *   Whether or not this instance should print debug information to the console.
    * @param debugPageFilter
@@ -88,24 +88,24 @@ class DiacriticMarksMerger {
   ~DiacriticMarksMerger();
 
   /**
-   * This method merges each diacritic mark with its respective base glyph.
+   * This method merges each diacritic mark with its respective base character.
    *
-   * The basic approach is as follows: The glyphs of each page are iterated. For each glyph, it is
+   * The basic approach is as follows: The characters of each page are iterated. For each character, it is
    * checked whether or not it represents a diacritic mark. If so, the horizontal overlap with the
-   * respective previous and next glyph is computed. The diacritic mark is merged with the glyph
+   * respective previous and next character is computed. The diacritic mark is merged with the character
    * yielding the larger horizontal overlap (if this overlap exceeds a certain threshold).
    *
-   * Let `mark` be a diacritic mark and `base` the base glyph with which the diacritic mark
+   * Let `mark` be a diacritic mark and `base` the base character with which the diacritic mark
    * should be merged. The actual merging process is realized as follows:
-   *  - `mark->isDiacriticMarkOfBaseGlyph` is set to `base`,
-   *  - `base->isBaseGlyphOfDiacriticMark` is set to `mark`,
+   *  - `mark->isDiacriticMarkOfBaseChar` is set to `base`,
+   *  - `base->isBaseCharOfDiacriticMark` is set to `mark`,
    *  - `base->textWithDiacriticMark` is set to the string containing the character with diacritic
    *     mark represented by a single character,
-   *  - `base->position` is updated to the bounding box surrounding both glyphs.
+   *  - `base->position` is updated to the bounding box surrounding both characters.
    *
-   * NOTE: The glyph representing the diacritic mark are *not* removed from the `page->glyphs`. If
-   *  you want to exclude the glyph from further processing, you need to check whether or not
-   *  `mark->isDiacriticMarkOfBaseGlyph` is set.
+   * NOTE: The character representing the diacritic mark are *not* removed from the `page->characters`. If
+   *  you want to exclude the character from further processing, you need to check whether or not
+   *  `mark->isDiacriticMarkOfBaseChar` is set.
    */
   void merge();
 

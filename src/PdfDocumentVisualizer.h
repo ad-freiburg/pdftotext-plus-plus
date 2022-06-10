@@ -54,7 +54,7 @@ const ColorScheme gray(gr1, gr2, gr3);
 /**
  * This class creates a visualization of a `PdfDocument`, that is: a copy of the belonging PDF
  * file, with annotations added for debugging purposes; for example: the bounding boxes of
- * the extracted glyphs, words or text blocks; or the semantic roles of the text blocks.
+ * the extracted character, words or text blocks; or the semantic roles of the text blocks.
  */
 class PdfDocumentVisualizer {
  public:
@@ -62,7 +62,7 @@ class PdfDocumentVisualizer {
    * TODO This constructor creates and initializes a new `PdfDocumentVisualizer` object.
    *
    * @param doc
-   *   The `PdfDocument` providing the elements (for example, the glyphs, words and text blocks)
+   *   The `PdfDocument` providing the elements (for example, the characters, words and text blocks)
    *   extracted from the given PDF document.
    */
   explicit PdfDocumentVisualizer(std::string pdfFilePath);
@@ -73,16 +73,16 @@ class PdfDocumentVisualizer {
   ~PdfDocumentVisualizer();
 
   /**
-   * TODO This method visualizes the extracted glyphs by drawing their bounding boxes to the
+   * TODO This method visualizes the extracted characters by drawing their bounding boxes to the
    * visualization.
    */
-  void visualizeGlyphs(const PdfDocument& doc, const ColorScheme& cs);
+  void visualizeCharacters(const PdfDocument& doc, const ColorScheme& cs);
 
   /**
-   * TODO This method visualizes the extracted glyphs by drawing their bounding boxes to the
+   * TODO This method visualizes the extracted characters by drawing their bounding boxes to the
    * visualization.
    */
-  void visualizeGlyphs(const std::vector<PdfGlyph*>& glyphs, const ColorScheme& cs);
+  void visualizeCharacters(const std::vector<PdfCharacter*>& chars, const ColorScheme& cs);
 
   /**
    * TODO This method visualizes the extracted non-text elements by drawing their bounding boxes to
@@ -218,7 +218,7 @@ class PdfDocumentVisualizer {
    * TODO(korzen): This method draws the bounding boxes of the non-text elements (e.g., figures and
    * shapes) stored in `_doc` to the visualization.
    */
-  void drawGlyphBoundingBoxes(const std::vector<PdfGlyph*>& glyphs, const ColorScheme& cs);
+  void drawCharBoundingBoxes(const std::vector<PdfCharacter*>& chars, const ColorScheme& cs);
 
   /**
    * TODO(korzen): This method draws the bounding boxes of the non-text elements (e.g., figures and
@@ -264,7 +264,7 @@ class PdfDocumentVisualizer {
       const ColorScheme& cs);
 
   /**
-   * TODO(korzen): This method draws the bounding boxes of the glyphs stored in `_doc` to the
+   * TODO(korzen): This method draws the bounding boxes of the characters stored in `_doc` to the
    * visualization.
    */
   void drawBoundingBox(const PdfElement* element, const ColorScheme& cs);
