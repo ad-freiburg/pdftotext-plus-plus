@@ -130,7 +130,7 @@ int PdfToTextPlusPlus::process(const std::string& pdfFilePath, PdfDocument* doc,
   // Detect the words.
   start = high_resolution_clock::now();
   WordsDetector wd(doc, _debugWordsDetection, _debugPageFilter);
-  wd.detect();
+  wd.process();
   end = high_resolution_clock::now();
   auto timeDetectWords = duration_cast<milliseconds>(end - start).count();
   if (timings) {
