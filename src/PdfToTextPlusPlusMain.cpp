@@ -359,7 +359,9 @@ int main(int argc, char* argv[]) {
   // TODO: Don't use the invalid argument exception; is currently thrown by SemanticRolesPredictor.
   // Instead, use the exit code to check if something went wrong.
   try {
+    cout << "START " << pdfFilePathStr << std::endl;
     status = engine.process(pdfFilePathStr, &doc, &timings);
+    cout << "END  " << pdfFilePathStr << std::endl;
   } catch (const std::invalid_argument& ia) {
     std::cerr << "An error occurred: " << ia.what() << '\n';
     return 3;
