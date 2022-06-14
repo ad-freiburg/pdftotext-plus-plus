@@ -9,74 +9,104 @@
 #ifndef XYCUT_H_
 #define XYCUT_H_
 
-#include <functional>
+#include <functional>  // std::function
 #include <vector>
 
 #include "./PdfDocument.h"
 
+using std::vector;
+
+// * used for page segmentation; detecting columns
+// * recursively divide the given elements into smaller subgroups, by x-cuts and y-cpu_set_t
+// * explain x-cuts and y-cuts
+// * explain the concept: computing candidates; candidates are chosen by the PageSegmentator and
+//   ReadingOrderDetector.
+
+// =================================================================================================
 
 /**
- * TODO This typedef defines a declaration for a function that needs to be passed to the xCut() and
- * yCut() methods below. It returns true, if the position between `closestElementAlreadySeen` and
- * elements[i] denotes a valid position for dividing the elements by an x-cut (if the function is
- * passed to the xCut() method) or a y-cut (if the function is passed to the yCut() method).
- * Otherwise (if the position does not denote a valid cut position) this method returns false.
+ * A wrapper for the function that needs to be passed to the xCut() and yCut() methods below. The
+ * wrapped function is supposed to choose those cuts from a given vector of candidate cuts, which
+ * should be actually made on segmenting a given vector of elements.
  *
+ * The motivation behind this wrapper is that the `PageSegmentator` class and `ReadingOrderDetector`
+ * class use the same XYcut algorithm under the hood, but with different cut choosing algorithms.
+ * Thanks to the  wrapper, we do not have to implement the logic behind XY-cut twice, but can pass
+ * different functions, implementing different cut choosing strategies, to the xCut() and yCut()
+ * algorithm (so that the logic of xCut() and yCut() can be re-used).
+ *
+ * For each given cut candidate, the function is supposed to set the isChosen property to true, if
+ * the cut should actually made, and set to false otherwise.
+ *
+ * @param candidates
+ *   The cut candidates computed by the XY-cut algorithm. For each candidate, the function is
+ *   supposed to set the isChosen property to true, if the cut should actually made, and set to
+ *   false otherwise.
  * @param elements
- *   The elements that should be divided by an x-cut or y-cut.
- * @param cutPos
- *   The index identifying the position in `elements` for which to decide whether or not it is a
- *   valid cut position.
- * @param closestElementAlreadySeen
- *   The element in elements[0..cutPos] with the largest rightX when this function is passed
- *   to the xCut() method; or the largest lowerY when it passed to the yCut() method.
- *   NOTE: This element is usually *not* equal to elements[cutPos-1], because the elements are
- *   *not* sorted by rightX values (resp. lowerY values), but by their leftX values (resp. upperY values).
- * @return
- *   True if the position between `closestElementAlreadySeen` and `elements[cutPos]` denotes a
- *   valid cut position, false otherwise.
+ *   The elements to segment (and on the basis of which the cut candidates were computed).
+ * @param silent
+ *    Whether or not the function should output debug information to the console.
+ *    NOTE: We introduced this flag because we use the xCut() and yCut() methods also for
+ *    lookaheads. For example, one possible strategy is to choose a y-cut when it allows another,
+ *    subsequent x-cut (in which case a lookeahead is required to check if a subsequent y-cut
+ *    is actually possible). We usually do not want to output the debug information of the function
+ *    if it is used in a lookahead, since it would mess up the log.
+ *    Set this parameter to true to suppress the debug information, and to false to not suppress
+ *    the debug information.
  */
-typedef std::function<void(const std::vector<PdfElement*>& elements, std::vector<Cut*>& cuts,
+typedef std::function<void(const vector<Cut*>& candidates, const vector<PdfElement*>& elements,
     bool silent)> ChooseCutsFunc;
 
 // =================================================================================================
 
 /**
- * TODO This method recursively divides the given elements, which can consist of text elements (like
- * characters or words) and non-text elements (like figures and shapes) into (sub-)groups.
- * At each recursion step, it tries to first divide the elements by vertical lines (also called
- * "x-cuts") and then by horizontal lines (also called "y-cuts"). This process is repeated
- * recursively until no group can be divided further by an x-cut or y-cut.
+ * This method recursively divides the given elements, which can consist of text elements (like
+ * characters or words) and non-text elements (like figures and shapes) into smaller (sub-)groups.
  *
- * For more information about how the division by x-cuts and y-cuts works exactly, see the
- * information given in the comments of the xCut() and yCut() methods below.
+ * At each recursion step, it tries to first divide the elements by one or more vertical cuts (also
+ * called "x-cuts", because the lines are "moved" through the elements in x-direction in order to
+ * find cut positions) and then by one or more horizontal lines (also called "y-cuts", because they
+ * are moved to the elements in y-direction). This process is repeated recursively until no group
+ * can be divided further by an x-cut or y-cut.
+ *
+ * How the x-cuts and y-cuts are computed exactly is described in the respective comments of the of
+ * the xCut() and yCut() methods below.
  *
  * @param elements
  *   The elements to divide into groups.
- * @param isValidXCutFunc
- *   The function telling this method whether or not a given position in `elements` is a valid
- *   position for dividing the elements by an x-cut.
- * @param isValidYCutFunc
- *   The function telling this method whether or not a given position in `elements` is a valid
- *   position for dividing the elements by an x-cut.
- * @param maxNumXCutsPerStep
- *   The max number of x-cuts to do in each recursion step. Does *all* valid x-cuts if set to -1.
- * @param maxNumYCutsPerStep
- *   The max number of y-cuts to do in each recursion step. Does *all* valid x-cuts if set to -1.
+ * @param chooseXCutsFunc
+ *   A function that chooses those cuts from a given vector of x-cuts that should be actually made.
+ * @param chooseYCutsFunc
+ *   A function that chooses those cuts from a given vector of y-cuts that should be actually made.
+ * @param minXCutGapWidth
+ *   For a given x-cut c, the minimum value for `c.gapWidth` in order to be considered as a cut
+ *   candidate.
+ * @param minYCutGapHeight
+ *   For a given y-cut c, the minimum value for `c.gapHeight` in order to be considered as a cut
+ *   candidate.
+ * @param maxNumOverlappingElements
+ *   The maximum number of elements a cut candidate is allowed to overlap. TODO: Explain better.
+ * @param silent
+ *    Whether or not subsequent calls to the xCut()- and yCut()-methods should output debug
+ *    information to the console.
+ *    NOTE: The number of calls to the xCut()- and yCut()-methods may be large, in particular when
+ *    the methods are used for "looking ahead". This parameter allows to manually suppress the
+ *    output of debug information of certain calls; e.g., to keep the log readable.
  * @param resultGroups
- *   The vector to which the groups which can't be divided further should be appended.
+ *   The vector to which the groups which can't be divided further (by an x-cut or y-cut) should be
+ *   appended.
  * @param resultCuts
- *   If specified, this method adds the cuts made to divide the elements to this vector, each
- *   together with its x,y-coordinates. This is particularly helpful for debugging and
- *   visualization purposes.
+ *   If specified, this method adds the chosen cuts to this vector, each together with
+ *   positional information. This is particularly helpful for debugging and visualization purposes.
  */
-void xyCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc chooseXCutsFunc,
-  const ChooseCutsFunc chooseYCutsFunc, double minXCutGapWidth, double minYCutGapHeight,
-  int maxNumCuttingElements, bool silent,
-  std::vector<std::vector<PdfElement*>>* resultGroups, std::vector<Cut*>* resultCuts = nullptr);
+void xyCut(const vector<PdfElement*>& elements, double minXCutGapWidth, double minYCutGapHeight,
+  int maxNumOverlappingElements, const ChooseCutsFunc chooseXCutsFunc,
+  const ChooseCutsFunc chooseYCutsFunc, bool silent, vector<vector<PdfElement*>>* resultGroups,
+  vector<Cut*>* resultCuts = nullptr);
 
 /**
- * TODO This method divides the given elements into groups by x-cuts. The basic approach is as follows:
+ * This method divides the given elements into groups by one or more x-cuts. The basic approach is
+ * as follows: TODO
  * First, the elements are sorted by their leftX values and iterated in sorted order (= from left
  * to right). In iteration step i, the pair (elementLargestMaxX, elements[i+1]) is considered,
  * where `elementLargestMaxX` is the element in elements[0..i] with the largest rightX. For
@@ -89,58 +119,83 @@ void xyCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc choose
  * `maxNumXCuts`-many valid x-cuts positions were found.
  *
  * @param elements
- *   The elements to divide by x-cuts.
- * @param isValidXCutFunc
- *   The function telling this method whether or not a given position in `elements` is a valid
- *   position for dividing the elements by an x-cut.
- * @param maxNumXCuts
- *   The maximum number of x-cuts to do. Aborts the iteration through the elements when
- *   `maxNumXCuts`-many cuts were made. Set it to -1 to do *all* valid x-cuts.
+ *   The elements to divide into groups.
+ * @param chooseCutsFunc
+ *   A function that chooses those cuts from a given vector of x-cuts that should be actually made.
+ * @param minGapWidth
+ *   For a given x-cut c, the minimum value for `c.gapWidth` in order to be considered as a cut
+ *   candidate.
+ * @param maxNumOverlappingElements
+ *   The maximum number of elements a cut candidate is allowed to overlap. TODO: Explain better.
+ * @param silent
+ *   Whether or not this method should output debug information to the console.
+ *   NOTE: The number of calls to this method may be large, in particular when it is used for
+ *   "looking ahead". This parameter allows to manually suppress the output of debug information
+ *   of certain calls; e.g., to keep the log readable.
  * @param resultGroups
- *   The vector to which the result groups should be appended.
+ *   The vector to which the groups which can't be divided further (by an x-cut or y-cut) should be
+ *   appended.
  * @param resultCuts
- *   If specified, this method adds the cuts made to divide the elements to this vector, each
- *   together with its x,y-coordinates.
+ *   If specified, this method adds the chosen cuts to this vector, each together with
+ *   positional information. This is particularly helpful for debugging and visualization purposes.
  *
  * @return True, if the elements were divided into two or more groups; false otherwise.
  */
-bool xCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc chooseCutsFunc,
-  double minGapWidth, int maxNumCuttingElements, bool silent,
-  std::vector<std::vector<PdfElement*>>* resultGroups = nullptr,
-  std::vector<Cut*>* resultCuts = nullptr);
+bool xCut(const vector<PdfElement*>& elements, double minGapWidth, int maxNumOverlappingElements,
+  const ChooseCutsFunc chooseCutsFunc, bool silent,
+  vector<vector<PdfElement*>>* resultGroups = nullptr, vector<Cut*>* resultCuts = nullptr);
 
 /**
- * TODO This method divides the given elements into groups by y-cuts. The basic approach is as follows:
- * First, the elements are sorted by their upperY values and iterated in sorted order (= from top
- * to bottom). In iteration step i, the pair (elementLargestMaxY, elements[i+1]) is considered,
- * where `elementLargestMaxY` is the element in elements[0..i] with the largest lowerY. For
+ * TODO
+ * This method divides the given elements into groups by one or more x-cuts. The basic approach is
+ * as follows: TODO
+ * First, the elements are sorted by their leftX values and iterated in sorted order (= from left
+ * to right). In iteration step i, the pair (elementLargestMaxX, elements[i+1]) is considered,
+ * where `elementLargestMaxX` is the element in elements[0..i] with the largest rightX. For
  * each pair, the given `IsValidCutFunc`-function is invoked, with the purpose to find out whether
- * or not the current position is a valid y-cut position (that is: whether or not to divide the
- * elements between elementLargestMaxY and elements[i+1] by a y-cut).
- * When the `IsValidCutFunc` function affirms that the current position is a valid y-cut position,
+ * or not the current position is a valid x-cut position (that is: whether or not to divide the
+ * elements between elementLargestMaxX and elements[i+1] by a x-cut).
+ * When the `IsValidCutFunc` function affirms that the current position is a valid x-cut position,
  * a vector consisting of the elements[prevCutPos..i] is added to `resultGroups`, where
- * `prevCutPos` is the index of the previous y-cut position. The iteration stops when
- * `maxNumYCuts`-many valid y-cuts positions were found.
+ * `prevCutPos` is the index of the previous x-cut position. The iteration stops when
+ * `maxNumXCuts`-many valid x-cuts positions were found.
  *
  * @param elements
- *   The elements to divide by y-cuts.
- * @param isValidYCutFunc
- *   The function telling this method whether or not a given position in `elements` is a valid
- *   position for dividing the elements by an y-cut.
- * @param maxNumYCuts
- *   The maximum number of y-cuts to do. Aborts the iteration through the elements when
- *   `maxNumYCuts`-many cuts were made. Set it to -1 to do *all* valid y-cuts.
+ *   The elements to divide into groups.
+ * @param chooseCutsFunc
+ *   A function that chooses those cuts from a given vector of x-cuts that should be actually made.
+ * @param minGapHeight
+ *   For a given y-cut c, the minimum value for `c.gapHeight` in order to be considered as a cut
+ *   candidate.
+ * @param silent
+ *   Whether or not this method should output debug information to the console.
+ *   NOTE: The number of calls to this method may be large, in particular when it is used for
+ *   "looking ahead". This parameter allows to manually suppress the output of debug information
+ *   of certain calls; e.g., to keep the log readable.
  * @param resultGroups
- *   The vector to which the result groups should be appended.
+ *   The vector to which the groups which can't be divided further (by an x-cut or y-cut) should be
+ *   appended.
  * @param resultCuts
- *   If specified, this method adds the cuts made to divide the elements to this vector, each
- *   together with its x,y-coordinates.
+ *   If specified, this method adds the chosen cuts to this vector, each together with
+ *   positional information. This is particularly helpful for debugging and visualization purposes.
  *
  * @return True, if the elements were divided into two or more groups; false otherwise.
  */
-bool yCut(const std::vector<PdfElement*>& elements, const ChooseCutsFunc chooseCutsFunc,
-  double minGapHeight, bool silent,
-  std::vector<std::vector<PdfElement*>>* resultGroups = nullptr,
-  std::vector<Cut*>* resultCuts = nullptr);
+bool yCut(const vector<PdfElement*>& elements, double minGapHeight,
+  const ChooseCutsFunc chooseCutsFunc, bool silent,
+  vector<vector<PdfElement*>>* resultGroups = nullptr, vector<Cut*>* resultCuts = nullptr);
 
 #endif  // XYCUT_H_
+
+
+
+// * @param cutPos
+//  *   The index identifying the position in `elements` for which to decide whether or not it is a
+//  *   valid cut position.
+//  * @param closestElementAlreadySeen
+//  *   The element in elements[0..cutPos] with the largest rightX when this function is passed
+//  *   to the xCut() method; or the largest lowerY when it passed to the yCut() method.
+//  *   NOTE: This element is usually *not* equal to elements[cutPos-1], because the elements are
+//  *   *not* sorted by rightX values (resp. lowerY values), but by their leftX values (resp.
+// upperY values).
+

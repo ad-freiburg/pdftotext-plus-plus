@@ -25,9 +25,6 @@ using std::min;
 double element_utils::computeHorizontalGap(const PdfElement* element1, const PdfElement* element2) {
   assert(element1);
   assert(element2);
-  assert(element1->position->pageNum == element2->position->pageNum);
-  assert(element1->position->rotation == element2->position->rotation);
-  assert(element1->position->wMode == element2->position->wMode);
 
   // Determine the leftmost element, that is: the element with the minimum leftX.
   const PdfElement* leftElement;
@@ -56,9 +53,6 @@ double element_utils::computeHorizontalGap(const PdfElement* element1, const Pdf
 double element_utils::computeVerticalGap(const PdfElement* element1, const PdfElement* element2) {
   assert(element1);
   assert(element2);
-  assert(element1->position->pageNum == element2->position->pageNum);
-  assert(element1->position->rotation == element2->position->rotation);
-  assert(element1->position->wMode == element2->position->wMode);
 
   // Determine the upper element, that is: the element with the minimum upperY.
   const PdfElement* upperElement;

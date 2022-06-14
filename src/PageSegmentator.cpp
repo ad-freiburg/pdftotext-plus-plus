@@ -103,8 +103,8 @@ void PageSegmentator::segmentPage(PdfPage* page, std::vector<PdfPageSegment*>* s
 
   std::vector<std::vector<PdfElement*>> groups;
 
-  xyCut(pageElements, chooseXCutsBind, chooseYCutsBind, _minXCutGapWidth, _minYCutGapHeight,
-      maxNumCuttingElements, false, &groups, &page->blockDetectionCuts);
+  xyCut(pageElements, _minXCutGapWidth, _minYCutGapHeight, maxNumCuttingElements, chooseXCutsBind,
+      chooseYCutsBind, false, &groups, &page->blockDetectionCuts);
 
   // Create a text segment from each group and append it to the result list.
   for (const auto& group : groups) {
@@ -113,8 +113,8 @@ void PageSegmentator::segmentPage(PdfPage* page, std::vector<PdfPageSegment*>* s
 }
 
 // _________________________________________________________________________________________________
-void PageSegmentator::chooseXCuts(const std::vector<PdfElement*>& elements,
-      std::vector<Cut*>& cuts, bool silent) {
+void PageSegmentator::chooseXCuts(const std::vector<Cut*>& cuts,
+    const std::vector<PdfElement*>& elements, bool silent) {
   // Do nothing if no elements are given.
   if (elements.empty()) {
     return;
@@ -328,8 +328,8 @@ void PageSegmentator::chooseXCuts(const std::vector<PdfElement*>& elements,
 }
 
 // _________________________________________________________________________________________________
-void PageSegmentator::chooseYCuts(const std::vector<PdfElement*>& elems, std::vector<Cut*>& cuts,
-      bool silent) {
+void PageSegmentator::chooseYCuts(const std::vector<Cut*>& cuts,
+    const std::vector<PdfElement*>& elems, bool silent) {
   // Do nothing if no elements are given.
   if (elems.empty()) {
     return;
@@ -371,7 +371,7 @@ void PageSegmentator::chooseYCuts(const std::vector<PdfElement*>& elems, std::ve
 
     // Check if the elements between the previous cut and the current cut can be split vertically.
     std::vector<PdfElement*> elems1(elems.begin() + prevCutPos, elems.begin() + currCutPos);
-    bool cutOk = xCut(elems1, chooseXCutsBind, _minXCutGapWidth, maxNumCuttingElements, true);
+    bool cutOk = xCut(elems1, _minXCutGapWidth, maxNumCuttingElements, chooseXCutsBind, true);
 
     if (!silent) {
       _log->debug(p) << "Checked if elements between prev/curr cut can be x-cut." << std::endl;
@@ -385,7 +385,7 @@ void PageSegmentator::chooseYCuts(const std::vector<PdfElement*>& elems, std::ve
     if (cutOk) {
       // Check if *all* elements below the prev cut can be split vertically.
       std::vector<PdfElement*> elems2(elems.begin() + prevCutPos, elems.end());
-      cutOk = xCut(elems2, chooseXCutsBind, _minXCutGapWidth, maxNumCuttingElements, true);
+      cutOk = xCut(elems2, _minXCutGapWidth, maxNumCuttingElements, chooseXCutsBind, true);
 
       if (!silent) {
         _log->debug(p) << "Checked if all elements below prev cut can be x-cut." << std::endl;
@@ -426,7 +426,7 @@ void PageSegmentator::chooseYCuts(const std::vector<PdfElement*>& elems, std::ve
         }
 
         std::vector<PdfElement*> elems3(elems.begin() + prevCutPos, elems.begin() + nextCutPos);
-        cutOk = xCut(elems3, chooseXCutsBind, _minXCutGapWidth, maxNumCuttingElements, true);
+        cutOk = xCut(elems3, _minXCutGapWidth, maxNumCuttingElements, chooseXCutsBind, true);
 
         if (!silent) {
           _log->debug(p) << "Checked if elements between prev/next cut can be x-cut." << std::endl;
@@ -460,7 +460,7 @@ void PageSegmentator::chooseYCuts(const std::vector<PdfElement*>& elems, std::ve
   Cut* lastCut = !cuts.empty() ? cuts[cuts.size() - 1] : nullptr;
   size_t lastCutPos = lastCut ? lastCut->posInElements : 0;
   std::vector<PdfElement*> elems4(elems.begin() + lastCutPos, elems.end());
-  bool cutOk = xCut(elems4, chooseXCutsBind, _minXCutGapWidth, maxNumCuttingElements, true);
+  bool cutOk = xCut(elems4, _minXCutGapWidth, maxNumCuttingElements, chooseXCutsBind, true);
 
   if (!silent) {
     _log->debug(p) << "Checked if all elements below last cut can be x-cut." << std::endl;

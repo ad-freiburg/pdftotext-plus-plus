@@ -697,6 +697,15 @@ void TextOutputDev::drawGraphic(GfxState* state) {
   double rightX = leftX + ctm[0];  // ctm[0] = scaleX
   double lowerY = upperY + ctm[3];  // ctm[3] = scaleY
 
+  // Ignore the graphic if it lies outside the clip box (since graphics outside the clip box are
+  // not visible). Example PDF where a graphic lies outside the clip box: 1001.5159
+  if (math_utils::equalOrSmaller(leftX, clipLeftX)
+      || math_utils::equalOrSmaller(upperY, clipUpperY)
+      || math_utils::equalOrLarger(rightX, clipRightX)
+      || math_utils::equalOrLarger(lowerY, clipLowerY)) {
+    return;
+  }
+
   // Handle each graphic as a `PdfGraphic`.
   PdfGraphic* graphic = new PdfGraphic();
   graphic->id = string_utils::createRandomString(8, "graphic-");

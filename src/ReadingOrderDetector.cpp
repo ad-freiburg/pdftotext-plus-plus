@@ -85,19 +85,19 @@ void ReadingOrderDetector::detectReadingOrder() {
 
     // Identify the primary x-cuts and divide the page elements into groups at each primary x-cut.
     std::vector<std::vector<PdfElement*>> primaryXCutGroups;
-    xCut(pageElements, choosePrimaryXCutsBind, _minXCutGapWidth, 0, false, &primaryXCutGroups,
+    xCut(pageElements, _minXCutGapWidth, 0, choosePrimaryXCutsBind, false, &primaryXCutGroups,
         &page->readingOrderCuts);
 
     for (const auto& primXCutGroup : primaryXCutGroups) {
       // Identify the primary y-cuts and divide the page elements into groups at each primary y-cut.
       std::vector<std::vector<PdfElement*>> primaryYCutGroups;
-      yCut(primXCutGroup, choosePrimaryYCutsBind, _minYCutGapHeight, false, &primaryYCutGroups,
+      yCut(primXCutGroup, _minYCutGapHeight, choosePrimaryYCutsBind, false, &primaryYCutGroups,
           &page->readingOrderCuts);
 
       // Divide each group further by using the recursive XY-cut algorithm.
       for (const auto& primYCutGroup : primaryYCutGroups) {
-        xyCut(primYCutGroup, chooseXCutsBind, chooseYCutsBind, _minXCutGapWidth, _minYCutGapHeight,
-            0, false, &groups, &page->readingOrderCuts);
+        xyCut(primYCutGroup, _minXCutGapWidth, _minYCutGapHeight, 0, chooseXCutsBind,
+          chooseYCutsBind, false, &groups, &page->readingOrderCuts);
       }
     }
 
@@ -119,8 +119,8 @@ void ReadingOrderDetector::detectReadingOrder() {
 }
 
 // _________________________________________________________________________________________________
-void ReadingOrderDetector::chooseXCuts(const std::vector<PdfElement*>& elements,
-    std::vector<Cut*>& cuts, bool silent) {
+void ReadingOrderDetector::chooseXCuts(const std::vector<Cut*>& cuts,
+    const std::vector<PdfElement*>& elements, bool silent) {
   // Consider all cut candidates as valid cuts.
   for (Cut* cut : cuts) {
     cut->isChosen = true;
@@ -128,8 +128,8 @@ void ReadingOrderDetector::chooseXCuts(const std::vector<PdfElement*>& elements,
 }
 
 // _________________________________________________________________________________________________
-void ReadingOrderDetector::choosePrimaryXCuts(const std::vector<PdfElement*>& elements,
-    std::vector<Cut*>& cuts, bool silent) {
+void ReadingOrderDetector::choosePrimaryXCuts(const std::vector<Cut*>& cuts,
+    const std::vector<PdfElement*>& elements, bool silent) {
   // Do nothing if no elements are given.
   if (elements.empty()) {
     return;
@@ -214,8 +214,8 @@ void ReadingOrderDetector::choosePrimaryXCuts(const std::vector<PdfElement*>& el
 }
 
 // _________________________________________________________________________________________________
-void ReadingOrderDetector::choosePrimaryYCuts(const std::vector<PdfElement*>& elements,
-      std::vector<Cut*>& cuts, bool silent) {
+void ReadingOrderDetector::choosePrimaryYCuts(const std::vector<Cut*>& cuts,
+    const std::vector<PdfElement*>& elements, bool silent) {
   // Do nothing if no elements are given.
   if (elements.empty()) {
     return;
@@ -294,8 +294,8 @@ void ReadingOrderDetector::choosePrimaryYCuts(const std::vector<PdfElement*>& el
 }
 
 // _________________________________________________________________________________________________
-void ReadingOrderDetector::chooseYCuts(const std::vector<PdfElement*>& elements,
-    std::vector<Cut*>& cuts, bool silent) {
+void ReadingOrderDetector::chooseYCuts(const std::vector<Cut*>& cuts,
+    const std::vector<PdfElement*>& elements, bool silent) {
   // Do nothing if no elements are given.
   if (elements.empty()) {
     return;
@@ -317,7 +317,7 @@ void ReadingOrderDetector::chooseYCuts(const std::vector<PdfElement*>& elements,
   for (size_t i = 0; i < cuts.size(); i++) {
     Cut* cut = cuts[i];
     std::vector<PdfElement*> group(elements.begin() + cut->posInElements, elements.end());
-    bool cutOk = xCut(group, chooseXCutsBind, _minXCutGapWidth, 0, true);
+    bool cutOk = xCut(group, _minXCutGapWidth, 0, chooseXCutsBind, true);
     if (cutOk) {
       cut->isChosen = true;
       lastCutIndex = i;
@@ -331,7 +331,7 @@ void ReadingOrderDetector::chooseYCuts(const std::vector<PdfElement*>& elements,
   for (size_t i = lastCutIndex + 1; i --> firstCutIndex; ) {
     Cut* cut = cuts[i];
     std::vector<PdfElement*> group(elements.begin(), elements.begin() + cut->posInElements);
-    bool cutOk = xCut(group, chooseXCutsBind, _minXCutGapWidth, 0, true);
+    bool cutOk = xCut(group, _minXCutGapWidth, 0, chooseXCutsBind, true);
     if (cutOk) {
       cut->isChosen = true;
       firstCutIndex = i;
@@ -348,7 +348,7 @@ void ReadingOrderDetector::chooseYCuts(const std::vector<PdfElement*>& elements,
     for (size_t j = lastCutIndex + 1; j --> i; ) {
       Cut* lowCut = cuts[j];
       std::vector<PdfElement*> group(elements.begin() + highCut->posInElements, elements.begin() + lowCut->posInElements);
-      bool cutOk = xCut(group, chooseXCutsBind, _minXCutGapWidth, 0, true);
+      bool cutOk = xCut(group, _minXCutGapWidth, 0, chooseXCutsBind, true);
 
       if (cutOk) {
         highCut->isChosen = true;

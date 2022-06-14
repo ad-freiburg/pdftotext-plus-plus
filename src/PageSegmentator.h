@@ -67,7 +67,7 @@ class PageSegmentator {
    * @return True if the position between `closestElementLeft` and `elements[cutPos]` denotes a
    *   valid x-cut position, false otherwise.
    */
-  void chooseXCuts(const std::vector<PdfElement*>& elements, std::vector<Cut*>& cuts, bool silent);
+  void chooseXCuts(const std::vector<Cut*>& cuts, const std::vector<PdfElement*>& elements, bool silent);
 
   // TODO(korzen): /**
   //  * This method tells the XY-cut algorithm whether or not the position between the elements
@@ -85,7 +85,7 @@ class PageSegmentator {
   //  * @return True if the position between `closestElementAbove` and `elements[cutPos]` denotes a
   //  *   valid semantic y-cut position, false otherwise.
   //  */
-  void choosePrimaryYCuts(const std::vector<PdfElement*>& elements, std::vector<Cut*>& cuts,
+  void choosePrimaryYCuts(const std::vector<Cut*>& cuts, const std::vector<PdfElement*>& elements,
       bool silent);
 
   /**
@@ -105,7 +105,7 @@ class PageSegmentator {
    * @return True if the position between `closestElementAbove` and `elements[cutPos]` denotes a
    *   valid y-cut position, false otherwise.
    */
-  void chooseYCuts(const std::vector<PdfElement*>& elements, std::vector<Cut*>& cuts, bool silent);
+  void chooseYCuts(const std::vector<Cut*>& cuts, const std::vector<PdfElement*>& elements, bool silent);
 
   /**
    * TODO This method (1) creates a new `PdfTextBlock` from the words in the given list of
