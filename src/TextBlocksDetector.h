@@ -9,9 +9,10 @@
 #ifndef TEXTBLOCKSDETECTOR_H_
 #define TEXTBLOCKSDETECTOR_H_
 
+#include <algorithm>  // std::max
 #include <string>
 #include <unordered_set>
-#include <vector>
+#include <utility>  // std::make_pair
 
 #include "./utils/Log.h"
 #include "./utils/Trool.h"
@@ -23,6 +24,8 @@ using std::unordered_set;
 
 // =================================================================================================
 
+struct TextBlocksDetectorConfig;
+
 /**
  * This class is responsible for detecting text blocks in a PDF document.
  *
@@ -31,12 +34,12 @@ using std::unordered_set;
  * page-wise. Each page is processed using the following two-step approach.
  *
  * In the first step, the text lines of each segment of the page are split into preliminary text
- * blocks, that is: groups of (consecutive) lines that exhibit some special layout feature, for
+ * blocks. The purpose is to seperate text that exhibits some special layout feature (for
  * example: a special rotation, a special writing mode, a special font size, or a special line
- * distance by which the lines are separated from the rest of the text (by "special" we mean that
+ * distance by which the lines are separated) from the rest of the text (by "special" we mean that
  * the majority of text in the document does not exhibit the same layout feature). Preliminary text
- * blocks can be seen as a division into roughh text blocks, which need to be split further into
- * smaller (and more accurate) text blocks.
+ * blocks can be seen as a division into rough text blocks, which however need to be split further
+ * into smaller (and more accurate) text blocks.
  *
  * In the second step, the preliminary text blocks are split further into smaller text blocks by
  * analyzing the contained text lines for more advanced layout features, for example: the
@@ -60,7 +63,7 @@ using std::unordered_set;
 class TextBlocksDetector {
  public:
   /**
-   * This constructor creates and initializes a new instance of the `TextBlocksDetector` class.
+   * This constructor creates and initializes a new instance of this class.
    *
    * @param doc
    *    The PDF document to process. It is expected that the pages of the document were already
@@ -68,25 +71,20 @@ class TextBlocksDetector {
    *    the i-th page are expected to be stored in doc.pages[i].segments. The text lines of the
    *    j-th segment of the i-th page are expected to be stored in doc.pages[i].segments[j].lines.
    * @param debug
-   *    A boolean flag indicating whether or not this class should output debug information to the
-   *    console while detecting the text blocks.
+   *   Whether or not this instance should print debug information to the console.
    * @param debugPageFilter
-   *    A filter that can be used to output only the debug information that is produced while
-   *    detecting the text blocks on page <debugPageFilter>. If specified by a value < 0, *all*
-   *    debug information produced while detecting the text blocks is outputted, no matter on which
-   *    pages the text blocks are located.
+   *   If set to a value > 0, only the debug messages produced while processing the
+   *   <debugPageFilter>-th page of the current PDF file will be printed to the console.
    */
   explicit TextBlocksDetector(PdfDocument* doc, bool debug = false, int debugPageFilter = -1);
 
-  /**
-   * The deconstructor.
-   */
+  /** The deconstructor. */
   ~TextBlocksDetector();
 
   /**
-   * This method starts the text block detection. As mentioned in the preliminary comment of this
-   * class, the document is processed page-wise. For each page, the text blocks are detected in
-   * two steps: (1) detecting preliminary text blocks, and (2) splitting the preliminary text
+   * This method starts the detection of text blocks. As mentioned in the preliminary comment of
+   * this class, the document is processed page-wise. For each page, the text blocks are detected
+   * in two steps: (1) detecting preliminary text blocks, and (2) splitting the preliminary text
    * blocks into smaller text blocks.
    *
    * For detecting the preliminary text blocks, the text lines are processed segment-wise. For each
@@ -103,7 +101,7 @@ class TextBlocksDetector {
    * startsBlock() method is called for deciding whether or not L starts a text block; (3) instead
    * of to S.blocks, the created `PdfTextBlock` instances are added to P.blocks.
    */
-  void detect();
+  void process();
 
  private:
   /**
@@ -114,7 +112,8 @@ class TextBlocksDetector {
    * @param line
    *    The text line to process.
    *
-   * @return True, if the given text line starts a preliminary text block, false otherwise.
+   * @return
+   *    True, if the given text line starts a preliminary text block, false otherwise.
    */
   bool startsPreliminaryBlock(const PdfTextLine* line) const;
 
@@ -130,9 +129,10 @@ class TextBlocksDetector {
    * @param line
    *    The text line to process.
    *
-   * @return True, if the given text line starts a text block, false otherwise.
+   * @return
+   *    True, if the given text line starts a text block, false otherwise.
    */
-  bool startsBlock(const PdfTextBlock* pBlock, const PdfTextLine* line);
+  bool startsBlock(const PdfTextBlock* pBlock, const PdfTextLine* line) const;
 
   // ===============================================================================================
 
@@ -201,15 +201,13 @@ class TextBlocksDetector {
    *
    * @param line
    *    The line to process.
-   * @param tolerance
-   *    The value by which two font sizes may differ in order to be considered equal.
    *
    * @return
    *    Trool::True if the line starts a block;
    *    Trool::False if the line does *not* start a block;
    *    Trool::None if this method couldn't decide whether the line starts a block.
    */
-  Trool startsBlock_fontSize(const PdfTextLine* line, double tolerance = 1.0) const;
+  Trool startsBlock_fontSize(const PdfTextLine* line) const;
 
   /**
    * This method checks whether the given line starts a block because its distance to the previous
@@ -218,27 +216,13 @@ class TextBlocksDetector {
    *
    * @param line
    *    The line to process.
-   * @param minTolerance
-   *    A value used for computing a tolerance by which the line distance may differ from the most
-   *    frequent line distance, so that both distances are considered to be equal. See the comment
-   *    given for the <toleranceFactor> parameter for more details about how the tolerance is
-   *    computed and used exactly.
-   * @param toleranceFactor
-   *    A factor used for computing a tolerance by which the line distance may differ from the most
-   *    frequent line distance, so that both distances are considered to be equal. The tolerance is
-   *    computed as:
-   *      max(<minTolerance>, <toleranceFactor> * _doc->mostFreqLineDistance)
-   *    The line distance is only then considered to be larger than the most frequent line distance
-   *    when the difference between the line distance and the most frequent line distance is larger
-   *    than this threshold.
    *
    * @return
    *    Trool::True if the line starts a block;
    *    Trool::False if the line does *not* start a block;
    *    Trool::None if this method couldn't decide whether the line starts a block.
    */
-  Trool startsBlock_lineDistance(const PdfTextLine* line, double minTolerance = 1.0,
-      double toleranceFactor = 0.1) const;
+  Trool startsBlock_lineDistance(const PdfTextLine* line) const;
 
   /**
    * This method checks whether the given line starts a block because the line distance between
@@ -247,22 +231,13 @@ class TextBlocksDetector {
    *
    * @param line
    *    The line to process.
-   * @param toleranceFactor
-   *    A factor used for computing a tolerance by which the curr/prev distance may differ from the
-   *    prev/prevPrev distance, so that both distances are considered to be equal. The tolerance is
-   *    computed as:
-   *      <toleranceFactor> * _doc->mostFreqWordHeight
-   *    The curr/prev distance is only then considered to be larger than the prev/prevPrev distance
-   *    when the difference between the curr+prev distance and the prev+prevPrev distance is larger
-   *    than this threshold.
    *
    * @return
    *    Trool::True if the line starts a block;
    *    Trool::False if the line does *not* start a block;
    *    Trool::None if this method couldn't decide whether the line starts a block.
    */
-  Trool startsBlock_increasedLineDistance(const PdfTextLine* line,
-      double toleranceFactor = 0.5) const;
+  Trool startsBlock_increasedLineDistance(const PdfTextLine* line) const;
 
   /**
    * This method checks whether the given line starts a block because the given preliminary
@@ -309,31 +284,13 @@ class TextBlocksDetector {
    *    The preliminary block to process.
    * @param line
    *    The line to process.
-   * @param leftXOffsetToleranceFactorLow
-   *    The first factor used to compute an interval into which the leftX-offset between the given
-   *    line and its previous line must fall so that both lines are considered to be part of the
-   *    same block. The second factor for computing the interval is
-   *    <leftXOffsetToleranceFactorHigh>, see the comment given for this parameter for more
-   *    information about how the interval is computed and used exactly.
-   * @param leftXOffsetToleranceFactorHigh
-   *    The second factor used to compute an interval into which the leftX-offset between the given
-   *    line and its previous line must fall so that both lines are considered to be part of the
-   *    same block. The interval is computed as:
-   *      [<leftXOffsetToleranceFactorLow> * _doc->avgCharWidth,
-   *       <rightXOffsetToleranceFactorHigh> * _doc->avgCharWidth]
-   *    The leftX-offset between the line and its previous line is computed as:
-   *       line.prevLine.leftX - line.leftX
-   *    If the offset falls into the computed interval, the line and the previous line are
-   *    considered to be part of the same block. Otherwise, the given line is considered to be the
-   *    start of a block.
    *
    * @return
    *    Trool::True if the line starts a block;
    *    Trool::False if the line does *not* start a block;
    *    Trool::None if this method couldn't decide whether the line starts a block.
    */
-  Trool startsBlock_item(const PdfTextBlock* pBlock, const PdfTextLine* line,
-      double leftXOffsetToleranceFactorLow = -1, double leftXOffsetToleranceFactorHigh = 6) const;
+  Trool startsBlock_item(const PdfTextBlock* pBlock, const PdfTextLine* line) const;
 
   /**
    * This method checks whether the given line does *not* introduce a block because the line and
@@ -362,32 +319,13 @@ class TextBlocksDetector {
    *    The preliminary block to process.
    * @param line
    *    The line to process.
-   * @param leftXOffsetToleranceFactorLow
-   *    The first factor used to compute an interval into which the leftX-offset between the given
-   *    line and its previous line must fall so that both lines are considered to be part of the
-   *    same block. The second factor for computing the interval is
-   *    <leftXOffsetToleranceFactorHigh>, see the comment given for this parameter for more
-   *    information about how the interval is computed and used exactly.
-   * @param leftXOffsetToleranceFactorHigh
-   *    The second factor used to compute an interval into which the leftX-offset between the given
-   *    line and its previous line must fall so that both lines are considered to be part of the
-   *    same block. The interval is computed as:
-   *      [<leftXOffsetToleranceFactorLow> * _doc->avgCharWidth,
-   *       <rightXOffsetToleranceFactorHigh> * _doc->avgCharWidth]
-   *    The leftX-offset between the line and its previous line is computed as:
-   *       line.prevLine.leftX - line.leftX
-   *    If the offset falls into the computed interval, the line and the previous line are
-   *    considered to be part of the same block. Otherwise, the given line is considered to be the
-   *    start of a block.
    *
    * @return
    *    Trool::True if the line starts a block;
    *    Trool::False if the line does *not* start a block;
    *    Trool::None if this method couldn't decide whether the line starts a block.
    */
-  Trool startsBlock_hangingIndent(const PdfTextBlock* pBlock, const PdfTextLine* line,
-      double leftXOffsetToleranceFactorLow = -1.0,
-      double leftXOffsetToleranceFactorHigh = 3.0) const;
+  Trool startsBlock_hangingIndent(const PdfTextBlock* pBlock, const PdfTextLine* line) const;
 
   /**
    * This method checks whether the given line starts a block because the given block
@@ -397,49 +335,136 @@ class TextBlocksDetector {
    *    The preliminary block to process.
    * @param line
    *    The line to process.
-   * @param leftXOffsetToleranceFactorLow
-   *    The first factor used to compute an interval into which the leftX-offset between the given
-   *    line and its previous line must fall so that both lines are considered to be part of the
-   *    same block. The second factor for computing the interval is
-   *    <leftXOffsetToleranceFactorHigh>, see the comment given for this parameter for more
-   *    information about how the interval is computed and used.
-   * @param leftXOffsetToleranceFactorHigh
-   *    The second factor used to compute an interval into which the leftX-offset between the given
-   *    line and its previous line must fall so that both lines are considered to be part of the
-   *    same block. The interval is computed as:
-   *      [<leftXOffsetToleranceFactorLow> * _doc->avgCharWidth,
-   *       <rightXOffsetToleranceFactorHigh> * _doc->avgCharWidth]
-   *    The leftX-offset is computed as:
-   *       line.prevLine.leftX - line.leftX
-   *    If the offset falls into the computed interval, the line and previous line is considered to
-   *    be part of the same block. Otherwise, the given line is considered to be the start of a
-   *    block.
    *
    * @return
    *    Trool::True if the line starts a text block;
    *    Trool::False if the line does not start a text block;
    *    Trool::None if it is unknown whether or not the text line starts a text block.
    */
-  Trool startsBlock_indent(const PdfTextLine* line, double indentToleranceFactorLow = 1.0,
-      double indentToleranceFactorHigh = 6.0) const;
+  Trool startsBlock_indent(const PdfTextLine* line) const;
 
-  // ===============================================================================================
-
-  /**
-   * The PDF document to process.
-   */
+  // The PDF document to process.
   PdfDocument* _doc;
 
+  // The config.
+  TextBlocksDetectorConfig* _config;
+
+  // The potential footnote labels, that is: superscripted strings consisting of alphanumerical
+  // characters.
+  unordered_set<string> _potentFnLabels;
+
+  // The logger.
+  Logger* _log;
+};
+
+// =================================================================================================
+
+/**
+ * This struct provides the configuration (= thresholds and parameters) to be used by the
+ * `TextBlocksDetector` class while detecting text blocks.
+ */
+struct TextBlocksDetectorConfig {
   /**
-   * The potential footnote labels, that is: superscripted strings consisting of alphanumerical
-   * characters.
+   * This method returns the value by which two font sizes may differ in order to be considered
+   * equal.
+   *
+   * NOTE: This method is used by the TextBlocksDetector::startsBlock_fontSize() method.
+   *
+   * @param doc
+   *    The PDF document currently processed.
+   *
+   * @return
+   *    The value by which two font sizes may differ in order to be considered equal.
    */
-  unordered_set<string> _potentialFnLabels;
+  double getFontSizeEqualTolerance(const PdfDocument* doc) const {
+    return 1.0;
+  }
 
   /**
-   * The logger for outputting the debug information.
+   * This method returns a tolerance to be used on checking if the distance between two text lines
+   * is larger than the given expected line distance. The line distance is only then considered to
+   * be larger than the given expected line distance when the difference between the two distances
+   * is larger than the returned tolerance.
+   *
+   * NOTE: This method is used by TextBlocksDetector::startsBlock_lineDistance().
+   *
+   * @param doc
+   *    The PDF document currently processed.
+   * @param expectedLineDistance
+   *    The expected line distance.
+   *
+   * @return
+   *    The tolerance to be used on checking if the distance between two text lines is larger than
+   *    the given expected line distance.
    */
-  Logger* _log;
+  double getExpectedLineDistanceTolerance(const PdfDocument* doc, double expectedLineDist) const {
+    return std::max(1.0, 0.1 * expectedLineDist);
+  }
+
+  /**
+   * This method returns a tolerance to be used on checking if the distance between the current
+   * line and the next line (= "curr/next distance") is larger than the distance between the
+   * current line and previous line (= "curr/prev distance").
+   * The curr/next distance is only then considered to be larger than the "curr/prev distance" if
+   * the difference between the two distances is larger than the returned tolerance.
+   *
+   * NOTE: This method is used by TextBlocksDetector::startsBlock_increasedLineDistance().
+   *
+   * @param doc
+   *    The PDF document currently processed.
+   * @param expectedLineDistance
+   *    The expected line distance.
+   *
+   * @return
+   *    The tolerance to be used on checking if the "curr/next distance" is larger than the
+   *    "curr/prev distance".
+   */
+  double getPrevCurrNextLineDistanceTolerance(const PdfDocument* doc) const {
+    return 0.5 * doc->mostFreqWordHeight;
+  }
+
+  /**
+   * This method returns an interval into which the "leftX offset" of a line and its previous line
+   * must fall so that both lines are considered to be part of the same block. The "leftX offset"
+   * of a line and its previous line is computed as:
+   *    line.prevLine.leftX - line.leftX
+   * If the offset falls into the returned interval, the line and the previous line are considered
+   * to be part of the same block. Otherwise, the line is considered to be the start of a new block.
+   *
+   * NOTE: This method is used by TextBlocksDetector::startsBlock_item() and
+   * TextBlocksDetector::startsBlock_hangingIndent().
+   *
+   * @param doc
+   *    The PDF document currently processed.
+   *
+   * @return
+   *    A pair of doubles, with the first value denoting the start point of the interval and the
+   *    second point denoting the end point of the interval.
+   */
+  std::pair<double, double> getLeftXOffsetToleranceInterval(const PdfDocument* doc) const {
+    return std::make_pair(-1 * doc->avgCharWidth, 6 * doc->avgCharWidth);
+  }
+
+  /**
+   * This method returns an interval into which the left margin of a line must fall so that the
+   * line is considered to be the start of a new text block because it denotes the indented first
+   * line of a text block.
+   * If the left margin of a line falls into the returned interval (and if the parent segment is
+   * not in hanging indent format), the line is considered to be the indented first line of a text
+   * block. Otherwise it is not considered to be the first line of a text block.
+   *
+   * NOTE: This method is used by TextBlocksDetector::startsBlock_indent().
+   *
+   * @param doc
+   *    The PDF document currently processed.
+   *
+   * @return
+   *    A pair of doubles, with the first value denoting the start point of the interval and the
+   *    second point denoting the end point of the interval.
+   */
+  std::pair<double, double> getIndentToleranceInterval(const PdfDocument* doc) const {
+    return std::make_pair(1 * doc->avgCharWidth, 6 * doc->avgCharWidth);
+  }
 };
 
 #endif  // TEXTBLOCKSDETECTOR_H_

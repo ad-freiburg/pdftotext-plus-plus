@@ -257,7 +257,6 @@ void PdfDocumentVisualizer::drawCharBoundingBoxes(const std::vector<PdfCharacter
 void PdfDocumentVisualizer::drawFigureBoundingBoxes(const std::vector<PdfFigure*>& figures,
     const ColorScheme& cs) {
   for (const auto* figure : figures) {
-    std::cout << "V" << std::endl;
     drawBoundingBox(figure, cs);
   }
 }

@@ -151,7 +151,7 @@ int PdfToTextPlusPlus::process(const std::string& pdfFilePath, PdfDocument* doc,
   // Segment the pages of the document (for identifying columns).
   start = high_resolution_clock::now();
   PageSegmentator ps(doc, _debugPageSegmentation, _debugPageFilter);
-  ps.segment();
+  ps.process();
   end = high_resolution_clock::now();
   auto timeSegmentPages = duration_cast<milliseconds>(end - start).count();
   if (timings) {
@@ -162,7 +162,7 @@ int PdfToTextPlusPlus::process(const std::string& pdfFilePath, PdfDocument* doc,
   // Detect the text lines.
   start = high_resolution_clock::now();
   TextLinesDetector tld(doc, _debugTextLinesDetection, _debugPageFilter);
-  tld.detect();
+  tld.process();
   end = high_resolution_clock::now();
   auto timeDetectTextLines = duration_cast<milliseconds>(end - start).count();
   if (timings) {
@@ -173,7 +173,7 @@ int PdfToTextPlusPlus::process(const std::string& pdfFilePath, PdfDocument* doc,
   // Detect subscripted and superscripted characters.
   start = high_resolution_clock::now();
   SubSuperScriptsDetector ssd(doc);
-  ssd.detect();
+  ssd.process();
   end = high_resolution_clock::now();
   auto timeDetectSubSuperScripts = duration_cast<milliseconds>(end - start).count();
   if (timings) {
@@ -194,7 +194,7 @@ int PdfToTextPlusPlus::process(const std::string& pdfFilePath, PdfDocument* doc,
   // Detect the text blocks.
   start = high_resolution_clock::now();
   TextBlocksDetector tbd(doc, _debugTextBlocksDetection, _debugPageFilter);
-  tbd.detect();
+  tbd.process();
   end = high_resolution_clock::now();
   auto timeDetectTextBlocks = duration_cast<milliseconds>(end - start).count();
   if (timings) {

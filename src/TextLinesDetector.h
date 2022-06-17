@@ -12,88 +12,127 @@
 #include <vector>
 
 #include "./utils/Log.h"
+
 #include "./PdfDocument.h"
 
 // =================================================================================================
 
+struct TextLinesDetectorConfig;
+
 /**
- * This class groups the words of a PDF document into text lines.
+ * This class is responsible for detecting text lines from the words of a PDF document.
+ *
+ * The basic approach is as follows: A given PDF-document is processed segment-wise. The words of a
+ * segment are clustered twice, first by their rotations, then by their leftX values. For each
+ * cluster, a text line consisting of the words of the cluster is created. The created lines are
+ * sorted by their lowerY values in ascending order (from top to bottom).
+ *
+ * Consecutive lines that vertically overlap each other are merged in rounds, until there are no
+ * consecutive lines that vertically overlap anymore. This should merge words that were assigned to
+ * different clusters but actually belong to the same text line, because they are sub- or
+ * superscripted, or they are part of fractions in formulas.
  */
 class TextLinesDetector {
  public:
   /**
-   * This constructor creates and initializes a new instance of this `TextLinesDetector` class.
+   * This constructor creates and initializes a new instance of this class.
    *
    * @param doc
    *   The PDF document to process.
    * @param debug
    *   Whether or not this instance should print debug information to the console.
    * @param debugPageFilter
-   *   The number of the page to which the debug information should be reduced. If specified as a
-   *   value > 0, only those messages that relate to the given page will be printed to the console.
+   *   If set to a value > 0, only the debug messages produced while processing the
+   *   <debugPageFilter>-th page of the current PDF file will be printed to the console.
    */
-  TextLinesDetector(PdfDocument* doc, bool debug=false, int debugPageFilter=-1);
+  explicit TextLinesDetector(PdfDocument* doc, bool debug = false, int debugPageFilter = -1);
 
   /** The deconstructor. */
   ~TextLinesDetector();
 
   /**
-   * This method groups the words of the given PDF document (detected by the `WordsDetector` class)
-   * into text lines. The basic procedure is as follows: The given PDF document is processed
-   * page-wise. For each page, the words stored in `page->words` are clustered first by their
-   * rotation and then by their lowerY coordinates. From each cluster, a (preliminary)
-   * `PdfTextLine` is created. The preliminary text lines are then merged in rounds. In each round,
-   * the text lines that vertically overlap are merged. This is repeated until there are no text
-   * lines anymore that vertically overlap. This should merge words that were assigned to different
-   * clusters but actually belong to the same text line, which particulary often happens in
-   * case of sub- and superscripts, or fractions in formulas. The final text lines of a page are
-   * appended to `page->lines`.
+   * This method starts the process of detecting text lines in the given PDF document.
    */
-  void detect();
+  void process();
 
  private:
   /**
-   * This method (a) creates a new `PdfTextLine` object from the given list of words, (b) computes
-   * the respective layout information of the text line and (c) appends the text line to the given
-   * result list.
+   * This method creates a new `PdfTextLine` from the given vector of words, computes and sets the
+   * respective layout properties of the text line, and appends the text line to the given result
+   * vector.
    *
    * @param words
-   *   The words from which to create the text line.
+   *   The words that are part of the text line.
    * @param segment
    *   The segment of which the text line is a part.
    * @param words
    *   The vector to which the created text line should be appended.
+   *
+   * @return
+   *   The created text line.
    */
-  void createTextLine(const std::vector<PdfWord*>& words, PdfPageSegment* segment,
+  PdfTextLine* createTextLine(const std::vector<PdfWord*>& words, const PdfPageSegment* segment,
       std::vector<PdfTextLine*>* lines) const;
 
   /**
-   * This method merges the given second text line with the given first text line. This is done
-   * by adding all words of the second text line to the first text line and (re-)computing the
-   * text line properties of the first text line by calling computeTextLineProperties(line1).
+   * This method merges the given first text line with the given second text line. This is
+   * accomplished by adding all words of the first text line to the words of the second text line
+   * and (re-)computing the layout properties of the second text line, by invoking
+   * computeTextLineProperties(line2).
    *
    * @param line1
-   *    The first text line to merge.
+   *    The text line to merge with the second text line.
    * @param line2
-   *    The second text line to merge.
+   *    The text line to be merged with the first text line.
    */
-  void mergeTextLines(PdfTextLine* line1, PdfTextLine* line2) const;
+  void mergeTextLines(const PdfTextLine* line1, PdfTextLine* line2) const;
 
   /**
-   * This method iterates the words stored in `line->words` and computes all layout information
-   * about the text line (for example: the bounding box or the font). The computed information
-   * is written to the respective member variables of the text line.
+   * This method iterates through the words stored in `line->words` and computes all layout
+   * properties of the text line (for example: the bounding box, or the font). The computed
+   * properties are written to the respective member variables of the text line.
    *
    * @param line
-   *    The text line for which to compute the layout information.
+   *    The text line for which to compute the layout properties.
    */
   void computeTextLineProperties(PdfTextLine* line) const;
 
-  /** The PDF document to process. */
+  // The PDF document to process.
   PdfDocument* _doc;
 
-  /** The logger. */
+  // The config.
+  const TextLinesDetectorConfig* _config;
+
+  // The logger.
   Logger* _log;
+};
+
+// =================================================================================================
+
+/**
+ * This struct provides the configuration (= thresholds and parameters) to be used by the
+ * `TextLinesDetector` class while detecting text lines.
+ */
+struct TextLinesDetectorConfig {
+  /**
+   * This method returns a threshold which the maximum vertical overlap ratio between two
+   * consecutive text lines must achieve so that the text lines are merged while detecting text
+   * lines. If the maximum vertical overlap ratio between two consecutive lines is larger or equal
+   * to the returned value, the text lines are merged; otherwise the text lines are not merged.
+   *
+   * @param doc
+   *    A reference to the PDF document currently processed, which can be used to get general
+   *    statistics about the document, for example: the average character width and -height.
+   * @param xGap
+   *    The horizontal gap between the two text lines for which it is to be decided whether or not
+   *    they should be merged.
+   *
+   * @return
+   *    The threshold for the maximum vertical overlap ratio between two text lines.
+   */
+  double getYOverlapRatioThreshold(const PdfDocument* doc, double xGap) const {
+    return xGap < 3 * doc->avgCharWidth ? 0.4 : 0.8;
+  }
 };
 
 #endif  // TEXTLINESDETECTOR_H_

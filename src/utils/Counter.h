@@ -52,6 +52,13 @@ class DoubleCounter : public std::unordered_map<double, int> {
    * @return A pair of the most frequent double and the respective count.
    */
   pair<double, int> mostFreqAndCount() const;
+
+  /**
+   * This method returns the maximum double stored in this counter.
+   *
+   * @return The maximum double stored in this counter.
+   */
+  double max() const;
 };
 
 // =================================================================================================

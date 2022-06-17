@@ -74,12 +74,26 @@ enum CutDir { X, Y };
 class Cut {
  public:
   /**
-   * This constructor creates and initializes a new instance of this class.
+   * This constructor creates a new instance of this class and initializes it with the given cut
+   * direction.
    *
    * @param dir
    *   The direction of this cut.
    */
   explicit Cut(const CutDir dir);
+
+  /**
+   * This constructor creates a new instance of this class and initializes it with the given cut
+   * direction and position in the vector of elements to divide.
+   *
+   * @param dir
+   *   The direction of this cut.
+   * @param posInElements
+   *   The page elements to be split are given in a vector. The parameter `posInElements` is the
+   *   position of the cut in this vector. It can be understood as follows: If set to value i, the
+   *   cut splits the elements in vector V between V[i-1] and V[i].
+   */
+  explicit Cut(const CutDir dir, int posInElements);
 
   /** The deconstructor. */
   ~Cut();

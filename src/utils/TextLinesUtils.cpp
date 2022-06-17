@@ -362,14 +362,14 @@ void text_lines_utils::computePotentialFootnoteLabels(const PdfTextLine* line,
       }
 
       // Otherwise the end of a potential label is reached. When the current label string is not
-      // empty, append it to the result list.
+      // empty, append it to the result vector.
       if (!label.empty()) {
         result->insert(label);
         label.clear();
       }
     }
 
-    // Don't forget to add the last label string to the result list (if it is not empty).
+    // Don't forget to add the last label string to the result vector (if it is not empty).
     if (!label.empty()) {
       result->insert(label);
     }

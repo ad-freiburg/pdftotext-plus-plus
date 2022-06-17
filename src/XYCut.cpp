@@ -22,24 +22,26 @@ using comparators::LeftXAscComparator;
 using comparators::RightXDescComparator;
 using comparators::UpperYAscComparator;
 
+using std::vector;
+
 // _________________________________________________________________________________________________
-void xyCut(const std::vector<PdfElement*>& elements,
+void xyCut(const vector<PdfElement*>& elements,
     double minXCutGapWidth, double minYCutGapHeight, int maxNumOverlappingElements,
     const ChooseCutsFunc chooseXCutsFunc, const ChooseCutsFunc chooseYCutsFunc, bool silent,
-    std::vector<std::vector<PdfElement*>>* resultGroups, std::vector<Cut*>* resultCuts) {
+    vector<vector<PdfElement*>>* resultGroups, vector<Cut*>* resultCuts) {
   // Do nothing if no elements are given.
   if (elements.empty()) {
     return;
   }
 
   // Check if the group of elements can be divided into sub-groups by one or more x-cuts.
-  std::vector<std::vector<PdfElement*>> xGroups;
+  vector<vector<PdfElement*>> xGroups;
   bool ok = xCut(elements, minXCutGapWidth, maxNumOverlappingElements,
       chooseXCutsFunc, silent, &xGroups, resultCuts);
 
   if (!ok) {
     // The group could not be divided by x-cuts. Try to divide it by y-cuts.
-    std::vector<std::vector<PdfElement*>> yGroups;
+    vector<vector<PdfElement*>> yGroups;
     ok = yCut(elements, minYCutGapHeight, chooseYCutsFunc, silent, &yGroups, resultCuts);
 
     if (!ok) {
@@ -59,7 +61,7 @@ void xyCut(const std::vector<PdfElement*>& elements,
 
   // The group could be divided into sub-groups by x-cuts. Try to divide each sub-group by y-cuts.
   for (const auto& xGroup : xGroups) {
-    std::vector<std::vector<PdfElement*>> yGroups;
+    vector<vector<PdfElement*>> yGroups;
     ok = yCut(xGroup, minYCutGapHeight, chooseYCutsFunc, silent, &yGroups, resultCuts);
 
     if (!ok) {
@@ -85,8 +87,8 @@ bool xCut(const vector<PdfElement*>& elements, double minGapWidth, int maxNumOve
     return false;
   }
 
-  // Sort the elements by their leftX values in ascending order.
-  std::vector<PdfElement*> sElements = elements;
+  // Sort the elements by their leftX values, in ascending order.
+  vector<PdfElement*> sElements = elements;
   std::sort(sElements.begin(), sElements.end(), LeftXAscComparator());
 
   // Compute minY and maxY among the elements, needed for computing the y-coordinates of the cuts.
@@ -105,7 +107,7 @@ bool xCut(const vector<PdfElement*>& elements, double minGapWidth, int maxNumOve
   // element with the smallest rightX when the size of the PQ exceeds its capacity after inserting
   // a new element.
   // NOTE: The elements in this queue are used for computing the horizontal gap width between the
-  // element currently processed and a previous element (which is stored in the queue).
+  // element currently processed and a previous element stored in the queue.
   // If maxNumOverlappingElements == 0 (meaning that a cut is not allowed to overlap any element),
   // this queue contains exactly one element (the element with the largest rightX seen before the
   // current element). The gap width is computed as (E.leftX - queue.top().rightX), where `E` is
@@ -115,13 +117,14 @@ bool xCut(const vector<PdfElement*>& elements, double minGapWidth, int maxNumOve
   // If maxNumOverlappingElements > 0 (meaning that a cut is allowed to overlap
   // <maxNumOverlappingElements>-many elements), the elements in the queue are iterated in
   // reversed order (starting at the element with the largest rightX value). For each element Q
-  // in the queue the gap width (E.leftX - Q.rightX) is computed. If the gap widths between E and Q
+  // in the queue the gap width (E.leftX - Q.rightX) is computed. If the gap width between E and Q
   // is >= minGapWidth, a cut candidate dividing the elements between Q and E is created.
   int queueSize = maxNumOverlappingElements + 1;
   FixedPriorityQueue<PdfElement*, RightXDescComparator> elementsLargestRightXQueue(queueSize);
   elementsLargestRightXQueue.push(sElements[0]);
 
-  std::vector<Cut*> candidates;
+  // Iterate through the elements from left to right and compute the cut candidates.
+  vector<Cut*> candidates;
   for (size_t pos = 1; pos < sElements.size(); pos++) {
     PdfElement* element = sElements[pos];
 
@@ -130,10 +133,10 @@ bool xCut(const vector<PdfElement*>& elements, double minGapWidth, int maxNumOve
     // the gap width is larger or equal to minGapWidth, create a cut candidate.
     // NOTE: To iterate the queue elements in reversed order, we have to sort the elements
     // manually, since the queue stores the elements by their rightX values in *ascending* order.
-    std::vector<PdfElement*> elementsLargestRightXSorted;
+    vector<PdfElement*> elementsLargestRightXSorted;
     elementsLargestRightXQueue.sort(RightXDescComparator(), &elementsLargestRightXSorted);
 
-    std::vector<PdfElement*> overlappingElements;
+    vector<PdfElement*> overlappingElements;
     for (auto* prevElement : elementsLargestRightXSorted) {
       // Compute the gap width (= the horizontal gap between prevElement and element).
       double gapWidth = element_utils::computeHorizontalGap(prevElement, element);
@@ -190,7 +193,7 @@ bool xCut(const vector<PdfElement*>& elements, double minGapWidth, int maxNumOve
 
     // Divide the elements at the chosen cut.
     if (resultGroups) {
-      std::vector<PdfElement*> group(sElements.begin() + prevCutPos, sElements.begin() + cutPos);
+      vector<PdfElement*> group(sElements.begin() + prevCutPos, sElements.begin() + cutPos);
       resultGroups->push_back(group);
     }
     hasChosenCut = true;
@@ -199,7 +202,7 @@ bool xCut(const vector<PdfElement*>& elements, double minGapWidth, int maxNumOve
 
   // Don't forget to add the last group to the result groups.
   if (resultGroups) {
-    std::vector<PdfElement*> group(sElements.begin() + prevCutPos, sElements.end());
+    vector<PdfElement*> group(sElements.begin() + prevCutPos, sElements.end());
     resultGroups->push_back(group);
   }
 
@@ -216,7 +219,7 @@ bool yCut(const vector<PdfElement*>& elements, double minGapHeight,
   }
 
   // Sort the elements by their upperY in ascending order.
-  std::vector<PdfElement*> sElements = elements;
+  vector<PdfElement*> sElements = elements;
   std::sort(sElements.begin(), sElements.end(), UpperYAscComparator());
 
   // Compute minY and maxY among the elements, needed for computing the x-coordinates of the cuts.
@@ -227,13 +230,13 @@ bool yCut(const vector<PdfElement*>& elements, double minGapHeight,
     elementsMaxX = std::max(elementsMaxX, element->position->rightX);
   }
 
-  std::vector<Cut*> candidates;
-
-  // Remember the element with the largest lowerY seen so far.
+  // The element with the largest lowerY seen so far.
   PdfElement* elementLargestLowerY = sElements[0];
 
-  // Iterate through the elements in sorted order (= from top to bottom) and find all gaps with
-  // a height > minGapHeight. For each such gap, create a cut candidate.
+  // Iterate through the elements in sorted order (= from top to bottom). For each element E,
+  // compute the vertical gap between elementLargestLowerY and E. For each gap >= minGapHeight,
+  // create a cut candidate.
+  vector<Cut*> candidates;
   for (size_t pos = 1; pos < sElements.size(); pos++) {
     PdfElement* element = sElements[pos];
 
@@ -259,7 +262,7 @@ bool yCut(const vector<PdfElement*>& elements, double minGapHeight,
       candidates.push_back(cut);
     }
 
-    // Update elementLargestLowerY, if the rightX of the current element is larger.
+    // Update elementLargestLowerY if lowerY of the current element is larger.
     if (element->position->lowerY > elementLargestLowerY->position->lowerY) {
       elementLargestLowerY = element;
     }
@@ -287,7 +290,7 @@ bool yCut(const vector<PdfElement*>& elements, double minGapHeight,
 
     // Divide the elements at the chosen cut.
     if (resultGroups) {
-      std::vector<PdfElement*> group(sElements.begin() + prevCutPos, sElements.begin() + cutPos);
+      vector<PdfElement*> group(sElements.begin() + prevCutPos, sElements.begin() + cutPos);
       resultGroups->push_back(group);
     }
     hasChosenCut = true;
@@ -296,7 +299,7 @@ bool yCut(const vector<PdfElement*>& elements, double minGapHeight,
 
   // Don't forget to add the last group to the result groups.
   if (resultGroups) {
-    std::vector<PdfElement*> group(sElements.begin() + prevCutPos, sElements.end());
+    vector<PdfElement*> group(sElements.begin() + prevCutPos, sElements.end());
     resultGroups->push_back(group);
   }
 

@@ -7,6 +7,7 @@
  */
 
 #include <utility>  // pair
+#include <limits>  // pair
 
 #include "./Counter.h"
 
@@ -36,6 +37,17 @@ pair<double, int> DoubleCounter::mostFreqAndCount() const {
     }
   }
   return make_pair(mostFreq, mostFreqCount);
+}
+
+// _________________________________________________________________________________________________
+double DoubleCounter::max() const {
+  double max = std::numeric_limits<double>::min();
+  for (auto it = begin(); it != end(); ++it) {
+    if (it->first > max) {
+      max = it->first;
+    }
+  }
+  return max;
 }
 
 // =================================================================================================

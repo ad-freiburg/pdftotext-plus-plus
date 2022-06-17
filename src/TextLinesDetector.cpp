@@ -6,60 +6,70 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include <cmath>
-#include <iostream>
-#include <stack>
+#include <algorithm>  // min, max
+#include <string>
+#include <tuple>
+#include <unordered_map>
 #include <vector>
+
+#include "./utils/Comparators.h"
+#include "./utils/Counter.h"
+#include "./utils/Log.h"
+#include "./utils/MathUtils.h"
+#include "./utils/PageSegmentsUtils.h"
+#include "./utils/PdfElementsUtils.h"
+#include "./utils/StringUtils.h"
+#include "./utils/TextLinesUtils.h"
 
 #include "./PdfDocument.h"
 #include "./TextLinesDetector.h"
-#include "./utils/Log.h"
-#include "./utils/MathUtils.h"
-#include "./utils/PdfElementsUtils.h"
-#include "./utils/StringUtils.h"
-#include "./utils/PageSegmentsUtils.h"
-#include "./utils/TextLinesUtils.h"
 
-using namespace std;
+using std::endl;
+using std::get;
+using std::max;
+using std::min;
+using std::string;
+using std::tuple;
+using std::unordered_map;
+using std::vector;
 
 // _________________________________________________________________________________________________
 TextLinesDetector::TextLinesDetector(PdfDocument* doc, bool debug, int debugPageFilter) {
-  _doc = doc;
   _log = new Logger(debug ? DEBUG : INFO, debugPageFilter);
-
-  _log->debug() << "=======================================" << endl;
-  _log->debug() << "\033[1mDEBUG MODE | Detecting Text Lines\033[0m" << endl;
-  _log->debug() << " ─ debug page filter: " << debugPageFilter << endl;
+  _config = new TextLinesDetectorConfig();
+  _doc = doc;
 }
 
 // _________________________________________________________________________________________________
 TextLinesDetector::~TextLinesDetector() {
+  delete _config;
   delete _log;
-};
+}
 
 // _________________________________________________________________________________________________
-void TextLinesDetector::detect() {
-  // Do nothing if no document is given.
-  if (!_doc) {
-    return;
-  }
+void TextLinesDetector::process() {
+  assert(_doc);
+
+  _log->debug() << BOLD << "Text Lines Detection - DEBUG MODE" << OFF << endl;
 
   // Do nothing if the document does not contain any pages.
   if (_doc->pages.empty()) {
     return;
   }
 
-  for (auto* page : _doc->pages) {
+  // Process the PDF document page-wise and segment-wise.
+  int numLines = 0;
+  for (const auto* page : _doc->pages) {
     int p = page->pageNum;
     _log->debug(p) << "=======================================" << endl;
-    _log->debug(p) << "\033[1mPROCESSING PAGE " << p << "\033[0m" << endl;
+    _log->debug(p) << BOLD << "PROCESSING PAGE " << p << OFF << endl;
     _log->debug(p) << " └─ # segments: " << page->segments.size() << endl;
 
     for (auto* segment : page->segments) {
-      _log->debug(p) << "=======================================" << endl;
+      _log->debug(p) << "---------------------------------------" << endl;
       _log->debug(p) << "PROCESSING SEGMENT " << segment->id << endl;
 
-      // Create a vector containing only the *words* (not figures or shapes) of the segment.
+      // Create a vector containing only the words (but not figures or shapes) of the segment.
       vector<PdfWord*> words;
       for (auto* element : segment->elements) {
         PdfWord* word = dynamic_cast<PdfWord*>(element);
@@ -69,67 +79,63 @@ void TextLinesDetector::detect() {
       }
 
       // Skip the segment if it doesn't contain any words.
-      if (words.size() == 0) {
+      if (words.empty()) {
         continue;
       }
 
-      _log->debug(p) << "=======================================" << endl;
-      _log->debug(p) << "CLUSTERING" << endl;
+      _log->debug(p) << "----------- CLUSTERING WORDS -----------" << endl;
 
-      // Cluster the words by their rotations and their lower y-values.
+      // Cluster the words first by their rotations, then by their lowerY values.
       unordered_map<int, unordered_map<double, vector<PdfWord*>>> clusters;
-      for (size_t i = 0; i < words.size(); i++) {
-        PdfWord* word = words[i];
+      for (auto* word : words) {
         int p = word->position->pageNum;
 
-        if (i > 0) { _log->debug(p) << "-------" << endl; }
-        _log->debug(p) << "word: text: \"" << word->text << "\""
-            << "; page: " << word->position->pageNum
-            << "; leftX: " << word->position->leftX
-            << "; upperY: " << word->position->upperY
-            << "; rightX: " << word->position->rightX
-            << "; lowerY: " << word->position->lowerY << endl;
+        _log->debug(p) << BOLD << "word: \"" << word->text << "\"" << OFF << endl;
+        _log->debug(p) << " └─ word.page: " << word->position->pageNum << endl;
+        _log->debug(p) << " └─ word.leftX: " << word->position->leftX << endl;
+        _log->debug(p) << " └─ word.upperY: " << word->position->upperY << endl;
+        _log->debug(p) << " └─ word.rightX: " << word->position->rightX << endl;
+        _log->debug(p) << " └─ word.lowerY: " << word->position->lowerY << endl;
         if (word->position->rotation != 0) {
-          _log->debug(p) << "rot: " << word->position->rotation
-              << "; rotLeftX: " << word->position->getRotLeftX()
-              << "; rotUpperY: " << word->position->getRotUpperY()
-              << "; rotRightX: " << word->position->getRotRightX()
-              << "; rotLowerY: " << word->position->getRotLowerY() << endl;
+          _log->debug(p) << " └─ word.rot: " << word->position->rotation << endl;
+          _log->debug(p) << " └─ word.rotLeftX: " << word->position->getRotLeftX() << endl;
+          _log->debug(p) << " └─ word.rotUpperY: " << word->position->getRotUpperY() << endl;
+          _log->debug(p) << " └─ word.rotRightX: " << word->position->getRotRightX() << endl;
+          _log->debug(p) << " └─ word.rotLowerY: " << word->position->getRotLowerY() << endl;
         }
 
-        // Skip the word if it is part of a stacked math symbol which was merged with the base word.
+        // Skip the word if it is part of a stacked math symbol.
         if (word->isPartOfStackedMathSymbol) {
-          _log->debug(p) << "\033[1mskipping (is part of stacked math symbol).\033[0m" << endl;
+          _log->debug(p) << BOLD << "skipping word (part of stacked math symbol)." << OFF << endl;
           continue;
         }
 
         double rotation = word->position->rotation;
-        double lowerY = math_utils::round(word->position->getRotLowerY(), 1);
+        double lowerY = math_utils::round(word->position->getRotLowerY(), COORDS_PREC);
         clusters[rotation][lowerY].push_back(word);
         _log->debug(p) << " └─ cluster: (" << rotation << ", " << lowerY << ")" << endl;
 
         // If the word is the base word of a stacked math symbol, add each word that is part
-        // of the stacked math symbol to the same cluster as the base word.
+        // of the same stacked math symbol to the same cluster.
         for (auto* w : word->isBaseOfStackedMathSymbol) {
-          _log->debug(p) << "Adding part of stacked math symbol: " << w->text << endl;
+          _log->debug(p) << "Is base word of stacked math symbol; adding " << w->text << endl;
           clusters[rotation][lowerY].push_back(w);
         }
       }
 
-      _log->debug(p) << "=======================================" << endl;
-      _log->debug(p) << "CREATING PRELIMINARY TEXT LINES" << endl;
+      _log->debug(p) << "--------- CREATING TEXT LINES ---------" << endl;
 
-      for (const auto& pair : clusters) {
+      // Iterate through the clusters and create a text line for each.
+      for (const auto& pair : clusters) {  // pair: (rotation, words per leftX value)
         int rot = pair.first;
 
-        // Create a text line from each cluster.
         vector<PdfTextLine*> lines;
-        for (const auto& e : pair.second) {
-          createTextLine(e.second, segment, &lines);
+        for (const auto& e : pair.second) {  // e: (leftX, words)
+          double lowerY = e.first;
 
-          PdfTextLine* line = lines[lines.size() - 1];
-          double y = e.first;
-          _log->debug(p) << "Created line from cluster (" << rot << ", " << y << ")" << endl;
+          PdfTextLine* line = createTextLine(e.second, segment, &lines);
+
+          _log->debug(p) << "Created line from cluster (" << rot << ", " << lowerY << ")" << endl;
           _log->debug(p) << " └─ line.pageNum: " << line->position->pageNum << endl;
           _log->debug(p) << " └─ line.leftX: " << line->position->leftX << endl;
           _log->debug(p) << " └─ line.upperY: " << line->position->upperY << endl;
@@ -144,151 +150,112 @@ void TextLinesDetector::detect() {
         }
 
         // Sort the lines by their lower y-values in asc or desc order, depending on the rotation.
-        // This should sort the lines according to the natural reading order, from top to bottom.
+        // This should sort the lines from "top to bottom".
         _log->debug(p) << "-------" << endl;
-        _log->debug(p) << "\033[1mSorting text lines...\033[0m" << endl;
+        _log->debug(p) << BOLD << "Sorting text lines..." << OFF << endl;
         if (rot == 0 || rot == 1) {
-          sort(lines.begin(), lines.end(), [](const PdfTextLine* l1, const PdfTextLine* l2) {
-            return l1->position->getRotLowerY() < l2->position->getRotLowerY();
-          });
+          sort(lines.begin(), lines.end(), comparators::RotLowerYAscComparator());
         } else {
-          sort(lines.begin(), lines.end(), [](const PdfTextLine* l1, const PdfTextLine* l2) {
-            return l1->position->getRotLowerY() > l2->position->getRotLowerY();
-          });
+          sort(lines.begin(), lines.end(), comparators::RotLowerYDescComparator());
         }
 
-        // Merge text lines that overlap vertically in rounds. Repeat until there are no text lines
-        // anymore that vertically overlap. This should merge words that were assigned to different
-        // clusters but actually belong to the same text line, which particulary often happens in
-        // case of sub- and superscripts, or fractions in formulas.
+        // Merge consecutive text lines that vertically overlap in rounds. Repeat this until there
+        // are no text lines anymore which vertically overlap. This should merge words that were
+        // assigned to different clusters but actually belong to the same text line, because they
+        // are sub- or superscripted, or they are parts of fractions in formulas.
         int round = 0;
         while (true) {
           _log->debug(p) << "=======" << endl;
-          _log->debug(p) << "\033[1mMerging lines, round " << ++round << "\033[0m" << endl;
+          _log->debug(p) << BOLD << "Merging overlapping lines, round " << ++round << OFF << endl;
 
           bool merged = false;
-          vector<PdfTextLine*> nLines;
+          vector<PdfTextLine*> mergedLines;
           for (size_t i = 0; i < lines.size(); i++) {
-            PdfTextLine* prevLine = nLines.size() > 0 ? nLines.at(nLines.size() - 1) : nullptr;
-            PdfTextLine* currLine = lines.at(i);
-            PdfTextLine* nextLine = i < lines.size() - 1 ? lines.at(i + 1) : nullptr;
+            PdfTextLine* prevLine = !mergedLines.empty() ? mergedLines.back() : nullptr;
+            PdfTextLine* currLine = lines[i];
 
             _log->debug(p) << "-------" << endl;
+
             if (prevLine) {
-              _log->debug(p) << "\033[1mPrev Line: "
-                  << "\033[1mpage:\033[0m " << prevLine->position->pageNum
-                  << "; \033[1mleftX:\033[0m " << prevLine->position->leftX
-                  << "; \033[1mupperY:\033[0m " << prevLine->position->upperY
-                  << "; \033[1mrightX:\033[0m " << prevLine->position->rightX
-                  << "; \033[1mlowerY:\033[0m " << prevLine->position->lowerY
-                  << "; \033[1mtext:\033[0m \"" << prevLine->text << "\"" << endl;
-            }
-            _log->debug(p) << "\033[1mCurr Line: "
-                << "\033[1mpage:\033[0m " << currLine->position->pageNum
-                << "; \033[1mleftX:\033[0m " << currLine->position->leftX
-                << "; \033[1mupperY:\033[0m " << currLine->position->upperY
-                << "; \033[1mrightX:\033[0m " << currLine->position->rightX
-                << "; \033[1mlowerY:\033[0m " << currLine->position->lowerY
-                << "; \033[1mtext:\033[0m \"" << currLine->text << "\"" << endl;
-            if (nextLine) {
-              _log->debug(p) << "\033[1mNext Line: "
-                  << "\033[1mpage:\033[0m " << nextLine->position->pageNum
-                  << "; \033[1mleftX:\033[0m " << nextLine->position->leftX
-                  << "; \033[1mupperY:\033[0m " << nextLine->position->upperY
-                  << "; \033[1mrightX:\033[0m " << nextLine->position->rightX
-                  << "; \033[1mlowerY:\033[0m " << nextLine->position->lowerY
-                  << "; \033[1mtext:\033[0m \"" << nextLine->text << "\"" << endl;
+              _log->debug(p) << BOLD << "prevLine: \"" << prevLine->text << "\"" << OFF << endl;
+              _log->debug(p) << " └─ prevLine.pageNum: " << prevLine->position->pageNum << endl;
+              _log->debug(p) << " └─ prevLine.leftX: " << prevLine->position->leftX << endl;
+              _log->debug(p) << " └─ prevLine.upperY: " << prevLine->position->upperY << endl;
+              _log->debug(p) << " └─ prevLine.rightX: " << prevLine->position->rightX << endl;
+              _log->debug(p) << " └─ prevLine.lowerY: " << prevLine->position->lowerY << endl;
             }
 
-            // Compute the horizontal distance and the vertical overlap to the previous line.
-            double prevLineXGap = 0.0;
-            double prevLineYOverlap = 0.0;
+            _log->debug(p) << BOLD << "currLine: \"" << currLine->text << "\"" << OFF << endl;
+            _log->debug(p) << " └─ currLine.pageNum: " << currLine->position->pageNum << endl;
+            _log->debug(p) << " └─ currLine.leftX: " << currLine->position->leftX << endl;
+            _log->debug(p) << " └─ currLine.upperY: " << currLine->position->upperY << endl;
+            _log->debug(p) << " └─ currLine.rightX: " << currLine->position->rightX << endl;
+            _log->debug(p) << " └─ currLine.lowerY: " << currLine->position->lowerY << endl;
+
+            // Compute the horizontal gap and the vertical overlap ratio to the previous line.
+            double xGap = 0.0;
+            double yOverlapRatio = 0.0;
             if (prevLine) {
-              prevLineXGap = element_utils::computeHorizontalGap(prevLine, currLine);
-              std::pair<double, double> yOverlapRatios = element_utils::computeYOverlapRatios(prevLine, currLine);
-              prevLineYOverlap = max(yOverlapRatios.first, yOverlapRatios.second);
+              xGap = element_utils::computeHorizontalGap(prevLine, currLine);
+              yOverlapRatio = element_utils::computeMaxYOverlapRatio(prevLine, currLine);
             }
-            _log->debug(p) << " └─ prevLine.xGap: " << prevLineXGap << endl;
-            _log->debug(p) << " └─ prevLine.yOverlap: " << prevLineYOverlap << endl;
+            _log->debug(p) << " └─ xGap (prevLine/currLine): " << xGap << endl;
+            _log->debug(p) << " └─ yOverlapRatio (prevLine/currLine): " << yOverlapRatio << endl;
 
-            // Compute the horizontal distance and the vertical overlap to the next line.
-            double nextLineXGap = 0.0;
-            double nextLineYOverlap = 0.0;
-            if (nextLine) {
-              nextLineXGap = element_utils::computeHorizontalGap(currLine, nextLine);
-              std::pair<double, double> yOverlapRatios = element_utils::computeYOverlapRatios(currLine, nextLine);
-              nextLineYOverlap = max(yOverlapRatios.first, yOverlapRatios.second);
-            }
-            _log->debug(p) << " └─ nextLine.xGap: " << nextLineXGap << endl;
-            _log->debug(p) << " └─ nextLine.yOverlap: " << nextLineYOverlap << endl;
-
-            // Define a threshold for the vertical overlap between the current line and the
-            // previous line (next line). The previous line (next line) must exceed this threshold
-            // in order to be considered to be merged with the current line.
-            // The threshold is defined dependent on the horizontal distance between the lines.
-            // The premise is as follows: If the horizontal distance between two lines is small,
-            // the threshold should be less restrictive. If the horizontal distance is large, the
+            // Define a threshold for the vertical overlap ratio between the current line and the
+            // previous line. The current line must exceed this threshold in order to be merged
+            // with the previous line
+            // The threshold is defined dependent on the horizontal gap between the lines. The
+            // rationale behind is as follows: If the horizontal gap between two lines is small,
+            // the threshold should be less restrictive. If the horizontal gap is large, the
             // threshold should be more restrictive.
-            // TODO: Parameterize the values.
-            double prevLineThreshold = prevLineXGap < 3 * _doc->avgCharWidth ? 0.4 : 0.8;
-            double nextLineThreshold = nextLineXGap < 3 * _doc->avgCharWidth ? 0.4 : 0.8;
-            _log->debug(p) << " └─ prevLineThreshold: " << prevLineThreshold << endl;
-            _log->debug(p) << " └─ nextLineThreshold: " << nextLineThreshold << endl;
+            double yOverlapRatioThreshold = _config->getYOverlapRatioThreshold(_doc, xGap);
+            _log->debug(p) << " └─ yOverlapThreshold: " << yOverlapRatioThreshold << endl;
 
-            // Check if to merge the previous line with the current line.
-            if (math_utils::larger(prevLineYOverlap, nextLineYOverlap, 0.001)) {
-              if (math_utils::equalOrLarger(prevLineYOverlap, prevLineThreshold, 0.001)) {
-                mergeTextLines(prevLine, currLine);
-                merged = true;
+            // Merge the current line with the previous line when the vertical overlap between the
+            // lines is larger or equal to the threshold.
+            if (math_utils::equalOrLarger(yOverlapRatio, yOverlapRatioThreshold)) {
+              mergeTextLines(currLine, prevLine);
 
-                _log->debug(p) << "\033[1mMerged prev line with curr line.\033[0m" << endl;
-                _log->debug(p) << " └─ line.pageNum: " << prevLine->position->pageNum << endl;
-                _log->debug(p) << " └─ line.leftX: " << prevLine->position->leftX << endl;
-                _log->debug(p) << " └─ line.upperY: " << prevLine->position->upperY << endl;
-                _log->debug(p) << " └─ line.rightX: " << prevLine->position->rightX << endl;
-                _log->debug(p) << " └─ line.lowerY: " << prevLine->position->lowerY << endl;
-                _log->debug(p) << " └─ line.text: \"" << prevLine->text << "\"" << endl;
+              _log->debug(p) << BOLD << "Merged curr line with prev line." << OFF << endl;
+              _log->debug(p) << " └─ prevLine.pageNum: " << prevLine->position->pageNum << endl;
+              _log->debug(p) << " └─ prevLine.leftX: " << prevLine->position->leftX << endl;
+              _log->debug(p) << " └─ prevLine.upperY: " << prevLine->position->upperY << endl;
+              _log->debug(p) << " └─ prevLine.rightX: " << prevLine->position->rightX << endl;
+              _log->debug(p) << " └─ prevLine.lowerY: " << prevLine->position->lowerY << endl;
+              _log->debug(p) << " └─ prevLine.text: \"" << prevLine->text << "\"" << endl;
 
-                continue;
-              }
+              merged = true;
+              continue;
             }
 
-            // Do not merge.
-            nLines.push_back(currLine);
+            // Do not merge the lines. Instead, append the current line to the vector.
+            mergedLines.push_back(currLine);
           }
+          lines = mergedLines;
 
+          // Abort if no text lines were merged in this round.
           if (!merged) {
-            _log->debug(p) << "-------" << endl;
-            _log->debug(p) << "Final text lines:" << endl;
-
-            for (size_t i = 0; i < nLines.size(); i++) {
-              PdfTextLine* line = nLines[i];
-              line->rank = i;
-              segment->lines.push_back(line);
-
-              _log->debug(p) << "\033[1mLine: \033[1mpage:\033[0m " << line->position->pageNum
-                << "; \033[1mleftX:\033[0m " << line->position->leftX
-                << "; \033[1mupperY:\033[0m " << line->position->upperY
-                << "; \033[1mrightX:\033[0m " << line->position->rightX
-                << "; \033[1mlowerY:\033[0m " << line->position->lowerY
-                << "; \033[1mtext:\033[0m \"" << line->text << "\"" << endl;
-            }
             break;
           }
+        }
 
-          lines = nLines;
+        // For each line, set the references to the respective previous and next line.
+        // Append the lines to segment->lines.
+        for (size_t i = 0; i < lines.size(); i++) {
+          PdfTextLine* prevLine = i > 0 ? lines[i - 1] : nullptr;
+          PdfTextLine* currLine = lines[i];
+          PdfTextLine* nextLine = i < lines.size() - 1 ? lines[i + 1] : nullptr;
+
+          currLine->rank = numLines++;
+          currLine->prevLine = prevLine;
+          currLine->nextLine = nextLine;
+
+          segment->lines.push_back(currLine);
         }
       }
 
-      for (size_t i = 0; i < segment->lines.size(); i++) {
-        PdfTextLine* prevLine = i > 0 ? segment->lines[i-1] : nullptr;
-        PdfTextLine* currLine = segment->lines[i];
-        PdfTextLine* nextLine = i < segment->lines.size() - 1 ? segment->lines[i+1] : nullptr;
-
-        currLine->prevLine = prevLine;
-        currLine->nextLine = nextLine;
-      }
-
+      // Compute the trim box of the segment.
       tuple<double, double, double, double> trimBox = page_segment_utils::computeTrimBox(segment);
       segment->trimLeftX = get<0>(trimBox);
       segment->trimUpperY = get<1>(trimBox);
@@ -296,71 +263,77 @@ void TextLinesDetector::detect() {
       segment->trimLowerY = get<3>(trimBox);
     }
 
+    // Compute the text lines hierarchies.
     text_lines_utils::computeTextLineHierarchy(page);
   }
 }
 
 // _________________________________________________________________________________________________
-void TextLinesDetector::createTextLine(const vector<PdfWord*>& words,
-    PdfPageSegment* segment, vector<PdfTextLine*>* lines) const {
-  if (words.empty()) {
-    return;
-  }
+PdfTextLine* TextLinesDetector::createTextLine(const vector<PdfWord*>& words,
+    const PdfPageSegment* segment, vector<PdfTextLine*>* lines) const {
+  assert(!words.empty());
 
   PdfTextLine* line = new PdfTextLine();
-  line->id = string_utils::createRandomString(8, "line-");
   line->doc = _doc;
 
-  // Set the segment.
-  line->segment = segment;
+  // Create a (unique) id.
+  line->id = string_utils::createRandomString(8, "line-");
 
   // Set the words.
   line->words = words;
 
+  // Set the reference to the parent segment.
+  line->segment = segment;
+
+  // Compute all other layout properties.
   computeTextLineProperties(line);
 
   lines->push_back(line);
+
+  return line;
 }
 
 // _________________________________________________________________________________________________
-void TextLinesDetector::mergeTextLines(PdfTextLine* line1, PdfTextLine* line2) const {
-  line1->words.insert(line1->words.end(), line2->words.begin(), line2->words.end());
-  computeTextLineProperties(line1);
+void TextLinesDetector::mergeTextLines(const PdfTextLine* line1, PdfTextLine* line2) const {
+  assert(line1);
+  assert(line2);
+
+  line2->words.insert(line2->words.end(), line1->words.begin(), line1->words.end());
+  computeTextLineProperties(line2);
 }
 
 // _________________________________________________________________________________________________
 void TextLinesDetector::computeTextLineProperties(PdfTextLine* line) const {
-  // Abort if there are no words.
+  assert(line);
+
+  // Do nothing if the line contains no words.
   if (line->words.empty()) {
     return;
   }
 
+  // Set the rotation value.
+  double rotation = line->position->rotation = line->words[0]->position->rotation;
+
   // Set the writing mode.
   line->position->wMode = line->words[0]->position->wMode;
-
-  // Set the rotation value.
-  line->position->rotation = line->words[0]->position->rotation;
 
   // Set the page number.
   line->position->pageNum = line->words[0]->position->pageNum;
 
   // Sort the words by their leftX-coordinates, in ascending or descending order, depending
   // on the rotation.
-  if (line->position->rotation == 0 || line->position->rotation == 1) {
-    sort(line->words.begin(), line->words.end(), [](const PdfWord* w1, const PdfWord* w2) {
-      return w1->position->getRotLeftX() < w2->position->getRotLeftX();
-    });
+  if (rotation == 0 || rotation == 1) {
+    sort(line->words.begin(), line->words.end(), comparators::RotLeftXAscComparator());
   } else {
-    sort(line->words.begin(), line->words.end(), [](const PdfWord* w1, const PdfWord* w2) {
-      return w1->position->getRotLeftX() > w2->position->getRotLeftX();
-    });
+    sort(line->words.begin(), line->words.end(), comparators::RotLeftXDescComparator());
   }
 
-  // Iteratively compute the text, the x,y-coordinates of the bounding box, and the font info.
+  // Iterate through the words from left to right and compute the text, the x,y-coordinates of the
+  // bounding box, and the font info.
   string text;
-  unordered_map<string, int> fontNameFreqs;
-  unordered_map<double, int> fontSizeFreqs;
-  unordered_map<double, int> baseFreqs;
+  StringCounter fontNameCounter;
+  DoubleCounter fontSizeCounter;
+  DoubleCounter baseCounter;
   for (size_t i = 0; i < line->words.size(); i++) {
     PdfWord* word = line->words[i];
 
@@ -375,53 +348,28 @@ void TextLinesDetector::computeTextLineProperties(PdfTextLine* line) const {
     line->position->lowerY = max(line->position->lowerY, wordMaxY);
 
     // Compute the most frequent font name, font size and baseline among the characters.
-    for (const auto* character : word->characters) {
-      fontNameFreqs[character->fontName]++;
-      fontSizeFreqs[character->fontSize]++;
-      baseFreqs[character->base]++;
+    for (const auto* ch : word->characters) {
+      fontNameCounter[ch->fontName]++;
+      fontSizeCounter[ch->fontSize]++;
+      baseCounter[ch->base]++;
     }
 
-    // Append the text of the word, separated by whitespace
+    // Append the text of the word, separated by a whitespace.
     text += word->text;
     if (i < line->words.size() - 1) {
       text += " ";
     }
 
+    // For each word, set the reference to the text line.
     word->line = line;
   }
 
   // Set the text.
   line->text = text;
 
-  // Compute and set the most frequent font name.
-  int mostFreqFontNameCount = 0;
-  for (const auto& pair : fontNameFreqs) {
-    if (pair.second > mostFreqFontNameCount) {
-      line->fontName = pair.first;
-      mostFreqFontNameCount = pair.second;
-    }
-  }
-
-  // Compute and set the most frequent font size and the maximum font size.
-  int mostFreqFontSizeCount = 0;
-  double mostFreqFontSize = 0;
-  double maxFontSize = 0;
-  for (const auto& pair : fontSizeFreqs) {
-    if (pair.second > mostFreqFontSizeCount) {
-      mostFreqFontSize = pair.first;
-      mostFreqFontSizeCount = pair.second;
-    }
-    maxFontSize = max(maxFontSize, pair.first);
-  }
-  line->fontSize = mostFreqFontSize;
-  line->maxFontSize = maxFontSize;
-
-  // Compute and set the most frequent baseline.
-  int mostFreqBaseCount = 0;
-  for (const auto& pair : baseFreqs) {
-    if (pair.second > mostFreqBaseCount) {
-      line->base = pair.first;
-      mostFreqBaseCount = pair.second;
-    }
-  }
+  // Compute and set the font info.
+  line->fontName = fontNameCounter.mostFreq();
+  line->fontSize = fontSizeCounter.mostFreq();
+  line->maxFontSize = fontSizeCounter.max();
+  line->base = baseCounter.mostFreq();
 }
