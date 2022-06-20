@@ -17,6 +17,9 @@ using std::vector;
 
 // =================================================================================================
 
+/**
+ * A collection of some useful and commonly used functions in context of text blocks.
+ */
 namespace text_blocks_utils {
 
 /**
@@ -123,5 +126,55 @@ void computeTextLineMargins(const PdfTextBlock* block);
 void createTextBlock(const vector<PdfTextLine*>& lines, vector<PdfTextBlock*>* blocks);
 
 }  // namespace text_blocks_utils
+
+// =================================================================================================
+// CONFIG
+
+namespace text_blocks_utils::config {
+  // The characters we use to identify formulas.
+  const char* const FORMULA_ID_ALPHABET = global_config::FORMULA_ID_ALPHABET;
+
+  // The factor that is passed by the text_blocks_utils::computeIsTextLinesCentered() method to
+  // the text_lines_utils::computeIsCentered() method.
+  const double CENTERING_MAX_XOFFSET_THRESH_FACTOR = 2.0;
+
+  // The maximum number of justified lines a text block may contain in order to be considered as
+  // a text block with centered text lines.
+  const int CENTERING_MAX_JUSTIFIED_LINES = 5;
+
+  // The minimum length of a text line in order to be processed by the text_blocks_utils::
+  // computeHangingIndent() method.
+  const double HANGING_INDENT_MIN_LINE_LENGTH = 3;
+
+  // If all non-indented lines of a text block start with an uppercase character and if the number
+  // of non-indented lines is larger than this threshold, the block is in hanging indent format.
+  const int HANGING_INDENT_MIN_NUM_NON_INDENTED_LINES = 10;
+
+  // If there is at least one indented line that starts with a lowercase character, and the number
+  // of long lines is larger than this threshold, the text block is in hanging indent format.
+  const int HANGING_INDENT_MIN_NUM_LONG_LINES = 4;
+
+  /**
+   * This method returns the threshold to be used on checking whether a line has a larger indent
+   * (larger than the normal indent) compared to another line.
+   *
+   * @param doc
+   *    The document currently processed. This can be used to, for example, get the average
+   *    character width.
+   *
+   * @return
+   *    The threshold.
+   */
+  constexpr double getLargeXOffsetThreshold(const PdfDocument* doc) {
+    return 2.0 * doc->avgCharWidth;
+  };
+
+  /**
+   */
+  constexpr double getHangingIndentMinLeftMargin(const PdfDocument* doc) {
+    return doc->avgCharWidth;
+  };
+
+}
 
 #endif  // TEXTBLOCKSUTILS_H_

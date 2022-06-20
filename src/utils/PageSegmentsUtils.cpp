@@ -9,10 +9,15 @@
 #include <tuple>
 #include <unordered_map>
 
+#include "./Counter.h"
 #include "./MathUtils.h"
 #include "./PageSegmentsUtils.h"
 
+using page_segment_utils::config::COORDS_PREC;
+using page_segment_utils::config::MIN_PERCENTAGE_SAME_RIGHT_X;
+
 using std::make_tuple;
+using std::pair;
 using std::tuple;
 using std::unordered_map;
 
@@ -28,26 +33,21 @@ tuple<double, double, double, double> page_segment_utils::computeTrimBox(
   double trimLowerY = segment->position->lowerY;
 
   // Compute the most frequent rightX among the text lines.
-  unordered_map<double, int> rightXFreqs;
+  DoubleCounter rightXCounter;
   for (auto* line : segment->lines) {
-    double rightX = math_utils::round(line->position->getRotRightX());
-    rightXFreqs[rightX]++;
+    double rightX = math_utils::round(line->position->getRotRightX(), COORDS_PREC);
+    rightXCounter[rightX]++;
   }
-  double mostFreqRightX = 0;
-  int mostFreqRightXCount = 0;
-  for (const auto& pair : rightXFreqs) {
-    if (pair.second > mostFreqRightXCount) {
-      mostFreqRightX = pair.first;
-      mostFreqRightXCount = pair.second;
-    }
-  }
+  pair<double, double> mostFreqRightXPair = rightXCounter.mostFreqAndCount();
+  double mostFreqRightX = mostFreqRightXPair.first;
+  int mostFreqRightXCount = mostFreqRightXPair.second;
 
   // Compute the percentage of lines exhibiting the most frequent rightX.
   double numLines = segment->lines.size();
   double mostFreqRightXRatio = numLines > 0.0 ? mostFreqRightXCount / numLines : 0.0;
 
   // If at least half of the lines exhibit the most frequent rightX, set trimRightX to this value.
-  trimRightX = mostFreqRightXRatio >= 0.5 ? mostFreqRightX : trimRightX;
+  trimRightX = mostFreqRightXRatio >= MIN_PERCENTAGE_SAME_RIGHT_X ? mostFreqRightX : trimRightX;
 
   return make_tuple(trimLeftX, trimUpperY, trimRightX, trimLowerY);
 }

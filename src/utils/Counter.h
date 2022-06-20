@@ -21,9 +21,9 @@ using std::unordered_map;
 // DoubleCounter
 
 /**
- * A subclass of unordered_map for counting double values and determining the most frequent double.
- * It stores the double values as keys and their counts as values. To initialize a counter and
- * change the count associated with a double value D, you can type something like:
+ * This class is a subclass of unordered_map, for counting double values and determining the most
+ * frequent double. It stores the double values as keys and their counts as values. To initialize a
+ * counter and change the count associated with a double value D, you can type something like:
  *
  * DoubleCounter counter;
  * counter[D] = 3;
@@ -71,9 +71,9 @@ class DoubleCounter : public unordered_map<double, int> {
 // StringCounter
 
 /**
- * A subclass of unordered_map for counting double strings and determining the most frequent string.
- * It stores the strings as keys and their counts as values. To initialize a counter and change the
- * count associated with a string S, you can type something like:
+ * This class is a subclass of unordered_map, for counting strings and determining the most
+ * frequent string. It stores the strings as keys and their counts as values. To initialize a
+ * counter and change the count associated with a string S, you can type something like:
  *
  * StringCounter counter;
  * counter[S] = 3;

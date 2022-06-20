@@ -10,11 +10,14 @@
 #include <utility>  // pair
 #include <vector>
 
-#include "../Constants.h"
 #include "../PdfDocument.h"
 
 #include "./MathUtils.h"
 #include "./PdfElementsUtils.h"
+
+using text_element_utils::config::FS_EQUAL_TOLERANCE;
+using text_element_utils::config::MIN_FONT_WEIGHT_DELTA;
+using text_element_utils::config::SENTENCE_DELIMITER_ALPHABET;
 
 using std::make_pair;
 using std::max;
@@ -215,11 +218,11 @@ bool text_element_utils::computeHasEqualFont(const PdfTextElement* e1, const Pdf
 }
 
 // _________________________________________________________________________________________________
-bool text_element_utils::computeHasEqualFontSize(const PdfTextElement* e1, const PdfTextElement* e2,
-      double tolerance) {
+bool text_element_utils::computeHasEqualFontSize(const PdfTextElement* e1,
+      const PdfTextElement* e2) {
   assert(e1);
   assert(e2);
-  return math_utils::equal(e1->fontSize, e2->fontSize, tolerance);
+  return math_utils::equal(e1->fontSize, e2->fontSize, FS_EQUAL_TOLERANCE);
 }
 
 // _________________________________________________________________________________________________
@@ -262,7 +265,7 @@ bool text_element_utils::computeIsEmphasized(const PdfTextElement* element) {
   // ... its font weight is larger than the most frequent font weight (and its font size is not
   // smaller than the most frequent font size).
   if (math_utils::equalOrLarger(element->fontSize, mostFreqFontSize, FS_EQUAL_TOLERANCE)
-      && math_utils::larger(elementFontInfo->weight, docFontInfo->weight, 100)) {
+      && math_utils::larger(elementFontInfo->weight, docFontInfo->weight, MIN_FONT_WEIGHT_DELTA)) {
     return true;
   }
 

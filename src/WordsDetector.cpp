@@ -20,6 +20,8 @@
 #include "./PdfDocument.h"
 #include "./WordsDetector.h"
 
+using global_config::FS_EQUAL_TOLERANCE;
+
 using std::endl;
 using std::max;
 using std::min;

@@ -17,6 +17,9 @@ using std::tuple;
 
 // =================================================================================================
 
+/**
+ * A collection of some useful and commonly used functions in context of page segments.
+ */
 namespace page_segment_utils {
 
 /**
@@ -68,5 +71,20 @@ namespace page_segment_utils {
 tuple<double, double, double, double> computeTrimBox(const PdfPageSegment* segment);
 
 }  // namespace page_segment_utils
+
+
+// =================================================================================================
+// CONFIG
+
+namespace page_segment_utils::config {
+
+// The number of decimals to use when rounding coordinates.
+const double COORDS_PREC = 0;
+
+// The minimum percentage of lines in a segment that must exhibit the most frequent rightX in the
+// segment so that the rightX value is considered to be the rightX of the trim box of the segment.
+const double MIN_PERCENTAGE_SAME_RIGHT_X = 0.5;
+
+}  // namespace page_segment_utils::config
 
 #endif  // PAGESEGMENTSUTILS_H_

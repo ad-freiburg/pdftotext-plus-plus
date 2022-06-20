@@ -17,7 +17,9 @@ using std::vector;
 // =================================================================================================
 
 /**
- * A priority queue with a fixed capacity.
+ * A priority queue with a fixed capacity. If the size of this queue is larger than the given
+ * capacity after inserting an element, the element referenced by top() is removed (so that the
+ * priority queue never contains more than <capacity>-many elements.).
  */
 template <typename T, typename Comparator>
 class FixedPriorityQueue : public priority_queue<T, vector<T>, Comparator> {
@@ -48,8 +50,8 @@ class FixedPriorityQueue : public priority_queue<T, vector<T>, Comparator> {
   }
 
   /**
-   * This method sorts the elements contained in the queue by the given comparator and append the
-   * elements to the given result vector (in sorted order).
+   * This method sorts the elements contained in the queue using the given comparator and append
+   * the elements to the given result vector (in sorted order).
    *
    * @param cmp
    *    The comparator.

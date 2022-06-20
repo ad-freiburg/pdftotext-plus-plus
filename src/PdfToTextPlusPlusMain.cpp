@@ -425,7 +425,7 @@ int main(int argc, char* argv[]) {
 
     int64_t timeTotal = 0;
     for (const auto& timing : timings) { timeTotal += timing.time; }
-    cout << "\033[1m" << "Finished in " << timeTotal << " ms." << "\033[22m" << endl;
+    cout << BOLD << "Finished in " << timeTotal << " ms." << OFF << endl;
 
     for (const auto& timing : timings) {
       string prefix = " * " + timing.name + ":";

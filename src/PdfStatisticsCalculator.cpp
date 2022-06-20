@@ -16,6 +16,8 @@
 #include "./PdfDocument.h"
 #include "./PdfStatisticsCalculator.h"
 
+using global_config::COORDS_PREC;
+
 using std::max;
 using std::unordered_map;
 

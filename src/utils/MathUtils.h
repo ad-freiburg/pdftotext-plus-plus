@@ -13,6 +13,9 @@
 
 // =================================================================================================
 
+/**
+ * A collection of some useful and commonly used math functions.
+ */
 namespace math_utils {
 
 /**

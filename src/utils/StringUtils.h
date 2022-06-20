@@ -12,12 +12,17 @@
 #include <string>
 #include <vector>
 
+#include "../Constants.h"
+
 using std::string;
 using std::vector;
 using std::wstring;
 
 // =================================================================================================
 
+/**
+ * A collection of some useful and commonly used functions in context of strings.
+ */
 namespace string_utils {
 
 /**
@@ -71,5 +76,10 @@ string createRandomString(size_t len, const string& prefix = "");
 string escapeJson(const string& str);
 
 }  // namespace string_utils
+
+namespace string_utils::config {
+  const char* const ALPHA_NUM_ALPHABET = global_config::ALPHA_NUM_ALPHABET;
+  const double x = 1.2;
+}
 
 #endif  // STRINGUTILS_H_

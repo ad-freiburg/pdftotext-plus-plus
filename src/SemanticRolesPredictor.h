@@ -94,7 +94,7 @@ class SemanticRolesPredictor {
   // The path to the parent directory of this source file.
   string _parentDirPath = _filePath.substr(0, _filePath.rfind("/"));
   // The path to the dir containing the (serialized) model to use, relative to the parent dir.
-  string _modelDirPath = _parentDirPath + "/models/2022-08-30_model-3K-documents";
+  string _modelDirPath = _parentDirPath + "/models/2021-08-30_model-3K-documents";
 
   // The name of the BPE vocabulary file within the model dir.
   string _bpeVocabFilePath = _modelDirPath + "/bpe-vocab.tsv";

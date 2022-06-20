@@ -11,14 +11,21 @@
 #include <unordered_map>
 #include <vector>
 
-#include "../Constants.h"
-
 #include "./Counter.h"
 #include "./MathUtils.h"
 #include "./PdfElementsUtils.h"
 #include "./StringUtils.h"
 #include "./TextBlocksUtils.h"
 #include "./TextLinesUtils.h"
+
+using text_blocks_utils::config::CENTERING_MAX_JUSTIFIED_LINES;
+using text_blocks_utils::config::CENTERING_MAX_XOFFSET_THRESH_FACTOR;
+using text_blocks_utils::config::FORMULA_ID_ALPHABET;
+using text_blocks_utils::config::getLargeXOffsetThreshold;
+using text_blocks_utils::config::getHangingIndentMinLeftMargin;
+using text_blocks_utils::config::HANGING_INDENT_MIN_LINE_LENGTH;
+using text_blocks_utils::config::HANGING_INDENT_MIN_NUM_LONG_LINES;
+using text_blocks_utils::config::HANGING_INDENT_MIN_NUM_NON_INDENTED_LINES;
 
 using std::max;
 using std::min;
@@ -36,17 +43,6 @@ bool text_blocks_utils::computeIsTextLinesCentered(const PdfTextBlock* block) {
     return false;
   }
 
-  // ----------
-  // CONSTANTS
-
-  // TODO(korzen): Add these constants to the method's signature, for overwriting.
-  const double XOFFSET_THRESH_FACTOR = 2.0;
-  const int MAX_JUSTIFIED_LINES = 5;
-  const double LARGE_XOFFSET_THRESHOLD = 2 * block->lines[0]->doc->avgCharWidth;
-
-  // ----------
-  // VARIABLES
-
   // A boolean indicating whether or not the block contains a line (not representing a display
   // formula) with a leftX offset (resp. rightX offset) larger than the threshold.
   bool hasNonFormulaWithLargeXOffset = false;
@@ -61,7 +57,8 @@ bool text_blocks_utils::computeIsTextLinesCentered(const PdfTextBlock* block) {
 
     // The lines in the block are not centered when there is at least one line which is not
     // centered compared to the previous line.
-    bool centered = text_lines_utils::computeIsCentered(prevLine, currLine, XOFFSET_THRESH_FACTOR);
+    bool centered = text_lines_utils::computeIsCentered(prevLine, currLine,
+        CENTERING_MAX_XOFFSET_THRESH_FACTOR);
     if (!centered) {
       return false;
     }
@@ -85,10 +82,11 @@ bool text_blocks_utils::computeIsTextLinesCentered(const PdfTextBlock* block) {
     bool isFormula = prevLineContainsFormula || currLineContainsFormula;
 
     // Check if the line has a leftX offset (or rightX offset) larger than the threshold.
+    const PdfDocument* doc = currLine->doc;
     double absLeftXOffset = abs(element_utils::computeLeftXOffset(prevLine, currLine));
     double absRightXOffset = abs(element_utils::computeRightXOffset(prevLine, currLine));
-    bool isLargeLeftXOffset = math_utils::larger(absLeftXOffset, LARGE_XOFFSET_THRESHOLD);
-    bool isLargeRightXOffset = math_utils::larger(absRightXOffset, LARGE_XOFFSET_THRESHOLD);
+    bool isLargeLeftXOffset = math_utils::larger(absLeftXOffset, getLargeXOffsetThreshold(doc));
+    bool isLargeRightXOffset = math_utils::larger(absRightXOffset, getLargeXOffsetThreshold(doc));
     bool isLargeXOffset = isLargeLeftXOffset || isLargeRightXOffset;
 
     // Check if the line is not a formula and has a leftX offset (or rightX offset) larger than
@@ -100,7 +98,7 @@ bool text_blocks_utils::computeIsTextLinesCentered(const PdfTextBlock* block) {
     }
   }
 
-  return hasNonFormulaWithLargeXOffset && numJustifiedLines <= MAX_JUSTIFIED_LINES;
+  return hasNonFormulaWithLargeXOffset && numJustifiedLines <= CENTERING_MAX_JUSTIFIED_LINES;
 }
 
 // _________________________________________________________________________________________________
@@ -113,18 +111,6 @@ double text_blocks_utils::computeHangingIndent(const PdfTextBlock* block) {
   }
 
   double avgCharWidth = block->lines[0]->doc->avgCharWidth;
-
-  // ----------
-  // CONSTANTS
-
-  // TODO(korzen): Add these constants to the method's signature, for overwriting.
-  const double MIN_LINE_LENGTH = 3;
-  const double MIN_LEFT_MARGIN = avgCharWidth;
-  const int MIN_NUM_NON_INDENTED_LINES = 10;
-  const int MIN_NUM_LONG_LINES = 4;
-
-  // ----------
-  // VARIABLES
 
   // The number of lines with a length larger than the threshold.
   int numLongLines = 0;
@@ -158,14 +144,14 @@ double text_blocks_utils::computeHangingIndent(const PdfTextBlock* block) {
   // Count the number of lines with a left margin larger than the threshold.
   for (const auto* line : block->lines) {
     // Ignore lines with a length smaller than the threshold.
-    if (line->text.size() < MIN_LINE_LENGTH) {
+    if (line->text.size() < HANGING_INDENT_MIN_LINE_LENGTH) {
       continue;
     }
     numLongLines++;
 
     // Ignore lines with a left margin smaller than the threshold.
     double leftMargin = math_utils::round(line->leftMargin);
-    if (math_utils::equalOrSmaller(leftMargin, MIN_LEFT_MARGIN)) {
+    if (math_utils::equalOrSmaller(leftMargin, getHangingIndentMinLeftMargin(line->doc))) {
       continue;
     }
     largeLeftMarginCounter[leftMargin]++;
@@ -194,7 +180,7 @@ double text_blocks_utils::computeHangingIndent(const PdfTextBlock* block) {
     const PdfTextLine* line = block->lines[i];
 
     // Ignore short lines.
-    if (line->text.size() < MIN_LINE_LENGTH) {
+    if (line->text.size() < HANGING_INDENT_MIN_LINE_LENGTH) {
       continue;
     }
 
@@ -267,13 +253,14 @@ double text_blocks_utils::computeHangingIndent(const PdfTextBlock* block) {
 
   // The block is in hanging indent format if all non-indented lines start with an uppercase
   // character and if the number of non-indented lines exceed a certain threshold.
-  if (numNonIndentedLines >= MIN_NUM_NON_INDENTED_LINES && numLowercasedNonIndentedLines == 0) {
+  if (numNonIndentedLines >= HANGING_INDENT_MIN_NUM_NON_INDENTED_LINES
+        && numLowercasedNonIndentedLines == 0) {
     return mostFreqLargeLeftMargin;
   }
 
   // The block is in hanging indent format if there is at least one indented line that start
   // with a lowercase character.
-  if (numLongLines >= MIN_NUM_LONG_LINES && numLowercasedIndentedLines > 0) {
+  if (numLongLines >= HANGING_INDENT_MIN_NUM_LONG_LINES && numLowercasedIndentedLines > 0) {
     return mostFreqLargeLeftMargin;
   }
 

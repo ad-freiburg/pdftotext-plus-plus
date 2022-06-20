@@ -20,6 +20,9 @@ using std::vector;
 
 // =================================================================================================
 
+/**
+ * A collection of some useful and commonly used functions in context of PDF elements.
+ */
 namespace element_utils {
 
 /**
@@ -347,21 +350,19 @@ bool computeHasEqualFont(const PdfTextElement* element1, const PdfTextElement* e
 /**
  * This method returns true if the given elements exhibit (approximately) the same font size.
  *
- * Whether or not the font sizes of the two elements are considered equal depends on the given
- * tolerance, which represents the maximum allowed difference between the font sizes.
+ * Whether or not the font sizes of the two elements are considered equal depends on
+ * text_element_utils::config::FS_EQUAL_TOLERANCE, which represents the maximum allowed difference
+ * between the font sizes.
  *
  * @param element1
  *    The first element to process.
  * @param element2
  *    The second element to process.
- * @param tolerance
- *    The (absolute) tolerance.
  *
  * @return
  *    True if the given elements exhibit (approximately) the same font size, false otherwise.
  */
-bool computeHasEqualFontSize(const PdfTextElement* element1, const PdfTextElement* element2,
-    double tolerance = FS_EQUAL_TOLERANCE);
+bool computeHasEqualFontSize(const PdfTextElement* element1, const PdfTextElement* element2);
 
 /**
  * This method returns true if the text of the given element ends with a sentence delimiter (that
@@ -408,5 +409,21 @@ bool computeStartsWithUpper(const PdfTextElement* element);
 bool computeIsEmphasized(const PdfTextElement* element);
 
 }  // namespace text_element_utils
+
+// =================================================================================================
+// CONFIG
+
+namespace text_element_utils::config {
+  // The maximum allowed difference between two font sizes so that both font sizes are considered
+  // to be equal.
+  const double FS_EQUAL_TOLERANCE = global_config::FS_EQUAL_TOLERANCE;
+
+  // The value by which the font weight of an element must be at least larger than the most frequent
+  // font weight in the document, so that the element is considered to be emphasized.
+  const int MIN_FONT_WEIGHT_DELTA = 100;
+
+  // The characters we consider to be a sentence delimiter.
+  const char* const SENTENCE_DELIMITER_ALPHABET = global_config::SENTENCE_DELIMITER_ALPHABET;
+}
 
 #endif  // PDFELEMENTSUTILS_H_

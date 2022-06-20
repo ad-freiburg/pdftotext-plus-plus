@@ -13,9 +13,9 @@
 #include <utility>  // std::move
 #include <vector>
 
-#include "../Constants.h"
-
 #include "./StringUtils.h"
+
+using string_utils::config::ALPHA_NUM_ALPHABET;
 
 using std::string;
 using std::stringstream;
@@ -59,6 +59,9 @@ string string_utils::createRandomString(size_t len, const string& prefix) {
   // Append the prefix.
   string tmp_s = prefix;
   tmp_s.reserve(prefix.length() + len);
+
+  double x = string_utils::config::x;
+  double y = config::x;
 
   // Append <len>-many random characters from our alphabet of alphanumerical characters.
   int alphabetSize = sizeof(ALPHA_NUM_ALPHABET);

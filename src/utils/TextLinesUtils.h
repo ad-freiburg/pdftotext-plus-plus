@@ -46,6 +46,9 @@ const regex ITEM_LABEL_REGEXES[] = {
 
 // =================================================================================================
 
+/**
+ * A collection of some useful and commonly used functions in context of text lines.
+ */
 namespace text_lines_utils {
 
 /**

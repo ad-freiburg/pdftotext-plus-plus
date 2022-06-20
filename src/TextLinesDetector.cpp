@@ -24,6 +24,8 @@
 #include "./PdfDocument.h"
 #include "./TextLinesDetector.h"
 
+using global_config::COORDS_PREC;
+
 using std::endl;
 using std::get;
 using std::max;
