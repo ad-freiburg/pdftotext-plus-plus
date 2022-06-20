@@ -29,7 +29,7 @@ using std::vector;
 // =================================================================================================
 
 // _________________________________________________________________________________________________
-WordsDetector::WordsDetector(PdfDocument* doc, bool debug, int debugPageFilter) {
+WordsDetector::WordsDetector(const PdfDocument* doc, bool debug, int debugPageFilter) {
   _log = new Logger(debug ? DEBUG : INFO, debugPageFilter);
   _doc = doc;
 }
@@ -236,7 +236,9 @@ bool WordsDetector::startsWord(const PdfCharacter* currChar, double hGapToleranc
 }
 
 // _________________________________________________________________________________________________
-void WordsDetector::mergeStackedMathSymbols(PdfPage* page) const {
+void WordsDetector::mergeStackedMathSymbols(const PdfPage* page) const {
+  assert(page);
+
   int p = page->pageNum;
 
   _log->debug(p) << "=======================================" << endl;
@@ -349,7 +351,9 @@ void WordsDetector::mergeStackedMathSymbols(PdfPage* page) const {
 
 // _________________________________________________________________________________________________
 PdfWord* WordsDetector::createWord(const vector<PdfCharacter*>& characters,
-    vector<PdfWord*>* words) const {
+      vector<PdfWord*>* words) const {
+  assert(words);
+
   PdfWord* word = new PdfWord();
   word->doc = _doc;
 

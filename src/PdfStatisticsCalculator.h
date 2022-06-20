@@ -16,6 +16,8 @@
 // Do not use the default FS_EQUAL_TOLERANCE from Constants.h here, but an alternative value.
 const double _FS_EQUAL_TOLERANCE = 0.1;
 
+// =================================================================================================
+
 /**
  * This class computes some statistics about the characters, words and text lines in a PDF document,
  * for example: the most frequent font size among the characters or the most frequent line distance.

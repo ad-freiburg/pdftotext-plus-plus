@@ -13,9 +13,16 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
-#include <utility>  // std::pair
+#include <utility>  // pair
 #include <vector>
 
+using std::pair;
+using std::unordered_map;
+using std::unordered_set;
+using std::vector;
+using std::wstring;
+
+// =================================================================================================
 
 /**
  * This class encodes given texts by using byte pair encoding.
@@ -31,7 +38,7 @@ class BytePairEncoder {
    * @param vocabulary
    *   A (previously computed) mapping of the most frequent tokens to unique ids.
    */
-  explicit BytePairEncoder(std::unordered_map<std::wstring, int>* vocabulary);
+  explicit BytePairEncoder(unordered_map<wstring, int>* vocabulary);
 
   /**
    * Splits the given text into words, encodes the words using byte pair encoding and cuts or pads
@@ -48,7 +55,7 @@ class BytePairEncoder {
    * @param result
    *   The vector to which the integer ids of the encoding should be added.
    */
-  void encode(const std::wstring& text, size_t targetLength, std::vector<int>* result);
+  void encode(const wstring& text, size_t targetLength, vector<int>* result);
 
  private:
   /**
@@ -61,7 +68,7 @@ class BytePairEncoder {
    * @param result
    *   The vector to which the integer ids of the encoding should be added.
    */
-  void encodeWord(const std::wstring& word, std::vector<int>* result);
+  void encodeWord(const wstring& word, vector<int>* result);
 
   /**
    * Computes all pairs of two consecutive tokens in the given token list, together with the
@@ -73,21 +80,19 @@ class BytePairEncoder {
    * @param result
    *   The vector to which the result pairs should be added.
    */
-  static void computeTokenPairPositions(const std::vector<std::wstring>& tokens,
-    std::vector<std::pair<std::wstring, std::unordered_set<size_t>* >* >* result);
+  static void computeTokenPairPositions(const vector<wstring>& tokens,
+    vector<pair<wstring, unordered_set<size_t>* >* >* result);
 
-  /** The vocabulary, mapping tokens to unique ids. */
-  std::unordered_map<std::wstring, int> _vocabulary;
-
-  /** The cache with encodings already computed (mapping a word to its actual encoding). */
-  std::unordered_map<std::wstring, std::vector<int> > _encodings_cache;
-
-  /** The symbol to use as padding. */
-  std::wstring PADDING_SYMBOL = L"⊛";
-  /** The symbol to use instead of a character unknown to the vocabulary. */
-  std::wstring UNKNOWN_CHAR_SYMBOL = L"⌾";
-  /** The symbol to use as word delimiter. */
-  std::wstring WORD_DELIM_SYMBOL = L"✂";
+  // The vocabulary, mapping tokens to unique ids.
+  unordered_map<wstring, int> _vocabulary;
+  // The cache with encodings already computed (mapping a word to its actual encoding).
+  unordered_map<wstring, vector<int> > _encodingsCache;
+  // The symbol to use as padding.
+  wstring PADDING_SYMBOL = L"⊛";
+  // The symbol to use instead of a character unknown to the vocabulary.
+  wstring UNKNOWN_CHAR_SYMBOL = L"⌾";
+  // The symbol to use as word delimiter.
+  wstring WORD_DELIM_SYMBOL = L"✂";
 
   FRIEND_TEST(BytePairEncoderTest, testConstructor);
   FRIEND_TEST(BytePairEncoderTest, testEncodeWord);

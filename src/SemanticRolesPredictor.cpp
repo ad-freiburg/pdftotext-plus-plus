@@ -6,13 +6,11 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include <codecvt>
-#include <fstream>
-#include <iostream>
-#include <limits>
-#include <stdexcept>
+#include <codecvt>  // std::codecvt_utf8
+#include <fstream>  // std::wifstream
+#include <limits>  // std::numeric_limits
 #include <string>
-#include <utility>
+#include <utility>  // std::make_pair
 #include <vector>
 
 #include "tensorflow/cc/client/client_session.h"
@@ -20,11 +18,15 @@
 #include "./BytePairEncoder.h"
 #include "./SemanticRolesPredictor.h"
 
-using tensorflow::SessionOptions;
 using tensorflow::RunOptions;
+using tensorflow::SessionOptions;
 using tensorflow::Tensor;
 using tensorflow::TensorShape;
 
+using std::numeric_limits;
+using std::string;
+using std::vector;
+using std::wstring;
 
 // _________________________________________________________________________________________________
 SemanticRolesPredictor::SemanticRolesPredictor() = default;
@@ -61,7 +63,7 @@ void SemanticRolesPredictor::readModel() {
   bpeVocabFile.imbue(std::locale(bpeVocabFile.getloc(), codecvt));
 
   // Read the vocabulary line by line, where each line is of form <token>TAB<id>.
-  std::wstring wline;
+  wstring wline;
   while (true) {
     std::getline(bpeVocabFile, wline);
 
@@ -70,8 +72,8 @@ void SemanticRolesPredictor::readModel() {
 
     // Split the line "<token>TAB<id>" into "<token>" and "<id>".
     size_t posTab = wline.find(L"\t");
-    if (posTab == std::string::npos) { continue; }
-    std::wstring token = wline.substr(0, posTab);
+    if (posTab == string::npos) { continue; }
+    wstring token = wline.substr(0, posTab);
     int tokenId = std::stoi(wline.substr(posTab + 1));
     _bpeVocab.insert(std::make_pair(token, tokenId));
   }
@@ -83,16 +85,16 @@ void SemanticRolesPredictor::readModel() {
   if (!vocabFile.is_open()) {
     throw std::invalid_argument("Could not load vocab file \"" + _rolesVocabFilePath + "\"");
   }
-  std::string line;
+  string line;
   while (true) {
     std::getline(vocabFile, line);
     if (vocabFile.eof()) {
       break;
     }
     size_t posTab = line.find("\t");
-    if (posTab == std::string::npos) { continue; }
+    if (posTab == string::npos) { continue; }
 
-    std::string roleName = line.substr(0, posTab);
+    string roleName = line.substr(0, posTab);
     int roleId = std::stoi(line.substr(posTab + 1));
     _rolesVocab[roleId] = roleName;
   }
@@ -102,7 +104,9 @@ void SemanticRolesPredictor::readModel() {
 }
 
 // _________________________________________________________________________________________________
-void SemanticRolesPredictor::predict(PdfDocument* doc) {
+void SemanticRolesPredictor::predict(const PdfDocument* doc) {
+  assert(doc);
+
   if (!_modelOk) {
     readModel();
   }
@@ -111,7 +115,7 @@ void SemanticRolesPredictor::predict(PdfDocument* doc) {
   tensorflow::Tensor wordsTensor = createWordsInputTensor(doc);
 
   // Use the model to predict the semantic roles.
-  std::vector<tensorflow::Tensor> outputs;
+  vector<tensorflow::Tensor> outputs;
   tensorflow::Status run_status = _bundle.GetSession()->Run({
       { "serving_default_layout_features_input:0", layoutTensor },
       { "serving_default_words_input:0", wordsTensor }
@@ -124,7 +128,7 @@ void SemanticRolesPredictor::predict(PdfDocument* doc) {
     for (auto* block : page->blocks) {
       // For the block, find the role with the highest probability.
       float maxProb = 0;
-      std::string maxSemanticRole;
+      string maxSemanticRole;
       for (size_t roleNum = 0; roleNum < _rolesVocab.size(); roleNum++) {
         if (predictions(blockIndex, roleNum) > maxProb) {
           maxProb = predictions(blockIndex, roleNum);
@@ -132,25 +136,6 @@ void SemanticRolesPredictor::predict(PdfDocument* doc) {
         }
       }
       block->role = maxSemanticRole;
-
-      // std::stringstream lv;
-      // lv << "[";
-      // for (int i = 0; i < 15; i++) {
-      //   lv << layoutTensor.tensor<float, 2>()(blockIndex, i) << " ";
-      // }
-      // lv << "]";
-
-      // std::cout << "Layout-Vector: " << lv.str() << std::endl;
-
-      // std::stringstream wv;
-      // wv << "[";
-      // for (int i = 0; i < 100; i++) {
-      //   wv << wordsTensor.tensor<int, 2>()(blockIndex, i) << " ";
-      // }
-      // wv << "]";
-
-      // std::cout << "Words-Vector: " << wv.str() << std::endl;
-
       blockIndex++;
     }
   }
@@ -158,10 +143,12 @@ void SemanticRolesPredictor::predict(PdfDocument* doc) {
 
 // _________________________________________________________________________________________________
 tensorflow::Tensor SemanticRolesPredictor::createLayoutInputTensor(const PdfDocument* doc) {
+  assert(doc);
+
   // Iterate through the text blocks of the document to count the total number of text blocks and
   // some document-wide statistics (e.g., the largest font size).
-  float minFontSize = std::numeric_limits<float>::max();
-  float maxFontSize = std::numeric_limits<float>::min();
+  float minFontSize = numeric_limits<float>::max();
+  float maxFontSize = numeric_limits<float>::min();
   int numBlocks = 0;
   for (const auto* page : doc->pages) {
     for (const auto* block : page->blocks) {
@@ -186,7 +173,7 @@ tensorflow::Tensor SemanticRolesPredictor::createLayoutInputTensor(const PdfDocu
       PdfFontInfo* fontInfo = doc->fontInfos.at(block->fontName);
 
       // Convert the block text to a wstring, to correctly handle umlauts etc.
-      std::wstring wBlockText = stringConverter.from_bytes(block->text);
+      wstring wBlockText = stringConverter.from_bytes(block->text);
 
       // -----
       // Encode the page number.
@@ -247,7 +234,7 @@ tensorflow::Tensor SemanticRolesPredictor::createLayoutInputTensor(const PdfDocu
       // -----
       // Encode whether or not the block contains an "@".
 
-      bool containsAtEncoded = wBlockText.find(L"@") != std::string::npos ? 1.0f : 0.0f;
+      bool containsAtEncoded = wBlockText.find(L"@") != string::npos ? 1.0f : 0.0f;
       layoutTensor.tensor<float, 2>()(blockIndex, 8) = containsAtEncoded;
 
       // -----
@@ -322,7 +309,7 @@ tensorflow::Tensor SemanticRolesPredictor::createLayoutInputTensor(const PdfDocu
       for (const auto* line : block->lines) {
         for (const auto* word : line->words) {
           // Convert the block text to a wstring, to correctly handle umlauts etc.
-          std::wstring wWordText = stringConverter.from_bytes(word->text);
+          wstring wWordText = stringConverter.from_bytes(word->text);
 
           if (wWordText.length() > 0 && isupper(wWordText[0])) {
             numUppercasedWords += 1;
@@ -346,20 +333,6 @@ tensorflow::Tensor SemanticRolesPredictor::createLayoutInputTensor(const PdfDocu
                                      static_cast<float>(numNonWhitespaceChars);
       }
       layoutTensor.tensor<float, 2>()(blockIndex, 14) = percUppercasedCharsEncoded;
-
-      // std::stringstream ss;
-      // ss << "[";
-      // for (int i = 0; i < 15; i++) {
-      //   ss << layoutTensor.tensor<float, 2>()(blockIndex, i) << " ";
-      // }
-      // ss << "]";
-
-      // // LOG(DEBUG) << "Computed layout input tensor: " << ss.str() << std::endl;
-      // std::cout << "Block: " << block->text << std::endl;
-      // std::string str = ss.str();
-      // std::string wstr(str.begin(), str.end());
-      // std::cout << "Layout features: " << wstr << std::endl;
-
       blockIndex++;
     }
   }
@@ -369,6 +342,8 @@ tensorflow::Tensor SemanticRolesPredictor::createLayoutInputTensor(const PdfDocu
 
 // _________________________________________________________________________________________________
 tensorflow::Tensor SemanticRolesPredictor::createWordsInputTensor(const PdfDocument* doc) {
+  assert(doc);
+
   // Iterate through the text blocks of the document to count the total number of text blocks.
   int numBlocks = 0;
   for (const auto* page : doc->pages) {
@@ -384,26 +359,14 @@ tensorflow::Tensor SemanticRolesPredictor::createWordsInputTensor(const PdfDocum
   for (const auto* page : doc->pages) {
     for (const auto* block : page->blocks) {
       // Convert the block text to a wstring, to correctly handle umlauts etc.
-      std::wstring wBlockText = stringConverter.from_bytes(block->text);
+      wstring wBlockText = stringConverter.from_bytes(block->text);
 
       // Encode the text of each block using byte pair encoding.
-      std::vector<int> encoding;
+      vector<int> encoding;
       encoder.encode(wBlockText, length, &encoding);
       for (size_t k = 0; k < encoding.size(); k++) {
         wordsTensor.tensor<int, 2>()(blockIndex, k) = encoding[k];
       }
-
-      // std::stringstream ss;
-      // ss << "[";
-      // for (int i = 0; i < 100; i++) {
-      //   ss << wordsTensor.tensor<int, 2>()(blockIndex, i) << " ";
-      // }
-      // ss << "]";
-      // std::cout << "Block: " << block->text << std::endl;
-      // std::string str = ss.str();
-      // std::string wstr(str.begin(), str.end());
-      // std::cout << "Word features: " << wstr << std::endl;
-
       blockIndex++;
     }
   }

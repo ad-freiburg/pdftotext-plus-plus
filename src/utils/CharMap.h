@@ -21,9 +21,11 @@ using std::unordered_map;
 // =================================================================================================
 
 /**
- * A mapping of char names to the respective Unicode codepoints, and string representations.
+ * A mapping of char names to the respective Unicode codepoints and string representations.
  * This is needed because for some chars, some PDFs only provide the char names but not the
- * respective Unicode character (for example, due to a missing or broken encoding).
+ * respective Unicode character (for example, due to a missing or broken encoding). For example,
+ * for the character "Σ", only the name "summationdisplay" may be provided, but not the actual
+ * text. This map is used to get the text of such characters.
  */
 const unordered_map<string, pair<unsigned int, string>> charMap = {
   { "summationdisplay", make_pair(0x2211, "\u2211") },

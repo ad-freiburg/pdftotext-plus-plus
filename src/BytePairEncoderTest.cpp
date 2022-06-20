@@ -19,8 +19,9 @@
 // #include "./BytePairEncoder.h"
 
 
-// // _________________________________________________________________________________________________
-// void readVocabularyFromFile(const std::string& path, std::unordered_map<std::wstring, int>* res) {
+// // _____________________________________________________________________________________________
+// void readVocabularyFromFile(const std::string& path, std::unordered_map<std::wstring, int>*
+//  res) {
 //   std::wifstream vocabFile(path);
 
 //   // Abort if the file can't be read.
@@ -55,7 +56,7 @@
 //   delete codecvt;
 // }
 
-// // _________________________________________________________________________________________________
+// // _____________________________________________________________________________________________
 // TEST(BytePairEncoderTest, testConstructor) {
 //   std::unordered_map<std::wstring, int> vocabulary;
 //   vocabulary[L"effi"] = 0;
@@ -72,7 +73,7 @@
 //   ASSERT_EQ(0, encoder._encodings_cache.size());
 // }
 
-// // _________________________________________________________________________________________________
+// // ______________________________________________________________________________________________
 // TEST(BytePairEncoderTest, testEncode) {
 //   std::unordered_map<std::wstring, int> vocabulary;
 //   readVocabularyFromFile("./vocab-bpe.test.txt", &vocabulary);
@@ -128,7 +129,7 @@
 //   ASSERT_EQ(51, result4[5]);
 // }
 
-// // _________________________________________________________________________________________________
+// // ______________________________________________________________________________________________
 // TEST(BytePairEncoderTest, testEncodeWord) {
 //   std::unordered_map<std::wstring, int> vocabulary;
 //   readVocabularyFromFile("./vocab-bpe.test.txt", &vocabulary);
@@ -206,7 +207,7 @@
 //   ASSERT_EQ(279, result8[0]);
 // }
 
-// // _________________________________________________________________________________________________
+// // ______________________________________________________________________________________________
 // TEST(BytePairEncoderTest, computeTokenPairPositions) {
 //   // ---------
 //   // Test computing the token pair positions from an empty list.

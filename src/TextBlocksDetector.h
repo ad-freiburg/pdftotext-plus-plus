@@ -19,6 +19,9 @@
 
 #include "./PdfDocument.h"
 
+using std::make_pair;
+using std::max;
+using std::pair;
 using std::string;
 using std::unordered_set;
 
@@ -76,7 +79,7 @@ class TextBlocksDetector {
    *   If set to a value > 0, only the debug messages produced while processing the
    *   <debugPageFilter>-th page of the current PDF file will be printed to the console.
    */
-  explicit TextBlocksDetector(PdfDocument* doc, bool debug = false, int debugPageFilter = -1);
+  explicit TextBlocksDetector(const PdfDocument* doc, bool debug = false, int debugPageFilter = -1);
 
   /** The deconstructor. */
   ~TextBlocksDetector();
@@ -331,8 +334,6 @@ class TextBlocksDetector {
    * This method checks whether the given line starts a block because the given block
    * is not in hanging indent format and the given line and/or previous line is indented (or not).
    *
-   * @param pBlock
-   *    The preliminary block to process.
    * @param line
    *    The line to process.
    *
@@ -344,7 +345,7 @@ class TextBlocksDetector {
   Trool startsBlock_indent(const PdfTextLine* line) const;
 
   // The PDF document to process.
-  PdfDocument* _doc;
+  const PdfDocument* _doc;
 
   // The config.
   TextBlocksDetectorConfig* _config;
@@ -354,7 +355,7 @@ class TextBlocksDetector {
   unordered_set<string> _potentFnLabels;
 
   // The logger.
-  Logger* _log;
+  const Logger* _log;
 };
 
 // =================================================================================================
@@ -398,7 +399,7 @@ struct TextBlocksDetectorConfig {
    *    the given expected line distance.
    */
   double getExpectedLineDistanceTolerance(const PdfDocument* doc, double expectedLineDist) const {
-    return std::max(1.0, 0.1 * expectedLineDist);
+    return max(1.0, 0.1 * expectedLineDist);
   }
 
   /**
@@ -412,8 +413,6 @@ struct TextBlocksDetectorConfig {
    *
    * @param doc
    *    The PDF document currently processed.
-   * @param expectedLineDistance
-   *    The expected line distance.
    *
    * @return
    *    The tolerance to be used on checking if the "curr/next distance" is larger than the
@@ -441,8 +440,8 @@ struct TextBlocksDetectorConfig {
    *    A pair of doubles, with the first value denoting the start point of the interval and the
    *    second point denoting the end point of the interval.
    */
-  std::pair<double, double> getLeftXOffsetToleranceInterval(const PdfDocument* doc) const {
-    return std::make_pair(-1 * doc->avgCharWidth, 6 * doc->avgCharWidth);
+  pair<double, double> getLeftXOffsetToleranceInterval(const PdfDocument* doc) const {
+    return make_pair(-1 * doc->avgCharWidth, 6 * doc->avgCharWidth);
   }
 
   /**
@@ -462,8 +461,8 @@ struct TextBlocksDetectorConfig {
    *    A pair of doubles, with the first value denoting the start point of the interval and the
    *    second point denoting the end point of the interval.
    */
-  std::pair<double, double> getIndentToleranceInterval(const PdfDocument* doc) const {
-    return std::make_pair(1 * doc->avgCharWidth, 6 * doc->avgCharWidth);
+  pair<double, double> getIndentToleranceInterval(const PdfDocument* doc) const {
+    return make_pair(1 * doc->avgCharWidth, 6 * doc->avgCharWidth);
   }
 };
 

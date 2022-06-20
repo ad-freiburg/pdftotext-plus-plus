@@ -6,19 +6,27 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include <cmath>  // fabs
-#include <iostream>
-#include <string>
-
-#include <poppler/Annot.h>
 #include <goo/GooString.h>
+#include <poppler/Annot.h>
 #include <poppler/PDFDoc.h>
 #include <poppler/PDFDocEncoding.h>
 #include <poppler/PDFDocFactory.h>
 
+#include <cmath>  // fabs
+#include <memory>  // std::unique_ptr
+#include <string>
+#include <utility>  // std::move
+#include <vector>
+
 #include "./PdfDocument.h"
 #include "./PdfDocumentVisualizer.h"
 #include "./TextOutputDev.h"
+
+using std::make_unique;
+using std::move;
+using std::string;
+using std::unique_ptr;
+using std::vector;
 
 
 /** The resolution in DPI. */
@@ -54,7 +62,7 @@ static GooString cutIdAppearance("/Helv 3 Tf .9 .9 .9 rg");
 // =================================================================================================
 
 // _________________________________________________________________________________________________
-PdfDocumentVisualizer::PdfDocumentVisualizer(std::string pdfFilePath) {
+PdfDocumentVisualizer::PdfDocumentVisualizer(const string& pdfFilePath) {
   // Load the PDF document.
   GooString gooPdfFilePath(pdfFilePath);
   _pdfDoc = PDFDocFactory().createPDFDoc(gooPdfFilePath);
@@ -83,72 +91,74 @@ PdfDocumentVisualizer::~PdfDocumentVisualizer() {
 }
 
 // _________________________________________________________________________________________________
-void PdfDocumentVisualizer::visualizeCharacters(const PdfDocument& doc, const ColorScheme& cs) {
+void PdfDocumentVisualizer::visualizeCharacters(const PdfDocument& doc, const ColorScheme& cs)
+    const {
   for (const auto* page : doc.pages) {
     drawCharBoundingBoxes(page->characters, cs);
   }
 }
 
 // _________________________________________________________________________________________________
-void PdfDocumentVisualizer::visualizeCharacters(const std::vector<PdfCharacter*>& chars,
-    const ColorScheme& cs) {
+void PdfDocumentVisualizer::visualizeCharacters(const vector<PdfCharacter*>& chars,
+    const ColorScheme& cs) const {
   drawCharBoundingBoxes(chars, cs);
 }
 
 // _________________________________________________________________________________________________
-void PdfDocumentVisualizer::visualizeFigures(const PdfDocument& doc, const ColorScheme& cs) {
+void PdfDocumentVisualizer::visualizeFigures(const PdfDocument& doc, const ColorScheme& cs) const {
   for (const auto* page : doc.pages) {
     drawFigureBoundingBoxes(page->figures, cs);
   }
 }
 
 // _________________________________________________________________________________________________
-void PdfDocumentVisualizer::visualizeFigures(const std::vector<PdfFigure*>& figures,
-    const ColorScheme& cs) {
+void PdfDocumentVisualizer::visualizeFigures(const vector<PdfFigure*>& figures,
+    const ColorScheme& cs) const {
   drawFigureBoundingBoxes(figures, cs);
 }
 
 // _________________________________________________________________________________________________
-void PdfDocumentVisualizer::visualizeShapes(const PdfDocument& doc, const ColorScheme& cs) {
+void PdfDocumentVisualizer::visualizeShapes(const PdfDocument& doc, const ColorScheme& cs) const {
   for (const auto* page : doc.pages) {
     drawShapeBoundingBoxes(page->shapes, cs);
   }
 }
 
 // _________________________________________________________________________________________________
-void PdfDocumentVisualizer::visualizeShapes(const std::vector<PdfShape*>& shapes,
-    const ColorScheme& cs) {
+void PdfDocumentVisualizer::visualizeShapes(const vector<PdfShape*>& shapes,
+    const ColorScheme& cs) const {
   drawShapeBoundingBoxes(shapes, cs);
 }
 
 // _________________________________________________________________________________________________
-void PdfDocumentVisualizer::visualizeGraphics(const PdfDocument& doc, const ColorScheme& cs) {
+void PdfDocumentVisualizer::visualizeGraphics(const PdfDocument& doc, const ColorScheme& cs) const {
   for (const auto* page : doc.pages) {
     drawGraphicBoundingBoxes(page->graphics, cs);
   }
 }
 
 // _________________________________________________________________________________________________
-void PdfDocumentVisualizer::visualizeGraphics(const std::vector<PdfGraphic*>& graphics,
-    const ColorScheme& cs) {
+void PdfDocumentVisualizer::visualizeGraphics(const vector<PdfGraphic*>& graphics,
+    const ColorScheme& cs) const {
   drawGraphicBoundingBoxes(graphics, cs);
 }
 
 // _________________________________________________________________________________________________
-void PdfDocumentVisualizer::visualizeWords(const PdfDocument& doc, const ColorScheme& cs) {
+void PdfDocumentVisualizer::visualizeWords(const PdfDocument& doc, const ColorScheme& cs) const {
   for (const auto* page : doc.pages) {
     drawWordBoundingBoxes(page->words, cs);
   }
 }
 
 // _________________________________________________________________________________________________
-void PdfDocumentVisualizer::visualizeWords(const std::vector<PdfWord*>& words,
-    const ColorScheme& cs) {
+void PdfDocumentVisualizer::visualizeWords(const vector<PdfWord*>& words,
+    const ColorScheme& cs) const {
   drawWordBoundingBoxes(words, cs);
 }
 
 // _________________________________________________________________________________________________
-void PdfDocumentVisualizer::visualizeTextLines(const PdfDocument& doc, const ColorScheme& cs) {
+void PdfDocumentVisualizer::visualizeTextLines(const PdfDocument& doc, const ColorScheme& cs)
+    const {
   for (const auto* page : doc.pages) {
     for (const auto* segment : page->segments) {
       drawTextLineBoundingBoxes(segment->lines, cs);
@@ -157,13 +167,14 @@ void PdfDocumentVisualizer::visualizeTextLines(const PdfDocument& doc, const Col
 }
 
 // _________________________________________________________________________________________________
-void PdfDocumentVisualizer::visualizeTextLines(const std::vector<PdfTextLine*>& lines,
-    const ColorScheme& cs) {
+void PdfDocumentVisualizer::visualizeTextLines(const vector<PdfTextLine*>& lines,
+    const ColorScheme& cs) const {
   drawTextLineBoundingBoxes(lines, cs);
 }
 
 // _________________________________________________________________________________________________
-void PdfDocumentVisualizer::visualizeTextBlocks(const PdfDocument& doc, const ColorScheme& cs) {
+void PdfDocumentVisualizer::visualizeTextBlocks(const PdfDocument& doc, const ColorScheme& cs)
+      const {
   for (const auto* page : doc.pages) {
     drawTextBlockBoundingBoxes(page->blocks, cs);
     drawTextBlockSemanticRoles(page->blocks, cs);
@@ -171,29 +182,29 @@ void PdfDocumentVisualizer::visualizeTextBlocks(const PdfDocument& doc, const Co
 }
 
 // _________________________________________________________________________________________________
-void PdfDocumentVisualizer::visualizeTextBlocks(const std::vector<PdfTextBlock*>& blocks,
-    const ColorScheme& cs) {
+void PdfDocumentVisualizer::visualizeTextBlocks(const vector<PdfTextBlock*>& blocks,
+    const ColorScheme& cs) const {
   drawTextBlockBoundingBoxes(blocks, cs);
   drawTextBlockSemanticRoles(blocks, cs);
 }
 
 // _________________________________________________________________________________________________
 void PdfDocumentVisualizer::visualizePageSegments(const PdfDocument& doc,
-    const ColorScheme& cs) {
+    const ColorScheme& cs) const {
   for (const auto* page : doc.pages) {
     drawPageSegmentBoundingBoxes(page->segments, cs);
   }
 }
 
 // _________________________________________________________________________________________________
-void PdfDocumentVisualizer::visualizePageSegments(const std::vector<PdfPageSegment*>& segments,
-    const ColorScheme& cs) {
+void PdfDocumentVisualizer::visualizePageSegments(const vector<PdfPageSegment*>& segments,
+    const ColorScheme& cs) const {
   drawPageSegmentBoundingBoxes(segments, cs);
 }
 
 // _________________________________________________________________________________________________
 void PdfDocumentVisualizer::visualizeReadingOrder(const PdfDocument& doc,
-    const ColorScheme& cs) {
+    const ColorScheme& cs) const {
   for (const auto* page : doc.pages) {
     drawTextBlockBoundingBoxes(page->blocks, cs);
     drawTextBlockSemanticRoles(page->blocks, cs);
@@ -202,8 +213,8 @@ void PdfDocumentVisualizer::visualizeReadingOrder(const PdfDocument& doc,
 }
 
 // _________________________________________________________________________________________________
-void PdfDocumentVisualizer::visualizeReadingOrder(const std::vector<PdfTextBlock*>& blocks,
-    const ColorScheme& cs) {
+void PdfDocumentVisualizer::visualizeReadingOrder(const vector<PdfTextBlock*>& blocks,
+    const ColorScheme& cs) const {
   drawTextBlockBoundingBoxes(blocks, cs);
   drawTextBlockSemanticRoles(blocks, cs);
   drawReadingOrder(blocks, cs);
@@ -211,34 +222,34 @@ void PdfDocumentVisualizer::visualizeReadingOrder(const std::vector<PdfTextBlock
 
 // _________________________________________________________________________________________________
 void PdfDocumentVisualizer::visualizeTextBlockDetectionCuts(const PdfDocument& doc,
-    const ColorScheme& cs) {
+    const ColorScheme& cs) const {
   for (const auto* page : doc.pages) {
     drawCuts(page->blockDetectionCuts, cs);
   }
 }
 
 // _________________________________________________________________________________________________
-void PdfDocumentVisualizer::visualizeTextBlockDetectionCuts(const std::vector<Cut*>& cuts,
-    const ColorScheme& cs) {
+void PdfDocumentVisualizer::visualizeTextBlockDetectionCuts(const vector<Cut*>& cuts,
+    const ColorScheme& cs) const {
   drawCuts(cuts, cs);
 }
 
 // _________________________________________________________________________________________________
 void PdfDocumentVisualizer::visualizeReadingOrderCuts(const PdfDocument& doc,
-    const ColorScheme& cs) {
+    const ColorScheme& cs) const {
   for (const auto* page : doc.pages) {
     drawCuts(page->readingOrderCuts, cs);
   }
 }
 
 // _________________________________________________________________________________________________
-void PdfDocumentVisualizer::visualizeReadingOrderCuts(const std::vector<Cut*>& cuts,
-    const ColorScheme& cs) {
+void PdfDocumentVisualizer::visualizeReadingOrderCuts(const vector<Cut*>& cuts,
+    const ColorScheme& cs) const {
   drawCuts(cuts, cs);
 }
 
 // _________________________________________________________________________________________________
-void PdfDocumentVisualizer::save(const std::string& targetPath) {
+void PdfDocumentVisualizer::save(const string& targetPath) const {
   GooString gooTargetPath(targetPath);
   _pdfDoc->saveAs(&gooTargetPath);
 }
@@ -246,56 +257,56 @@ void PdfDocumentVisualizer::save(const std::string& targetPath) {
 // =================================================================================================
 
 // _________________________________________________________________________________________________
-void PdfDocumentVisualizer::drawCharBoundingBoxes(const std::vector<PdfCharacter*>& characters,
-    const ColorScheme& cs) {
+void PdfDocumentVisualizer::drawCharBoundingBoxes(const vector<PdfCharacter*>& characters,
+    const ColorScheme& cs) const {
   for (const auto* ch : characters) {
     drawBoundingBox(ch, cs);
   }
 }
 
 // _________________________________________________________________________________________________
-void PdfDocumentVisualizer::drawFigureBoundingBoxes(const std::vector<PdfFigure*>& figures,
-    const ColorScheme& cs) {
+void PdfDocumentVisualizer::drawFigureBoundingBoxes(const vector<PdfFigure*>& figures,
+    const ColorScheme& cs) const {
   for (const auto* figure : figures) {
     drawBoundingBox(figure, cs);
   }
 }
 
 // _________________________________________________________________________________________________
-void PdfDocumentVisualizer::drawShapeBoundingBoxes(const std::vector<PdfShape*>& shapes,
-    const ColorScheme& cs) {
+void PdfDocumentVisualizer::drawShapeBoundingBoxes(const vector<PdfShape*>& shapes,
+    const ColorScheme& cs) const {
   for (const auto* shape : shapes) {
     drawBoundingBox(shape, cs);
   }
 }
 
 // _________________________________________________________________________________________________
-void PdfDocumentVisualizer::drawGraphicBoundingBoxes(const std::vector<PdfGraphic*>& graphics,
-    const ColorScheme& cs) {
+void PdfDocumentVisualizer::drawGraphicBoundingBoxes(const vector<PdfGraphic*>& graphics,
+    const ColorScheme& cs) const {
   for (const auto* graphic : graphics) {
     drawBoundingBox(graphic, cs);
   }
 }
 
 // _________________________________________________________________________________________________
-void PdfDocumentVisualizer::drawWordBoundingBoxes(const std::vector<PdfWord*>& words,
-    const ColorScheme& cs) {
+void PdfDocumentVisualizer::drawWordBoundingBoxes(const vector<PdfWord*>& words,
+    const ColorScheme& cs) const {
   for (const auto* word : words) {
     drawBoundingBox(word, cs);
   }
 }
 
 // _________________________________________________________________________________________________
-void PdfDocumentVisualizer::drawTextLineBoundingBoxes(const std::vector<PdfTextLine*>& lines,
-    const ColorScheme& cs) {
+void PdfDocumentVisualizer::drawTextLineBoundingBoxes(const vector<PdfTextLine*>& lines,
+    const ColorScheme& cs) const {
   for (const auto* line : lines) {
     drawBoundingBox(line, cs);
   }
 }
 
 // _________________________________________________________________________________________________
-void PdfDocumentVisualizer::drawTextBlockBoundingBoxes(const std::vector<PdfTextBlock*>& blocks,
-    const ColorScheme& cs) {
+void PdfDocumentVisualizer::drawTextBlockBoundingBoxes(const vector<PdfTextBlock*>& blocks,
+    const ColorScheme& cs) const {
   for (const auto* block : blocks) {
     drawBoundingBox(block, cs);
   }
@@ -303,7 +314,7 @@ void PdfDocumentVisualizer::drawTextBlockBoundingBoxes(const std::vector<PdfText
 
 // _________________________________________________________________________________________________
 void PdfDocumentVisualizer::drawPageSegmentBoundingBoxes(
-    const std::vector<PdfPageSegment*>& segments, const ColorScheme& cs) {
+    const vector<PdfPageSegment*>& segments, const ColorScheme& cs) const {
   for (const auto* segment : segments) {
     drawBoundingBox(segment, cs);
 
@@ -325,8 +336,8 @@ void PdfDocumentVisualizer::drawPageSegmentBoundingBoxes(
     AnnotGeometry* annot = new AnnotGeometry(_pdfDoc.get(), &rect, Annot::AnnotSubtype::typeSquare);
 
     // Define the color of the bounding box.
-    std::unique_ptr<AnnotColor> color = std::make_unique<AnnotColor>(cs1.primaryColor);
-    annot->setColor(std::move(color));
+    std::unique_ptr<AnnotColor> color = make_unique<AnnotColor>(cs1.primaryColor);
+    annot->setColor(move(color));
 
     // Draw the bounding box.
     pdfPage->addAnnot(annot);
@@ -348,29 +359,31 @@ void PdfDocumentVisualizer::drawPageSegmentBoundingBoxes(
       PDFRectangle rect(leftX, upperY, rightX, lowerY);
 
       // Create the bounding box.
-      AnnotGeometry* annot = new AnnotGeometry(_pdfDoc.get(), &rect, Annot::AnnotSubtype::typeSquare);
+      AnnotGeometry* a = new AnnotGeometry(_pdfDoc.get(), &rect, Annot::AnnotSubtype::typeSquare);
 
       // Define the color of the bounding box.
-      std::unique_ptr<AnnotColor> color = std::make_unique<AnnotColor>(cs2.primaryColor);
-      annot->setColor(std::move(color));
+      std::unique_ptr<AnnotColor> color = make_unique<AnnotColor>(cs2.primaryColor);
+      a->setColor(move(color));
 
       // Draw the bounding box.
-      pdfPage->addAnnot(annot);
-      annot->draw(gfx, false);
+      pdfPage->addAnnot(a);
+      a->draw(gfx, false);
     }
   }
 }
 
 // _________________________________________________________________________________________________
-void PdfDocumentVisualizer::drawBoundingBox(const PdfElement* element, const ColorScheme& cs) {
+void PdfDocumentVisualizer::drawBoundingBox(const PdfElement* element, const ColorScheme& cs)
+      const {
   Page* pdfPage = _pdfDoc->getPage(element->position->pageNum);
   Gfx* gfx = _gfxs[element->position->pageNum];
 
-  // Define the coordinates of the bounding box to draw.
+  // Define the coordinates of the bounding box to draw. Make the y-coordinates relatively to the
+  // lower left of the page.
   double leftX = element->position->leftX;
-  double upperY = pdfPage->getMediaHeight() - element->position->lowerY;  // make it relative to the lower left.
+  double upperY = pdfPage->getMediaHeight() - element->position->lowerY;
   double rightX = element->position->rightX;
-  double lowerY = pdfPage->getMediaHeight() - element->position->upperY;  // make it relative to the lower left.
+  double lowerY = pdfPage->getMediaHeight() - element->position->upperY;
   // Vertical/horizontal lines can have a width/height of zero, in which case they are not
   // visible in the visualization. So ensure a minimal width/height of 1.
   if (fabs(leftX - rightX) < 1) { rightX += 1; }
@@ -381,8 +394,8 @@ void PdfDocumentVisualizer::drawBoundingBox(const PdfElement* element, const Col
   AnnotGeometry* annot = new AnnotGeometry(_pdfDoc.get(), &rect, Annot::AnnotSubtype::typeSquare);
 
   // Define the color of the bounding box.
-  std::unique_ptr<AnnotColor> color = std::make_unique<AnnotColor>(cs.primaryColor);
-  annot->setColor(std::move(color));
+  std::unique_ptr<AnnotColor> color = make_unique<AnnotColor>(cs.primaryColor);
+  annot->setColor(move(color));
 
   // Draw the bounding box.
   pdfPage->addAnnot(annot);
@@ -390,16 +403,17 @@ void PdfDocumentVisualizer::drawBoundingBox(const PdfElement* element, const Col
 }
 
 // _________________________________________________________________________________________________
-void PdfDocumentVisualizer::drawTextBlockSemanticRoles(const std::vector<PdfTextBlock*>& blocks,
-    const ColorScheme& cs) {
+void PdfDocumentVisualizer::drawTextBlockSemanticRoles(const vector<PdfTextBlock*>& blocks,
+    const ColorScheme& cs) const {
   // Iterate through the text blocks and draw the semantic role of each.
   for (const auto* block : blocks) {
     Page* pdfPage = _pdfDoc->getPage(block->position->pageNum);
     Gfx* gfx = _gfxs[block->position->pageNum];
 
-    // Define the position of the semantic role.
+    // Define the position of the semantic role. Make the lowerY relatively to the lower left of
+    // the page.
     double leftX = block->position->leftX;
-    double lowerY = pdfPage->getMediaHeight() - block->position->upperY;  // make it relative to the lower left.
+    double lowerY = pdfPage->getMediaHeight() - block->position->upperY;
     PDFRectangle rect(leftX, lowerY, leftX + 100, lowerY + 7);
 
     // Define the font appearance of the semantic role.
@@ -415,7 +429,7 @@ void PdfDocumentVisualizer::drawTextBlockSemanticRoles(const std::vector<PdfText
     // Remove the default border around the annotation.
     std::unique_ptr<AnnotBorder> border(new AnnotBorderArray());
     border->setWidth(0);
-    annot->setBorder(std::move(border));
+    annot->setBorder(move(border));
 
     // Draw the annotation.
     pdfPage->addAnnot(annot);
@@ -424,24 +438,28 @@ void PdfDocumentVisualizer::drawTextBlockSemanticRoles(const std::vector<PdfText
 }
 
 // _________________________________________________________________________________________________
-void PdfDocumentVisualizer::drawReadingOrder(const std::vector<PdfTextBlock*>& blocks,
-    const ColorScheme& cs) {
+void PdfDocumentVisualizer::drawReadingOrder(const vector<PdfTextBlock*>& blocks,
+    const ColorScheme& cs) const {
   // Iterate through the text blocks and draw a line between the current and previous block.
   for (size_t i = 1; i < blocks.size(); i++) {
     PdfTextBlock* prevBlock = blocks[i - 1];
-    PdfTextBlock* block = blocks[i];
+    PdfTextBlock* currBlock = blocks[i];
 
-    Page* pdfPage = _pdfDoc->getPage(block->position->pageNum);
-    Gfx* gfx = _gfxs[block->position->pageNum];
+    Page* pdfPage = _pdfDoc->getPage(currBlock->position->pageNum);
+    Gfx* gfx = _gfxs[currBlock->position->pageNum];
 
     // Compute the coordinates of the midpoints of the previous and current text block.
+    double prevMinX = prevBlock->position->leftX;
+    double prevMaxX = prevBlock->position->rightX;
     double prevMinY = pdfPage->getMediaHeight() - prevBlock->position->lowerY;
     double prevMaxY = pdfPage->getMediaHeight() - prevBlock->position->upperY;
-    double prevMidX = prevBlock->position->leftX + ((prevBlock->position->rightX - prevBlock->position->leftX) / 2.0);
+    double prevMidX = prevBlock->position->leftX + ((prevMaxX - prevMinX) / 2.0);
     double prevMidY = prevMinY + ((prevMaxY - prevMinY) / 2.0);
-    double currMinY = pdfPage->getMediaHeight() - block->position->lowerY;
-    double currMaxY = pdfPage->getMediaHeight() - block->position->upperY;
-    double currMidX = block->position->leftX + ((block->position->rightX - block->position->leftX) / 2.0);
+    double currMinX = currBlock->position->leftX;
+    double currMaxX = currBlock->position->rightX;
+    double currMinY = pdfPage->getMediaHeight() - currBlock->position->lowerY;
+    double currMaxY = pdfPage->getMediaHeight() - currBlock->position->upperY;
+    double currMidX = currBlock->position->leftX + ((currMaxX - currMinX) / 2.0);
     double currMidY = currMinY + ((currMaxY - currMinY) / 2.0);
 
     // Define the position of the reading order line.
@@ -452,11 +470,11 @@ void PdfDocumentVisualizer::drawReadingOrder(const std::vector<PdfTextBlock*>& b
     // Define the width of the reading order line.
     std::unique_ptr<AnnotBorder> lineBorder(new AnnotBorderArray());
     lineBorder->setWidth(readingOrderLineWidth);
-    lineAnnot->setBorder(std::move(lineBorder));
+    lineAnnot->setBorder(move(lineBorder));
 
     // Define the color of the reading order line.
-    auto lineColor = std::make_unique<AnnotColor>(cs.secondaryColor);
-    lineAnnot->setColor(std::move(lineColor));
+    auto lineColor = make_unique<AnnotColor>(cs.secondaryColor);
+    lineAnnot->setColor(move(lineColor));
 
     // Draw the reading order line.
     pdfPage->addAnnot(lineAnnot);
@@ -476,7 +494,7 @@ void PdfDocumentVisualizer::drawReadingOrder(const std::vector<PdfTextBlock*>& b
 
 // _________________________________________________________________________________________________
 void PdfDocumentVisualizer::drawReadingOrderIndexCircle(Page* page, Gfx* gfx, double x,
-    double y, int readingOrderIndex, const ColorScheme& cs) {
+    double y, int readingOrderIndex, const ColorScheme& cs) const {
   // Define the position of the circle.
   PDFRectangle circleRect(
     x - readingOrderCircleRadius, y - readingOrderCircleRadius,
@@ -485,12 +503,12 @@ void PdfDocumentVisualizer::drawReadingOrderIndexCircle(Page* page, Gfx* gfx, do
     Annot::AnnotSubtype::typeCircle);
 
   // Define the stroking color of the circle.
-  auto circleStrokingColor = std::make_unique<AnnotColor>(cs.primaryColor);
-  circleAnnot->setColor(std::move(circleStrokingColor));
+  auto circleStrokingColor = make_unique<AnnotColor>(cs.primaryColor);
+  circleAnnot->setColor(move(circleStrokingColor));
 
   // Define the filling color of the circle.
-  auto circleFillingColor = std::make_unique<AnnotColor>(cs.primaryColor);
-  circleAnnot->setInteriorColor(std::move(circleFillingColor));
+  auto circleFillingColor = make_unique<AnnotColor>(cs.primaryColor);
+  circleAnnot->setInteriorColor(move(circleFillingColor));
 
   // Draw the circle.
   page->addAnnot(circleAnnot);
@@ -516,7 +534,7 @@ void PdfDocumentVisualizer::drawReadingOrderIndexCircle(Page* page, Gfx* gfx, do
   // Remove the default border around the reading order index.
   std::unique_ptr<AnnotBorder> indexBorder(new AnnotBorderArray());
   indexBorder->setWidth(0);
-  indexAnnot->setBorder(std::move(indexBorder));
+  indexAnnot->setBorder(move(indexBorder));
 
   // Draw the reading order index.
   page->addAnnot(indexAnnot);
@@ -524,7 +542,7 @@ void PdfDocumentVisualizer::drawReadingOrderIndexCircle(Page* page, Gfx* gfx, do
 }
 
 // _________________________________________________________________________________________________
-void PdfDocumentVisualizer::drawCuts(const std::vector<Cut*>& cuts, const ColorScheme& cs) {
+void PdfDocumentVisualizer::drawCuts(const vector<Cut*>& cuts, const ColorScheme& cs) const {
   size_t chosenCutIndex = 0;
   // Iterate through the cuts and visualize each.
   for (size_t i = 0; i < cuts.size(); i++) {
@@ -551,11 +569,11 @@ void PdfDocumentVisualizer::drawCuts(const std::vector<Cut*>& cuts, const ColorS
     // Define the line width.
     std::unique_ptr<AnnotBorder> lineBorder(new AnnotBorderArray());
     lineBorder->setWidth(cutWidth);
-    lineAnnot->setBorder(std::move(lineBorder));
+    lineAnnot->setBorder(move(lineBorder));
 
     // Define the line color.
-    auto lineColor = std::make_unique<AnnotColor>(cos.tertiaryColor);
-    lineAnnot->setColor(std::move(lineColor));
+    auto lineColor = make_unique<AnnotColor>(cos.tertiaryColor);
+    lineAnnot->setColor(move(lineColor));
 
     // Draw the line.
     pdfPage->addAnnot(lineAnnot);
@@ -574,12 +592,12 @@ void PdfDocumentVisualizer::drawCuts(const std::vector<Cut*>& cuts, const ColorS
 
       // Define the stroking color of the square.
 
-      auto squareStrokingColor = std::make_unique<AnnotColor>(cos.secondaryColor);
-      squareAnnot->setColor(std::move(squareStrokingColor));
+      auto squareStrokingColor = make_unique<AnnotColor>(cos.secondaryColor);
+      squareAnnot->setColor(move(squareStrokingColor));
 
       // Define the filling color of the square.
-      auto squareFillingColor = std::make_unique<AnnotColor>(cos.secondaryColor);
-      squareAnnot->setInteriorColor(std::move(squareFillingColor));
+      auto squareFillingColor = make_unique<AnnotColor>(cos.secondaryColor);
+      squareAnnot->setInteriorColor(move(squareFillingColor));
 
       // Draw the square.
       pdfPage->addAnnot(squareAnnot);
@@ -605,7 +623,7 @@ void PdfDocumentVisualizer::drawCuts(const std::vector<Cut*>& cuts, const ColorS
       // Remove the default border around the cut index.
       std::unique_ptr<AnnotBorder> indexBorder(new AnnotBorderArray());
       indexBorder->setWidth(0);
-      indexAnnot->setBorder(std::move(indexBorder));
+      indexAnnot->setBorder(move(indexBorder));
 
       // Draw the cut index.
       pdfPage->addAnnot(indexAnnot);
@@ -637,7 +655,7 @@ void PdfDocumentVisualizer::drawCuts(const std::vector<Cut*>& cuts, const ColorS
     // Remove the default border around the cut id.
     // std::unique_ptr<AnnotBorder> idBorder(new AnnotBorderArray());
     // idBorder->setWidth(0);
-    // idAnnot->setBorder(std::move(idBorder));
+    // idAnnot->setBorder(move(idBorder));
 
     // Draw the id.
     pdfPage->addAnnot(idAnnot);
@@ -646,7 +664,7 @@ void PdfDocumentVisualizer::drawCuts(const std::vector<Cut*>& cuts, const ColorS
 }
 
 // _________________________________________________________________________________________________
-GooString* PdfDocumentVisualizer::convertToUtf16(GooString* str) {
+GooString* PdfDocumentVisualizer::convertToUtf16(GooString* str) const {
   int length = 2 + 2 * str->getLength();
   char* result = new char[length];
   // Add unicode markers.

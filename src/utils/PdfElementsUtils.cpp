@@ -17,9 +17,10 @@
 #include "./PdfElementsUtils.h"
 
 using std::make_pair;
-using std::pair;
 using std::max;
 using std::min;
+using std::pair;
+using std::vector;
 
 // _________________________________________________________________________________________________
 double element_utils::computeHorizontalGap(const PdfElement* element1, const PdfElement* element2) {
@@ -188,7 +189,7 @@ double element_utils::computeRightXOffset(const PdfElement* elem1, const PdfElem
 
 // _________________________________________________________________________________________________
 PdfFigure* element_utils::computeOverlapsFigure(const PdfElement* element,
-      const std::vector<PdfFigure*>& figures, double minXOverlapRatio, double minYOverlapRatio) {
+      const vector<PdfFigure*>& figures, double minXOverlapRatio, double minYOverlapRatio) {
   assert(element);
 
   for (auto* figure : figures) {

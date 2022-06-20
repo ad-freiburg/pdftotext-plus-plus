@@ -9,9 +9,8 @@
 #include <poppler/GlobalParams.h>
 
 #include <chrono>  // std::chrono::high_resolution_clock
-#include <cmath>  // round
 #include <iomanip>  // std::setw, std::setprecision
-#include <iostream>
+#include <iostream>  // std::cout
 #include <locale>  // imbue
 #include <memory>  // std::make_unique
 #include <string>
@@ -20,7 +19,6 @@
 #include "./serializers/JsonlSerializer.h"
 #include "./serializers/TextSerializer.h"
 
-#include "./utils/Log.h"
 #include "./utils/MathUtils.h"
 #include "./utils/parseargs.h"
 
@@ -30,7 +28,9 @@
 using std::chrono::duration_cast;
 using std::chrono::high_resolution_clock;
 using std::chrono::milliseconds;
+using std::cerr;
 using std::cout;
+using std::endl;
 using std::string;
 using std::vector;
 
@@ -288,7 +288,7 @@ void printHelpInfo() {
  * This method prints the version info to stdout.
  */
 void printVersionInfo() {
-  cout << "Version: " << version << std::endl;
+  cout << "Version: " << version << endl;
 }
 
 // =================================================================================================
@@ -356,14 +356,12 @@ int main(int argc, char* argv[]) {
   vector<Timing> timings;
 
   int status = 0;
-  // TODO: Don't use the invalid argument exception; is currently thrown by SemanticRolesPredictor.
-  // Instead, use the exit code to check if something went wrong.
+  // TODO(korzen): Don't use the invalid argument exception; is currently thrown by
+  // SemanticRolesPredictor. Instead, use the exit code to check if something went wrong.
   try {
-    cout << "START " << pdfFilePathStr << std::endl;
     status = engine.process(pdfFilePathStr, &doc, &timings);
-    cout << "END  " << pdfFilePathStr << std::endl;
   } catch (const std::invalid_argument& ia) {
-    std::cerr << "An error occurred: " << ia.what() << '\n';
+    cerr << "An error occurred: " << ia.what() << '\n';
     return 3;
   }
 
@@ -427,7 +425,7 @@ int main(int argc, char* argv[]) {
 
     int64_t timeTotal = 0;
     for (const auto& timing : timings) { timeTotal += timing.time; }
-    cout << "\033[1m" << "Finished in " << timeTotal << " ms." << "\033[22m" << std::endl;
+    cout << "\033[1m" << "Finished in " << timeTotal << " ms." << "\033[22m" << endl;
 
     for (const auto& timing : timings) {
       string prefix = " * " + timing.name + ":";
@@ -435,7 +433,7 @@ int main(int argc, char* argv[]) {
       cout << std::right << std::setw(4) << timing.time << " ms ";
       double time = math_utils::round(timing.time / static_cast<double>(timeTotal) * 100, 1);
       cout << "(" << time << "%)";
-      cout << std::endl;
+      cout << endl;
     }
   }
 

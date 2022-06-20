@@ -6,7 +6,7 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include <cassert>
+#include <cassert>  // assert
 #include <iomanip>  // std::setw, std::setfill
 #include <sstream>
 #include <string>
@@ -18,6 +18,7 @@
 #include "./StringUtils.h"
 
 using std::string;
+using std::stringstream;
 using std::vector;
 using std::wstring;
 
@@ -73,7 +74,7 @@ string string_utils::createRandomString(size_t len, const string& prefix) {
 // _________________________________________________________________________________________________
 string string_utils::escapeJson(const string& str) {
   // Disclaimer: this code is stolen from https://stackoverflow.com/questions/7724448
-  std::stringstream o;
+  stringstream o;
   for (size_t i = 0; i < str.size(); i++) {
     switch (str[i]) {
       case '"':

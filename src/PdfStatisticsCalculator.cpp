@@ -29,6 +29,8 @@ PdfStatisticsCalculator::~PdfStatisticsCalculator() = default;
 
 // _________________________________________________________________________________________________
 void PdfStatisticsCalculator::computeCharacterStatistics() const {
+  assert(_doc);
+
   // A counter for the font sizes of the characters.
   DoubleCounter fontSizeCounter;
   // A counter for the font names of the characters.
@@ -67,6 +69,8 @@ void PdfStatisticsCalculator::computeCharacterStatistics() const {
 
 // _________________________________________________________________________________________________
 void PdfStatisticsCalculator::computeWordStatistics() const {
+  assert(_doc);
+
   // A counter for the horizontal gaps between two consecutive words that overlap vertically.
   DoubleCounter horizontalGapCounter;
   // A counter for the vertical gaps between two consecutive words that don't overlap vertically.
@@ -135,6 +139,8 @@ void PdfStatisticsCalculator::computeWordStatistics() const {
 
 // _________________________________________________________________________________________________
 void PdfStatisticsCalculator::computeTextLineStatistics() const {
+  assert(_doc);
+
   // A counter for the line distances between two consecutive lines.
   DoubleCounter lineDistanceCounter;
   // The counters for the line distances between two consecutive lines, broken down by font sizes.

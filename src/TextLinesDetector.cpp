@@ -34,7 +34,7 @@ using std::unordered_map;
 using std::vector;
 
 // _________________________________________________________________________________________________
-TextLinesDetector::TextLinesDetector(PdfDocument* doc, bool debug, int debugPageFilter) {
+TextLinesDetector::TextLinesDetector(const PdfDocument* doc, bool debug, int debugPageFilter) {
   _log = new Logger(debug ? DEBUG : INFO, debugPageFilter);
   _config = new TextLinesDetectorConfig();
   _doc = doc;
@@ -272,6 +272,8 @@ void TextLinesDetector::process() {
 PdfTextLine* TextLinesDetector::createTextLine(const vector<PdfWord*>& words,
     const PdfPageSegment* segment, vector<PdfTextLine*>* lines) const {
   assert(!words.empty());
+  assert(segment);
+  assert(lines);
 
   PdfTextLine* line = new PdfTextLine();
   line->doc = _doc;

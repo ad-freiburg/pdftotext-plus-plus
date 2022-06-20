@@ -11,10 +11,12 @@
 
 #include <string>
 
-#include <poppler/PDFDoc.h>
-
 #include "../PdfDocument.h"
 
+using std::ostream;
+using std::string;
+
+// =================================================================================================
 
 /**
  * This class writes the text extracted from a PDF to a given file or stdout. The format is one
@@ -41,7 +43,7 @@ class TextSerializer {
    * @param targetPath
    *   The path to the file to which the text should be written.
    */
-  void serialize(const std::string& targetPath = nullptr);
+  void serialize(const string& targetPath = nullptr);
 
  private:
   /**
@@ -49,7 +51,7 @@ class TextSerializer {
    *
    * @param out The stream to which the text should be written.
    */
-  void serializeToStream(std::ostream& out);
+  void serializeToStream(ostream& out);
 
   /** The document to process. **/
   PdfDocument* _doc;

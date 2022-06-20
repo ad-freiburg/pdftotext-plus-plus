@@ -11,9 +11,12 @@
 
 #include <vector>
 
-#include "./SemanticRolesPredictor.h"
 #include "./PdfDocument.h"
+#include "./SemanticRolesPredictor.h"
 
+using std::vector;
+
+// =================================================================================================
 
 /**
  * This class detects the natural reading order of the text blocks extracted from a PDF document,
@@ -47,7 +50,7 @@ class ReadingOrderDetector {
    * @param doc
    *   The document to process.
    */
-  explicit ReadingOrderDetector(PdfDocument* doc);
+  explicit ReadingOrderDetector(const PdfDocument* doc);
 
   /** The deconstructor. */
   ~ReadingOrderDetector();
@@ -88,7 +91,7 @@ class ReadingOrderDetector {
   //  * @return True if the position between `closestElementAbove` and `elements[cutPos]` denotes a
   //  *   valid semantic y-cut position, false otherwise.
   //  */
-  void choosePrimaryXCuts(const std::vector<Cut*>& cuts, const std::vector<PdfElement*>& elements,
+  void choosePrimaryXCuts(const vector<Cut*>& cuts, const vector<PdfElement*>& elements,
       bool silent);
 
   // TODO(korzen): /**
@@ -107,7 +110,7 @@ class ReadingOrderDetector {
   //  * @return True if the position between `closestElementAbove` and `elements[cutPos]` denotes a
   //  *   valid semantic y-cut position, false otherwise.
   //  */
-  void choosePrimaryYCuts(const std::vector<Cut*>& cuts, const std::vector<PdfElement*>& elements,
+  void choosePrimaryYCuts(const vector<Cut*>& cuts, const vector<PdfElement*>& elements,
       bool silent);
 
   /**
@@ -117,17 +120,18 @@ class ReadingOrderDetector {
    * an x-cut.
    *
    * @param elements
-   *   The elements to divide.
+   *    The elements to divide.
    * @param cutPos
-   *   The index of the position in `elements` for which to decide whether or not it is a valid
-   *   position to divide the elements by an x-cut.
+   *    The index of the position in `elements` for which to decide whether or not it is a valid
+   *    position to divide the elements by an x-cut.
    * @param closestElementLeft
-   *   The element in elements[0..cutPos] with the largest rightX.
+   *    The element in elements[0..cutPos] with the largest rightX.
    *
-   * @return True if the position between `closestElementLeft` and `elements[cutPos]` denotes a
-   *   valid x-cut position, false otherwise.
+   * @return
+   *    True if the position between `closestElementLeft` and `elements[cutPos]` denotes a valid
+   *    x-cut position, false otherwise.
    */
-  void chooseXCuts(const std::vector<Cut*>& cuts, const std::vector<PdfElement*>& elements, bool silent);
+  void chooseXCuts(const vector<Cut*>& cuts, const vector<PdfElement*>& elements, bool silent);
 
   /**
    * TODO(korzen): This method tells the XY-cut algorithm whether or not the position between the
@@ -136,34 +140,35 @@ class ReadingOrderDetector {
    * an y-cut.
    *
    * @param elements
-   *   The elements to divide.
+   *    The elements to divide.
    * @param cutPos
-   *   The index of the position in `elements` for which to decide whether or not it is a valid
-   *   position to divide the elements by an y-cut.
+   *    The index of the position in `elements` for which to decide whether or not it is a valid
+   *    position to divide the elements by an y-cut.
    * @param closestElementAbove
-   *   The element in elements[0..cutPos] with the largest lowerY.
+   *    The element in elements[0..cutPos] with the largest lowerY.
    *
-   * @return True if the position between `closestElementAbove` and `elements[cutPos]` denotes a
-   *   valid y-cut position, false otherwise.
+   * @return
+   *    True if the position between `closestElementAbove` and `elements[cutPos]` denotes a
+   *    valid y-cut position, false otherwise.
    */
-  void chooseYCuts(const std::vector<Cut*>& cuts, const std::vector<PdfElement*>& elements, bool silent);
+  void chooseYCuts(const vector<Cut*>& cuts, const vector<PdfElement*>& elements, bool silent);
 
-  /** The document to process. */
-  PdfDocument* _doc;
+  // The document to process.
+  const PdfDocument* _doc;
 
   double _minXCutGapWidth = 0;
   double _minYCutGapHeight = 0;
 
-  /** The current page. */
+  // The current page.
   PdfPage* _page;
 
-  /** The coordinates of the bounding box around all page elements (blocks, figures, shapes). */
+  // The coordinates of the bounding box around all page elements (blocks, figures, shapes).
   double _pageElementsMinX;
   double _pageElementsMinY;
   double _pageElementsMaxX;
   double _pageElementsMaxY;
 
-  /** The device for predicting the semantic roles of the text blocks. */
+  // The device for predicting the semantic roles of the text blocks.
   SemanticRolesPredictor _semanticRolesPredictor;
 };
 

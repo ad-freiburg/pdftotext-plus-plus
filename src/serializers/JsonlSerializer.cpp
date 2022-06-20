@@ -7,13 +7,22 @@
  */
 
 #include <cstdlib>  // system()
-#include <fstream>
+#include <fstream>  // std::ofstream
 #include <iostream>
 #include <string>
 
 #include "./JsonlSerializer.h"
-#include "../PdfDocument.h"
+
 #include "../utils/StringUtils.h"
+
+#include "../PdfDocument.h"
+
+using std::cerr;
+using std::endl;
+using std::ofstream;
+using std::ostream;
+using std::string;
+using std::vector;
 
 // _________________________________________________________________________________________________
 JsonlSerializer::JsonlSerializer(PdfDocument* doc, bool serializePages, bool serializeChars,
@@ -31,26 +40,26 @@ JsonlSerializer::JsonlSerializer(PdfDocument* doc, bool serializePages, bool ser
 JsonlSerializer::~JsonlSerializer() = default;
 
 // _________________________________________________________________________________________________
-void JsonlSerializer::serialize(const std::string& targetFilePath) {
+void JsonlSerializer::serialize(const string& targetFilePath) {
   if (targetFilePath.size() == 1 && targetFilePath[0] == '-') {
     serializeToStream(std::cout);
   } else {
     // Compute the path to the parent directory of the target file.
-    std::string parentDirPath = ".";
+    string parentDirPath = ".";
     size_t posLastSlash = targetFilePath.find_last_of("/");
-    if (posLastSlash != std::string::npos) {
+    if (posLastSlash != string::npos) {
       parentDirPath = targetFilePath.substr(0, posLastSlash);
     }
 
     // Try to create all intermediate directories if the parent directory does not exist.
     if (system(("mkdir -p " + parentDirPath).c_str())) {
-      std::cerr << "Could not create directory '" << parentDirPath << "'." << std::endl;
+      cerr << "Could not create directory '" << parentDirPath << "'." << endl;
       return;
     }
 
-    std::ofstream outFile(targetFilePath);
+    ofstream outFile(targetFilePath);
     if (!outFile.is_open()) {
-      std::cerr << "Could not open file '" << targetFilePath << "'." << std::endl;
+      cerr << "Could not open file '" << targetFilePath << "'." << endl;
       return;
     }
 
@@ -60,7 +69,9 @@ void JsonlSerializer::serialize(const std::string& targetFilePath) {
 }
 
 // _________________________________________________________________________________________________
-void JsonlSerializer::serializeToStream(std::ostream& stream) {
+void JsonlSerializer::serializeToStream(ostream& stream) {
+  assert(_doc);
+
   for (const auto* page : _doc->pages) {
     if (_serializePages) {
       serializePage(page, stream);
@@ -84,7 +95,9 @@ void JsonlSerializer::serializeToStream(std::ostream& stream) {
 }
 
 // _________________________________________________________________________________________________
-void JsonlSerializer::serializePage(const PdfPage* page, std::ostream& stream) {
+void JsonlSerializer::serializePage(const PdfPage* page, ostream& stream) {
+  assert(page);
+
   stream << "{"
     << "\"type\": \"page\", "
     << "\"num\": " << page->pageNum << ", "
@@ -92,21 +105,21 @@ void JsonlSerializer::serializePage(const PdfPage* page, std::ostream& stream) {
     << "\"height\": " << page->getHeight() << ", "
     << "\"origin\": \"pdftotext++\""
     << "}"
-    << std::endl;
+    << endl;
 }
 
 // _________________________________________________________________________________________________
-void JsonlSerializer::serializeChars(const std::vector<PdfCharacter*>& chars, std::ostream& stream) {
+void JsonlSerializer::serializeChars(const vector<PdfCharacter*>& chars, ostream& stream) {
   for (const auto* g : chars) {
     if (g->isDiacriticMarkOfBaseChar) {
       continue;
     }
 
     const PdfFontInfo* fontInfo = _doc->fontInfos.at(g->fontName);
-    std::string text = g->isBaseCharOfDiacriticMark ? g->textWithDiacriticMark : g->text;
+    string text = g->isBaseCharOfDiacriticMark ? g->textWithDiacriticMark : g->text;
 
-    std::string wordId = g->word ? g->word->id : "";
-    std::string blockId = g->word && g->word->line && g->word->line->block
+    string wordId = g->word ? g->word->id : "";
+    string blockId = g->word && g->word->line && g->word->line->block
         ? g->word->line->block->id : "";
 
     // Serialize the character information.
@@ -133,12 +146,12 @@ void JsonlSerializer::serializeChars(const std::vector<PdfCharacter*>& chars, st
       << "\"block\": \"" << blockId << "\", "
       << "\"origin\": \"pdftotext++\""
       << "}"
-      << std::endl;
+      << endl;
   }
 }
 
 // _________________________________________________________________________________________________
-void JsonlSerializer::serializeFigures(const std::vector<PdfFigure*>& figs, std::ostream& stream) {
+void JsonlSerializer::serializeFigures(const vector<PdfFigure*>& figs, ostream& stream) {
   for (const auto* f : figs) {
     stream << "{"
       << "\"type\": \"figure\", "
@@ -151,12 +164,12 @@ void JsonlSerializer::serializeFigures(const std::vector<PdfFigure*>& figs, std:
       << "\"maxY\": " << f->position->lowerY << ", "
       << "\"origin\": \"pdftotext++\""
       << "}"
-      << std::endl;
+      << endl;
   }
 }
 
 // _________________________________________________________________________________________________
-void JsonlSerializer::serializeShapes(const std::vector<PdfShape*>& shapes, std::ostream& stream) {
+void JsonlSerializer::serializeShapes(const vector<PdfShape*>& shapes, ostream& stream) {
   for (const auto* s : shapes) {
     stream << "{"
       << "\"type\": \"shape\", "
@@ -169,14 +182,14 @@ void JsonlSerializer::serializeShapes(const std::vector<PdfShape*>& shapes, std:
       << "\"maxY\": " << s->position->lowerY << ", "
       << "\"origin\": \"pdftotext++\""
       << "}"
-      << std::endl;
+      << endl;
   }
 }
 
 // _________________________________________________________________________________________________
-void JsonlSerializer::serializeWords(const std::vector<PdfWord*>& words, std::ostream& stream) {
+void JsonlSerializer::serializeWords(const vector<PdfWord*>& words, ostream& stream) {
   for (const auto* word : words) {
-    std::string blockId = word->line && word->line->block ? word->line->block->id : "";
+    string blockId = word->line && word->line->block ? word->line->block->id : "";
 
     stream << "{"
       << "\"type\": \"word\", "
@@ -193,13 +206,13 @@ void JsonlSerializer::serializeWords(const std::vector<PdfWord*>& words, std::os
       << "\"block\": \"" << blockId << "\", "
       << "\"origin\": \"pdftotext++\""
       << "}"
-      << std::endl;
+      << endl;
   }
 }
 
 // _________________________________________________________________________________________________
-void JsonlSerializer::serializeTextBlocks(const std::vector<PdfTextBlock*>& blocks,
-    std::ostream& stream) {
+void JsonlSerializer::serializeTextBlocks(const vector<PdfTextBlock*>& blocks,
+    ostream& stream) {
   for (const auto* block : blocks) {
     stream << "{"
       << "\"type\": \"block\", "
@@ -216,6 +229,6 @@ void JsonlSerializer::serializeTextBlocks(const std::vector<PdfTextBlock*>& bloc
       << "\"role\": \"" << block->role << "\", "
       << "\"origin\": \"pdftotext++\""
       << "}"
-      << std::endl;
+      << endl;
   }
 }

@@ -6,8 +6,10 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
+#include <algorithm>  // std::max, std::min
 #include <functional>  // std::function, std::bind
 #include <limits>  // std::numeric_limits
+#include <vector>
 
 #include "./utils/Log.h"
 #include "./utils/MathUtils.h"
@@ -20,10 +22,12 @@
 #include "./XYCut.h"
 
 using std::endl;
+using std::max;
+using std::min;
 using std::vector;
 
 // _________________________________________________________________________________________________
-PageSegmentator::PageSegmentator(PdfDocument* doc, bool debug, int debugPageFilter) {
+PageSegmentator::PageSegmentator(const PdfDocument* doc, bool debug, int debugPageFilter) {
   _log = new Logger(debug ? DEBUG : INFO, debugPageFilter);
   _doc = doc;
 
@@ -59,6 +63,9 @@ void PageSegmentator::process() {
 
 // _________________________________________________________________________________________________
 void PageSegmentator::processPage(PdfPage* page, vector<PdfPageSegment*>* segments) {
+  assert(page);
+  assert(segments);
+
   // Create a vector with all words, figures, graphics, and shapes of the page.
   vector<PdfElement*> pageElements;
   pageElements.reserve(page->words.size() + page->figures.size()
@@ -342,51 +349,7 @@ void PageSegmentator::chooseYCuts(const vector<Cut*>& cuts, const vector<PdfElem
   for (auto* cut : cuts) { ccuts.push_back(cut); }
   ccuts.push_back(&bottomCut);
 
-  // To understand our approach of choosing y-cuts, consider the following examples:
-  //
-  // ┌───────────────────────┐                 ┌───────────────────────┐
-  // │ --------------------- │ <- 1            │ --------------------- │ <- 1
-  // │  xxxxxxxxxxxxxxxxxx   │                 │   xxxxxxx  xxxxxxxx   │
-  // │        xxxxxx         │                 │   xxxxxxx  xxxxxxxx   │
-  // │ --------------------- │ <- 2            │   xxxxxxx  xxxxxxxx   │
-  // │   xxxxxxx  xxxxxxxx   │                 │   xxxxxxx  xxxxxxxx   │
-  // │   xxxxxxx  xxxxxxxx   │                 │   xxxxxxx  xxxxxxxx   │
-  // │   xxxxxxx  xxxxxxxx   │                 │   xxxxxxx  xxxxxxxx   │
-  // | --------------------- | <- 3            | --------------------- | <- 2
-  // │   xxxxxxx  xxxxxxxx   │                 │    xxxxxxxxxxxxxxx    │
-  // │   xxxxxxx  xxxxxxxx   │                 │    xxxxxxxxxxxxxxx    │
-  // │ --------------------- │ <- 4            │    xxxxxxxxxxxxxxx    |
-  // │  xxxxxxxxxxxxxxxxxxx  │                 │    xxxxxxxxxxxxxxx    │
-  // │ --------------------- │ <- 5            │ --------------------- │ <- 3
-  // └───────────────────────┘                 └───────────────────────┘
-  //
-  // This should illustrate two PDF page, with the x's being some text and the horizontal  "---"
-  // lines (the lines labelled with a number at the right margin of each page) being the y-cut
-  // candidates. In the left example, the cuts labelled with 1 and 5 are the "cut sentinels" we
-  // added previously. Intuitively, the candidates 2 and 4 should be chosen, because they separate
-  // text that are aligned in a different number of columns (the text above cut 2 is aligned in one
-  // column, but the text below the cut in two columns; the text below cut 4 is again aligned in
-  // one column).
-  // To choose the two cuts, we process the cuts iteratively. For each cut c, we try to find its
-  // "partner cut", that is: the furthermost cut d, for which the elements between c and d can be
-  // divided by an x-cut. If such a partner cut exists, we choose both c and d.
-  //
-  // Here is a concrete recipe how we choose the cuts in case of the left page above:
-  // We process the cuts iteratively. For each, we iterate the respective subsequent cuts to find
-  // the partner cut.
-  // For cut 1, we iterate through the subsequent cuts [2,...,5] (from top to bottom). Since the
-  // elements between cut 1 and cut 2 can't be divided by an x-cut, we can stop searching for a
-  // partner of cut 1 (since the elements between cut 1 and cut 2 will remain for each other
-  // subsequent cut).
-  // For proceed with cut 2, and iterate through the cuts [3, 4, 5]. The elements between cut 2
-  // and 3 can be divided, so we proceed with cut 4. The elements between cut 2 and 4 can also be
-  // divided, so we proceed with cut 5. Since the elements between cut 2 and 5 can *not* be
-  // divided, the partner of cut 2 is cut 4.
-  // We proceed with cuts 4 and 5, for which there is no partner cut.
-  // NOTE: Thanks to the sentinel cuts, it is guaranteed that there is always a potential partner
-  // cut, even if there is only one "normal" y-cut candidate. Consider the page on the right.
-  // Without the sentinel cuts 1 and 3, the cut 2 would accidentally not be chosen (because there
-  // would be no partner cut).
+
 
   // Iterate through the cuts and find a partner cut for each.
   for (size_t cutIdx = 0; cutIdx < ccuts.size(); cutIdx++) {
@@ -435,10 +398,10 @@ void PageSegmentator::createPageSegment(const vector<PdfElement*>& elements,
 
   // Compute and set the coordinates of the bounding box.
   for (const auto* element : elements) {
-    segment->position->leftX = std::min(segment->position->leftX, element->position->leftX);
-    segment->position->upperY = std::min(segment->position->upperY, element->position->upperY);
-    segment->position->rightX = std::max(segment->position->rightX, element->position->rightX);
-    segment->position->lowerY = std::max(segment->position->lowerY, element->position->lowerY);
+    segment->position->leftX = min(segment->position->leftX, element->position->leftX);
+    segment->position->upperY = min(segment->position->upperY, element->position->upperY);
+    segment->position->rightX = max(segment->position->rightX, element->position->rightX);
+    segment->position->lowerY = max(segment->position->lowerY, element->position->lowerY);
   }
 
   // Set the elements.

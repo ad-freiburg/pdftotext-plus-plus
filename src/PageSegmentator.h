@@ -9,7 +9,6 @@
 #ifndef PAGESEGMENTATOR_H_
 #define PAGESEGMENTATOR_H_
 
-#include <string>
 #include <vector>
 
 #include "./utils/Log.h"
@@ -42,7 +41,7 @@ class PageSegmentator {
    *   If set to a value > 0, only the debug messages produced while processing the
    *   <debugPageFilter>-th page of the current PDF file will be printed to the console.
    */
-  PageSegmentator(PdfDocument* doc, bool debug, int debugPageFilter);
+  PageSegmentator(const PdfDocument* doc, bool debug, int debugPageFilter);
 
   /** The deconstructor. **/
   ~PageSegmentator();
@@ -342,10 +341,10 @@ class PageSegmentator {
    *   The vector to which the created segments should be appended.
    */
   void createPageSegment(const vector<PdfElement*>& elements,
-     vector<PdfPageSegment*>* segments) const;
+      vector<PdfPageSegment*>* segments) const;
 
   // The document to process.
-  PdfDocument* _doc;
+  const PdfDocument* _doc;
 
   // The maximum number of elements an x-cut is allowed to overlap.
   double _maxNumXCutOverlappingElements;
@@ -355,7 +354,7 @@ class PageSegmentator {
   double _minYCutGapHeight;
 
   // The logger.
-  Logger* _log;
+  const Logger* _log;
 };
 
 #endif  // PAGESEGMENTATOR_H_

@@ -22,12 +22,15 @@ using comparators::LeftXAscComparator;
 using comparators::RightXDescComparator;
 using comparators::UpperYAscComparator;
 
+using std::max;
+using std::min;
+using std::numeric_limits;
 using std::vector;
 
 // _________________________________________________________________________________________________
 void xyCut(const vector<PdfElement*>& elements,
     double minXCutGapWidth, double minYCutGapHeight, int maxNumOverlappingElements,
-    const ChooseCutsFunc chooseXCutsFunc, const ChooseCutsFunc chooseYCutsFunc, bool silent,
+    const ChooseCutsFunc& chooseXCutsFunc, const ChooseCutsFunc& chooseYCutsFunc, bool silent,
     vector<vector<PdfElement*>>* resultGroups, vector<Cut*>* resultCuts) {
   // Do nothing if no elements are given.
   if (elements.empty()) {
@@ -80,7 +83,7 @@ void xyCut(const vector<PdfElement*>& elements,
 
 // _________________________________________________________________________________________________
 bool xCut(const vector<PdfElement*>& elements, double minGapWidth, int maxNumOverlappingElements,
-    const ChooseCutsFunc chooseCutsFunc, bool silent, vector<vector<PdfElement*>>* resultGroups,
+    const ChooseCutsFunc& chooseCutsFunc, bool silent, vector<vector<PdfElement*>>* resultGroups,
     vector<Cut*>* resultCuts) {
   // Do nothing if no elements are given.
   if (elements.empty()) {
@@ -92,11 +95,11 @@ bool xCut(const vector<PdfElement*>& elements, double minGapWidth, int maxNumOve
   std::sort(sElements.begin(), sElements.end(), LeftXAscComparator());
 
   // Compute minY and maxY among the elements, needed for computing the y-coordinates of the cuts.
-  double elementsMinY = std::numeric_limits<double>::max();
-  double elementsMaxY = std::numeric_limits<double>::min();
+  double elementsMinY = numeric_limits<double>::max();
+  double elementsMaxY = numeric_limits<double>::min();
   for (const auto* element : sElements) {
-    elementsMinY = std::min(elementsMinY, element->position->upperY);
-    elementsMaxY = std::max(elementsMaxY, element->position->lowerY);
+    elementsMinY = min(elementsMinY, element->position->upperY);
+    elementsMaxY = max(elementsMaxY, element->position->lowerY);
   }
 
   // Create a fixed-size queue for storing the elements with the <maxNumOverlappingElements + 1>-th
@@ -211,7 +214,7 @@ bool xCut(const vector<PdfElement*>& elements, double minGapWidth, int maxNumOve
 
 // _________________________________________________________________________________________________
 bool yCut(const vector<PdfElement*>& elements, double minGapHeight,
-    const ChooseCutsFunc chooseCutsFunc, bool silent, vector<vector<PdfElement*>>* resultGroups,
+    const ChooseCutsFunc& chooseCutsFunc, bool silent, vector<vector<PdfElement*>>* resultGroups,
     vector<Cut*>* resultCuts) {
   // Do nothing if no elements are given.
   if (elements.empty()) {
@@ -223,11 +226,11 @@ bool yCut(const vector<PdfElement*>& elements, double minGapHeight,
   std::sort(sElements.begin(), sElements.end(), UpperYAscComparator());
 
   // Compute minY and maxY among the elements, needed for computing the x-coordinates of the cuts.
-  double elementsMinX = std::numeric_limits<double>::max();
-  double elementsMaxX = std::numeric_limits<double>::min();
+  double elementsMinX = numeric_limits<double>::max();
+  double elementsMaxX = numeric_limits<double>::min();
   for (const auto* element : sElements) {
-    elementsMinX = std::min(elementsMinX, element->position->leftX);
-    elementsMaxX = std::max(elementsMaxX, element->position->rightX);
+    elementsMinX = min(elementsMinX, element->position->leftX);
+    elementsMaxX = max(elementsMaxX, element->position->rightX);
   }
 
   // The element with the largest lowerY seen so far.

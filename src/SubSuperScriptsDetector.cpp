@@ -13,8 +13,11 @@
 #include "./PdfDocument.h"
 #include "./SubSuperScriptsDetector.h"
 
+using std::max;
+using std::min;
+
 // _________________________________________________________________________________________________
-SubSuperScriptsDetector::SubSuperScriptsDetector(PdfDocument* doc) {
+SubSuperScriptsDetector::SubSuperScriptsDetector(const PdfDocument* doc) {
   _config = new SubSuperScriptsDetectorConfig();
   _doc = doc;
 }
@@ -26,6 +29,8 @@ SubSuperScriptsDetector::~SubSuperScriptsDetector() {
 
 // _________________________________________________________________________________________________
 void SubSuperScriptsDetector::process() const {
+  assert(_doc);
+
   double fsTolerance = _config->getFontSizeTolerance(_doc);
 
   for (auto* page : _doc->pages) {
@@ -50,10 +55,10 @@ void SubSuperScriptsDetector::process() const {
             }
 
             // Compute the coordinates of the base bounding box of the line.
-            line->baseBBoxLeftX = std::min(line->baseBBoxLeftX, character->position->leftX);
-            line->baseBBoxUpperY = std::min(line->baseBBoxUpperY, character->position->upperY);
-            line->baseBBoxRightX = std::max(line->baseBBoxRightX, character->position->rightX);
-            line->baseBBoxLowerY = std::max(line->baseBBoxLowerY, character->position->lowerY);
+            line->baseBBoxLeftX = min(line->baseBBoxLeftX, character->position->leftX);
+            line->baseBBoxUpperY = min(line->baseBBoxUpperY, character->position->upperY);
+            line->baseBBoxRightX = max(line->baseBBoxRightX, character->position->rightX);
+            line->baseBBoxLowerY = max(line->baseBBoxLowerY, character->position->lowerY);
           }
         }
       }

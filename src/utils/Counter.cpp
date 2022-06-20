@@ -6,13 +6,17 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include <utility>  // pair
-#include <limits>  // pair
+#include <limits>
+#include <utility>  // make_pair, pair
 
 #include "./Counter.h"
 
 using std::make_pair;
+using std::numeric_limits;
 using std::pair;
+
+// =================================================================================================
+// DoubleCounter
 
 // _________________________________________________________________________________________________
 double DoubleCounter::mostFreq() const {
@@ -41,7 +45,7 @@ pair<double, int> DoubleCounter::mostFreqAndCount() const {
 
 // _________________________________________________________________________________________________
 double DoubleCounter::max() const {
-  double max = std::numeric_limits<double>::min();
+  double max = numeric_limits<double>::min();
   for (auto it = begin(); it != end(); ++it) {
     if (it->first > max) {
       max = it->first;
@@ -51,6 +55,7 @@ double DoubleCounter::max() const {
 }
 
 // =================================================================================================
+// StringCounter
 
 // _________________________________________________________________________________________________
 string StringCounter::mostFreq() const {

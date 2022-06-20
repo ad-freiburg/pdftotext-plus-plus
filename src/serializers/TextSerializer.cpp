@@ -6,21 +6,18 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include <algorithm>  // std::sort
-#include <cstdlib>  // system()
-#include <iostream>   // NOLINT(build/include)  (cpplint suggests to use
-                      // "#include 'serializers/TextSerializer.h'", ignore this)
-#include <fstream>
+#include <fstream>  // ofstream
 #include <iostream>
 #include <string>
 
-#include <poppler/Annot.h>
-#include <poppler/PDFDoc.h>
-#include <poppler/PDFDocEncoding.h>
-
 #include "../PdfDocument.h"
-#include "../TextOutputDev.h"
+
 #include "./TextSerializer.h"
+
+using std::cerr;
+using std::endl;
+using std::ofstream;
+using std::string;
 
 // _________________________________________________________________________________________________
 TextSerializer::TextSerializer(PdfDocument* doc, bool addControlCharacters,
@@ -35,26 +32,26 @@ TextSerializer::TextSerializer(PdfDocument* doc, bool addControlCharacters,
 TextSerializer::~TextSerializer() = default;
 
 // _________________________________________________________________________________________________
-void TextSerializer::serialize(const std::string& targetFilePath) {
+void TextSerializer::serialize(const string& targetFilePath) {
   if (targetFilePath.size() == 1 && targetFilePath[0] == '-') {
     serializeToStream(std::cout);
   } else {
     // Compute the path to the parent directory of the target file.
-    std::string parentDirPath = ".";
+    string parentDirPath = ".";
     size_t posLastSlash = targetFilePath.find_last_of("/");
-    if (posLastSlash != std::string::npos) {
+    if (posLastSlash != string::npos) {
       parentDirPath = targetFilePath.substr(0, posLastSlash);
     }
 
     // Try to create all intermediate directories if the parent directory does not exist.
     if (system(("mkdir -p " + parentDirPath).c_str())) {
-      std::cerr << "Could not create directory '" << parentDirPath << "'." << std::endl;
+      cerr << "Could not create directory '" << parentDirPath << "'." << endl;
       return;
     }
 
-    std::ofstream outFile(targetFilePath);
+    ofstream outFile(targetFilePath);
     if (!outFile.is_open()) {
-      std::cerr << "Could not open file '" << targetFilePath << "'." << std::endl;
+      cerr << "Could not open file '" << targetFilePath << "'." << endl;
       return;
     }
 
@@ -65,26 +62,28 @@ void TextSerializer::serialize(const std::string& targetFilePath) {
 
 // _________________________________________________________________________________________________
 void TextSerializer::serializeToStream(std::ostream& outStream) {
+  assert(_doc);
+
   PdfTextBlock* prevBlock = nullptr;
   for (auto* page : _doc->pages) {
     for (auto* block : page->blocks) {
       PdfWord* prevWord = nullptr;
 
       if (prevBlock) {
-        outStream << std::endl;
-        outStream << std::endl;
+        outStream << endl;
+        outStream << endl;
       }
 
       // Prefix each block with its semantic role if the respective option is enabled.
       if (_addSemanticRoles) {
-        std::string role = block->role;
+        string role = block->role;
         std::transform(role.begin(), role.end(), role.begin(), ::toupper);
         outStream << "[" << role << "] ";
       }
 
       // Prefix each emphasized block with "^A" (start of heading), if the resp. option is enabled.
       if (_addControlCharacters && block->isEmphasized) {
-        outStream << std::string(1, 0x01);
+        outStream << string(1, 0x01);
       }
 
       for (auto* line : block->lines) {
@@ -117,8 +116,8 @@ void TextSerializer::serializeToStream(std::ostream& outStream) {
 
     // Mark each page break with "^L" (form feed).
     if (_addControlCharacters) {
-      outStream << std::endl << std::string(1, 0x0C);
+      outStream << endl << string(1, 0x0C);
     }
   }
-  outStream << std::endl;
+  outStream << endl;
 }

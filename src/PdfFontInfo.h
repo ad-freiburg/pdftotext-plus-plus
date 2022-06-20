@@ -9,16 +9,21 @@
 #ifndef PDFFONTINFO_H_
 #define PDFFONTINFO_H_
 
+#include <poppler/GfxState.h>
+#include <poppler/Object.h>  // Ref
+#include <poppler/XRef.h>
+
 #include <string>
 #include <tuple>
 #include <unordered_map>
 #include <vector>
 
-#include <poppler/GfxFont.h>
-#include <poppler/GfxState.h>
-#include <poppler/Object.h>  // Ref
-#include <poppler/XRef.h>
+using std::string;
+using std::tuple;
+using std::unordered_map;
+using std::vector;
 
+// =================================================================================================
 
 class Type1FontFileParser;
 
@@ -37,16 +42,17 @@ class PdfFontInfo {
    * This method creates a new `PdfFontInfo` object from the given graphics state and xref table.
    *
    * @param state
-   *   The current graphics state.
+   *    The current graphics state.
    * @param xref
-   *   The XRef table of the current page.
+   *    The XRef table of the current page.
    * @param parseEmbeddedFontFiles
-   *   A boolean flag indicating whether or not to parse the embedded font files for more accurate
-   *   font information, for example: the weight of a font or the exact bounding boxes of the
-   *   characters. Setting this flag to true results in a faster extraction process but less
-   *   accurate extraction results.
+   *    A boolean flag indicating whether or not to parse the embedded font files for more accurate
+   *    font information, for example: the weight of a font or the exact bounding boxes of the
+   *    characters. Setting this flag to true results in a faster extraction process but less
+   *    accurate extraction results.
    *
-   * @return The created `PdfFontInfo` object
+   * @return
+   *    The created `PdfFontInfo` object
    */
   static PdfFontInfo* create(const GfxState* state, XRef* xref, bool parseEmbeddedFontFiles);
 
@@ -63,19 +69,19 @@ class PdfFontInfo {
   /**
    * The font name as it is provided by PDF, for example: "LTSL+Nimbus12-Bold".
    */
-  std::string fontName;
+  string fontName;
 
   /**
    * The normalized font name, that is: the original font name translated to lower cases and
    * without the prefix ending with "+", for example: "nimbus12-bold".
    */
-  std::string normFontName;
+  string normFontName;
 
   /**
    * The font base name, that is: the normalized font name without the suffix starting with "-"
    * and without digits.
    */
-  std::string fontBaseName;
+  string fontBaseName;
 
   /**
    * The boolean flag indicating whether or not this font is a fixed width font.
@@ -112,7 +118,8 @@ class PdfFontInfo {
    * 800: Black, Extra Bold or Heavy
    * 900: Extra Black, Fat, Poster or Ultra Blacktrue.
    *
-   * @return The font weight.
+   * @return
+   *    The font weight.
    */
   int weight = 400;
 
@@ -128,7 +135,7 @@ class PdfFontInfo {
    * A mapping of character names to bounding boxes (each given by its leftX, upperY, rightX, lowerY
    * coordinates in character space).
    */
-  std::unordered_map<std::string, std::tuple<double, double, double, double>> glyphBoundingBoxes;
+  unordered_map<string, tuple<double, double, double, double>> glyphBoundingBoxes;
 };
 
 // =================================================================================================
@@ -187,21 +194,21 @@ class Type1FontFileParser {
 
   void parseEncryptedPart(Object* streamObj, int length, PdfFontInfo* fontInfo);
 
-  void parseCharString(const std::string& charString,
-    const std::unordered_map<int, std::string>& subrs, int* curX, int* curY,
-    int* leftX, int* upperY, int* rightX, int* lowerY, std::vector<int>* args,
-    std::vector<int>* interpreterStack) const;
+  void parseCharString(const string& charString,
+    const unordered_map<int, string>& subrs, int* curX, int* curY,
+    int* leftX, int* upperY, int* rightX, int* lowerY, vector<int>* args,
+    vector<int>* interpreterStack) const;
 
   /** TODO(korzen) */
-  void decrypt(const char* bytes, int numBytes, int r, int n, std::string* resultStr) const;
+  void decrypt(const char* bytes, int numBytes, int r, int n, string* resultStr) const;
 
   /** The mapping of hex-codes to their respective integer representations. */
-  std::unordered_map<char, int> _charToHex{ { '0', 0 }, { '1', 1 }, { '2', 2 }, { '3', 3 },
+  unordered_map<char, int> _charToHex{ { '0', 0 }, { '1', 1 }, { '2', 2 }, { '3', 3 },
       { '4', 4 }, { '5', 5 }, { '6', 6 }, { '7', 7 }, { '8', 8 }, { '9', 9 }, { 'a', 10 },
       { 'b', 11 }, { 'c', 12 }, { 'd', 13 }, { 'e', 14 }, { 'f', 15 } };
 
   /** The reverse mapping of `charToHex`. */
-  std::unordered_map<int, char> _hexToChar{ { 0, '0' }, { 1, '1' }, { 2, '2' }, { 3, '3' },
+  unordered_map<int, char> _hexToChar{ { 0, '0' }, { 1, '1' }, { 2, '2' }, { 3, '3' },
       { 4, '4' }, { 5, '5' }, { 6, '6' }, { 7, '7' }, { 8, '8' }, { 9, '9' }, { 10, 'a' },
       { 11, 'b' }, { 12, 'c' }, { 13, 'd' }, { 14, 'e' }, { 15, 'f' } };
 };

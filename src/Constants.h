@@ -12,6 +12,9 @@
 #include <string>
 #include <unordered_set>
 
+using std::string;
+using std::unordered_set;
+
 // =================================================================================================
 
 const int FONT_SIZE_PREC = 1;
@@ -69,6 +72,6 @@ const char* const SPECIAL_FOOTNOTE_LABELS_ALPHABET = "*∗†‡§‖¶?";
  * such prefix, we do not count a line as a lowercased line if it starts with a word contained in
  * this set.
  */
-const std::unordered_set<std::string> LAST_NAME_PREFIXES = { "van", "von", "de" };
+const unordered_set<string> LAST_NAME_PREFIXES = { "van", "von", "de" };
 
 #endif  // CONSTANTS_H_

@@ -11,10 +11,13 @@
 
 #include <string>
 
-#include <poppler/PDFDoc.h>
-
 #include "../PdfDocument.h"
 
+using std::ostream;
+using std::string;
+using std::vector;
+
+// =================================================================================================
 
 /**
  * This class writes the elements extracted from a PDF to a specified file. The file will
@@ -47,7 +50,7 @@ class JsonlSerializer {
    * @param targetPath
    *   The path to the file to which the elements should be written.
    */
-  void serialize(const std::string& targetPath);
+  void serialize(const string& targetPath);
 
  private:
   /**
@@ -56,39 +59,39 @@ class JsonlSerializer {
    * @param out
    *    The stream to which the elements should be written.
    */
-  void serializeToStream(std::ostream& out);
+  void serializeToStream(ostream& out);
 
-  void serializePage(const PdfPage* page, std::ostream& stream);
+  void serializePage(const PdfPage* page, ostream& stream);
 
-  void serializeChars(const std::vector<PdfCharacter*>& chars, std::ostream& stream);
+  void serializeChars(const vector<PdfCharacter*>& chars, ostream& stream);
 
-  void serializeFigures(const std::vector<PdfFigure*>& figs, std::ostream& stream);
+  void serializeFigures(const vector<PdfFigure*>& figs, ostream& stream);
 
-  void serializeShapes(const std::vector<PdfShape*>& shapes, std::ostream& stream);
+  void serializeShapes(const vector<PdfShape*>& shapes, ostream& stream);
 
-  void serializeWords(const std::vector<PdfWord*>& words, std::ostream& stream);
+  void serializeWords(const vector<PdfWord*>& words, ostream& stream);
 
-  void serializeTextBlocks(const std::vector<PdfTextBlock*>& blocks, std::ostream& stream);
+  void serializeTextBlocks(const vector<PdfTextBlock*>& blocks, ostream& stream);
 
-  /** The document to process. **/
+  // The document to process.
   PdfDocument* _doc;
 
-  /** Whether to serialize the pages. **/
+  // Whether to serialize the pages.
   bool _serializePages;
 
-  /** Whether to serialize the characters. **/
+  // Whether to serialize the characters.
   bool _serializeChars;
 
-  /** Whether to serialize the figures. **/
+  // Whether to serialize the figures.
   bool _serializeFigures;
 
-  /** Whether to serialize the shapes. **/
+  // Whether to serialize the shapes.
   bool _serializeShapes;
 
-  /** Whether to serialize the words. **/
+  // Whether to serialize the words.
   bool _serializeWords;
 
-  /** Whether to serialize the text blocks. **/
+  // Whether to serialize the text blocks.
   bool _serializeTextBlocks;
 };
 

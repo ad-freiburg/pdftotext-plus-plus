@@ -15,6 +15,8 @@
 
 #include "./PdfDocument.h"
 
+using std::unordered_map;
+
 // =================================================================================================
 
 // Diacritical marks exist in two variants: a "non-combining" variant and a "combining" variant.
@@ -22,7 +24,7 @@
 // and the combining variant is 0x0300 ("COMBINING GRAVE ACCENT"). In PDF, diacritic marks can
 // occur in both variants. But for merging, we need the combining variant. This map maps
 // non-combining diacritic marks to their combining equivalents.
-static const std::unordered_map<unsigned int, unsigned int> combiningMap = {
+static const unordered_map<unsigned int, unsigned int> combiningMap = {
   { 0x0022, 0x030B },
   { 0x0027, 0x0301 },
   { 0x005E, 0x0302 },
@@ -85,7 +87,8 @@ class DiacriticalMarksMerger {
    *   If set to a value > 0, only the debug messages produced while processing the
    *   <debugPageFilter>-th page of the current PDF file will be printed to the console.
    */
-  explicit DiacriticalMarksMerger(PdfDocument* doc, bool debug = false, int debugPageFilter = -1);
+  explicit DiacriticalMarksMerger(const PdfDocument* doc, bool debug = false,
+      int debugPageFilter = -1);
 
   /** The deconstructor */
   ~DiacriticalMarksMerger();
@@ -111,13 +114,13 @@ class DiacriticalMarksMerger {
    * If you want to exclude the character from further processing, you need to check whether or not
    * `mark->isDiacriticMarkOfBaseChar` is set.
    */
-  void process();
+  void process() const;
 
  private:
   // The PDF document to process.
-  PdfDocument* _doc;
+  const PdfDocument* _doc;
   // The logger.
-  Logger* _log;
+  const Logger* _log;
 };
 
 #endif  // DIACRITICALMARKSMERGER_H_

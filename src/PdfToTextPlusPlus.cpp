@@ -15,7 +15,7 @@
 #include <string>
 #include <vector>
 
-#include "./Constants.h"
+#include "./Constants.h"  // C_DPI, H_DPI
 #include "./DiacriticalMarksMerger.h"
 #include "./PageSegmentator.h"
 #include "./PdfStatisticsCalculator.h"
@@ -31,6 +31,9 @@
 using std::chrono::duration_cast;
 using std::chrono::high_resolution_clock;
 using std::chrono::milliseconds;
+using std::string;
+using std::unique_ptr;
+using std::vector;
 
 // _________________________________________________________________________________________________
 PdfToTextPlusPlus::PdfToTextPlusPlus(
@@ -60,8 +63,8 @@ PdfToTextPlusPlus::PdfToTextPlusPlus(
 PdfToTextPlusPlus::~PdfToTextPlusPlus() = default;
 
 // _________________________________________________________________________________________________
-int PdfToTextPlusPlus::process(const std::string& pdfFilePath, PdfDocument* doc,
-    std::vector<Timing>* timings) const {
+int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
+    vector<Timing>* timings) const {
   assert(doc);
 
   doc->pdfFilePath = pdfFilePath;
@@ -69,7 +72,7 @@ int PdfToTextPlusPlus::process(const std::string& pdfFilePath, PdfDocument* doc,
   // Load the PDF file. Abort if it couldn't be loaded successfully.
   auto start = high_resolution_clock::now();
   GooString gooPdfFilePath(pdfFilePath);
-  std::unique_ptr<PDFDoc> pdfDoc = PDFDocFactory().createPDFDoc(gooPdfFilePath);
+  unique_ptr<PDFDoc> pdfDoc = PDFDocFactory().createPDFDoc(gooPdfFilePath);
   auto end = high_resolution_clock::now();
   if (timings) {
     Timing timingLoading("Loading PDF", duration_cast<milliseconds>(end - start).count());

@@ -9,15 +9,21 @@
 #ifndef PDFDOCUMENTVISUALIZER_H_
 #define PDFDOCUMENTVISUALIZER_H_
 
-#include <memory>
-#include <string>
-#include <vector>
-
 #include <poppler/Annot.h>
 #include <poppler/PDFDoc.h>
 
+#include <memory>  // std::unique_ptr
+#include <string>
+#include <vector>
+
 #include "./PdfDocument.h"
 #include "./TextOutputDev.h"
+
+using std::string;
+using std::unique_ptr;
+using std::vector;
+
+// =================================================================================================
 
 struct ColorScheme {
   ColorScheme(const AnnotColor& primaryColorA, const AnnotColor& secondaryColorA,
@@ -65,7 +71,7 @@ class PdfDocumentVisualizer {
    *   The `PdfDocument` providing the elements (for example, the characters, words and text blocks)
    *   extracted from the given PDF document.
    */
-  explicit PdfDocumentVisualizer(std::string pdfFilePath);
+  explicit PdfDocumentVisualizer(const string& pdfFilePath);
 
   /**
    * The deconstructor.
@@ -76,133 +82,133 @@ class PdfDocumentVisualizer {
    * TODO This method visualizes the extracted characters by drawing their bounding boxes to the
    * visualization.
    */
-  void visualizeCharacters(const PdfDocument& doc, const ColorScheme& cs);
+  void visualizeCharacters(const PdfDocument& doc, const ColorScheme& cs) const;
 
   /**
    * TODO This method visualizes the extracted characters by drawing their bounding boxes to the
    * visualization.
    */
-  void visualizeCharacters(const std::vector<PdfCharacter*>& chars, const ColorScheme& cs);
+  void visualizeCharacters(const vector<PdfCharacter*>& chars, const ColorScheme& cs) const;
 
   /**
    * TODO This method visualizes the extracted non-text elements by drawing their bounding boxes to
    * the visualization.
    */
-  void visualizeFigures(const PdfDocument& doc, const ColorScheme& cs);
+  void visualizeFigures(const PdfDocument& doc, const ColorScheme& cs) const;
 
   /**
    * TODO This method visualizes the extracted non-text elements by drawing their bounding boxes to
    * the visualization.
    */
-  void visualizeFigures(const std::vector<PdfFigure*>& figures, const ColorScheme& cs);
+  void visualizeFigures(const vector<PdfFigure*>& figures, const ColorScheme& cs) const;
 
   /**
    * TODO This method visualizes the extracted non-text elements by drawing their bounding boxes to
    * the visualization.
    */
-  void visualizeShapes(const PdfDocument& doc, const ColorScheme& cs);
+  void visualizeShapes(const PdfDocument& doc, const ColorScheme& cs) const;
 
   /**
    * TODO This method visualizes the extracted non-text elements by drawing their bounding boxes to
    * the visualization.
    */
-  void visualizeShapes(const std::vector<PdfShape*>& shapes, const ColorScheme& cs);
+  void visualizeShapes(const vector<PdfShape*>& shapes, const ColorScheme& cs) const;
 
   /**
    * TODO This method visualizes the extracted non-text elements by drawing their bounding boxes to
    * the visualization.
    */
-  void visualizeGraphics(const PdfDocument& doc, const ColorScheme& cs);
+  void visualizeGraphics(const PdfDocument& doc, const ColorScheme& cs) const;
 
   /**
    * TODO This method visualizes the extracted non-text elements by drawing their bounding boxes to
    * the visualization.
    */
-  void visualizeGraphics(const std::vector<PdfGraphic*>& graphics, const ColorScheme& cs);
+  void visualizeGraphics(const vector<PdfGraphic*>& graphics, const ColorScheme& cs) const;
 
   /**
    * TODO This method visualizes the extracted words by drawing their bounding boxes to the
    * visualization.
    */
-  void visualizeWords(const PdfDocument& doc, const ColorScheme& cs);
+  void visualizeWords(const PdfDocument& doc, const ColorScheme& cs) const;
 
   /**
    * TODO This method visualizes the extracted words by drawing their bounding boxes to the
    * visualization.
    */
-  void visualizeWords(const std::vector<PdfWord*>& words, const ColorScheme& cs);
+  void visualizeWords(const vector<PdfWord*>& words, const ColorScheme& cs) const;
 
   /**
    * TODO This method visualizes the extracted words by drawing their bounding boxes to the
    * visualization.
    */
-  void visualizeTextLines(const PdfDocument& doc, const ColorScheme& cs);
+  void visualizeTextLines(const PdfDocument& doc, const ColorScheme& cs) const;
 
   /**
    * TODO This method visualizes the extracted words by drawing their bounding boxes to the
    * visualization.
    */
-  void visualizeTextLines(const std::vector<PdfTextLine*>& lines, const ColorScheme& cs);
+  void visualizeTextLines(const vector<PdfTextLine*>& lines, const ColorScheme& cs) const;
 
   /**
    * TODO This method visualizes the extracted text blocks by drawing (1) their bounding boxes, (2)
    * their semantic roles and (3) the XY-cuts made to detect the text blocks to the visualization.
    */
-  void visualizeTextBlocks(const PdfDocument& doc, const ColorScheme& cs);
+  void visualizeTextBlocks(const PdfDocument& doc, const ColorScheme& cs) const;
 
   /**
    * TODO This method visualizes the extracted text blocks by drawing (1) their bounding boxes, (2)
    * their semantic roles and (3) the XY-cuts made to detect the text blocks to the visualization.
    */
-  void visualizeTextBlocks(const std::vector<PdfTextBlock*>& blocks, const ColorScheme& cs);
+  void visualizeTextBlocks(const vector<PdfTextBlock*>& blocks, const ColorScheme& cs) const;
 
   /**
    * TODO This method visualizes the extracted text blocks by drawing (1) their bounding boxes, (2)
    * their semantic roles and (3) the XY-cuts made to detect the text blocks to the visualization.
    */
-  void visualizePageSegments(const PdfDocument& doc, const ColorScheme& cs);
+  void visualizePageSegments(const PdfDocument& doc, const ColorScheme& cs) const;
 
   /**
    * TODO This method visualizes the extracted text blocks by drawing (1) their bounding boxes, (2)
    * their semantic roles and (3) the XY-cuts made to detect the text blocks to the visualization.
    */
-  void visualizePageSegments(const std::vector<PdfPageSegment*>& blocks, const ColorScheme& cs);
+  void visualizePageSegments(const vector<PdfPageSegment*>& blocks, const ColorScheme& cs) const;
 
   /**
    * TODO This method visualizes the detected reading order by drawing (1) lines between
    * consecutive text blocks and (2) the index of each text block in the reading order.
    */
-  void visualizeReadingOrder(const PdfDocument& doc, const ColorScheme& cs);
+  void visualizeReadingOrder(const PdfDocument& doc, const ColorScheme& cs) const;
 
   /**
    * TODO This method visualizes the detected reading order by drawing (1) lines between
    * consecutive text blocks and (2) the index of each text block in the reading order.
    */
-  void visualizeReadingOrder(const std::vector<PdfTextBlock*>& blocks, const ColorScheme& cs);
+  void visualizeReadingOrder(const vector<PdfTextBlock*>& blocks, const ColorScheme& cs) const;
 
   /**
    * TODO This method visualizes the detected reading order by drawing (1) lines between
    * consecutive text blocks and (2) the index of each text block in the reading order.
    */
-  void visualizeTextBlockDetectionCuts(const PdfDocument& doc, const ColorScheme& cs);
+  void visualizeTextBlockDetectionCuts(const PdfDocument& doc, const ColorScheme& cs) const;
 
   /**
    * TODO This method visualizes the detected reading order by drawing (1) lines between
    * consecutive text blocks and (2) the index of each text block in the reading order.
    */
-  void visualizeTextBlockDetectionCuts(const std::vector<Cut*>& cuts, const ColorScheme& cs);
+  void visualizeTextBlockDetectionCuts(const vector<Cut*>& cuts, const ColorScheme& cs) const;
 
   /**
    * TODO This method visualizes the detected reading order by drawing (1) lines between
    * consecutive text blocks and (2) the index of each text block in the reading order.
    */
-  void visualizeReadingOrderCuts(const PdfDocument& doc, const ColorScheme& cs);
+  void visualizeReadingOrderCuts(const PdfDocument& doc, const ColorScheme& cs) const;
 
   /**
    * TODO This method visualizes the detected reading order by drawing (1) lines between
    * consecutive text blocks and (2) the index of each text block in the reading order.
    */
-  void visualizeReadingOrderCuts(const std::vector<Cut*>& cuts, const ColorScheme& cs);
+  void visualizeReadingOrderCuts(const vector<Cut*>& cuts, const ColorScheme& cs) const;
 
   /**
    * This method writes the visualization (= the PDF with the added annotations) to the given file
@@ -211,75 +217,75 @@ class PdfDocumentVisualizer {
    * @param targetPath
    *    The path to the file to which the visualization should be written.
    */
-  void save(const std::string& targetPath);
+  void save(const string& targetPath) const;
 
  private:
   /**
    * TODO(korzen): This method draws the bounding boxes of the non-text elements (e.g., figures and
    * shapes) stored in `_doc` to the visualization.
    */
-  void drawCharBoundingBoxes(const std::vector<PdfCharacter*>& chars, const ColorScheme& cs);
+  void drawCharBoundingBoxes(const vector<PdfCharacter*>& chars, const ColorScheme& cs) const;
 
   /**
    * TODO(korzen): This method draws the bounding boxes of the non-text elements (e.g., figures and
    * shapes) stored in `_doc` to the visualization.
    */
-  void drawFigureBoundingBoxes(const std::vector<PdfFigure*>& figures, const ColorScheme& cs);
+  void drawFigureBoundingBoxes(const vector<PdfFigure*>& figures, const ColorScheme& cs) const;
 
   /**
    * TODO(korzen): This method draws the bounding boxes of the non-text elements (e.g., figures and
    * shapes) stored in `_doc` to the visualization.
    */
-  void drawShapeBoundingBoxes(const std::vector<PdfShape*>& shapes, const ColorScheme& cs);
+  void drawShapeBoundingBoxes(const vector<PdfShape*>& shapes, const ColorScheme& cs) const;
 
   /**
    * TODO(korzen): This method draws the bounding boxes of the non-text elements (e.g., figures and
    * shapes) stored in `_doc` to the visualization.
    */
-  void drawGraphicBoundingBoxes(const std::vector<PdfGraphic*>& graphics, const ColorScheme& cs);
+  void drawGraphicBoundingBoxes(const vector<PdfGraphic*>& graphics, const ColorScheme& cs) const;
 
   /**
    * TODO(korzen): This method draws the bounding boxes of the words stored in `_doc` to the
    * visualization.
    */
-  void drawWordBoundingBoxes(const std::vector<PdfWord*>& words, const ColorScheme& cs);
+  void drawWordBoundingBoxes(const vector<PdfWord*>& words, const ColorScheme& cs) const;
 
   /**
    * TODO(korzen): This method draws the bounding boxes of the non-text elements (e.g., figures and
    * shapes) stored in `_doc` to the visualization.
    */
-  void drawTextLineBoundingBoxes(const std::vector<PdfTextLine*>& lines, const ColorScheme& cs);
+  void drawTextLineBoundingBoxes(const vector<PdfTextLine*>& lines, const ColorScheme& cs) const;
 
   /**
    * TODO This method draws the bounding boxes of the text blocks stored in `_doc` to the
    * visualization.
    */
-  void drawTextBlockBoundingBoxes(const std::vector<PdfTextBlock*>& blocks, const ColorScheme& cs);
+  void drawTextBlockBoundingBoxes(const vector<PdfTextBlock*>& blocks, const ColorScheme& cs) const;
 
   /**
    * TODO This method draws the bounding boxes of the text blocks stored in `_doc` to the
    * visualization.
    */
-  void drawPageSegmentBoundingBoxes(const std::vector<PdfPageSegment*>& segments,
-      const ColorScheme& cs);
+  void drawPageSegmentBoundingBoxes(const vector<PdfPageSegment*>& segments,
+      const ColorScheme& cs) const;
 
   /**
    * TODO(korzen): This method draws the bounding boxes of the characters stored in `_doc` to the
    * visualization.
    */
-  void drawBoundingBox(const PdfElement* element, const ColorScheme& cs);
+  void drawBoundingBox(const PdfElement* element, const ColorScheme& cs) const;
 
   /**
    * TODO This method draws the semantic roles of the text blocks stored in `_doc` to the
    * visualization.
    */
-  void drawTextBlockSemanticRoles(const std::vector<PdfTextBlock*>& blocks, const ColorScheme& cs);
+  void drawTextBlockSemanticRoles(const vector<PdfTextBlock*>& blocks, const ColorScheme& cs) const;
 
   /**
    * This methods draws (1) lines between consecutive text blocks (with respect to the reading
    * order and (2) the index of each text block in the reading order.
    */
-  void drawReadingOrder(const std::vector<PdfTextBlock*>& blocks, const ColorScheme& cs);
+  void drawReadingOrder(const vector<PdfTextBlock*>& blocks, const ColorScheme& cs) const;
 
   /**
    * This methods draws the circle at the end of a reading order line, containing the index of the
@@ -297,30 +303,32 @@ class PdfDocumentVisualizer {
    *   The index of the respective text block in the reading order.
    */
   void drawReadingOrderIndexCircle(Page* page, Gfx* gfx, double x, double y, int blockIndex,
-      const ColorScheme& cs);
+      const ColorScheme& cs) const;
 
   /**
    * This method draws the given XY-cuts (made to detect the text blocks or the reading order of
    * text blocks) to the visualization.
    */
-  void drawCuts(const std::vector<Cut*>& cuts, const ColorScheme& cs);
+  void drawCuts(const vector<Cut*>& cuts, const ColorScheme& cs) const;
 
   /**
    * This method converts the given string to an UTF-16 string, which is required so that a string
    * of an AnnotText or AnnotFreeText is drawn correctly to the PDF.
    *
-   * @param The string to convert.
+   * @param str
+   *    The string to convert.
    *
-   * @return The string converted to UTF-16.
+   * @return
+   *    The string converted to UTF-16.
    */
-  GooString* convertToUtf16(GooString* str);
+  GooString* convertToUtf16(GooString* str) const;
 
   /** The PDF document to process. */
-  std::unique_ptr<PDFDoc> _pdfDoc;
+  unique_ptr<PDFDoc> _pdfDoc;
   /** The document to process. */
   PdfDocument* _doc;
 
-  std::vector<Gfx*> _gfxs;
+  vector<Gfx*> _gfxs;
 
   TextOutputDev* _out;
 };

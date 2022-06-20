@@ -15,9 +15,14 @@
 #include "./BytePairEncoder.h"
 #include "./utils/StringUtils.h"
 
+using std::pair;
+using std::unordered_map;
+using std::unordered_set;
+using std::vector;
+using std::wstring;
 
 // _________________________________________________________________________________________________
-BytePairEncoder::BytePairEncoder(std::unordered_map<std::wstring, int>* vocabulary) {
+BytePairEncoder::BytePairEncoder(unordered_map<wstring, int>* vocabulary) {
   _vocabulary = *vocabulary;
 
   // Add some meta symbols (e.g., the padding symbol or the word delimiter symbol).
@@ -27,10 +32,10 @@ BytePairEncoder::BytePairEncoder(std::unordered_map<std::wstring, int>* vocabula
 }
 
 // _________________________________________________________________________________________________
-void BytePairEncoder::encode(const std::wstring& text, size_t targetLength, std::vector<int>* res) {
+void BytePairEncoder::encode(const wstring& text, size_t targetLength, vector<int>* res) {
   // Split the text into words. For example, split "This is some text" into
   // ["This", "is", "some", "text"].
-  std::vector<std::wstring> words;
+  vector<wstring> words;
   string_utils::splitIntoWords(text, &words);
 
   // Iterate through the words and encode each word using byte pair encoding.
@@ -44,7 +49,7 @@ void BytePairEncoder::encode(const std::wstring& text, size_t targetLength, std:
     // resulting tokens to the result list. For example, when the word is "This", compute the
     // encoding of "This✂". If the tokens of this word are [2, 9, 10], append them to the result.
     word += WORD_DELIM_SYMBOL;
-    std::vector<int> wordTokens;
+    vector<int> wordTokens;
     encodeWord(word, &wordTokens);
     for (auto& token : wordTokens) {
       res->push_back(token);
@@ -71,15 +76,15 @@ void BytePairEncoder::encode(const std::wstring& text, size_t targetLength, std:
 }
 
 // _________________________________________________________________________________________________
-void BytePairEncoder::encodeWord(const std::wstring& word, std::vector<int>* result) {
+void BytePairEncoder::encodeWord(const wstring& word, vector<int>* result) {
   // Do nothing if the word is empty.
   if (word.length() == 0) {
     return;
   }
 
   // Return the cached encoding, if available.
-  if (_encodings_cache.find(word) != _encodings_cache.end()) {
-    for (auto& entry : _encodings_cache[word]) {
+  if (_encodingsCache.find(word) != _encodingsCache.end()) {
+    for (auto& entry : _encodingsCache[word]) {
       result->push_back(entry);
     }
     return;
@@ -89,11 +94,11 @@ void BytePairEncoder::encodeWord(const std::wstring& word, std::vector<int>* res
   // respective start positions. For example, when the word is "foxifox", first convert it into
   // ["f", "o", "x", "i", "f", "o", "x"] and compute
   // [("fo": {0, 4}), ("ox": {1, 5}), ("xi": {2}), ("if": {3})}.
-  std::vector<std::wstring> wordTokens;
+  vector<wstring> wordTokens;
   for (size_t k = 0; k < word.length(); k++) {
     wordTokens.push_back(word.substr(k, 1));
   }
-  std::vector<std::pair<std::wstring, std::unordered_set<size_t>* >* > tokenPairPositions;
+  vector<pair<wstring, unordered_set<size_t>* >* > tokenPairPositions;
   computeTokenPairPositions(wordTokens, &tokenPairPositions);
 
   // If tokenPairPositions is empty, the word consists of only one character.
@@ -107,7 +112,7 @@ void BytePairEncoder::encodeWord(const std::wstring& word, std::vector<int>* res
     // in the vocabulary. For example, when tokenPairPositions is {"fo": {0, 4}, "ox": {1, 5},
     // "xi": {2}, "if": {3}} and "ox" is the first token pair that is included in the vocabulary,
     // compute {1, 5}.
-    std::unordered_set<size_t>* firstMatchingPairPositions = nullptr;
+    unordered_set<size_t>* firstMatchingPairPositions = nullptr;
     for (auto& entry : tokenPairPositions) {
       // Check if the token pair is included in the vocabulary.
       if (_vocabulary.find(entry->first) != _vocabulary.end()) {
@@ -125,7 +130,7 @@ void BytePairEncoder::encodeWord(const std::wstring& word, std::vector<int>* res
     // tokenPairPositions is {"fo": {0, 4}, "ox": {1, 5}, "xi": {2}, "if": {3}} and "ox" is the
     // first matching token pair, compute ["f", "ox", "i", "f", "ox"].
     size_t i = 0;
-    std::vector<std::wstring> newWordTokens;
+    vector<wstring> newWordTokens;
     while (i < wordTokens.size()) {
       firstMatchingPairPositions->count(i);
       if (firstMatchingPairPositions->count(i)) {
@@ -160,27 +165,27 @@ void BytePairEncoder::encodeWord(const std::wstring& word, std::vector<int>* res
   for (auto& token : wordTokens) {
     if (_vocabulary.find(token) != _vocabulary.end()) {
       result->push_back(_vocabulary[token]);
-      _encodings_cache[word].push_back(_vocabulary[token]);
+      _encodingsCache[word].push_back(_vocabulary[token]);
     } else {
       result->push_back(_vocabulary[UNKNOWN_CHAR_SYMBOL]);
-      _encodings_cache[word].push_back(_vocabulary[UNKNOWN_CHAR_SYMBOL]);
+      _encodingsCache[word].push_back(_vocabulary[UNKNOWN_CHAR_SYMBOL]);
     }
   }
 }
 
 // _________________________________________________________________________________________________
-void BytePairEncoder::computeTokenPairPositions(const std::vector<std::wstring>& tokens,
-    std::vector<std::pair<std::wstring, std::unordered_set<size_t>* >* >* result) {
+void BytePairEncoder::computeTokenPairPositions(const vector<wstring>& tokens,
+    vector<pair<wstring, unordered_set<size_t>* >* >* result) {
   if (tokens.size() == 0) {
     return;
   }
 
   // A mapping of byte pairs to their positions in the given vector of tokens.
-  std::unordered_map<std::wstring, std::pair<std::wstring, std::unordered_set<size_t>* >* > cache;
+  unordered_map<wstring, pair<wstring, unordered_set<size_t>* >* > cache;
 
   for (size_t i = 1; i < tokens.size(); i++) {
     // Merge the current token with the previous token.
-    std::wstring merged = tokens[i - 1] + tokens[i];
+    wstring merged = tokens[i - 1] + tokens[i];
 
     // If the cache already contains an entry for the merged token, update its position list.
     if (cache.find(merged) != cache.end()) {
@@ -189,10 +194,10 @@ void BytePairEncoder::computeTokenPairPositions(const std::vector<std::wstring>&
     }
 
     // Otherwise, create a new entry of form (<merged token pair>, [<position>]).
-    auto positions = new std::unordered_set<size_t>();
+    auto positions = new unordered_set<size_t>();
     positions->insert(i - 1);
 
-    auto pair = new std::pair<std::wstring, std::unordered_set<size_t>* >(merged, positions);
+    auto pair = new std::pair<wstring, unordered_set<size_t>* >(merged, positions);
 
     result->push_back(pair);
     cache[merged] = pair;

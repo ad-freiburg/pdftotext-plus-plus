@@ -9,8 +9,10 @@
 #ifndef FIXEDPRIORITYQUEUE_H_
 #define FIXEDPRIORITYQUEUE_H_
 
-#include <iostream>
 #include <queue>
+
+using std::priority_queue;
+using std::vector;
 
 // =================================================================================================
 
@@ -18,7 +20,7 @@
  * A priority queue with a fixed capacity.
  */
 template <typename T, typename Comparator>
-class FixedPriorityQueue : public std::priority_queue<T, std::vector<T>, Comparator> {
+class FixedPriorityQueue : public priority_queue<T, vector<T>, Comparator> {
  public:
   /**
    * This constructor creates and initializes a new instance of this class.
@@ -39,14 +41,25 @@ class FixedPriorityQueue : public std::priority_queue<T, std::vector<T>, Compara
    *   The value to push.
    */
   void push(const T& value) {
-    std::priority_queue<T, std::vector<T>, Comparator>::push(value);
+    priority_queue<T, vector<T>, Comparator>::push(value);
     if (this->size() > _capacity) {
       this->pop();
     }
   }
 
+  /**
+   * This method sorts the elements contained in the queue by the given comparator and append the
+   * elements to the given result vector (in sorted order).
+   *
+   * @param cmp
+   *    The comparator.
+   * @param result
+   *    The result vector to which the sorted elements should be appended.
+   */
   template <class Compare>
-  void sort(Compare cmp, std::vector<T>* result) {
+  void sort(const Compare& cmp, vector<T>* result) const {
+    assert(result);
+
     result->resize(this->size());
     partial_sort_copy(begin(this->c), end(this->c), begin(*result), end(*result), cmp);
   }

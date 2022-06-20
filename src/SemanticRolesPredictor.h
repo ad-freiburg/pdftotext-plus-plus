@@ -9,16 +9,19 @@
 #ifndef SEMANTICROLESPREDICTOR_H_
 #define SEMANTICROLESPREDICTOR_H_
 
-#include <codecvt>
-#include <locale>
+#include <codecvt>  // std::codecvt_utf8_utf16
+#include <locale>  // std::wstring_convert
 #include <string>
 #include <unordered_map>
-#include <vector>
 
 #include "tensorflow/cc/saved_model/loader.h"
 
 #include "./PdfDocument.h"
 
+using std::string;
+using std::unordered_map;
+
+// =================================================================================================
 
 /**
  * This class predicts the semantic roles of the text blocks of a given PDF document by using
@@ -39,7 +42,7 @@ class SemanticRolesPredictor {
    * @param doc
    *   The document for which to predict the semantic roles of the text blocks.
    */
-  void predict(PdfDocument* doc);
+  void predict(const PdfDocument* doc);
 
  private:
   /**
@@ -57,9 +60,10 @@ class SemanticRolesPredictor {
    * Creates a tensor for the "layout" input from text blocks of the given document.
    *
    * @param doc
-   *  The document to process.
+   *    The document to process.
    *
-   * @return The created tensor.
+   * @return
+   *    The created tensor.
    */
   tensorflow::Tensor createLayoutInputTensor(const PdfDocument* doc);
 
@@ -67,36 +71,37 @@ class SemanticRolesPredictor {
    * Creates a tensor for the "words" input from text blocks of the given document.
    *
    * @param doc
-   *  The document to process.
+   *    The document to process.
    *
-   * @return The created tensor.
+   * @return
+   *    The created tensor.
    */
   tensorflow::Tensor createWordsInputTensor(const PdfDocument* doc);
 
-  /** The model loaded from file. */
+  // The model loaded from file.
   tensorflow::SavedModelBundle _bundle;
 
-  /** The mapping of byte pairs to integer ids, for example: {"para": 0; "eff": 1, "icient": 2}. */
-  std::unordered_map<std::wstring, int> _bpeVocab;
-  /** The mapping of integer ids to semantic roles, for example: {0: "paragraph", 1: "title"}. */
-  std::unordered_map<int, std::string> _rolesVocab;
+  // The mapping of byte pairs to integer ids, for example: {"para": 0; "eff": 1, "icient": 2}.
+  unordered_map<std::wstring, int> _bpeVocab;
+  // The mapping of integer ids to semantic roles, for example: {0: "paragraph", 1: "title"}.
+  unordered_map<int, string> _rolesVocab;
 
-  /** The converter for converting std::string to std::wstring. */
+  // The converter for converting string to std::wstring.
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> stringConverter;
 
-  /** The path to this file. */
-  std::string _filePath = __FILE__;
-  /** The path to the parent directory of this source file. */
-  std::string _parentDirPath = _filePath.substr(0, _filePath.rfind("/"));
-  /** The path to the dir containing the (serialized) model to use, relative to the parent dir. */
-  std::string _modelDirPath = _parentDirPath + "/models/2022-08-30_model-3K-documents";
+  // The path to this file.
+  string _filePath = __FILE__;
+  // The path to the parent directory of this source file.
+  string _parentDirPath = _filePath.substr(0, _filePath.rfind("/"));
+  // The path to the dir containing the (serialized) model to use, relative to the parent dir.
+  string _modelDirPath = _parentDirPath + "/models/2022-08-30_model-3K-documents";
 
-  /** The name of the BPE vocabulary file within the model dir. */
-  std::string _bpeVocabFilePath = _modelDirPath + "/bpe-vocab.tsv";
-  /** The name of the roles vocabulary file within the model dir. */
-  std::string _rolesVocabFilePath = _modelDirPath + "/roles-vocab.tsv";
+  // The name of the BPE vocabulary file within the model dir.
+  string _bpeVocabFilePath = _modelDirPath + "/bpe-vocab.tsv";
+  // The name of the roles vocabulary file within the model dir.
+  string _rolesVocabFilePath = _modelDirPath + "/roles-vocab.tsv";
 
-  /** Whether or not the model was already loaded. */
+  // Whether or not the model was already loaded.
   bool _modelOk = false;
 };
 

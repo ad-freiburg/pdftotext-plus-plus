@@ -11,11 +11,9 @@
 #include <utility>  // std::pair
 #include <vector>
 
-#include "./Constants.h"
 #include "./PdfDocument.h"
 #include "./TextBlocksDetector.h"
 
-#include "./utils/Counter.h"
 #include "./utils/Log.h"
 #include "./utils/MathUtils.h"
 #include "./utils/PdfElementsUtils.h"
@@ -29,7 +27,7 @@ using std::string;
 using std::vector;
 
 // _________________________________________________________________________________________________
-TextBlocksDetector::TextBlocksDetector(PdfDocument* doc, bool debug, int debugPageFilter) {
+TextBlocksDetector::TextBlocksDetector(const PdfDocument* doc, bool debug, int debugPageFilter) {
   _log = new Logger(debug ? DEBUG : INFO, debugPageFilter);
   _config = new TextBlocksDetectorConfig();
   _doc = doc;

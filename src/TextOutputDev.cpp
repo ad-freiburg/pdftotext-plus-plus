@@ -14,7 +14,7 @@
 #include <algorithm>  // min, max
 #include <cmath>  // fabs
 #include <limits>  // numeric_limits
-#include <sstream>
+#include <sstream>  // std::stringstream
 #include <string>
 
 #include "./utils/CharMap.h"
@@ -26,10 +26,13 @@
 #include "./TextOutputDev.h"
 
 using std::endl;
+using std::get;
 using std::max;
 using std::min;
+using std::numeric_limits;
 using std::string;
 using std::stringstream;
+using std::wstring;
 
 // _________________________________________________________________________________________________
 TextOutputDev::TextOutputDev(bool parseEmbeddedFontFiles, PdfDocument* doc, bool debug,
@@ -49,6 +52,9 @@ TextOutputDev::~TextOutputDev() {
 
 // _________________________________________________________________________________________________
 void TextOutputDev::startPage(int pageNum, GfxState* state, XRef* xref) {
+  assert(state);
+  assert(xref);
+
   _page = new PdfPage();
   _page->pageNum = _p = pageNum;
   state->getClipBBox(&_page->clipLeftX, &_page->clipUpperY, &_page->clipRightX, &_page->clipLowerY);
@@ -68,6 +74,8 @@ void TextOutputDev::startPage(int pageNum, GfxState* state, XRef* xref) {
 
 // _________________________________________________________________________________________________
 void TextOutputDev::updateFont(GfxState* state) {
+  assert(state);
+
   _log->debug(_p) << "=======================================" << endl;
   _log->debug(_p) << BOLD << "Event: UPDATE FONT" << OFF << endl;
 
@@ -112,13 +120,10 @@ void TextOutputDev::updateFont(GfxState* state) {
 // _________________________________________________________________________________________________
 void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, double dy,
     double originX, double originY, CharCode c, int nBytes, const Unicode* u, int uLen) {
+  assert(state);
+
   _log->debug(_p) << "=======================================" << endl;
   _log->debug(_p) << BOLD << "Event: DRAW CHAR" << OFF << endl;
-
-  if (!state) {
-    _log->debug(_p) << " └─ state: -" << endl;
-    return;
-  }
 
   if (!_fontInfo) {
     _log->debug(_p) << " └─ fontInfo: -" << endl;
@@ -179,7 +184,7 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   // space" character (\u00a0) as a whitespace, but std::isspace does not. So we have to check the
   // char for a non-breaking space manually. To do so, convert the text to a wide character, as the
   // non-breaking space is a 2-byte character.
-  std::wstring wText = _wStringConverter.from_bytes(ch->text);
+  wstring wText = _wStringConverter.from_bytes(ch->text);
   bool isWhitespace = !wText.empty();
   for (wchar_t& ch : wText) {
     if (!std::iswspace(ch) && ch != 0x00a0) {
@@ -371,10 +376,10 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   // Compute the bounding box from the "glyph bounding boxes" parsed from the embedded font file.
   if (_fontInfo && _fontInfo->glyphBoundingBoxes.count(ch->name)) {
     auto& boundingBox = _fontInfo->glyphBoundingBoxes[ch->name];  // tuple of four doubles.
-    double leftX = std::get<0>(boundingBox);
-    double upperY = std::get<1>(boundingBox);
-    double rightX = std::get<2>(boundingBox);
-    double lowerY = std::get<3>(boundingBox);
+    double leftX = get<0>(boundingBox);
+    double upperY = get<1>(boundingBox);
+    double rightX = get<2>(boundingBox);
+    double lowerY = get<3>(boundingBox);
 
     double* fm = _fontInfo->fontMatrix;
     double leftX2 = leftX * fm[0] + upperY * fm[2] + fm[4];
@@ -523,6 +528,8 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
 
 // _________________________________________________________________________________________________
 void TextOutputDev::stroke(GfxState* state) {
+  assert(state);
+
   _log->debug(_p) << "=======================================" << endl;
   _log->debug(_p) << BOLD << "Event: STROKE PATH" << OFF << endl;
 
@@ -533,10 +540,10 @@ void TextOutputDev::stroke(GfxState* state) {
 
   // Iterate through each subpath and each point, for compute the bounding box of the path.
   double x, y;
-  double leftX = std::numeric_limits<double>::max();
-  double upperY = std::numeric_limits<double>::max();
-  double rightX = std::numeric_limits<double>::min();
-  double lowerY = std::numeric_limits<double>::min();
+  double leftX = numeric_limits<double>::max();
+  double upperY = numeric_limits<double>::max();
+  double rightX = numeric_limits<double>::min();
+  double lowerY = numeric_limits<double>::min();
   const GfxPath* path = state->getPath();
   for (int i = 0; i < path->getNumSubpaths(); i++) {
     const GfxSubpath* subpath = path->getSubpath(i);
@@ -682,6 +689,8 @@ void TextOutputDev::drawSoftMaskedImage(GfxState* state, Object* ref, Stream* st
 
 // _________________________________________________________________________________________________
 void TextOutputDev::drawGraphic(GfxState* state) {
+  assert(state);
+
   _log->debug(_p) << "=======================================" << endl;
   _log->debug(_p) << BOLD << "Event: DRAW GRAPHIC" << OFF << endl;
 

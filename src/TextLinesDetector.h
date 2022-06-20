@@ -15,6 +15,8 @@
 
 #include "./PdfDocument.h"
 
+using std::vector;
+
 // =================================================================================================
 
 struct TextLinesDetectorConfig;
@@ -45,7 +47,7 @@ class TextLinesDetector {
    *   If set to a value > 0, only the debug messages produced while processing the
    *   <debugPageFilter>-th page of the current PDF file will be printed to the console.
    */
-  explicit TextLinesDetector(PdfDocument* doc, bool debug = false, int debugPageFilter = -1);
+  explicit TextLinesDetector(const PdfDocument* doc, bool debug = false, int debugPageFilter = -1);
 
   /** The deconstructor. */
   ~TextLinesDetector();
@@ -65,14 +67,14 @@ class TextLinesDetector {
    *   The words that are part of the text line.
    * @param segment
    *   The segment of which the text line is a part.
-   * @param words
+   * @param lines
    *   The vector to which the created text line should be appended.
    *
    * @return
    *   The created text line.
    */
-  PdfTextLine* createTextLine(const std::vector<PdfWord*>& words, const PdfPageSegment* segment,
-      std::vector<PdfTextLine*>* lines) const;
+  PdfTextLine* createTextLine(const vector<PdfWord*>& words, const PdfPageSegment* segment,
+      vector<PdfTextLine*>* lines) const;
 
   /**
    * This method merges the given first text line with the given second text line. This is
@@ -98,13 +100,13 @@ class TextLinesDetector {
   void computeTextLineProperties(PdfTextLine* line) const;
 
   // The PDF document to process.
-  PdfDocument* _doc;
+  const PdfDocument* _doc;
 
   // The config.
   const TextLinesDetectorConfig* _config;
 
   // The logger.
-  Logger* _log;
+  const Logger* _log;
 };
 
 // =================================================================================================

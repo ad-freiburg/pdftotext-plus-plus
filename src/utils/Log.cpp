@@ -23,13 +23,13 @@ using std::stringstream;
 static NullStream nullStr;
 
 // _________________________________________________________________________________________________
-Logger::Logger(LogLevel logLevel, int pageFilter) {
+Logger::Logger(const LogLevel& logLevel, int pageFilter) {
   _logLevel = logLevel;
   _pageFilter = pageFilter;
 }
 
 // _________________________________________________________________________________________________
-void Logger::setLogLevel(LogLevel logLevel) {
+void Logger::setLogLevel(const LogLevel& logLevel) {
   _logLevel = logLevel;
 }
 
@@ -64,7 +64,7 @@ ostream& Logger::error(int page) const {
 }
 
 // _________________________________________________________________________________________________
-ostream& Logger::log(LogLevel logLevel, int pageNum) const {
+ostream& Logger::log(const LogLevel& logLevel, int pageNum) const {
   // Forward the messages sent to the stream to /dev/null (= do not print the messages to the
   // console), if the given log level is smaller than _logLevel.
   if (_logLevel > logLevel) {

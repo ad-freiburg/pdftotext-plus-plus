@@ -21,15 +21,15 @@ using std::string;
 using std::unordered_map;
 using std::vector;
 
-class PdfElement;
-class PdfTextElement;
-class PdfWord;
-class PdfShape;
-class PdfGraphic;
-class PdfTextLine;
-class PdfTextBlock;
-class PdfPageSegment;
 class PdfDocument;
+class PdfElement;
+class PdfGraphic;
+class PdfPageSegment;
+class PdfShape;
+class PdfTextBlock;
+class PdfTextElement;
+class PdfTextLine;
+class PdfWord;
 
 // =================================================================================================
 
@@ -194,14 +194,16 @@ class PdfPosition {
   /**
    * This method returns the width of the bounding box.
    *
-   * @return The width of the bounding box.
+   * @return
+   *    The width of the bounding box.
    */
   double getWidth() const;
 
   /**
    * This method returns the height of the bounding box.
    *
-   * @return The height of the bounding box.
+   * @return
+   *    The height of the bounding box.
    */
   double getHeight() const;
 
@@ -214,7 +216,8 @@ class PdfPosition {
    * is rotated by 90 degrees *counter*-clockwise. The leftX of the element in the alternative
    * coordinate system is equal to the upperY in the original coordinate system.
    *
-   * @return The (logically correct) leftX of the element, under consideration of the rotation.
+   * @return
+   *    The (logically correct) leftX of the element, under consideration of the rotation.
    */
   double getRotLeftX() const;
 
@@ -227,7 +230,8 @@ class PdfPosition {
    * is rotated by 90 degrees *counter*-clockwise. The upperY of the element in the alternative
    * coordinate system is equal to the rightX in the original coordinate system.
    *
-   * @return The (logically correct) upperY of the element, under consideration of the rotation.
+   * @return
+   *    The (logically correct) upperY of the element, under consideration of the rotation.
    */
   double getRotUpperY() const;
 
@@ -240,7 +244,8 @@ class PdfPosition {
    * is rotated by 90 degrees *counter*-clockwise. The rightX of the element in the alternative
    * coordinate system is equal to the lowerY in the original coordinate system.
    *
-   * @return The (logically correct) rightX of the element, under consideration of the rotation.
+   * @return
+   *    The (logically correct) rightX of the element, under consideration of the rotation.
    */
   double getRotRightX() const;
 
@@ -253,7 +258,8 @@ class PdfPosition {
    * is rotated by 90 degrees *counter*-clockwise. The lowerY of the element in the alternative
    * coordinate system is equal to the leftX in the original coordinate system.
    *
-   * @return The (logically correct) lowerY of the element, under consideration of the rotation.
+   * @return
+   *    The (logically correct) lowerY of the element, under consideration of the rotation.
    */
   double getRotLowerY() const;
 
@@ -261,7 +267,8 @@ class PdfPosition {
    * This method returns the width of the element, under consideration of the rotation. Formally,
    * it returns getRotRightX() - getRotLeftX().
    *
-   * @return The width of the element, under consideration of the rotation.
+   * @return
+   *    The width of the element, under consideration of the rotation.
    */
   double getRotWidth() const;
 
@@ -269,14 +276,16 @@ class PdfPosition {
    * This method returns the height of the element, under consideration of the rotation. Formally,
    * it returns getRotLowerY() - getRotUpperY().
    *
-   * @return The height of the element, under consideration of the rotation.
+   * @return
+   *    The height of the element, under consideration of the rotation.
    */
   double getRotHeight() const;
 
   /**
    * This method returns a string representation of this position, for debugging purposes.
    *
-   * @return A string representation of this position.
+   * @return
+   *    A string representation of this position.
    */
   string toString() const;
 };
@@ -310,7 +319,8 @@ class PdfElement {
   /**
    * This method returns a string representation of this element, for debugging purposes.
    *
-   * @return A string representation of this element.
+   * @return
+   *    A string representation of this element.
    */
   virtual string toString() const = 0;
 };
@@ -407,7 +417,8 @@ class PdfCharacter : public PdfTextElement {
   /**
    * This method returns a string representation of this character, for debugging purposes.
    *
-   * @return A string representation of this character.
+   * @return
+   *    A string representation of this character.
    */
   string toString() const override;
 };
@@ -463,7 +474,8 @@ class PdfWord : public PdfTextElement {
   /**
    * This method returns a string representation of this word, for debugging purposes.
    *
-   * @return A string representation of this word.
+   * @return
+   *    A string representation of this word.
    */
   string toString() const override;
 };
@@ -548,7 +560,8 @@ class PdfTextLine : public PdfTextElement {
   /**
    * This method returns a string representation of this text line, for debugging purposes.
    *
-   * @return A string representation of this text line.
+   * @return
+   *    A string representation of this text line.
    */
   string toString() const override;
 };
@@ -611,7 +624,8 @@ class PdfTextBlock : public PdfTextElement {
   /**
    * This method returns a string representation of this text block, for debugging purposes.
    *
-   * @return A string representation of this text block, for debugging purposes.
+   * @return
+   *    A string representation of this text block, for debugging purposes.
    */
   string toString() const override;
 };
@@ -655,7 +669,8 @@ class PdfFigure : public PdfNonTextElement {
   /**
    * This method returns a string representation of this figure, for debugging purposes.
    *
-   * @return A string representation of this figure.
+   * @return
+   *    A string representation of this figure.
    */
   string toString() const override;
 };
@@ -676,7 +691,8 @@ class PdfShape : public PdfNonTextElement {
   /**
    * This method returns a string representation of this shape, for debugging purposes.
    *
-   * @return A string representation of this shape.
+   * @return
+   *    A string representation of this shape.
    */
   string toString() const override;
 };
@@ -700,7 +716,8 @@ class PdfGraphic : public PdfNonTextElement {
   /**
    * This method returns a string representation of this graphic, for debugging purposes.
    *
-   * @return A string representation of this graphic.
+   * @return
+   *    A string representation of this graphic.
    */
   string toString() const override;
 };
@@ -747,7 +764,8 @@ class PdfPageSegment : public PdfElement {
   /**
    * This method returns a string representation of this segment, for debugging purposes.
    *
-   * @return A string representation of this segment.
+   * @return
+   *    A string representation of this segment.
    */
   string toString() const override;
 };

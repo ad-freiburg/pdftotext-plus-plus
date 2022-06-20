@@ -20,6 +20,7 @@
 #include "./TextBlocksUtils.h"
 #include "./TextLinesUtils.h"
 
+using std::max;
 using std::min;
 using std::pair;
 using std::string;
@@ -354,10 +355,10 @@ void text_blocks_utils::createTextBlock(const vector<PdfTextLine*>& lines,
     block->position->lowerY = max(block->position->lowerY, lineMaxY);
 
     // Compute the trim box.
-    block->trimLeftX = std::max(block->position->leftX, block->segment->trimLeftX);
-    block->trimUpperY = std::max(block->position->upperY, block->segment->trimUpperY);
-    block->trimRightX = std::min(block->position->rightX, block->segment->trimRightX);
-    block->trimLowerY = std::min(block->position->lowerY, block->segment->trimLowerY);
+    block->trimLeftX = max(block->position->leftX, block->segment->trimLeftX);
+    block->trimUpperY = max(block->position->upperY, block->segment->trimUpperY);
+    block->trimRightX = min(block->position->rightX, block->segment->trimRightX);
+    block->trimLowerY = min(block->position->lowerY, block->segment->trimLowerY);
 
     // Count the font names and font sizes, for computing the most frequent font name / font size.
     fontNameFreqs[currLine->fontName]++;

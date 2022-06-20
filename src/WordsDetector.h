@@ -81,7 +81,7 @@ class WordsDetector {
    *   If set to a value > 0, only the debug messages produced while processing the
    *   <debugPageFilter>-th page of the current PDF file will be printed to the console.
    */
-  explicit WordsDetector(PdfDocument* doc, bool debug = false, int debugPageFilter = -1);
+  explicit WordsDetector(const PdfDocument* doc, bool debug = false, int debugPageFilter = -1);
 
   /** The deconstructor. */
   ~WordsDetector();
@@ -148,7 +148,7 @@ class WordsDetector {
    * @param page
    *    The page to process.
    */
-  void mergeStackedMathSymbols(PdfPage* page) const;
+  void mergeStackedMathSymbols(const PdfPage* page) const;
 
   /**
    * This method (a) creates a new `PdfWord` instance from the given vector of characters,
@@ -166,13 +166,13 @@ class WordsDetector {
   PdfWord* createWord(const vector<PdfCharacter*>& characters, vector<PdfWord*>* words) const;
 
   // The document to process.
-  PdfDocument* _doc;
+  const PdfDocument* _doc;
 
   // The active word.
   PdfWord _activeWord;
 
   // The logger.
-  Logger* _log;
+  const Logger* _log;
 };
 
 #endif  // WORDSDETECTOR_H_

@@ -9,7 +9,7 @@
 #include <poppler/GlobalParams.h>
 #include <utf8proc.h>
 
-#include <algorithm>
+#include <algorithm>  // min
 #include <vector>
 
 #include "./utils/Log.h"
@@ -19,9 +19,13 @@
 #include "./DiacriticalMarksMerger.h"
 
 using std::endl;
+using std::max;
+using std::min;
+using std::vector;
 
 // _________________________________________________________________________________________________
-DiacriticalMarksMerger::DiacriticalMarksMerger(PdfDocument* doc, bool debug, int debugPageFilter) {
+DiacriticalMarksMerger::DiacriticalMarksMerger(const PdfDocument* doc, bool debug,
+      int debugPageFilter) {
   _log = new Logger(debug ? DEBUG : INFO, debugPageFilter);
   _doc = doc;
 }
@@ -32,7 +36,9 @@ DiacriticalMarksMerger::~DiacriticalMarksMerger() {
 }
 
 // _________________________________________________________________________________________________
-void DiacriticalMarksMerger::process() {
+void DiacriticalMarksMerger::process() const {
+  assert(_doc);
+
   _log->debug() << BOLD << "Diacritical Marks Merging - DEBUG MODE" << OFF << endl;
 
   const UnicodeMap* uMap = globalParams->getTextEncoding();
@@ -143,11 +149,11 @@ void DiacriticalMarksMerger::process() {
 
       // Compute the text with the base character and the diacritic mark merged to a single
       // character, using the utf8proc library.
-      std::vector<Unicode> unicodesMerged;
+      vector<Unicode> unicodesMerged;
       for (const auto& u : base->unicodes) { unicodesMerged.push_back(u); }
       unicodesMerged.push_back(unicode);
 
-      std::vector<uint8_t> bytesMerged;
+      vector<uint8_t> bytesMerged;
       char buf[8];
       for (const auto& u : unicodesMerged) {
         int len = uMap->mapUnicode(u, buf, sizeof(buf));
@@ -163,10 +169,10 @@ void DiacriticalMarksMerger::process() {
       base->textWithDiacriticMark = reinterpret_cast<char*>(output);
 
       // Update the bounding box.
-      base->position->leftX = std::min(base->position->leftX, mark->position->leftX);
-      base->position->upperY = std::min(base->position->upperY, mark->position->upperY);
-      base->position->rightX = std::max(base->position->rightX, mark->position->rightX);
-      base->position->lowerY = std::max(base->position->lowerY, mark->position->lowerY);
+      base->position->leftX = min(base->position->leftX, mark->position->leftX);
+      base->position->upperY = min(base->position->upperY, mark->position->upperY);
+      base->position->rightX = max(base->position->rightX, mark->position->rightX);
+      base->position->lowerY = max(base->position->lowerY, mark->position->lowerY);
 
       _log->debug(p) << " └─ base.textWithDiacMark: " << base->textWithDiacriticMark << endl;
       _log->debug(p) << " └─ base.leftX: " << base->position->leftX << endl;

@@ -14,6 +14,9 @@
 
 #include "./PdfDocument.h"
 
+using std::string;
+using std::vector;
+
 // =================================================================================================
 
 /**
@@ -121,10 +124,10 @@ class PdfToTextPlusPlus {
    *   A vector to which the running times needed by the different modules of the extraction
    *   pipeline should be appended. If not set, no running times will be appended.
    *
-   * @return 0 if the PDF was processed successfully, and a value > 0 otherwise.
+   * @return
+   *    0 if the PDF was processed successfully, and a value > 0 otherwise.
    */
-  int process(const std::string& pdfFilePath, PdfDocument* doc,
-      std::vector<Timing>* timings = nullptr) const;
+  int process(const string& pdfFilePath, PdfDocument* doc, vector<Timing>* timings = nullptr) const;
 
  private:
   // Whether or not to parse the embedded font files of a PDF file.

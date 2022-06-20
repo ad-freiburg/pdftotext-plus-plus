@@ -6,7 +6,7 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include <sstream>
+#include <sstream>  // std::stringstream
 #include <string>
 
 #include "./PdfDocument.h"

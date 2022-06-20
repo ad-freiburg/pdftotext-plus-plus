@@ -12,7 +12,7 @@
 #include <poppler/GfxState.h>
 #include <poppler/OutputDev.h>
 
-#include <codecvt>
+#include <codecvt>  // std::codecvt_utf8_utf16
 #include <locale>  // std::wstring_convert
 
 #include "./utils/Log.h"
@@ -66,7 +66,8 @@ class TextOutputDev : public OutputDev {
    * is the top left corner of the page), and false otherwise (meaning that (0,0) is the lower
    * left corner of the page).
    *
-   * @return True if this device uses upside-down coordinates; false otherwise.
+   * @return
+   *    True if this device uses upside-down coordinates; false otherwise.
    */
   bool upsideDown() override { return true; }
 
@@ -74,7 +75,8 @@ class TextOutputDev : public OutputDev {
    * This method returns true if this device uses drawChar() (that is: if it processes the text
    * char-wise) instead of drawString(), and false otherwise.
    *
-   * @return True if this device uses drawChar(); false otherwise.
+   * @return
+   *    True if this device uses drawChar(); false otherwise.
    */
   bool useDrawChar() override { return true; }
 
@@ -83,7 +85,8 @@ class TextOutputDev : public OutputDev {
    * characters printed in a Type-3 font. Otherwise it returns false, meaning that characters in
    * Type-3 fonts will be drawn with the "normal" drawChar()/drawString() methods.
    *
-   * @return True if this device uses beginType3Char()/endType3Char(); false otherwise.
+   * @return
+   *    True if this device uses beginType3Char()/endType3Char(); false otherwise.
    */
   bool interpretType3Chars() override { return false; }
 
@@ -91,7 +94,8 @@ class TextOutputDev : public OutputDev {
    * This method returns true if this instance requires information about the non-text elements
    * (like graphics and shapes) contained in the PDF; false otherwise.
    *
-   * @return True if this instance requires information about non-text elements, false otherwise.
+   * @return
+   *    True if this instance requires information about non-text elements, false otherwise.
    */
   bool needNonText() override { return true; }
 
@@ -226,6 +230,9 @@ class TextOutputDev : public OutputDev {
    * clip box, the graphic is added to `_page->graphics`. Otherwise, the graphic is added to
    * `figure->graphics`, where figure is the `PdfFigure` object associated with the current clip
    * box.
+   *
+   * @param state
+   *    The current graphics state.
    */
   void drawGraphic(GfxState* state);
 
@@ -260,7 +267,7 @@ class TextOutputDev : public OutputDev {
   // An object that converts a std::string to std::wstring.
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> _wStringConverter;
   // The logger.
-  Logger* _log;
+  const Logger* _log;
 };
 
 #endif  // TEXTOUTPUTDEV_H_

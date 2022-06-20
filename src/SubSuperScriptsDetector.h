@@ -34,7 +34,7 @@ class SubSuperScriptsDetector {
    * @param doc
    *   The PDF document to process.
    */
-  explicit SubSuperScriptsDetector(PdfDocument* doc);
+  explicit SubSuperScriptsDetector(const PdfDocument* doc);
 
   /** The deconstructor. */
   ~SubSuperScriptsDetector();
@@ -51,7 +51,7 @@ class SubSuperScriptsDetector {
 
  private:
   // The PDF document to process.
-  PdfDocument* _doc;
+  const PdfDocument* _doc;
 
   // The config.
   SubSuperScriptsDetectorConfig* _config;

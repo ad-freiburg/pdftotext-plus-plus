@@ -9,7 +9,7 @@
 #ifndef LOG_H_
 #define LOG_H_
 
-#include <iostream>  // ostream
+#include <iostream>  // std::ostream
 #include <string>
 
 using std::ostream;
@@ -20,7 +20,6 @@ using std::string;
 // Some ANSI codes to print text in colors or in bold to the console. For example, to print text in
 // bold, you can type: 'cout << BLUE << "Hello World" << OFF << endl;'. To print text in bold
 // *and* blue you can type: 'cout << BOLD << BLUE << "Hello World" << OFF << endl;'.
-
 const char* const BOLD = "\033[1m";
 const char* const RED = "\033[31m";
 const char* const GREEN = "\033[32m";
@@ -78,7 +77,7 @@ class Logger {
    *    logger prints all messages to the console, no matter with which pages the messages are
    *    associated.
    */
-  Logger(LogLevel logLevel, int pageFilter);
+  Logger(const LogLevel& logLevel, int pageFilter);
 
   /**
    * This method sets the log level of this logger.
@@ -88,7 +87,7 @@ class Logger {
    *    is already described in the comment of the constructor, so see this comment for more
    *    details about this parameter.
    */
-  void setLogLevel(LogLevel logLevel);
+  void setLogLevel(const LogLevel& logLevel);
 
   /**
    * This method sets the page filter of this logger.
@@ -193,7 +192,7 @@ class Logger {
    * @return
    *    A stream which prints the received messages with the given log level to the console.
    */
-  ostream& log(LogLevel logLevel, int pageNum = -1) const;
+  ostream& log(const LogLevel& logLevel, int pageNum = -1) const;
 
   /**
    * This method returns the current timestamp as a human-readable string, for example:
@@ -205,10 +204,10 @@ class Logger {
    */
   static string getTimeStamp();
 
-  /** The logging level. */
+  // The logging level.
   LogLevel _logLevel = ERROR;
 
-  /** The page filter. */
+  // The page filter.
   int _pageFilter = -1;
 };
 

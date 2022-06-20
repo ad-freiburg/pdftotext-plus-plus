@@ -105,8 +105,8 @@ typedef std::function<void(const vector<Cut*>& candidates, const vector<PdfEleme
  *   particularly helpful for debugging and visualization purposes.
  */
 void xyCut(const vector<PdfElement*>& elements, double minXCutGapWidth, double minYCutGapHeight,
-  int maxNumOverlappingElements, const ChooseCutsFunc chooseXCutsFunc,
-  const ChooseCutsFunc chooseYCutsFunc, bool silent = false,
+  int maxNumOverlappingElements, const ChooseCutsFunc& chooseXCutsFunc,
+  const ChooseCutsFunc& chooseYCutsFunc, bool silent = false,
   vector<vector<PdfElement*>>* resultGroups = nullptr, vector<Cut*>* resultCuts = nullptr);
 
 /**
@@ -191,7 +191,7 @@ void xyCut(const vector<PdfElement*>& elements, double minXCutGapWidth, double m
  *   or more groups; false otherwise.
  */
 bool xCut(const vector<PdfElement*>& elements, double minGapWidth, int maxNumOverlappingElements,
-  const ChooseCutsFunc chooseCutsFunc, bool silent,
+  const ChooseCutsFunc& chooseCutsFunc, bool silent,
   vector<vector<PdfElement*>>* resultGroups = nullptr, vector<Cut*>* resultCuts = nullptr);
 
 /**
@@ -247,7 +247,7 @@ bool xCut(const vector<PdfElement*>& elements, double minGapWidth, int maxNumOve
  *   or more groups; false otherwise.
  */
 bool yCut(const vector<PdfElement*>& elements, double minGapHeight,
-  const ChooseCutsFunc chooseCutsFunc, bool silent,
+  const ChooseCutsFunc& chooseCutsFunc, bool silent,
   vector<vector<PdfElement*>>* resultGroups = nullptr, vector<Cut*>* resultCuts = nullptr);
 
 #endif  // XYCUT_H_

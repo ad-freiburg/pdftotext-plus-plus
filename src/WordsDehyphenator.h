@@ -11,16 +11,18 @@
 
 #include "./PdfDocument.h"
 
+// =================================================================================================
+
 class WordsDehyphenator {
  public:
-  explicit WordsDehyphenator(PdfDocument* doc);
+  explicit WordsDehyphenator(const PdfDocument* doc);
 
   ~WordsDehyphenator();
 
-  void dehyphenate();
+  void dehyphenate() const;
 
  private:
-  PdfDocument* _doc;
+  const PdfDocument* _doc;
 };
 
 #endif  // WORDSDEHYPHENATOR_H_

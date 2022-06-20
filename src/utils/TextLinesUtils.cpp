@@ -7,10 +7,10 @@
  */
 
 #include <regex>
+#include <stack>
 #include <string>
 #include <unordered_set>
 #include <vector>
-#include <stack>
 
 #include "../Constants.h"
 
