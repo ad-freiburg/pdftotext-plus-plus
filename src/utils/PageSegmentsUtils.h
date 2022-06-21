@@ -16,6 +16,21 @@
 using std::tuple;
 
 // =================================================================================================
+// CONFIG
+
+namespace page_segment_utils::config {
+
+// The number of decimals to use when rounding coordinates.
+const double COORDS_PREC = 0;
+
+// A value in [0, 1] denoting the minimum percentage of lines in the given segment that must
+// exhibit the same rightX so that this rightX is considered to be the rightX of the trim box of
+// the segment.
+const double MIN_PERC_LINES_SAME_RIGHT_X = 0.5;
+
+}  // namespace page_segment_utils::config
+
+// =================================================================================================
 
 /**
  * A collection of some useful and commonly used functions in context of page segments.
@@ -64,27 +79,17 @@ namespace page_segment_utils {
  *
  * @param segment
  *    The segment for which to compute the trim box.
+ * @param minPercLinesSameRightX
+ *    A value in [0, 1] denoting the minimum percentage of lines in the given segment that must
+ *    exhibit the same rightX so that this rightX is considered to be the rightX of the trim box of
+ *    the segment.
  *
  * @return
  *    The leftX, upperY, rightX, and lowerY of the computed trim box.
  */
-tuple<double, double, double, double> computeTrimBox(const PdfPageSegment* segment);
+tuple<double, double, double, double> computeTrimBox(const PdfPageSegment* segment,
+    double minPercLinesSameRightX = page_segment_utils::config::MIN_PERC_LINES_SAME_RIGHT_X);
 
 }  // namespace page_segment_utils
-
-
-// =================================================================================================
-// CONFIG
-
-namespace page_segment_utils::config {
-
-// The number of decimals to use when rounding coordinates.
-const double COORDS_PREC = 0;
-
-// The minimum percentage of lines in a segment that must exhibit the most frequent rightX in the
-// segment so that the rightX value is considered to be the rightX of the trim box of the segment.
-const double MIN_PERCENTAGE_SAME_RIGHT_X = 0.5;
-
-}  // namespace page_segment_utils::config
 
 #endif  // PAGESEGMENTSUTILS_H_

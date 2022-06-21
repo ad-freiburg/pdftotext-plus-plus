@@ -19,6 +19,17 @@ using std::vector;
 using std::wstring;
 
 // =================================================================================================
+// CONFIG
+
+namespace string_utils::config {
+  // The characters we consider to be alphanumerical.
+  const char* const ALPHA_NUM_ALPHABET = global_config::ALPHA_NUM_ALPHABET;
+
+  // The characters we consider to be word delimiters.
+  const char* const WORD_DELIMITERS_ALPHABET = global_config::WORD_DELIMITERS_ALPHABET;
+}
+
+// =================================================================================================
 
 /**
  * A collection of some useful and commonly used functions in context of strings.
@@ -76,10 +87,5 @@ string createRandomString(size_t len, const string& prefix = "");
 string escapeJson(const string& str);
 
 }  // namespace string_utils
-
-namespace string_utils::config {
-  const char* const ALPHA_NUM_ALPHABET = global_config::ALPHA_NUM_ALPHABET;
-  const double x = 1.2;
-}
 
 #endif  // STRINGUTILS_H_

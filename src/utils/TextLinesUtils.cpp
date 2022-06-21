@@ -23,6 +23,8 @@ using std::stack;
 using std::string;
 using std::unordered_set;
 using std::vector;
+using text_lines_utils::config::ITEM_LABEL_REGEXES;
+using text_lines_utils::config::SUPER_ITEM_LABEL_ALPHABET;
 
 // _________________________________________________________________________________________________
 bool text_lines_utils::computeIsFirstLineOfItem(const PdfTextLine* line,
@@ -216,7 +218,8 @@ bool text_lines_utils::computeHasPrevLineCapacity(const PdfTextLine* line, doubl
 
 
 // _________________________________________________________________________________________________
-void text_lines_utils::computeTextLineHierarchy(const PdfPage* page) {
+void text_lines_utils::computeTextLineHierarchy(const PdfPage* page,
+      double leftXOffsetThresholdFactor, double maxLineDistance) {
   assert(page);
 
   // Do nothing if the page does not contain any segments.
@@ -224,13 +227,8 @@ void text_lines_utils::computeTextLineHierarchy(const PdfPage* page) {
     return;
   }
 
-  // ----------
-  // CONSTANTS
-
-  const double MAX_LINE_DIST = 10.0;
-  const double LEFT_X_OFFSET_TOLERANCE = page->segments[0]->doc->avgCharWidth;
-
-  // ----------
+  double avgCharWidth = page->segments[0]->doc->avgCharWidth;
+  double leftXOffsetThreshold = leftXOffsetThresholdFactor * avgCharWidth;
 
   // Maintain a stack to keep track of the parent and sibling lines.
   stack<PdfTextLine*> lineStack;
@@ -247,7 +245,7 @@ void text_lines_utils::computeTextLineHierarchy(const PdfPage* page) {
         bool hasSameWMode = prevLine->position->wMode == line->position->wMode;
         if (hasSameRotation && hasSameWMode) {
           double absLineDistance = abs(element_utils::computeVerticalGap(prevLine, line));
-          if (math_utils::larger(absLineDistance, MAX_LINE_DIST)) {
+          if (math_utils::larger(absLineDistance, maxLineDistance)) {
             lineStack = stack<PdfTextLine*>();
           }
         }
@@ -259,7 +257,7 @@ void text_lines_utils::computeTextLineHierarchy(const PdfPage* page) {
       while (!lineStack.empty()) {
         double topStackLeftX = lineStack.top()->position->leftX;
         double lineLeftX = line->position->leftX;
-        if (!math_utils::larger(topStackLeftX, lineLeftX, LEFT_X_OFFSET_TOLERANCE)) {
+        if (!math_utils::larger(topStackLeftX, lineLeftX, leftXOffsetThreshold)) {
           break;
         }
         lineStack.pop();
@@ -290,7 +288,7 @@ void text_lines_utils::computeTextLineHierarchy(const PdfPage* page) {
       //     current line.
       double topStackLeftX = lineStack.top()->position->leftX;
       double lineLeftX = line->position->leftX;
-      if (math_utils::equal(topStackLeftX, lineLeftX, LEFT_X_OFFSET_TOLERANCE)) {
+      if (math_utils::equal(topStackLeftX, lineLeftX, leftXOffsetThreshold)) {
         lineStack.top()->nextSiblingLine = line;
         line->prevSiblingLine = lineStack.top();
         line->parentLine = lineStack.top()->parentLine;
@@ -302,7 +300,7 @@ void text_lines_utils::computeTextLineHierarchy(const PdfPage* page) {
       // Check if the topmost line in the stack has a smaller leftX than the current line
       // (under consideration of the given tolerance). If so, the topmost line in the stack is the
       // parent line of the current line.
-      if (math_utils::smaller(topStackLeftX, lineLeftX, LEFT_X_OFFSET_TOLERANCE)) {
+      if (math_utils::smaller(topStackLeftX, lineLeftX, leftXOffsetThreshold)) {
         line->parentLine = lineStack.top();
 
         lineStack.push(line);
@@ -378,14 +376,14 @@ void text_lines_utils::computePotentialFootnoteLabels(const PdfTextLine* line,
 
 // _________________________________________________________________________________________________
 bool text_lines_utils::computeIsCentered(const PdfTextLine* line1, const PdfTextLine* line2,
-      double xOffsetToleranceFactor) {
+      double xOffsetEqualToleranceFactor, double maxXOverlapRatioTolerance) {
   assert(line1);
   assert(line2);
 
   // The lines are not centered when neither the first line nor the second line is completely
   // overlapped horizontally by the respective other line.
   double maxXOverlapRatio = element_utils::computeMaxXOverlapRatio(line1, line2);
-  if (math_utils::smaller(maxXOverlapRatio, 1, 0.01)) {
+  if (math_utils::smaller(maxXOverlapRatio, 1, maxXOverlapRatioTolerance)) {
     return false;
   }
 
@@ -393,7 +391,7 @@ bool text_lines_utils::computeIsCentered(const PdfTextLine* line1, const PdfText
   // is not equal).
   double absLeftXOffset = abs(element_utils::computeLeftXOffset(line1, line2));
   double absRightXOffset = abs(element_utils::computeRightXOffset(line1, line2));
-  double tolerance = xOffsetToleranceFactor * line1->doc->avgCharWidth;
+  double tolerance = xOffsetEqualToleranceFactor * line1->doc->avgCharWidth;
   if (!math_utils::equal(absLeftXOffset, absRightXOffset, tolerance)) {
     return false;
   }

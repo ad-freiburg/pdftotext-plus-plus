@@ -15,10 +15,7 @@
 #include "./MathUtils.h"
 #include "./PdfElementsUtils.h"
 
-using text_element_utils::config::FS_EQUAL_TOLERANCE;
-using text_element_utils::config::MIN_FONT_WEIGHT_DELTA;
-using text_element_utils::config::SENTENCE_DELIMITER_ALPHABET;
-
+using element_utils::config::SENTENCE_DELIMITER_ALPHABET;
 using std::make_pair;
 using std::max;
 using std::min;
@@ -219,59 +216,60 @@ bool text_element_utils::computeHasEqualFont(const PdfTextElement* e1, const Pdf
 
 // _________________________________________________________________________________________________
 bool text_element_utils::computeHasEqualFontSize(const PdfTextElement* e1,
-      const PdfTextElement* e2) {
+      const PdfTextElement* e2, double equalTolerance) {
   assert(e1);
   assert(e2);
-  return math_utils::equal(e1->fontSize, e2->fontSize, FS_EQUAL_TOLERANCE);
+  return math_utils::equal(e1->fontSize, e2->fontSize, equalTolerance);
 }
 
 // _________________________________________________________________________________________________
-bool text_element_utils::computeEndsWithSentenceDelimiter(const PdfTextElement* elem) {
-  assert(elem);
+bool text_element_utils::computeEndsWithSentenceDelimiter(const PdfTextElement* element) {
+  assert(element);
 
-  if (elem->text.empty()) {
+  if (element->text.empty()) {
     return false;
   }
 
-  return strchr(SENTENCE_DELIMITER_ALPHABET, elem->text.back()) != nullptr;
+  return strchr(SENTENCE_DELIMITER_ALPHABET, element->text.back()) != nullptr;
 }
 
 // _________________________________________________________________________________________________
-bool text_element_utils::computeStartsWithUpper(const PdfTextElement* elem) {
-  assert(elem);
+bool text_element_utils::computeStartsWithUpper(const PdfTextElement* element) {
+  assert(element);
 
-  if (elem->text.empty()) {
+  if (element->text.empty()) {
     return false;
   }
 
-  return isupper(elem->text[0]);
+  return isupper(element->text[0]);
 }
 
 // _________________________________________________________________________________________________
-bool text_element_utils::computeIsEmphasized(const PdfTextElement* element) {
+bool text_element_utils::computeIsEmphasized(const PdfTextElement* element,
+      double fontSizeEqualTolerance, double fontWeightEqualTolerance) {
   assert(element);
 
   const PdfFontInfo* docFontInfo = element->doc->fontInfos.at(element->doc->mostFreqFontName);
-  const PdfFontInfo* elementFontInfo = element->doc->fontInfos.at(element->fontName);
+  const PdfFontInfo* elemFontInfo = element->doc->fontInfos.at(element->fontName);
   double mostFreqFontSize = element->doc->mostFreqFontSize;
 
   // The element is emphasized if...
 
   // ... its font size is larger than the most frequent font size in the document.
-  if (math_utils::larger(element->fontSize, mostFreqFontSize, FS_EQUAL_TOLERANCE)) {
+  if (math_utils::larger(element->fontSize, mostFreqFontSize, fontSizeEqualTolerance)) {
     return true;
   }
 
   // ... its font weight is larger than the most frequent font weight (and its font size is not
   // smaller than the most frequent font size).
-  if (math_utils::equalOrLarger(element->fontSize, mostFreqFontSize, FS_EQUAL_TOLERANCE)
-      && math_utils::larger(elementFontInfo->weight, docFontInfo->weight, MIN_FONT_WEIGHT_DELTA)) {
+  if (math_utils::equalOrLarger(element->fontSize, mostFreqFontSize, fontSizeEqualTolerance)
+      && math_utils::larger(elemFontInfo->weight, docFontInfo->weight, fontWeightEqualTolerance)) {
     return true;
   }
 
   // ... it is printed in italics (and its font size is not smaller than the most freq font size).
-  if (math_utils::equalOrLarger(element->fontSize, mostFreqFontSize, FS_EQUAL_TOLERANCE)
-      && elementFontInfo->isItalic) {
+  if (math_utils::equalOrLarger(element->fontSize, mostFreqFontSize, fontSizeEqualTolerance)
+      && elemFontInfo->isItalic) {
     return true;
   }
 

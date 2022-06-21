@@ -18,38 +18,30 @@
 #include "./TextBlocksUtils.h"
 #include "./TextLinesUtils.h"
 
-using text_blocks_utils::config::CENTERING_MAX_JUSTIFIED_LINES;
-using text_blocks_utils::config::CENTERING_MAX_XOFFSET_THRESH_FACTOR;
-using text_blocks_utils::config::FORMULA_ID_ALPHABET;
-using text_blocks_utils::config::getLargeXOffsetThreshold;
-using text_blocks_utils::config::getHangingIndentMinLeftMargin;
-using text_blocks_utils::config::HANGING_INDENT_MIN_LINE_LENGTH;
-using text_blocks_utils::config::HANGING_INDENT_MIN_NUM_LONG_LINES;
-using text_blocks_utils::config::HANGING_INDENT_MIN_NUM_NON_INDENTED_LINES;
-
 using std::max;
 using std::min;
 using std::pair;
 using std::string;
 using std::unordered_map;
 using std::vector;
+using text_blocks_utils::config::FORMULA_ID_ALPHABET;
+using text_blocks_utils::config::LAST_NAME_PREFIXES;
 
 // _________________________________________________________________________________________________
-bool text_blocks_utils::computeIsTextLinesCentered(const PdfTextBlock* block) {
+bool text_blocks_utils::computeIsTextLinesCentered(const PdfTextBlock* block,
+      double xOffsetEqualToleranceFactor, double maxNumJustifiedLines) {
   assert(block);
 
-  // The lines in the block are not centered if the block does not contain any lines.
+  // The lines in the block are not obviously not centered if the block does not contain any lines.
   if (block->lines.empty()) {
     return false;
   }
 
   // A boolean indicating whether or not the block contains a line (not representing a display
-  // formula) with a leftX offset (resp. rightX offset) larger than the threshold.
+  // formula) with a leftX offset (resp. rightX offset) larger than a threshold.
   bool hasNonFormulaWithLargeXOffset = false;
   // The number of justified lines (that is: lines with leftX offset == rightX offset == 0).
   int numJustifiedLines = 0;
-
-  // ----------
 
   for (size_t i = 1; i < block->lines.size(); i++) {
     const PdfTextLine* prevLine = block->lines[i - 1];
@@ -58,7 +50,7 @@ bool text_blocks_utils::computeIsTextLinesCentered(const PdfTextBlock* block) {
     // The lines in the block are not centered when there is at least one line which is not
     // centered compared to the previous line.
     bool centered = text_lines_utils::computeIsCentered(prevLine, currLine,
-        CENTERING_MAX_XOFFSET_THRESH_FACTOR);
+        xOffsetEqualToleranceFactor);
     if (!centered) {
       return false;
     }
@@ -82,11 +74,12 @@ bool text_blocks_utils::computeIsTextLinesCentered(const PdfTextBlock* block) {
     bool isFormula = prevLineContainsFormula || currLineContainsFormula;
 
     // Check if the line has a leftX offset (or rightX offset) larger than the threshold.
-    const PdfDocument* doc = currLine->doc;
+    double avgCharWidth = currLine->doc->avgCharWidth;
+    double xOffsetEqualTolerance = xOffsetEqualToleranceFactor * avgCharWidth;
     double absLeftXOffset = abs(element_utils::computeLeftXOffset(prevLine, currLine));
     double absRightXOffset = abs(element_utils::computeRightXOffset(prevLine, currLine));
-    bool isLargeLeftXOffset = math_utils::larger(absLeftXOffset, getLargeXOffsetThreshold(doc));
-    bool isLargeRightXOffset = math_utils::larger(absRightXOffset, getLargeXOffsetThreshold(doc));
+    bool isLargeLeftXOffset = math_utils::larger(absLeftXOffset, xOffsetEqualTolerance);
+    bool isLargeRightXOffset = math_utils::larger(absRightXOffset, xOffsetEqualTolerance);
     bool isLargeXOffset = isLargeLeftXOffset || isLargeRightXOffset;
 
     // Check if the line is not a formula and has a leftX offset (or rightX offset) larger than
@@ -98,19 +91,15 @@ bool text_blocks_utils::computeIsTextLinesCentered(const PdfTextBlock* block) {
     }
   }
 
-  return hasNonFormulaWithLargeXOffset && numJustifiedLines <= CENTERING_MAX_JUSTIFIED_LINES;
+  return hasNonFormulaWithLargeXOffset && numJustifiedLines <= maxNumJustifiedLines;
 }
 
 // _________________________________________________________________________________________________
-double text_blocks_utils::computeHangingIndent(const PdfTextBlock* block) {
+double text_blocks_utils::computeHangingIndent(const PdfTextBlock* block,
+    double minLengthLongLines, double marginThresholdFactor, double minPercLinesSameLeftMargin,
+    double maxNumLowercasedNonIndentedLines, double minNumNonIndentedLines,
+    double minNumLowercasedIndentedLines, double minNumLongLines) {
   assert(block);
-
-  // The block is *not* in hanging indent format if it contains less than two lines.
-  if (block->lines.size() < 2) {
-    return 0.0;
-  }
-
-  double avgCharWidth = block->lines[0]->doc->avgCharWidth;
 
   // The number of lines with a length larger than the threshold.
   int numLongLines = 0;
@@ -138,24 +127,20 @@ double text_blocks_utils::computeHangingIndent(const PdfTextBlock* block) {
   // The number of indented lines.
   int numIndentedLines = 0;
 
-  // ----------
-
-  // Count the number of lines with a length larger than the threshold.
-  // Count the number of lines with a left margin larger than the threshold.
   for (const auto* line : block->lines) {
-    // Ignore lines with a length smaller than the threshold.
-    if (line->text.size() < HANGING_INDENT_MIN_LINE_LENGTH) {
-      continue;
+    // Count the number of lines with a length >= the given threshold.
+    if (line->text.size() >= minLengthLongLines) {
+      numLongLines++;
     }
-    numLongLines++;
 
-    // Ignore lines with a left margin smaller than the threshold.
+    // Count the number of lines with a left margin >= the given threshold.
     double leftMargin = math_utils::round(line->leftMargin);
-    if (math_utils::equalOrSmaller(leftMargin, getHangingIndentMinLeftMargin(line->doc))) {
-      continue;
+    double avgCharWidth = line->doc->avgCharWidth;
+    double leftMarginThreshold = marginThresholdFactor * avgCharWidth;
+    if (math_utils::equalOrLarger(leftMargin, leftMarginThreshold)) {
+      largeLeftMarginCounter[leftMargin]++;
+      numLargeLeftMarginLines++;
     }
-    largeLeftMarginCounter[leftMargin]++;
-    numLargeLeftMarginLines++;
   }
 
   // Compute the most freq left margin among the lines with a left margin larger than the threshold.
@@ -163,15 +148,10 @@ double text_blocks_utils::computeHangingIndent(const PdfTextBlock* block) {
   mostFreqLargeLeftMargin = mostFreqLargeLeftMarginPair.first;
   mostFreqLargeLeftMarginCount = mostFreqLargeLeftMarginPair.second;
 
-  // The block is *not* in hanging indent format if it contains less than two lines with a length
-  // larger than the threshold.
-  if (numLongLines < 2) {
-    return 0.0;
-  }
-
-  // The block is *not* in hanging indent format if the most frequent left margin does not occur in
-  // more than half of the indented lines.
-  if (mostFreqLargeLeftMarginCount <= 0.5 * numLargeLeftMarginLines) {
+  // The block is *not* in hanging indent format if the percentage of lines exhibiting the
+  // most frequent left margin is smaller than a threshold.
+  double numLargeLeftMarginTresh = minPercLinesSameLeftMargin * numLargeLeftMarginLines;
+  if (math_utils::equalOrSmaller(mostFreqLargeLeftMarginCount, numLargeLeftMarginTresh)) {
     return 0.0;
   }
 
@@ -180,26 +160,28 @@ double text_blocks_utils::computeHangingIndent(const PdfTextBlock* block) {
     const PdfTextLine* line = block->lines[i];
 
     // Ignore short lines.
-    if (line->text.size() < HANGING_INDENT_MIN_LINE_LENGTH) {
+    if (line->text.size() < minLengthLongLines) {
       continue;
     }
 
     // Ignore lines that are centered.
-    bool isEqualMargin = math_utils::equal(line->leftMargin, line->rightMargin, avgCharWidth);
-    bool isLargeMargin = math_utils::larger(line->leftMargin, avgCharWidth);
+    double avgCharWidth = line->doc->avgCharWidth;
+    double marginThreshold = marginThresholdFactor * avgCharWidth;
+    bool isEqualMargin = math_utils::equal(line->leftMargin, line->rightMargin, marginThreshold);
+    bool isLargeMargin = math_utils::larger(line->leftMargin, marginThreshold);
     bool isCentered = isEqualMargin && isLargeMargin;
     if (isCentered) {
       continue;
     }
 
     // Count the number of non-indented lines.
-    bool isNonIndented = math_utils::equal(line->leftMargin, 0, avgCharWidth);
+    bool isNonIndented = math_utils::equal(line->leftMargin, 0, marginThreshold);
     if (isNonIndented) {
       numNonIndentedLines++;
     }
 
     // Count the number of indented lines.
-    bool isIndented = math_utils::equal(line->leftMargin, mostFreqLargeLeftMargin, avgCharWidth);
+    bool isIndented = math_utils::equal(line->leftMargin, mostFreqLargeLeftMargin, marginThreshold);
     if (isIndented) {
       numIndentedLines++;
     }
@@ -238,7 +220,7 @@ double text_blocks_utils::computeHangingIndent(const PdfTextBlock* block) {
 
   // The block is *not* in hanging indent format if it contains at least one non-indented line
   // that starts with a lowercase character.
-  if (numLowercasedNonIndentedLines > 0) {
+  if (numLowercasedNonIndentedLines > maxNumLowercasedNonIndentedLines) {
     return 0.0;
   }
 
@@ -253,14 +235,15 @@ double text_blocks_utils::computeHangingIndent(const PdfTextBlock* block) {
 
   // The block is in hanging indent format if all non-indented lines start with an uppercase
   // character and if the number of non-indented lines exceed a certain threshold.
-  if (numNonIndentedLines >= HANGING_INDENT_MIN_NUM_NON_INDENTED_LINES
-        && numLowercasedNonIndentedLines == 0) {
+  if (numNonIndentedLines >= minNumNonIndentedLines
+        && numLowercasedNonIndentedLines <= maxNumLowercasedNonIndentedLines) {
     return mostFreqLargeLeftMargin;
   }
 
   // The block is in hanging indent format if there is at least one indented line that start
   // with a lowercase character.
-  if (numLongLines >= HANGING_INDENT_MIN_NUM_LONG_LINES && numLowercasedIndentedLines > 0) {
+  if (numLongLines >= minNumLongLines
+        && numLowercasedIndentedLines >= minNumLowercasedIndentedLines) {
     return mostFreqLargeLeftMargin;
   }
 
@@ -274,7 +257,8 @@ void text_blocks_utils::computeTextLineMargins(const PdfTextBlock* block) {
   const PdfTextBlock* prevBlock = block->prevBlock;
   const PdfTextBlock* nextBlock = block->nextBlock;
 
-  // TODO(korzen): Enlarge text blocks consisting of short lines.
+  // Enlarge text blocks consisting of short lines.
+  // TODO(korzen): What does this mean?
   double blockTrimRightX = block->trimRightX;
   if (block->lines.size() == 2) {
     double leftMargin = block->position->leftX - block->segment->position->leftX;
@@ -299,7 +283,7 @@ void text_blocks_utils::createTextBlock(const vector<PdfTextLine*>& lines,
   assert(blocks);
 
   PdfTextBlock* block = new PdfTextBlock();
-  block->id = string_utils::createRandomString(8, "tb-");
+  block->id = string_utils::createRandomString(global_config::IDS_LENGTH, "block-");
 
   // Set the reference to the document.
   block->doc = lines[0]->doc;
@@ -323,8 +307,8 @@ void text_blocks_utils::createTextBlock(const vector<PdfTextLine*>& lines,
   block->rank = blocks->size();
 
   // Compute the bounding box and the trim box and count the different font names and font sizes.
-  unordered_map<string, int> fontNameFreqs;
-  unordered_map<double, int> fontSizeFreqs;
+  StringCounter fontNameCounter;
+  DoubleCounter fontSizeCounter;
   for (size_t i = 0; i < lines.size(); i++) {
     PdfTextLine* prevLine = i > 0 ? lines[i-1] : nullptr;
     PdfTextLine* currLine = lines[i];
@@ -348,8 +332,8 @@ void text_blocks_utils::createTextBlock(const vector<PdfTextLine*>& lines,
     block->trimLowerY = min(block->position->lowerY, block->segment->trimLowerY);
 
     // Count the font names and font sizes, for computing the most frequent font name / font size.
-    fontNameFreqs[currLine->fontName]++;
-    fontSizeFreqs[currLine->fontSize]++;
+    fontNameCounter[currLine->fontName]++;
+    fontSizeCounter[currLine->fontSize]++;
 
     currLine->prevLine = prevLine;
     currLine->nextLine = nextLine;
@@ -357,23 +341,9 @@ void text_blocks_utils::createTextBlock(const vector<PdfTextLine*>& lines,
     currLine->block = block;
   }
 
-  // Compute and set the most frequent font name.
-  int mostFreqFontNameCount = 0;
-  for (const auto& pair : fontNameFreqs) {
-    if (pair.second > mostFreqFontNameCount) {
-      block->fontName = pair.first;
-      mostFreqFontNameCount = pair.second;
-    }
-  }
-
-  // Compute and set the most frequent font size.
-  int mostFreqFontSizeCount = 0;
-  for (const auto& pair : fontSizeFreqs) {
-    if (pair.second > mostFreqFontSizeCount) {
-      block->fontSize = pair.first;
-      mostFreqFontSizeCount = pair.second;
-    }
-  }
+  // Compute and set the most frequent font name and -size.
+  block->fontName = fontNameCounter.mostFreq();
+  block->fontSize = fontSizeCounter.mostFreq();
 
   // Compute and set the text.
   for (size_t i = 0; i < lines.size(); i++) {

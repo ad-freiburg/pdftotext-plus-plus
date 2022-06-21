@@ -14,8 +14,6 @@
 #include "./PageSegmentsUtils.h"
 
 using page_segment_utils::config::COORDS_PREC;
-using page_segment_utils::config::MIN_PERCENTAGE_SAME_RIGHT_X;
-
 using std::make_tuple;
 using std::pair;
 using std::tuple;
@@ -23,7 +21,7 @@ using std::unordered_map;
 
 // _________________________________________________________________________________________________
 tuple<double, double, double, double> page_segment_utils::computeTrimBox(
-      const PdfPageSegment* segment) {
+    const PdfPageSegment* segment, double minPercLinesSameRightX) {
   assert(segment);
 
   // Initialize the coordinates of the trim box with the respective coordinates of the bounding box.
@@ -43,11 +41,13 @@ tuple<double, double, double, double> page_segment_utils::computeTrimBox(
   int mostFreqRightXCount = mostFreqRightXPair.second;
 
   // Compute the percentage of lines exhibiting the most frequent rightX.
-  double numLines = segment->lines.size();
-  double mostFreqRightXRatio = numLines > 0.0 ? mostFreqRightXCount / numLines : 0.0;
+  size_t nLines = segment->lines.size();
+  double mostFreqRightXRatio = nLines > 0 ? mostFreqRightXCount / static_cast<double>(nLines) : 0.0;
 
-  // If at least half of the lines exhibit the most frequent rightX, set trimRightX to this value.
-  trimRightX = mostFreqRightXRatio >= MIN_PERCENTAGE_SAME_RIGHT_X ? mostFreqRightX : trimRightX;
+  // If the percentage is larger or equal to the given threshold, set trimRightX to this value.
+  if (math_utils::equalOrLarger(mostFreqRightXRatio, minPercLinesSameRightX)) {
+    trimRightX = mostFreqRightX;
+  }
 
   return make_tuple(trimLeftX, trimUpperY, trimRightX, trimLowerY);
 }

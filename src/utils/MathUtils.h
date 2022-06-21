@@ -11,6 +11,8 @@
 
 #include "../Constants.h"
 
+using global_config::DOUBLE_EQUAL_TOLERANCE;
+
 // =================================================================================================
 
 /**
@@ -36,7 +38,7 @@ namespace math_utils {
  * @return
  *    True if d1 and d2 are (approximately) equal, false otherwise.
  */
-bool equal(double d1, double d2, double tolerance = EQUAL_TOLERANCE);
+bool equal(double d1, double d2, double tolerance = DOUBLE_EQUAL_TOLERANCE);
 
 /**
  * This method returns true, if the first value is larger than the second value by the given
@@ -54,7 +56,7 @@ bool equal(double d1, double d2, double tolerance = EQUAL_TOLERANCE);
  * @return
  *    True if d1 is larger than d2 by the given tolerance, false otherwise.
  */
-bool larger(double d1, double d2, double tolerance = EQUAL_TOLERANCE);
+bool larger(double d1, double d2, double tolerance = DOUBLE_EQUAL_TOLERANCE);
 
 /**
  * This method returns true, if the first value is smaller than the second value by the given
@@ -72,7 +74,7 @@ bool larger(double d1, double d2, double tolerance = EQUAL_TOLERANCE);
  * @return
  *    True if d1 is smaller than d2 by the given tolerance, false otherwise.
  */
-bool smaller(double d1, double d2, double tolerance = EQUAL_TOLERANCE);
+bool smaller(double d1, double d2, double tolerance = DOUBLE_EQUAL_TOLERANCE);
 
 /**
  * This method returns true, if the first value is (approximately) equal to the second value, or
@@ -90,7 +92,7 @@ bool smaller(double d1, double d2, double tolerance = EQUAL_TOLERANCE);
  * @return
  *    True if d1 is equal or larger than d2 by the given tolerance, false otherwise.
  */
-bool equalOrLarger(double d1, double d2, double tolerance = EQUAL_TOLERANCE);
+bool equalOrLarger(double d1, double d2, double tolerance = DOUBLE_EQUAL_TOLERANCE);
 
 /**
  * This method returns true, if the first value is (approximately) equal to the second value, or
@@ -108,7 +110,7 @@ bool equalOrLarger(double d1, double d2, double tolerance = EQUAL_TOLERANCE);
  * @return
  *    True if d1 is equal or smaller than d2 by the given tolerance; false otherwise.
  */
-bool equalOrSmaller(double d1, double d2, double tolerance = EQUAL_TOLERANCE);
+bool equalOrSmaller(double d1, double d2, double tolerance = DOUBLE_EQUAL_TOLERANCE);
 
 /**
  * This method returns true, if the given value is inside the given interval, under consideration
@@ -130,7 +132,7 @@ bool equalOrSmaller(double d1, double d2, double tolerance = EQUAL_TOLERANCE);
  * @return
  *    True if lower - tolerance <= d <= upper + tolerance, false otherwise.
  */
-bool between(double d, double lower, double upper, double tolerance = EQUAL_TOLERANCE);
+bool between(double d, double lower, double upper, double tolerance = DOUBLE_EQUAL_TOLERANCE);
 
 /**
  * This method rounds the given value to <numDecimals> precision after the decimal point.

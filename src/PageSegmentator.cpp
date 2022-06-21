@@ -391,7 +391,7 @@ void PageSegmentator::createPageSegment(const vector<PdfElement*>& elements,
   segment->doc = _doc;
 
   // Create a (unique) id.
-  segment->id = string_utils::createRandomString(8, "ps-");
+  segment->id = string_utils::createRandomString(global_config::IDS_LENGTH, "segment-");
 
   // Set the page number.
   segment->position->pageNum = elements[0]->position->pageNum;

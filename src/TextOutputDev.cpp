@@ -137,7 +137,7 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   // ----------------------------------
   // Create a (unique) id.
 
-  ch->id = string_utils::createRandomString(8, "g-");
+  ch->id = string_utils::createRandomString(global_config::IDS_LENGTH, "char-");
   _log->debug(_p) << " └─ char.id: \"" << ch->id << "\"" << endl;
 
   // ----------------------------------
@@ -499,7 +499,7 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
 
   // There is no figure with a clip box equal to the current clip box yet. Create one.
   PdfFigure* figure = new PdfFigure();
-  figure->id = string_utils::createRandomString(8, "fig-");
+  figure->id = string_utils::createRandomString(global_config::IDS_LENGTH, "figure-");
   figure->doc = _doc;
   figure->position->pageNum = _page->pageNum;
   figure->position->leftX = ch->position->leftX;
@@ -570,7 +570,7 @@ void TextOutputDev::stroke(GfxState* state) {
 
   // Store the information about the path in form of a `PdfShape`.
   PdfShape* shape = new PdfShape();
-  shape->id = string_utils::createRandomString(8, "shape-");
+  shape->id = string_utils::createRandomString(global_config::IDS_LENGTH, "shape-");
   shape->doc = _doc;
   shape->position->pageNum = _page->pageNum;
   shape->position->leftX = leftX;
@@ -629,7 +629,7 @@ void TextOutputDev::stroke(GfxState* state) {
 
   // There is no figure with a clip box equal to the current clip box yet. Create one.
   PdfFigure* figure = new PdfFigure();
-  figure->id = string_utils::createRandomString(8, "fig-");
+  figure->id = string_utils::createRandomString(global_config::IDS_LENGTH, "figure-");
   figure->doc = _doc;
   figure->position->pageNum = _page->pageNum;
   figure->position->leftX = shape->position->leftX;
@@ -717,7 +717,7 @@ void TextOutputDev::drawGraphic(GfxState* state) {
 
   // Handle each graphic as a `PdfGraphic`.
   PdfGraphic* graphic = new PdfGraphic();
-  graphic->id = string_utils::createRandomString(8, "graphic-");
+  graphic->id = string_utils::createRandomString(global_config::IDS_LENGTH, "graphic-");
   graphic->doc = _doc;
   graphic->position->pageNum = _page->pageNum;
   graphic->position->leftX = max(min(leftX, rightX), clipLeftX);
@@ -776,7 +776,7 @@ void TextOutputDev::drawGraphic(GfxState* state) {
 
   // There is no figure with a clip box equal to the current clip box yet. Create one.
   PdfFigure* figure = new PdfFigure();
-  figure->id = string_utils::createRandomString(8, "fig-");
+  figure->id = string_utils::createRandomString(global_config::IDS_LENGTH, "figure-");
   figure->doc = _doc;
   figure->position->pageNum = _page->pageNum;
   figure->position->leftX = graphic->position->leftX;

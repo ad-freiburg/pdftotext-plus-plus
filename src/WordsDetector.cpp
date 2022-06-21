@@ -360,7 +360,7 @@ PdfWord* WordsDetector::createWord(const vector<PdfCharacter*>& characters,
   word->doc = _doc;
 
   // Create a (unique) id.
-  word->id = string_utils::createRandomString(8, "w-");
+  word->id = string_utils::createRandomString(global_config::IDS_LENGTH, "word-");
 
   // Iterative through the characters and compute the text, the x,y-coordinates of the
   // bounding box, and the font info.

@@ -18,57 +18,36 @@ using std::unordered_set;
 // =================================================================================================
 
 namespace global_config {
-  const int COORDS_PREC = 1;
 
-  const double FS_EQUAL_TOLERANCE = 1;
+const int COORDS_PREC = 1;
 
-  /**
-   * The characters we use as an identifier for formulas.
-   */
-  const char* const FORMULA_ID_ALPHABET = "=+";
+const double DOUBLE_EQUAL_TOLERANCE = 0.0001;
+const double FS_EQUAL_TOLERANCE = 1;
 
-  /**
-   * The characters we consider to be alphanumerical. Used by, for example, the
-   * string_utils::createRandomString() method.
-   */
-  const char* const ALPHA_NUM_ALPHABET =
-      "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-
-  /**
-   * The characters we consider to be a sentence delimiter. Used by, for example, the
-   * text_element_utils::computeEndsWithSentenceDelimiter() method.
-   */
-  const char* const SENTENCE_DELIMITER_ALPHABET = "?!.);";
-}  // namespace config
-
-const int FONT_SIZE_PREC = 1;
-
-const int LINE_DIST_PREC = 1;
-const int LEFT_MARGIN_PREC = 0;
-
-const double EQUAL_TOLERANCE = 0.0001;
-
-
-// The resolution in DPI.
-const double H_DPI = 72.0;
-const double V_DPI = 72.0;
-
-// =================================================================================================
-
-
+const int IDS_LENGTH = 8;
 
 /**
- * The characters which we consider to be a valid part of a superscripted item label. This is used
- * by, for example, the text_lines_utils::computeIsPrefixedByItemLabel() method.
+ * The characters we use as an identifier for formulas.
  */
-const char* const SUPER_ITEM_LABEL_ALPHABET = "*∗abcdefghijklmnopqrstuvwxyz01234567890()";
+const char* const FORMULA_ID_ALPHABET = "=+";
 
 /**
- * The characters which we consider, to be a valid footnote label (in addition to alphanumerical
- * symbols). This is used by, for example, the text_lines_utils::computePotentialFootnoteLabels()
- * method.
+ * The characters we consider to be alphanumerical. Used by, for example, the
+ * string_utils::createRandomString() method.
  */
-const char* const SPECIAL_FOOTNOTE_LABELS_ALPHABET = "*∗†‡§‖¶?";
+const char* const ALPHA_NUM_ALPHABET =
+    "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+/**
+ * The characters we consider to be word delimiters.
+ */
+const char* const WORD_DELIMITERS_ALPHABET = " \t\r\n\f\v";
+
+/**
+ * The characters we consider to be a sentence delimiter. Used by, for example, the
+ * text_element_utils::computeEndsWithSentenceDelimiter() method.
+ */
+const char* const SENTENCE_DELIMITER_ALPHABET = "?!.);";
 
 /**
  * A set of common last name prefixes. This is used, for example, by
@@ -81,5 +60,33 @@ const char* const SPECIAL_FOOTNOTE_LABELS_ALPHABET = "*∗†‡§‖¶?";
  * this set.
  */
 const unordered_set<string> LAST_NAME_PREFIXES = { "van", "von", "de" };
+
+/**
+ * The characters which we consider to be a valid part of a superscripted item label. This is used
+ * by, for example, the text_lines_utils::computeIsPrefixedByItemLabel() method.
+ */
+const char* const SUPER_ITEM_LABEL_ALPHABET = "*∗abcdefghijklmnopqrstuvwxyz01234567890()";
+
+}  // namespace global_config
+
+const int FONT_SIZE_PREC = 1;
+
+const int LINE_DIST_PREC = 1;
+const int LEFT_MARGIN_PREC = 0;
+
+// The resolution in DPI.
+const double H_DPI = 72.0;
+const double V_DPI = 72.0;
+
+// =================================================================================================
+
+/**
+ * The characters which we consider, to be a valid footnote label (in addition to alphanumerical
+ * symbols). This is used by, for example, the text_lines_utils::computePotentialFootnoteLabels()
+ * method.
+ */
+const char* const SPECIAL_FOOTNOTE_LABELS_ALPHABET = "*∗†‡§‖¶?";
+
+
 
 #endif  // CONSTANTS_H_

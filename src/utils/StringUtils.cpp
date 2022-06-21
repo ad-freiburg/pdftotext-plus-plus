@@ -15,26 +15,28 @@
 
 #include "./StringUtils.h"
 
-using string_utils::config::ALPHA_NUM_ALPHABET;
-
 using std::string;
 using std::stringstream;
 using std::vector;
 using std::wstring;
+using string_utils::config::ALPHA_NUM_ALPHABET;
+using string_utils::config::WORD_DELIMITERS_ALPHABET;
 
 // _________________________________________________________________________________________________
 void string_utils::splitIntoWords(const wstring& text, vector<wstring>* words) {
   assert(words);
 
   size_t n = text.length();
-  const wstring delimiters = L" \t\r\n\f\v";  // TODO(korzen): Move this to Constants.h
-  size_t start = text.find_first_not_of(delimiters);
+  const string delimiters = WORD_DELIMITERS_ALPHABET;
+  // The following works because all characters are single-byte.
+  const wstring wdelimiters(delimiters.begin(), delimiters.end());
+  size_t start = text.find_first_not_of(wdelimiters);
 
   while (start < n) {
-    size_t stop = text.find_first_of(delimiters, start);
+    size_t stop = text.find_first_of(wdelimiters, start);
     if (stop > n) { stop = n; }
     words->push_back(text.substr(start, stop - start));
-    start = text.find_first_not_of(delimiters, stop + 1);
+    start = text.find_first_not_of(wdelimiters, stop + 1);
   }
 }
 
@@ -43,7 +45,7 @@ void string_utils::splitIntoWords(const string& text, vector<string>* words) {
   assert(words);
 
   size_t n = text.length();
-  const string delimiters = " \t\r\n\f\v";  // TODO(korzen): Move this to Constants.h
+  const string delimiters = WORD_DELIMITERS_ALPHABET;
   size_t start = text.find_first_not_of(delimiters);
 
   while (start < n) {
@@ -59,9 +61,6 @@ string string_utils::createRandomString(size_t len, const string& prefix) {
   // Append the prefix.
   string tmp_s = prefix;
   tmp_s.reserve(prefix.length() + len);
-
-  double x = string_utils::config::x;
-  double y = config::x;
 
   // Append <len>-many random characters from our alphabet of alphanumerical characters.
   int alphabetSize = sizeof(ALPHA_NUM_ALPHABET);
