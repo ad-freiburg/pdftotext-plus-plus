@@ -25,6 +25,7 @@
 #include "./PdfDocument.h"
 #include "./TextOutputDev.h"
 
+using global_config::COORDS_EQUAL_TOLERANCE;
 using std::endl;
 using std::get;
 using std::max;
@@ -41,6 +42,7 @@ TextOutputDev::TextOutputDev(bool parseEmbeddedFontFiles, PdfDocument* doc, bool
   _parseEmbeddedFontFiles = parseEmbeddedFontFiles;
   _doc = doc;
 
+  _log->debug() << "=======================================" << endl;
   _log->debug() << BOLD << "PDF parsing - DEBUG MODE" << OFF << endl;
   _log->debug() << " └─ parse embedded font files: " << parseEmbeddedFontFiles << endl;
 }
@@ -58,17 +60,18 @@ void TextOutputDev::startPage(int pageNum, GfxState* state, XRef* xref) {
   _page = new PdfPage();
   _page->pageNum = _p = pageNum;
   state->getClipBBox(&_page->clipLeftX, &_page->clipUpperY, &_page->clipRightX, &_page->clipLowerY);
+
   _doc->pages.push_back(_page);
   _xref = xref;
 
   _log->debug(_p) << "=======================================" << endl;
   _log->debug(_p) << BOLD << "Event: START PAGE" << OFF << endl;
   _log->debug(_p) << " └─ page.pageNum: " << _page->pageNum << endl;
-  _log->debug(_p) << " └─ page.clipLeftX: " << _page->clipLeftX << endl;
+  _log->debug(_p) << " └─ page.clipLeftX:  " << _page->clipLeftX << endl;
   _log->debug(_p) << " └─ page.clipUpperY: " << _page->clipUpperY << endl;
   _log->debug(_p) << " └─ page.clipRightX: " << _page->clipRightX << endl;
   _log->debug(_p) << " └─ page.clipLowerY: " << _page->clipLowerY << endl;
-  _log->debug(_p) << " └─ page.width: " << _page->getWidth() << endl;
+  _log->debug(_p) << " └─ page.width:  " << _page->getWidth() << endl;
   _log->debug(_p) << " └─ page.height: " << _page->getHeight() << endl;
 }
 
@@ -111,7 +114,7 @@ void TextOutputDev::updateFont(GfxState* state) {
   _log->debug(_p) << " └─ font.ascent: " << _fontInfo->ascent << endl;
   _log->debug(_p) << " └─ font.descent: " << _fontInfo->descent << endl;
   _log->debug(_p) << " └─ font.isItalic: " << _fontInfo->isItalic << endl;
-  _log->debug(_p) << " └─ font.isSerif: " << _fontInfo->isSerif << endl;
+  _log->debug(_p) << " └─ font.isSerif:  " << _fontInfo->isSerif << endl;
   _log->debug(_p) << " └─ font.isSymbolic: " << _fontInfo->isSymbolic << endl;
   _log->debug(_p) << " └─ font.isType3: " << _fontInfo->isType3 << endl;
   _log->debug(_p) << " └─ font.weight: " << _fontInfo->weight << endl;
@@ -299,10 +302,14 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   double nextTrm[6];
   concat(tdXtm, ctm, nextTrm);
 
-  double x0 = math_utils::round(trm[4], 1);
-  double y0 = math_utils::round(trm[5], 1);
-  double x1 = math_utils::round(nextTrm[4], 1);
-  double y1 = math_utils::round(nextTrm[5], 1);
+  // double x0 = math_utils::round(trm[4], 1);
+  // double y0 = math_utils::round(trm[5], 1);
+  // double x1 = math_utils::round(nextTrm[4], 1);
+  // double y1 = math_utils::round(nextTrm[5], 1);
+  double x0 = trm[4];
+  double y0 = trm[5];
+  double x1 = nextTrm[4];
+  double y1 = nextTrm[5];
   double transformedFontSize = state->getTransformedFontSize();
 
   // Compute the ascent, that is: the maximum extent of the font above the base line.
@@ -407,13 +414,13 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
     }
   }
 
-  _log->debug(_p) << " └─ char.leftX: " << ch->position->leftX << endl;
+  _log->debug(_p) << " └─ char.leftX:  " << ch->position->leftX << endl;
   _log->debug(_p) << " └─ char.upperY: " << ch->position->upperY << endl;
   _log->debug(_p) << " └─ char.rightX: " << ch->position->rightX << endl;
   _log->debug(_p) << " └─ char.lowerY: " << ch->position->lowerY << endl;
   _log->debug(_p) << " └─ char.base: " << ch->base << endl;
   if (ch->position->rotation > 0) {
-    _log->debug(_p) << " └─ char.rotLeftX: " << ch->position->getRotLeftX() << endl;
+    _log->debug(_p) << " └─ char.rotLeftX:  " << ch->position->getRotLeftX() << endl;
     _log->debug(_p) << " └─ char.rotUpperY: " << ch->position->getRotUpperY() << endl;
     _log->debug(_p) << " └─ char.rotRightX: " << ch->position->getRotRightX() << endl;
     _log->debug(_p) << " └─ char.rotLowerY: " << ch->position->getRotLowerY() << endl;
@@ -466,33 +473,34 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
 
   double clipLeftX, clipUpperY, clipRightX, clipLowerY;
   state->getClipBBox(&clipLeftX, &clipUpperY, &clipRightX, &clipLowerY);
+
   _log->debug(_p) << " └─ clipbox: leftX: " << clipLeftX << "; upperY: " << clipUpperY
       << "; rightX: " << clipRightX << "; lowerY: " << clipLowerY << endl;
 
   // Check if the clip box is equal to the page's clip box. If so, add the character to the page.
-  if (math_utils::equal(clipLeftX, _page->clipLeftX)
-        && math_utils::equal(clipUpperY, _page->clipUpperY)
-        && math_utils::equal(clipRightX, _page->clipRightX)
-        && math_utils::equal(clipLowerY, _page->clipLowerY)) {
+  if (math_utils::equal(clipLeftX, _page->clipLeftX, COORDS_EQUAL_TOLERANCE)
+        && math_utils::equal(clipUpperY, _page->clipUpperY, COORDS_EQUAL_TOLERANCE)
+        && math_utils::equal(clipRightX, _page->clipRightX, COORDS_EQUAL_TOLERANCE)
+        && math_utils::equal(clipLowerY, _page->clipLowerY, COORDS_EQUAL_TOLERANCE)) {
     _page->characters.push_back(ch);
-    _log->debug(_p) << BOLD << "Appended char to page." << OFF << endl;
+    _log->debug(_p) << "Append to page " << _page->pageNum << "." << endl;
     return;
   }
 
   // Iterate through the figures to check if there is a figure with a clip box equal to the current
   // clip box. If so, append the character to this figure.
   for (auto* figure : _page->figures) {
-    if (math_utils::equal(clipLeftX, figure->clipLeftX)
-          && math_utils::equal(clipUpperY, figure->clipUpperY)
-          && math_utils::equal(clipRightX, figure->clipRightX)
-          && math_utils::equal(clipLowerY, figure->clipLowerY)) {
+    if (math_utils::equal(clipLeftX, figure->clipLeftX, COORDS_EQUAL_TOLERANCE)
+          && math_utils::equal(clipUpperY, figure->clipUpperY, COORDS_EQUAL_TOLERANCE)
+          && math_utils::equal(clipRightX, figure->clipRightX, COORDS_EQUAL_TOLERANCE)
+          && math_utils::equal(clipLowerY, figure->clipLowerY, COORDS_EQUAL_TOLERANCE)) {
       // Update the bounding box of the figure.
       figure->position->leftX = min(figure->position->leftX, ch->position->leftX);
       figure->position->upperY = min(figure->position->upperY, ch->position->upperY);
       figure->position->rightX = max(figure->position->rightX, ch->position->rightX);
       figure->position->lowerY = max(figure->position->lowerY, ch->position->lowerY);
       figure->characters.push_back(ch);
-      _log->debug(_p) << BOLD << "Appended char to figure " << figure->id << "." << OFF << endl;
+      _log->debug(_p) << "Append to figure " << figure->id << "." << endl;
       return;
     }
   }
@@ -513,14 +521,14 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   figure->characters.push_back(ch);
   _page->figures.push_back(figure);
 
-  _log->debug(_p) << BOLD << "Created new figure and appended the char to it." << OFF << endl;
+  _log->debug(_p) << "Create new figure and append the char to it." << endl;
   _log->debug(_p) << " └─ figure.id: " << figure->id << endl;
   _log->debug(_p) << " └─ figure.pageNum: " << figure->position->pageNum << endl;
-  _log->debug(_p) << " └─ figure.leftX: " << figure->position->leftX << endl;
+  _log->debug(_p) << " └─ figure.leftX:  " << figure->position->leftX << endl;
   _log->debug(_p) << " └─ figure.upperY: " << figure->position->upperY << endl;
   _log->debug(_p) << " └─ figure.rightX: " << figure->position->rightX << endl;
   _log->debug(_p) << " └─ figure.lowerY: " << figure->position->lowerY << endl;
-  _log->debug(_p) << " └─ figure.clipLeftX: " << figure->clipLeftX << endl;
+  _log->debug(_p) << " └─ figure.clipLeftX:  " << figure->clipLeftX << endl;
   _log->debug(_p) << " └─ figure.clipUpperY: " << figure->clipUpperY << endl;
   _log->debug(_p) << " └─ figure.clipRightX: " << figure->clipRightX << endl;
   _log->debug(_p) << " └─ figure.clipLowerY: " << figure->clipLowerY << endl;
@@ -550,14 +558,17 @@ void TextOutputDev::stroke(GfxState* state) {
 
     for (int j = 0; j < subpath->getNumPoints(); j++) {
       state->transform(subpath->getX(j), subpath->getY(j), &x, &y);
+
       // Ignore points that lies outside the clip box (since points outside the clip box are
       // not visible).
       // TODO(korzen): This is dangerous, since we may ignore a path that is actually visible, for
       // example, when the first endpoint of a line lies left to the clip box and the second
       // endpoint lies right to the clip box (and the connecting line goes straight through the
       // clip box).
-      if (math_utils::equalOrSmaller(x, clipLeftX) || math_utils::equalOrSmaller(y, clipUpperY) ||
-          math_utils::equalOrLarger(x, clipRightX) || math_utils::equalOrLarger(y, clipLowerY)) {
+      if (math_utils::equalOrSmaller(x, clipLeftX, COORDS_EQUAL_TOLERANCE)
+          || math_utils::equalOrSmaller(y, clipUpperY, COORDS_EQUAL_TOLERANCE)
+          || math_utils::equalOrLarger(x, clipRightX, COORDS_EQUAL_TOLERANCE)
+          || math_utils::equalOrLarger(y, clipLowerY, COORDS_EQUAL_TOLERANCE)) {
         continue;
       }
 
@@ -581,7 +592,7 @@ void TextOutputDev::stroke(GfxState* state) {
 
   _log->debug(_p) << " └─ shape.id: " << shape->id << endl;
   _log->debug(_p) << " └─ shape.pageNum: " << shape->position->pageNum << endl;
-  _log->debug(_p) << " └─ shape.leftX: " << shape->position->leftX << endl;
+  _log->debug(_p) << " └─ shape.leftX:  " << shape->position->leftX << endl;
   _log->debug(_p) << " └─ shape.upperY: " << shape->position->upperY << endl;
   _log->debug(_p) << " └─ shape.rightX: " << shape->position->rightX << endl;
   _log->debug(_p) << " └─ shape.lowerY: " << shape->position->lowerY << endl;
@@ -600,29 +611,29 @@ void TextOutputDev::stroke(GfxState* state) {
   // box is "seen" for the first time.
 
   // Check if the clip box is equal to the page's clip box. If so, add the shape to the page.
-  if (math_utils::equal(clipLeftX, _page->clipLeftX)
-        && math_utils::equal(clipUpperY, _page->clipUpperY)
-        && math_utils::equal(clipRightX, _page->clipRightX)
-        && math_utils::equal(clipLowerY, _page->clipLowerY)) {
+  if (math_utils::equal(clipLeftX, _page->clipLeftX, COORDS_EQUAL_TOLERANCE)
+        && math_utils::equal(clipUpperY, _page->clipUpperY, COORDS_EQUAL_TOLERANCE)
+        && math_utils::equal(clipRightX, _page->clipRightX, COORDS_EQUAL_TOLERANCE)
+        && math_utils::equal(clipLowerY, _page->clipLowerY, COORDS_EQUAL_TOLERANCE)) {
     _page->shapes.push_back(shape);
-    _log->debug(_p) << BOLD << "Appended shape to page." << OFF << endl;
+    _log->debug(_p) << "Append to page " << _page->pageNum << "." << endl;
     return;
   }
 
   // Iterate through the figures to check if there is a figure with a clip box equal to the current
   // clip box. If so, append the shape to this figure.
   for (auto* figure : _page->figures) {
-    if (math_utils::equal(clipLeftX, figure->clipLeftX)
-          && math_utils::equal(clipUpperY, figure->clipUpperY)
-          && math_utils::equal(clipRightX, figure->clipRightX)
-          && math_utils::equal(clipLowerY, figure->clipLowerY)) {
+    if (math_utils::equal(clipLeftX, figure->clipLeftX, COORDS_EQUAL_TOLERANCE)
+          && math_utils::equal(clipUpperY, figure->clipUpperY, COORDS_EQUAL_TOLERANCE)
+          && math_utils::equal(clipRightX, figure->clipRightX, COORDS_EQUAL_TOLERANCE)
+          && math_utils::equal(clipLowerY, figure->clipLowerY, COORDS_EQUAL_TOLERANCE)) {
       // Update the bounding box of the figure.
       figure->position->leftX = min(figure->position->leftX, shape->position->leftX);
       figure->position->upperY = min(figure->position->upperY, shape->position->upperY);
       figure->position->rightX = max(figure->position->rightX, shape->position->rightX);
       figure->position->lowerY = max(figure->position->lowerY, shape->position->lowerY);
       figure->shapes.push_back(shape);
-      _log->debug(_p) << BOLD << "Appended shape to figure " << figure->id << "." << OFF << endl;
+      _log->debug(_p) << "Append to figure " << figure->id << "." << endl;
       return;
     }
   }
@@ -643,10 +654,10 @@ void TextOutputDev::stroke(GfxState* state) {
   figure->shapes.push_back(shape);
   _page->figures.push_back(figure);
 
-  _log->debug(_p) << BOLD << "Created new figure and appended the shape to it." << OFF << endl;
+  _log->debug(_p) << "Create new figure and append the shape to it." << endl;
   _log->debug(_p) << " └─ figure.id: " << figure->id << endl;
   _log->debug(_p) << " └─ figure.pageNum: " << figure->position->pageNum << endl;
-  _log->debug(_p) << " └─ figure.leftX: " << figure->position->leftX << endl;
+  _log->debug(_p) << " └─ figure.leftX:  " << figure->position->leftX << endl;
   _log->debug(_p) << " └─ figure.upperY: " << figure->position->upperY << endl;
   _log->debug(_p) << " └─ figure.rightX: " << figure->position->rightX << endl;
   _log->debug(_p) << " └─ figure.lowerY: " << figure->position->lowerY << endl;
@@ -708,10 +719,10 @@ void TextOutputDev::drawGraphic(GfxState* state) {
 
   // Ignore the graphic if it lies outside the clip box (since graphics outside the clip box are
   // not visible). Example PDF where a graphic lies outside the clip box: 1001.5159
-  if (math_utils::equalOrSmaller(leftX, clipLeftX)
-      || math_utils::equalOrSmaller(upperY, clipUpperY)
-      || math_utils::equalOrLarger(rightX, clipRightX)
-      || math_utils::equalOrLarger(lowerY, clipLowerY)) {
+  if (math_utils::equalOrSmaller(leftX, clipLeftX, COORDS_EQUAL_TOLERANCE)
+      || math_utils::equalOrSmaller(upperY, clipUpperY, COORDS_EQUAL_TOLERANCE)
+      || math_utils::equalOrLarger(rightX, clipRightX, COORDS_EQUAL_TOLERANCE)
+      || math_utils::equalOrLarger(lowerY, clipLowerY, COORDS_EQUAL_TOLERANCE)) {
     return;
   }
 
@@ -728,7 +739,7 @@ void TextOutputDev::drawGraphic(GfxState* state) {
 
   _log->debug(_p) << " └─ graphic.id: " << graphic->id << endl;
   _log->debug(_p) << " └─ graphic.pageNum: " << graphic->position->pageNum << endl;
-  _log->debug(_p) << " └─ graphic.leftX: " << graphic->position->leftX << endl;
+  _log->debug(_p) << " └─ graphic.leftX:  " << graphic->position->leftX << endl;
   _log->debug(_p) << " └─ graphic.upperY: " << graphic->position->upperY << endl;
   _log->debug(_p) << " └─ graphic.rightX: " << graphic->position->rightX << endl;
   _log->debug(_p) << " └─ graphic.lowerY: " << graphic->position->lowerY << endl;
@@ -747,29 +758,29 @@ void TextOutputDev::drawGraphic(GfxState* state) {
   // box is "seen" for the first time.
 
   // Check if the clip box is equal to the page's clip box. If so, add the graphic to the page.
-  if (math_utils::equal(clipLeftX, _page->clipLeftX)
-        && math_utils::equal(clipUpperY, _page->clipUpperY)
-        && math_utils::equal(clipRightX, _page->clipRightX)
-        && math_utils::equal(clipLowerY, _page->clipLowerY)) {
+  if (math_utils::equal(clipLeftX, _page->clipLeftX, COORDS_EQUAL_TOLERANCE)
+        && math_utils::equal(clipUpperY, _page->clipUpperY, COORDS_EQUAL_TOLERANCE)
+        && math_utils::equal(clipRightX, _page->clipRightX, COORDS_EQUAL_TOLERANCE)
+        && math_utils::equal(clipLowerY, _page->clipLowerY, COORDS_EQUAL_TOLERANCE)) {
     _page->graphics.push_back(graphic);
-    _log->debug(_p) << BOLD << "Appended graphic to page." << OFF << endl;
+    _log->debug(_p) << "Append to page " << _page->pageNum << "." << endl;
     return;
   }
 
   // Iterate through the figures to check if there is a figure with a clip box equal to the current
   // clip box. If so, append the graphic to this figure.
   for (auto* figure : _page->figures) {
-    if (math_utils::equal(clipLeftX, figure->clipLeftX)
-          && math_utils::equal(clipUpperY, figure->clipUpperY)
-          && math_utils::equal(clipRightX, figure->clipRightX)
-          && math_utils::equal(clipLowerY, figure->clipLowerY)) {
+    if (math_utils::equal(clipLeftX, figure->clipLeftX, COORDS_EQUAL_TOLERANCE)
+          && math_utils::equal(clipUpperY, figure->clipUpperY, COORDS_EQUAL_TOLERANCE)
+          && math_utils::equal(clipRightX, figure->clipRightX, COORDS_EQUAL_TOLERANCE)
+          && math_utils::equal(clipLowerY, figure->clipLowerY, COORDS_EQUAL_TOLERANCE)) {
       // Update the bounding box of the figure.
       figure->position->leftX = min(figure->position->leftX, graphic->position->leftX);
       figure->position->upperY = min(figure->position->upperY, graphic->position->upperY);
       figure->position->rightX = max(figure->position->rightX, graphic->position->rightX);
       figure->position->lowerY = max(figure->position->lowerY, graphic->position->lowerY);
       figure->graphics.push_back(graphic);
-      _log->debug(_p) << BOLD << "Appended graphic to figure " << figure->id << "." << OFF << endl;
+      _log->debug(_p) << "Append to figure " << figure->id << "." << endl;
       return;
     }
   }
@@ -790,14 +801,14 @@ void TextOutputDev::drawGraphic(GfxState* state) {
   figure->graphics.push_back(graphic);
   _page->figures.push_back(figure);
 
-  _log->debug(_p) << BOLD << "Created new figure and appended the graphic to it." << OFF << endl;
+  _log->debug(_p) << "Create new figure and append the graphic to it." << endl;
   _log->debug(_p) << " └─ figure.id: " << figure->id << endl;
   _log->debug(_p) << " └─ figure.pageNum: " << figure->position->pageNum << endl;
-  _log->debug(_p) << " └─ figure.leftX: " << figure->position->leftX << endl;
+  _log->debug(_p) << " └─ figure.leftX:  " << figure->position->leftX << endl;
   _log->debug(_p) << " └─ figure.upperY: " << figure->position->upperY << endl;
   _log->debug(_p) << " └─ figure.rightX: " << figure->position->rightX << endl;
   _log->debug(_p) << " └─ figure.lowerY: " << figure->position->lowerY << endl;
-  _log->debug(_p) << " └─ figure.clipLeftX: " << figure->clipLeftX << endl;
+  _log->debug(_p) << " └─ figure.clipLeftX:  " << figure->clipLeftX << endl;
   _log->debug(_p) << " └─ figure.clipUpperY: " << figure->clipUpperY << endl;
   _log->debug(_p) << " └─ figure.clipRightX: " << figure->clipRightX << endl;
   _log->debug(_p) << " └─ figure.clipLowerY: " << figure->clipLowerY << endl;

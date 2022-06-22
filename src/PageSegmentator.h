@@ -192,7 +192,7 @@ class PageSegmentator {
   /**
    * This method checks whether the given cut should *not* be chosen, because it divides contiguous
    * words. Two words are contiguous, if the one word immediately follows behind the other word in
-   * the extraction order and if both words share the same text line.
+   * the extraction order and if both words vertically overlap (= they share the same text line).
    *
    * This rule exists to not accidentally divide the words of a title when a word boundary within
    * the title coincide with a column boundary, as shown in the following example:
@@ -205,12 +205,14 @@ class PageSegmentator {
    *
    * @param cut
    *   The cut candidate for which to decide whether to choose or not.
+   * @param elements
+   *   The elements divided by the cut.
    *
    * @return
    *    Trool::False if the given cut should not be chosen, because it divides two contiguous words;
    *    Trool::None otherwise. Note that this method never returns Trool::True.
    */
-  Trool chooseXCut_contiguousWords(const Cut* cut) const;
+  Trool chooseXCut_contiguousWords(const Cut* cut, const vector<PdfElement*>& elements) const;
 
   /**
    * This method checks whether the given cut should *not* be chosen, because the width of one of

@@ -18,6 +18,7 @@
 #include "./PdfElementsUtils.h"
 #include "./TextLinesUtils.h"
 
+using global_config::COORDS_EQUAL_TOLERANCE;
 using std::smatch;
 using std::stack;
 using std::string;
@@ -245,7 +246,7 @@ void text_lines_utils::computeTextLineHierarchy(const PdfPage* page,
         bool hasSameWMode = prevLine->position->wMode == line->position->wMode;
         if (hasSameRotation && hasSameWMode) {
           double absLineDistance = abs(element_utils::computeVerticalGap(prevLine, line));
-          if (math_utils::larger(absLineDistance, maxLineDistance)) {
+          if (math_utils::larger(absLineDistance, maxLineDistance, COORDS_EQUAL_TOLERANCE)) {
             lineStack = stack<PdfTextLine*>();
           }
         }
@@ -276,7 +277,7 @@ void text_lines_utils::computeTextLineHierarchy(const PdfPage* page,
       // sibling line of a line in a different column.
       double topStackLowerY = lineStack.top()->position->lowerY;
       double lineLowerY = line->position->lowerY;
-      if (math_utils::equalOrLarger(topStackLowerY, lineLowerY)) {
+      if (math_utils::equalOrLarger(topStackLowerY, lineLowerY, COORDS_EQUAL_TOLERANCE)) {
         continue;
       }
 
@@ -343,8 +344,8 @@ void text_lines_utils::computePotentialFootnoteLabels(const PdfTextLine* line,
         continue;
       }
 
-      // The character is part of a potential footnote label when it occurs in our alphabet we defined
-      // to identify special (= non-alphanumerical) footnote labels.
+      // The character is part of a potential footnote label when it occurs in our alphabet we
+      // defined to identify special (= non-alphanumerical) footnote labels.
       bool isLabel = strchr(SPECIAL_FOOTNOTE_LABELS_ALPHABET, ch->text[0]) != nullptr;
 
       // The character is also a potential footnote label when it is a superscripted alphanumerical.

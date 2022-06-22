@@ -6,8 +6,8 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#ifndef TROOL_H_
-#define TROOL_H_
+#ifndef UTILS_TROOL_H_
+#define UTILS_TROOL_H_
 
 /**
  * A tri-state "boolean", with values: true, false and "not set". This is required by, for example,
@@ -18,4 +18,4 @@
  */
 enum Trool { None = -1, False, True };
 
-#endif  // TROOL_H_
+#endif  // UTILS_TROOL_H_

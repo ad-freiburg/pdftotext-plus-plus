@@ -21,11 +21,11 @@ using std::vector;
 
 /**
  * This class is the core class of pdftotext++. It is responsible for processing a given PDF file
- * and invoking the following modules of the extraction pipeline, for extracting the text from the
- * PDF file:
+ * and invoking the following modules of the extraction pipeline to extract the text from the PDF
+ * file:
  *
  *  (1) Loading the PDF file;
- *  (2) Parsing the content streams of the PDF file for characters, figures and shapes;
+ *  (2) Parsing the content streams of the PDF file for characters, graphics and shapes;
  *  (3) Computing character statistics;
  *  (4) Merging combining diacritical marks with their base characters;
  *  (5) Detecting words;
@@ -44,7 +44,7 @@ using std::vector;
 class PdfToTextPlusPlus {
  public:
   /**
-   * This constructor creates and initializes a new instance of this `PdfToTextPlusPlus` class.
+   * This constructor creates and initializes a new instance of this class.
    *
    * @param noEmbeddedFontFilesParsing
    *   A boolean flag indicating whether or not to parse the font files, embedded into the current
@@ -119,7 +119,7 @@ class PdfToTextPlusPlus {
    * @param pdfFilePath
    *   The path to the PDF file to process.
    * @param doc
-   *   The `PdfDocument` instance to which the extracted text should be stored.
+   *   The `PdfDocument` instance to which the extracted text and elements should be stored.
    * @param timing
    *   A vector to which the running times needed by the different modules of the extraction
    *   pipeline should be appended. If not set, no running times will be appended.

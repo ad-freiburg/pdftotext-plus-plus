@@ -6,6 +6,8 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
+#include <iostream>
+
 #include <algorithm>  // std::max, std::min
 #include <functional>  // std::function, std::bind
 #include <limits>  // std::numeric_limits
@@ -160,7 +162,7 @@ void PageSegmentator::chooseXCuts(const vector<Cut*>& cuts, const vector<PdfElem
     }
 
     // Check if to *not* choose the x-cut because it divides contiguous words.
-    res = chooseXCut_contiguousWords(cut);
+    res = chooseXCut_contiguousWords(cut, elements);
     if (res == Trool::True) {
       cut->isChosen = true;
       continue;
@@ -236,40 +238,42 @@ Trool PageSegmentator::chooseXCut_smallGapWidthHeight(const Cut* cut, double wid
 }
 
 // _________________________________________________________________________________________________
-Trool PageSegmentator::chooseXCut_contiguousWords(const Cut* cut) const {
+Trool PageSegmentator::chooseXCut_contiguousWords(const Cut* cut,
+      const vector<PdfElement*>& elements) const {
   assert(cut);
 
-  // Check if the elements are words, by casting them to `PdfWord` objects.
-  // An object will be null, if it is not a word.
-  const PdfWord* wordLeft = dynamic_cast<const PdfWord*>(cut->elementBefore);
-  const PdfWord* wordRight = dynamic_cast<const PdfWord*>(cut->elementAfter);
-
-  if (!wordLeft || !wordRight) {
+  // Determine the rightmost word to the left of the cut.
+  const PdfWord* leftWord = dynamic_cast<const PdfWord*>(cut->elementBefore);
+  if (!leftWord) {
     return Trool::None;
   }
 
-  // if (!silent) {
-  //   _log->debug(p) << "Checking contiguousness..." << endl;
-  //   _log->debug(p) << " └─ wordLeft.rank: " << wordLeft->rank << endl;
-  //   _log->debug(p) << " └─ wordRight.rank: " << wordRight->rank << endl;
-  //   _log->debug(p) << " └─ y-ratios: " << ratios.first << ", " << ratios.second << endl;
-  // }
+  // Iterate through the elements to the right of the cut. Check if there is a word w with rank
+  // leftWord.rank + 1 which vertically overlaps `leftWord`. If so, do not choose the cut, since
+  // there is a pair of words that are contiguous.
+  for (size_t i = cut->posInElements; i < elements.size(); i++) {
+    const PdfWord* rightWord = dynamic_cast<const PdfWord*>(elements[i]);
+    if (!rightWord) {
+      continue;
+    }
 
-  bool isContiguous = true;
+    // The words are not contiguous, if they are not neighbors in the extraction order.
+    if (leftWord->rank + 1 != rightWord->rank) {
+      continue;
+    }
 
-  // The words are not contiguous, if they are not neighbors in the extraction order.
-  if (wordLeft->rank + 1 != wordRight->rank) {
-    isContiguous = false;
+    // The words are not contiguous, if they do not share the same text line (= if they do
+    // not overlap vertically).
+    double maxYOverlapRatio = element_utils::computeMaxYOverlapRatio(leftWord, rightWord);
+    if (math_utils::smaller(maxYOverlapRatio, 0.1)) {  // TODO: Parameterize.
+      continue;
+    }
+
+    // The words are contiguous.
+    return Trool::False;
   }
 
-  // The words are not contiguous, if they do not share the same text line (= if they do
-  // not overlap vertically).
-  double maxYOverlapRatio = element_utils::computeMaxYOverlapRatio(wordLeft, wordRight);
-  if (math_utils::smaller(maxYOverlapRatio, 0.1)) {
-    isContiguous = false;
-  }
-
-  return isContiguous ? Trool::False : Trool::None;
+  return Trool::None;
 }
 
 // _________________________________________________________________________________________________
@@ -348,8 +352,6 @@ void PageSegmentator::chooseYCuts(const vector<Cut*>& cuts, const vector<PdfElem
   ccuts.push_back(&topCut);
   for (auto* cut : cuts) { ccuts.push_back(cut); }
   ccuts.push_back(&bottomCut);
-
-
 
   // Iterate through the cuts and find a partner cut for each.
   for (size_t cutIdx = 0; cutIdx < ccuts.size(); cutIdx++) {

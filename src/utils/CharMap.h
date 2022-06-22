@@ -6,8 +6,8 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#ifndef CHARMAP_H_
-#define CHARMAP_H_
+#ifndef UTILS_CHARMAP_H_
+#define UTILS_CHARMAP_H_
 
 #include <string>
 #include <unordered_map>
@@ -164,4 +164,4 @@ const unordered_map<string, pair<unsigned int, string>> charMap = {
   { "vextendsingle", make_pair(0x2223, "\u2223") }
 };
 
-#endif  // CHARMAP_H_
+#endif  // UTILS_CHARMAP_H_

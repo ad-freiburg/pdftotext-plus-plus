@@ -6,6 +6,7 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
+#include <algorithm>
 #include <fstream>  // ofstream
 #include <iostream>
 #include <string>
@@ -97,7 +98,7 @@ void TextSerializer::serializeToStream(std::ostream& outStream) {
           }
 
           if (word->isFirstPartOfHyphenatedWord) {
-            // TODO: Hyphenated words should be also processed character-wise.
+            // TODO(korzen): Hyphenated words should be also processed character-wise.
             outStream << word->isFirstPartOfHyphenatedWord->text;
           } else {
             for (auto* ch : word->characters) {

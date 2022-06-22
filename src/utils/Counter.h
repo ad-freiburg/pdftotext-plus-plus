@@ -6,8 +6,8 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#ifndef COUNTER_H_
-#define COUNTER_H_
+#ifndef UTILS_COUNTER_H_
+#define UTILS_COUNTER_H_
 
 #include <string>
 #include <unordered_map>
@@ -21,9 +21,10 @@ using std::unordered_map;
 // DoubleCounter
 
 /**
- * This class is a subclass of unordered_map, for counting double values and determining the most
- * frequent double. It stores the double values as keys and their counts as values. To initialize a
- * counter and change the count associated with a double value D, you can type something like:
+ * This class is for counting double values and determining the most frequent double or the max
+ * double. It is implemented as a subclass of unordered_map. It stores the double values as keys
+ * and the respective counts as values. To initialize a counter and change the count associated
+ * with a double D, you can type something like:
  *
  * DoubleCounter counter;
  * counter[D] = 3;
@@ -71,9 +72,10 @@ class DoubleCounter : public unordered_map<double, int> {
 // StringCounter
 
 /**
- * This class is a subclass of unordered_map, for counting strings and determining the most
- * frequent string. It stores the strings as keys and their counts as values. To initialize a
- * counter and change the count associated with a string S, you can type something like:
+ * This class is for counting string values and determining the most frequent string. It is
+ * implemented as a subclass of unordered_map. It stores the strings as keys and the respective
+ * counts as values. To initialize a counter and change the count associated with a string S, you
+ * can type something like:
  *
  * StringCounter counter;
  * counter[S] = 3;
@@ -109,4 +111,4 @@ class StringCounter : public unordered_map<string, int> {
   pair<string, int> mostFreqAndCount() const;
 };
 
-#endif  // COUNTER_H_
+#endif  // UTILS_COUNTER_H_

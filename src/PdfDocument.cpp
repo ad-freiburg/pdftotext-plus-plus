@@ -9,8 +9,12 @@
 #include <sstream>  // std::stringstream
 #include <string>
 
+#include "./utils/MathUtils.h"
+
+#include "./Constants.h"
 #include "./PdfDocument.h"
 
+using global_config::COORDS_PREC;
 using std::string;
 using std::stringstream;
 
@@ -141,10 +145,10 @@ string PdfPosition::toString() const {
   stringstream ss;
   ss << "PdfPosition("
      << "page=" << pageNum << "; "
-     << "leftX=" << leftX << "; "
-     << "upperY=" << upperY << "; "
-     << "rightX=" << rightX << "; "
-     << "lowerY=" << lowerY << "; "
+     << "leftX=" << math_utils::round(leftX, COORDS_PREC) << "; "
+     << "upperY=" << math_utils::round(upperY, COORDS_PREC) << "; "
+     << "rightX=" << math_utils::round(rightX, COORDS_PREC) << "; "
+     << "lowerY=" << math_utils::round(lowerY, COORDS_PREC) << "; "
      << "rotation=" << rotation << "; "
      << "wMode=" << wMode << "; ";
   return ss.str();

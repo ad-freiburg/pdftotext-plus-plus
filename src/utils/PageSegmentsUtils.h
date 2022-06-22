@@ -6,8 +6,8 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#ifndef PAGESEGMENTSUTILS_H_
-#define PAGESEGMENTSUTILS_H_
+#ifndef UTILS_PAGESEGMENTSUTILS_H_
+#define UTILS_PAGESEGMENTSUTILS_H_
 
 #include <tuple>
 
@@ -92,4 +92,4 @@ tuple<double, double, double, double> computeTrimBox(const PdfPageSegment* segme
 
 }  // namespace page_segment_utils
 
-#endif  // PAGESEGMENTSUTILS_H_
+#endif  // UTILS_PAGESEGMENTSUTILS_H_

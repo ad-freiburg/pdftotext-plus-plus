@@ -12,11 +12,29 @@
 #include "./PdfDocument.h"
 
 // =================================================================================================
+// CONFIG.
 
-// Do not use the default FS_EQUAL_TOLERANCE from Constants.h here, but an alternative value.
-const double _FS_EQUAL_TOLERANCE = 0.1;
+namespace pdf_statistics_calculator::config {
+
+// Do not use the default FS_EQUAL_TOLERANCE from global_config here, but an alternative value.
+const double FS_EQUAL_TOLERANCE = 0.1;
+
+// A threshold that is used while checking if two consecutive words vertically overlap. The
+// doc->mostFreqWordDistance is only measured between those two words for which the maximum
+// y-overlap ratio is larger or equal to this threshold.
+const double Y_OVERLAP_RATIO_OVERLAPPING_THRESH = 0.5;
+
+//  A threshold that is used while checking if two consecutive words do *not* vertically overlap.
+// The doc->mostFreqEstimatedLineDistance is only measured between those two words for which the
+// maximum y-overlap ratio is smaller or equal to this threshold.
+const double Y_OVERLAP_RATIO_NOT_OVERLAPPING_THRESH = 0;
+
+}  // namespace pdf_statistics_calculator::config
 
 // =================================================================================================
+
+using pdf_statistics_calculator::config::Y_OVERLAP_RATIO_OVERLAPPING_THRESH;
+using pdf_statistics_calculator::config::Y_OVERLAP_RATIO_NOT_OVERLAPPING_THRESH;
 
 /**
  * This class computes some statistics about the characters, words and text lines in a PDF document,
@@ -54,8 +72,19 @@ class PdfStatisticsCalculator {
    *     estimated by analyzing the vertical gaps between consecutive words that do not vertically
    *     overlap (this is needed for tasks that require the most frequent line distance, but
    *     need to be executed before text lines were detected).
+   *
+   * @param yOverlapRatioOverlappingThreshold
+   *    A threshold that is used while checking if two consecutive words vertically overlap. The
+   *    mostFreqWordDistance is only measured between those two words for which the maximum
+   *    y-overlap ratio is larger or equal to this threshold.
+   * @param yOverlapRatioNotOverlappingThreshold
+   *    A threshold that is used while checking if two consecutive words do *not* vertically
+   *    overlap. The mostFreqEstimatedLineDistance is only measured between those two words for
+   *    which the maximum y-overlap ratio is smaller or equal to this threshold.
    */
-  void computeWordStatistics() const;
+  void computeWordStatistics(
+    double yOverlapRatioOverlappingThreshold = Y_OVERLAP_RATIO_OVERLAPPING_THRESH,
+    double yOverlapRatioNotOverlappingThreshold = Y_OVERLAP_RATIO_NOT_OVERLAPPING_THRESH) const;
 
   /**
    * This method computes statistics about the text lines in a PDF document and stores them in the

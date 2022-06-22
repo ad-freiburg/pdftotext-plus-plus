@@ -6,8 +6,8 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#ifndef PDFELEMENTSUTILS_H_
-#define PDFELEMENTSUTILS_H_
+#ifndef UTILS_PDFELEMENTSUTILS_H_
+#define UTILS_PDFELEMENTSUTILS_H_
 
 #include <utility>  // pair
 #include <vector>
@@ -15,7 +15,7 @@
 #include "../Constants.h"
 #include "../PdfDocument.h"
 
-using global_config::DOUBLE_EQUAL_TOLERANCE;
+using global_config::COORDS_EQUAL_TOLERANCE;
 using std::pair;
 using std::vector;
 
@@ -41,7 +41,7 @@ namespace element_utils::config {
 
   // The characters we consider to be a sentence delimiter.
   const char* const SENTENCE_DELIMITER_ALPHABET = global_config::SENTENCE_DELIMITER_ALPHABET;
-}
+}  // namespace element_utils::config
 
 // =================================================================================================
 
@@ -235,7 +235,7 @@ double computeMaxYOverlapRatio(const PdfElement* elem1, const PdfElement* elem2)
  *    True if the leftX values of the two elements are (approximately) equal, false otherwise.
  */
 bool computeHasEqualLeftX(const PdfElement* elem1, const PdfElement* elem2,
-    double tolerance = DOUBLE_EQUAL_TOLERANCE);
+    double tolerance = COORDS_EQUAL_TOLERANCE);
 
 /**
  * This method returns true, if the upperY values of the two given elements are (approximately)
@@ -255,7 +255,7 @@ bool computeHasEqualLeftX(const PdfElement* elem1, const PdfElement* elem2,
  *    True if the upperY values of the two elements are (approximately) equal, false otherwise.
  */
 bool computeHasEqualUpperY(const PdfElement* elem1, const PdfElement* elem2,
-    double tolerance = DOUBLE_EQUAL_TOLERANCE);
+    double tolerance = COORDS_EQUAL_TOLERANCE);
 
 /**
  * This method returns true, if the rightX values of the two given elements are (approximately)
@@ -275,7 +275,7 @@ bool computeHasEqualUpperY(const PdfElement* elem1, const PdfElement* elem2,
  *    True if the rightX values of the two elements are (approximately) equal, false otherwise.
  */
 bool computeHasEqualRightX(const PdfElement* elem1, const PdfElement* elem2,
-    double tolerance = DOUBLE_EQUAL_TOLERANCE);
+    double tolerance = COORDS_EQUAL_TOLERANCE);
 
 /**
  * This method returns true, if the lowerY values of the two given elements are (approximately)
@@ -295,7 +295,7 @@ bool computeHasEqualRightX(const PdfElement* elem1, const PdfElement* elem2,
  *    True if the lowerY values of the two elements are (approximately) equal, false otherwise.
  */
 bool computeHasEqualLowerY(const PdfElement* elem1, const PdfElement* elem2,
-    double tolerance = DOUBLE_EQUAL_TOLERANCE);
+    double tolerance = COORDS_EQUAL_TOLERANCE);
 
 // =================================================================================================
 
@@ -453,4 +453,4 @@ bool computeIsEmphasized(const PdfTextElement* element,
 
 }  // namespace text_element_utils
 
-#endif  // PDFELEMENTSUTILS_H_
+#endif  // UTILS_PDFELEMENTSUTILS_H_

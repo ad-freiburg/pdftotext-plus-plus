@@ -13,6 +13,7 @@
 #include "./PdfDocument.h"
 #include "./SubSuperScriptsDetector.h"
 
+using global_config::COORDS_EQUAL_TOLERANCE;
 using std::max;
 using std::min;
 
@@ -43,12 +44,12 @@ void SubSuperScriptsDetector::process() const {
             // line is higher than the base line of the text line. Consider a character to be
             // subscripted if its base line is lower than the base line of the text line.
             if (math_utils::smaller(character->fontSize, _doc->mostFreqFontSize, fsTolerance)) {
-              if (math_utils::smaller(character->base, line->base)) {
+              if (math_utils::smaller(character->base, line->base, COORDS_EQUAL_TOLERANCE)) {
                 character->isSuperscript = true;
                 continue;
               }
 
-              if (math_utils::larger(character->base, line->base)) {
+              if (math_utils::larger(character->base, line->base, COORDS_EQUAL_TOLERANCE)) {
                 character->isSubscript = true;
                 continue;
               }

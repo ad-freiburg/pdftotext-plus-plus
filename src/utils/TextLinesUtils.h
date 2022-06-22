@@ -6,8 +6,8 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#ifndef TEXTLINESUTILS_H_
-#define TEXTLINESUTILS_H_
+#ifndef UTILS_TEXTLINESUTILS_H_
+#define UTILS_TEXTLINESUTILS_H_
 
 #include <regex>
 #include <string>
@@ -347,4 +347,4 @@ bool computeIsCentered(const PdfTextLine* line1, const PdfTextLine* line2,
 
 }  // namespace text_lines_utils
 
-#endif  // TEXTLINESUTILS_H_
+#endif  // UTILS_TEXTLINESUTILS_H_

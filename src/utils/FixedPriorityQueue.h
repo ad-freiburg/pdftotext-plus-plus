@@ -6,10 +6,12 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#ifndef FIXEDPRIORITYQUEUE_H_
-#define FIXEDPRIORITYQUEUE_H_
+#ifndef UTILS_FIXEDPRIORITYQUEUE_H_
+#define UTILS_FIXEDPRIORITYQUEUE_H_
 
+#include <algorithm>  // std::sort
 #include <queue>
+#include <vector>
 
 using std::priority_queue;
 using std::vector;
@@ -18,8 +20,8 @@ using std::vector;
 
 /**
  * A priority queue with a fixed capacity. If the size of this queue is larger than the given
- * capacity after inserting an element, the element referenced by top() is removed (so that the
- * priority queue never contains more than <capacity>-many elements.).
+ * capacity after inserting an element, the element referenced by top() is removed, so that the
+ * priority queue never contains more than <capacity>-many elements.
  */
 template <typename T, typename Comparator>
 class FixedPriorityQueue : public priority_queue<T, vector<T>, Comparator> {
@@ -71,4 +73,4 @@ class FixedPriorityQueue : public priority_queue<T, vector<T>, Comparator> {
   size_t _capacity;
 };
 
-#endif  // FIXEDPRIORITYQUEUE_H_
+#endif  // UTILS_FIXEDPRIORITYQUEUE_H_

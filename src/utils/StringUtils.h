@@ -6,8 +6,8 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#ifndef STRINGUTILS_H_
-#define STRINGUTILS_H_
+#ifndef UTILS_STRINGUTILS_H_
+#define UTILS_STRINGUTILS_H_
 
 #include <string>
 #include <vector>
@@ -88,4 +88,4 @@ string escapeJson(const string& str);
 
 }  // namespace string_utils
 
-#endif  // STRINGUTILS_H_
+#endif  // UTILS_STRINGUTILS_H_

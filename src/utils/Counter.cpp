@@ -7,6 +7,7 @@
  */
 
 #include <limits>
+#include <string>
 #include <utility>  // make_pair, pair
 
 #include "./Counter.h"

@@ -26,7 +26,7 @@
  * different events triggered by Poppler while parsing the content streams of a PDF (for example:
  * "start a new page", or "draw a character", or "update font", or "draw a graphic", or "draw a
  * shape") and (2) storing the information required by pdftotext++ about, for example,
- * the characters, graphics, and shapes in form of a `PdfDocument`.
+ * the characters, graphics, figures and shapes in form of a `PdfDocument`.
  */
 class TextOutputDev : public OutputDev {
  public:
@@ -170,6 +170,7 @@ class TextOutputDev : public OutputDev {
    * this information in form of a `PdfShape`. If the current clip box is equal to the page's clip
    * box, the shape is added to `_page->shapes`. Otherwise, the shape is added to `figure->shapes`,
    * where figure is the `PdfFigure` object associated with the current clip box.
+   *
    * NOTE: Our assumption here is that each clip box, which is different to the page's clip box,
    * represents a separate figure and that all shapes (and text) falling into the same clip box
    * belong to the same figure. We create exactly one figure per clip box. This figure is created

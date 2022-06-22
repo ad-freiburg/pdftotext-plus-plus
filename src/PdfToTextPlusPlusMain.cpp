@@ -140,7 +140,7 @@ static bool visualizeFigures = false;
 static bool visualizeShapes = false;
 static bool visualizeGraphics = false;
 static bool visualizeReadingOrder = false;
-static bool visualizeBlockDetectionCuts = false;
+static bool visualizeSegmentCuts = false;
 static bool visualizeReadingOrderCuts = false;
 static char visualizeFilePath[256] = "";
 static bool debugPdfParsing = false;
@@ -220,9 +220,9 @@ static const ArgDesc options[] = {
   { "--visualize-reading-order", argFlag, &visualizeReadingOrder, 0,
       "Add the detected reading order of the text blocks to the visualization. Must be used "
       "together with --visualization-path." },
-  { "--visualize-text-block-cuts", argFlag, &visualizeBlockDetectionCuts, 0,
-      "Add the XY-cuts made to detect the text blocks to the visualization. Must be used together "
-      "with --visualization-path." },
+  { "--visualize-segment-cuts", argFlag, &visualizeSegmentCuts, 0,
+      "Add the XY-cuts made by the page segmentation. Must be used together with "
+      "--visualization-path." },
   { "--visualize-reading-order-cuts", argFlag, &visualizeReadingOrderCuts, 0,
       "Add the XY-cuts made to detect the reading order to the visualization. Must be used "
       "together with --visualization-path." },
@@ -407,7 +407,7 @@ int main(int argc, char* argv[]) {
     if (visualizeTextBlocks) { visualizer.visualizeTextBlocks(doc, red); }
     if (visualizePageSegments) { visualizer.visualizePageSegments(doc, blue); }
     if (visualizeReadingOrder) { visualizer.visualizeReadingOrder(doc, blue); }
-    if (visualizeBlockDetectionCuts) { visualizer.visualizeTextBlockDetectionCuts(doc, blue); }
+    if (visualizeSegmentCuts) { visualizer.visualizeSegmentCuts(doc, blue); }
     if (visualizeReadingOrderCuts) { visualizer.visualizeReadingOrderCuts(doc, blue); }
     visualizer.save(visualizeFilePathStr);
     auto end = high_resolution_clock::now();

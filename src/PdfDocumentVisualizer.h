@@ -190,7 +190,7 @@ class PdfDocumentVisualizer {
    * TODO This method visualizes the detected reading order by drawing (1) lines between
    * consecutive text blocks and (2) the index of each text block in the reading order.
    */
-  void visualizeTextBlockDetectionCuts(const PdfDocument& doc, const ColorScheme& cs) const;
+  void visualizeSegmentCuts(const PdfDocument& doc, const ColorScheme& cs) const;
 
   /**
    * TODO This method visualizes the detected reading order by drawing (1) lines between

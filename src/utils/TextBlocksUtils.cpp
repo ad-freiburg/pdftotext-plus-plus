@@ -9,6 +9,7 @@
 #include <algorithm>  // min
 #include <string>
 #include <unordered_map>
+#include <utility>  // pair
 #include <vector>
 
 #include "./Counter.h"
@@ -271,6 +272,7 @@ void text_blocks_utils::computeTextLineMargins(const PdfTextBlock* block) {
   }
 
   for (auto* line : block->lines) {
+    // TODO(korzen): Should this really be rounded?
     line->leftMargin = math_utils::round(line->position->leftX - block->trimLeftX);
     line->rightMargin = math_utils::round(blockTrimRightX - line->position->rightX);
   }

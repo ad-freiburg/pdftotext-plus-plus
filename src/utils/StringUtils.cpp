@@ -6,6 +6,9 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
+#include <string.h>
+
+#include <iostream>
 #include <cassert>  // assert
 #include <iomanip>  // std::setw, std::setfill
 #include <sstream>
@@ -63,7 +66,7 @@ string string_utils::createRandomString(size_t len, const string& prefix) {
   tmp_s.reserve(prefix.length() + len);
 
   // Append <len>-many random characters from our alphabet of alphanumerical characters.
-  int alphabetSize = sizeof(ALPHA_NUM_ALPHABET);
+  int alphabetSize = strlen(ALPHA_NUM_ALPHABET);
   for (size_t i = 0; i < len; i++) {
     tmp_s += ALPHA_NUM_ALPHABET[rand() % (alphabetSize - 1)];
   }

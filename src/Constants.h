@@ -23,6 +23,7 @@ const int COORDS_PREC = 1;
 
 const double DOUBLE_EQUAL_TOLERANCE = 0.0001;
 const double FS_EQUAL_TOLERANCE = 1;
+const double COORDS_EQUAL_TOLERANCE = 0.1;
 
 const int IDS_LENGTH = 8;
 

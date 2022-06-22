@@ -8,6 +8,7 @@
 
 #include <tuple>
 #include <unordered_map>
+#include <utility>  // std::pair
 
 #include "./Counter.h"
 #include "./MathUtils.h"

@@ -6,8 +6,8 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#ifndef LOG_H_
-#define LOG_H_
+#ifndef UTILS_LOG_H_
+#define UTILS_LOG_H_
 
 #include <iostream>  // std::ostream
 #include <string>
@@ -55,7 +55,7 @@ class NullStream : public ostream {
 // =================================================================================================
 
 /**
- * A custom logger for printing logging messages to the console.
+ * A custom logger for printing logging messages with different severity levels to the console.
  */
 class Logger {
  public:
@@ -211,4 +211,4 @@ class Logger {
   int _pageFilter = -1;
 };
 
-#endif  // LOG_H_
+#endif  // UTILS_LOG_H_

@@ -6,8 +6,8 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#ifndef COMPARATORS_H_
-#define COMPARATORS_H_
+#ifndef UTILS_COMPARATORS_H_
+#define UTILS_COMPARATORS_H_
 
 #include "../PdfDocument.h"
 
@@ -121,5 +121,4 @@ class RotLowerYDescComparator {
 
 }  // namespace comparators
 
-
-#endif  // COMPARATORS_H_
+#endif  // UTILS_COMPARATORS_H_

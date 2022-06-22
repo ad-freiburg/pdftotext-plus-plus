@@ -6,9 +6,10 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#ifndef TEXTBLOCKSUTILS_H_
-#define TEXTBLOCKSUTILS_H_
+#ifndef UTILS_TEXTBLOCKSUTILS_H_
+#define UTILS_TEXTBLOCKSUTILS_H_
 
+#include <string>
 #include <unordered_set>
 #include <vector>
 
@@ -238,4 +239,4 @@ void createTextBlock(const vector<PdfTextLine*>& lines, vector<PdfTextBlock*>* b
 
 }  // namespace text_blocks_utils
 
-#endif  // TEXTBLOCKSUTILS_H_
+#endif  // UTILS_TEXTBLOCKSUTILS_H_
