@@ -23,6 +23,12 @@
 #include "./PdfDocument.h"
 #include "./XYCut.h"
 
+using global_config::ID_LENGTH;
+
+using page_segmentator::config::getXCutMinGapWidth;
+using page_segmentator::config::getYCutMinGapHeight;
+using page_segmentator::config::MAX_NUM_X_CUT_OVERLAPPING_ELEMENTS;
+
 using std::endl;
 using std::max;
 using std::min;
@@ -32,10 +38,6 @@ using std::vector;
 PageSegmentator::PageSegmentator(const PdfDocument* doc, bool debug, int debugPageFilter) {
   _log = new Logger(debug ? DEBUG : INFO, debugPageFilter);
   _doc = doc;
-
-  _minXCutGapWidth = 2 * _doc->mostFreqWordDistance;
-  _minYCutGapHeight = 2;
-  _maxNumXCutOverlappingElements = 1;
 }
 
 // _________________________________________________________________________________________________
@@ -47,10 +49,9 @@ PageSegmentator::~PageSegmentator() {
 void PageSegmentator::process() {
   assert(_doc);
 
-  _log->debug() << BOLD << "Page Segmentation - DEBUG MODE" << OFF << endl;
-  _log->debug() << " └─ min x-cut gap width:  " << _minXCutGapWidth << endl;
-  _log->debug() << " └─ min x-cut gap height: " << _minYCutGapHeight << endl;
-  _log->debug() << " └─ max num overlapping elements: " << _maxNumXCutOverlappingElements << endl;
+  _log->info() << "Segmenting the pages..." << endl;
+  _log->debug() << "=======================================" << endl;
+  _log->debug() << BOLD << "DEBUG MODE" << OFF << endl;
 
   // Do nothing if no pages are given.
   if (_doc->pages.empty()) {
@@ -61,6 +62,8 @@ void PageSegmentator::process() {
   for (auto* page : _doc->pages) {
     processPage(page, &page->segments);
   }
+
+  _log->debug() << "=======================================" << endl;
 }
 
 // _________________________________________________________________________________________________
@@ -79,7 +82,7 @@ void PageSegmentator::processPage(PdfPage* page, vector<PdfPageSegment*>* segmen
 
   int p = page->pageNum;
   _log->debug(p) << "=======================================" << endl;
-  _log->debug(p) << BOLD << "PROCESSING PAGE " << p << OFF << endl;
+  _log->debug(p) << BOLD << "page " << p << OFF << endl;
   _log->debug(p) << " └─ # elements: " << pageElements.size() << endl;
   _log->debug(p) << " └─ # words: " << page->words.size() << endl;
   _log->debug(p) << " └─ # figures: " << page->figures.size() << endl;
@@ -94,8 +97,9 @@ void PageSegmentator::processPage(PdfPage* page, vector<PdfPageSegment*>* segmen
 
   // Segment the page using the XY-cut algorithm.
   vector<vector<PdfElement*>> groups;
-  xyCut(pageElements, _minXCutGapWidth, _minYCutGapHeight, _maxNumXCutOverlappingElements,
-      chooseXCutsBind, chooseYCutsBind, false, &groups, &page->blockDetectionCuts);
+  xyCut(pageElements, getXCutMinGapWidth(_doc), getYCutMinGapHeight(_doc),
+      MAX_NUM_X_CUT_OVERLAPPING_ELEMENTS, chooseXCutsBind, chooseYCutsBind, false,
+      &groups, &page->blockDetectionCuts);
 
   // Create a `PdfPageSegment` from each group and append it to the result vector.
   for (const auto& group : groups) {
@@ -113,7 +117,7 @@ void PageSegmentator::chooseXCuts(const vector<Cut*>& cuts, const vector<PdfElem
 
   int p = elements[0]->position->pageNum;
   if (!silent) {
-    _log->debug(p) << "====================" << endl;
+    _log->debug(p) << "---------------------------------------" << endl;
     _log->debug(p) << BOLD << "Choosing x-cuts..." << OFF << endl;
     _log->debug(p) << " └─ # elements: " << elements.size() << endl;
     _log->debug(p) << " └─ # cut candidates: " << cuts.size() << endl;
@@ -121,10 +125,12 @@ void PageSegmentator::chooseXCuts(const vector<Cut*>& cuts, const vector<PdfElem
 
   // Iterate through the cut candidates and choose the cuts that should be actually used.
   Cut* prevChosenCut = nullptr;
-  for (Cut* cut : cuts) {
+  for (size_t i = 0; i < cuts.size(); i++) {
+    Cut* cut = cuts[i];
     if (!silent) {
       _log->debug(p) << "--------------------" << endl;
-      _log->debug(p) << BOLD << "x-cut: " << cut->id << OFF << endl;
+      _log->debug(p) << BOLD << "x-cut #" << (i + 1) << OFF << endl;
+      _log->debug(p) << " └─ cut.id: " << cut->id << endl;
       _log->debug(p) << " └─ cut.pageNum: " << cut->pageNum << endl;
       _log->debug(p) << " └─ cut.x1: " << cut->x1 << endl;
       _log->debug(p) << " └─ cut.y1: " << cut->y1 << endl;
@@ -133,15 +139,15 @@ void PageSegmentator::chooseXCuts(const vector<Cut*>& cuts, const vector<PdfElem
       _log->debug(p) << " └─ cut.gapWidth: " << cut->gapWidth << endl;
       _log->debug(p) << " └─ cut.gapHeight: " << cut->gapHeight << endl;
       _log->debug(p) << " └─ cut.posInElements: " << cut->posInElements << endl;
-      _log->debug(p) << " └─ cut.elementBefore: " << cut->elementBefore->toString() << endl;
-      _log->debug(p) << " └─ cut.elementAfter: " << cut->elementAfter->toString() << endl;
+      _log->debug(p) << " └─ cut.elementBefore: " << cut->elementBefore->toShortString() << endl;
+      _log->debug(p) << " └─ cut.elementAfter:  " << cut->elementAfter->toShortString() << endl;
       _log->debug(p) << " └─ #overlapping elements: " << cut->overlappingElements.size() << endl;
     }
 
     // Check if to *not* choose the x-cut because there are overlapping elements that are
     // positioned near the top or the bottom of the cut. This should avoid to accidentally divide
     // page headers or -footers that are positioned above or below a multi-column layout.
-    Trool res = chooseXCut_overlappingElements(cut, elements);
+    Trool res = chooseXCut_overlappingElements(cut, elements, silent);
     if (res == Trool::True) {
       cut->isChosen = true;
       continue;
@@ -152,7 +158,7 @@ void PageSegmentator::chooseXCuts(const vector<Cut*>& cuts, const vector<PdfElem
 
     // Check if to *not* choose the x-cut because its gap width *and* gap height are smaller than
     // a threshold.
-    res = chooseXCut_smallGapWidthHeight(cut);
+    res = chooseXCut_smallGapWidthHeight(cut, silent);
     if (res == Trool::True) {
       cut->isChosen = true;
       continue;
@@ -162,7 +168,7 @@ void PageSegmentator::chooseXCuts(const vector<Cut*>& cuts, const vector<PdfElem
     }
 
     // Check if to *not* choose the x-cut because it divides contiguous words.
-    res = chooseXCut_contiguousWords(cut, elements);
+    res = chooseXCut_contiguousWords(cut, elements, silent);
     if (res == Trool::True) {
       cut->isChosen = true;
       continue;
@@ -172,7 +178,7 @@ void PageSegmentator::chooseXCuts(const vector<Cut*>& cuts, const vector<PdfElem
     }
 
     // Check if to *not* choose the x-cut because the resulting groups are too slim.
-    res = chooseXCut_slimGroups(prevChosenCut, cut, elements);
+    res = chooseXCut_slimGroups(prevChosenCut, cut, elements, silent);
     if (res == Trool::True) {
       cut->isChosen = true;
       continue;
@@ -182,39 +188,65 @@ void PageSegmentator::chooseXCuts(const vector<Cut*>& cuts, const vector<PdfElem
     }
 
     // Choose the cut, since no rule above was applied.
+    if (!silent) {
+      _log->debug(p) << BLUE << BOLD << " no rule applied → choose cut" << OFF << endl;
+    }
     cut->isChosen = true;
     prevChosenCut = cut;
   }
 }
 
 // _________________________________________________________________________________________________
-Trool PageSegmentator::chooseXCut_overlappingElements(const Cut* cut,
-    const vector<PdfElement*>& elements, double minNumElements,
-    double marginToleranceFactor) const {
+Trool PageSegmentator::chooseXCut_overlappingElements(const Cut* cut, const vector<PdfElement*>&
+      elements, bool silent, double minSize, double marginThresholdFactor) const {
   assert(cut);
+
+  int p = cut->pageNum;
+  double marginThreshold = marginThresholdFactor * _doc->avgCharHeight;
+
+  if (!silent) {
+    _log->debug(p) << BLUE << "Are there overlapping elements at the top/bottom?" << OFF << endl;
+    _log->debug(p) << " └─ #overlappingElements: " << cut->overlappingElements.size() << endl;
+    _log->debug(p) << " └─ #elements: " << elements.size() << endl;
+    _log->debug(p) << " └─ minSize: " << minSize << endl;
+    _log->debug(p) << " └─ marginTolerance: " << marginThreshold << endl;
+  }
 
   // Skip the cut when it does not overlap any elements.
   if (cut->overlappingElements.empty()) {
     return Trool::None;
   }
 
-  // Do not choose the cut when the number of given elements is smaller than the given minimum
-  // number of elements.
-  if (elements.size() < minNumElements) {
+  // Do not choose the cut when the number of divided elements is too small.
+  if (elements.size() < minSize) {
+    if (!silent) {
+      _log->debug(p) << BLUE << BOLD << " #elements < minSize → do not choose" << OFF << endl;
+    }
     return Trool::False;
   }
 
-  double marginTolerance = marginToleranceFactor * _doc->avgCharHeight;
-
   // Do not choose the cut when the top margin (= the distance between the upperY of an element and
   // the upperY of the cut) or the bottom margin (= the distance between the lowerY of the cut and
-  // the lowerY of an element) of an overlapping element is smaller than the tolerance.
+  // the lowerY of an element) of an overlapping element is smaller than the threshold.
   for (const auto* element : cut->overlappingElements) {
-    // Compute the top margin and bottom margin.
     double topMargin = element->position->upperY - cut->y1;
     double bottomMargin = cut->y2 - element->position->lowerY;
 
-    if (topMargin < marginTolerance || bottomMargin < marginTolerance) {
+    if (math_utils::smaller(topMargin, marginThreshold)) {
+      if (!silent) {
+        _log->debug(p) << BLUE << BOLD << " yes → do not choose" << OFF << endl;
+        _log->debug(p) << "  └─ element: " << element->toShortString() << endl;
+        _log->debug(p) << "  └─ element.topMargin: " << topMargin << endl;
+      }
+      return Trool::False;
+    }
+
+    if (math_utils::smaller(bottomMargin, marginThreshold)) {
+      if (!silent) {
+        _log->debug(p) << BLUE << BOLD << " yes → do not choose" << OFF << endl;
+        _log->debug(p) << "  └─ element: " << element->toShortString() << endl;
+        _log->debug(p) << "  └─ element.bottomMargin: " << bottomMargin << endl;
+      }
       return Trool::False;
     }
   }
@@ -223,14 +255,24 @@ Trool PageSegmentator::chooseXCut_overlappingElements(const Cut* cut,
 }
 
 // _________________________________________________________________________________________________
-Trool PageSegmentator::chooseXCut_smallGapWidthHeight(const Cut* cut, double widthThresholdFactor,
-      double heightThresholdFactor) const {
+Trool PageSegmentator::chooseXCut_smallGapWidthHeight(const Cut* cut, bool silent,
+      double widthThresholdFactor, double heightThresholdFactor) const {
   assert(cut);
 
+  int p = cut->pageNum;
   double wThreshold = widthThresholdFactor * _doc->avgCharWidth;
   double hThreshold = heightThresholdFactor * _doc->avgCharHeight;
 
+  if (!silent) {
+    _log->debug(p) << BLUE << "Are the width and height of the cut gap too small?" << OFF << endl;
+    _log->debug(p) << " └─ cut.gapWidth: " << cut->gapWidth << endl;
+    _log->debug(p) << " └─ threshold gapWidth: " << wThreshold << endl;
+    _log->debug(p) << " └─ cut.gapHeight: " << cut->gapHeight << endl;
+    _log->debug(p) << " └─ threshold gapHeight: " << hThreshold << endl;
+  }
+
   if (cut->gapWidth < wThreshold && cut->gapHeight < hThreshold) {
+    _log->debug(p) << BLUE << BOLD << " si → do not choose" << OFF << endl;
     return Trool::False;
   }
 
@@ -239,13 +281,25 @@ Trool PageSegmentator::chooseXCut_smallGapWidthHeight(const Cut* cut, double wid
 
 // _________________________________________________________________________________________________
 Trool PageSegmentator::chooseXCut_contiguousWords(const Cut* cut,
-      const vector<PdfElement*>& elements) const {
+      const vector<PdfElement*>& elements, bool silent, double maxYOverlapRatioThreshold) const {
   assert(cut);
 
   // Determine the rightmost word to the left of the cut.
+  int p = cut->pageNum;
   const PdfWord* leftWord = dynamic_cast<const PdfWord*>(cut->elementBefore);
+
+  if (!silent) {
+    _log->debug(p) << BLUE << "Does the cut divide contiguous words?" << OFF << endl;
+  }
+
   if (!leftWord) {
+    if (!silent) { _log->debug(p) << " └─ leftWord: -" << endl; }
     return Trool::None;
+  }
+
+  if (!silent) {
+    _log->debug(p) << " └─ leftWord: " << leftWord->toShortString() << endl;
+    _log->debug(p) << " └─ leftWord.rank: " << leftWord->rank << endl;
   }
 
   // Iterate through the elements to the right of the cut. Check if there is a word w with rank
@@ -262,14 +316,22 @@ Trool PageSegmentator::chooseXCut_contiguousWords(const Cut* cut,
       continue;
     }
 
-    // The words are not contiguous, if they do not share the same text line (= if they do
-    // not overlap vertically).
+    // The words are not contiguous, if the maximum y-overlap ratio is smaller than the threshold.
     double maxYOverlapRatio = element_utils::computeMaxYOverlapRatio(leftWord, rightWord);
-    if (math_utils::smaller(maxYOverlapRatio, 0.1)) {  // TODO(korzen): Parameterize.
+    if (!silent) {
+      _log->debug(p) << " └─ rightWord: " << rightWord->toShortString() << endl;
+      _log->debug(p) << " └─ rightWord.rank: " << rightWord->rank << endl;
+      _log->debug(p) << " └─ max y-overlap ratio: " << maxYOverlapRatio << endl;
+      _log->debug(p) << " └─ max y-overlap ratio threshold: " << maxYOverlapRatioThreshold << endl;
+    }
+    if (math_utils::smaller(maxYOverlapRatio, maxYOverlapRatioThreshold)) {
       continue;
     }
 
     // The words are contiguous.
+    if (!silent) {
+      _log->debug(p) << BLUE << BOLD << " yes → do not choose" << OFF << endl;
+    }
     return Trool::False;
   }
 
@@ -278,48 +340,57 @@ Trool PageSegmentator::chooseXCut_contiguousWords(const Cut* cut,
 
 // _________________________________________________________________________________________________
 Trool PageSegmentator::chooseXCut_slimGroups(const Cut* prevChosenCut, const Cut* cut,
-    const vector<PdfElement*>& elements, double widthThresholdFactor) const {
+    const vector<PdfElement*>& elements, bool silent, double widthThresholdFactor) const {
   assert(cut);
+
+  int p = cut->pageNum;
+  if (!silent) {
+    _log->debug(p) << BLUE << "Is the width of one resulting group too small?" << OFF << endl;
+  }
 
   double widthThreshold = widthThresholdFactor * _doc->avgCharWidth;
 
   // Compute the width of the resulting left group.
   const PdfElement* leftGroupFirstElem = prevChosenCut ? prevChosenCut->elementAfter : elements[0];
+  const PdfElement* leftGroupLastElem = cut->elementBefore;
   double leftGroupMinX = leftGroupFirstElem->position->leftX;
-  double leftGroupMaxX = cut->elementBefore->position->rightX;
+  double leftGroupMaxX = leftGroupLastElem->position->rightX;
   double leftGroupWidth = leftGroupMaxX - leftGroupMinX;
 
-  // if (!silent) {
-  //   _log->debug(p) << "Checking left group width..." << endl;
-  //   _log->debug(p) << " └─ prevElementRight: " << prevElementRight->toString() << endl;
-  //   _log->debug(p) << " └─ leftGroup.width: " << leftGroupWidth << endl;
-  //   _log->debug(p) << " └─ threshold: " << 10 * widthThreshold << endl;
-  // }
+  if (!silent) {
+    _log->debug(p) << " └─ leftGroup.firstElem: " << leftGroupFirstElem->toShortString() << endl;
+    _log->debug(p) << " └─ leftGroup.lastElem:  " << leftGroupLastElem->toShortString() << endl;
+    _log->debug(p) << " └─ leftGroup.width: " << leftGroupWidth << endl;
+    _log->debug(p) << " └─ threshold: " << widthThreshold << endl;
+  }
 
   if (leftGroupWidth < widthThreshold) {
-    // if (!silent) {
-    //   _log->debug(p) << "\033[1mCut not chosen (left group width too small).\033[0m" << endl;
-    // }
+    if (!silent) {
+      _log->debug(p) << BLUE << BOLD << " yes (leftGroup) → do not choose" << OFF << endl;
+    }
     return Trool::False;
   }
 
   // Compute the width of the resulting right group.
-  double rightGroupMinX = cut->elementAfter->position->leftX;
+  const PdfElement* rightGroupFirstElem = cut->elementAfter;
   // TODO(korzen): The elements are sorted by leftX, so the last element isn't necessarily the
   // element with the largest rightX in the right group.
-  double rightGroupMaxX = elements[elements.size() - 1]->position->rightX;
+  const PdfElement* rightGroupLastElem = elements[elements.size() - 1];
+  double rightGroupMinX = rightGroupFirstElem->position->leftX;
+  double rightGroupMaxX = rightGroupLastElem->position->rightX;
   double rightGroupWidth = rightGroupMaxX - rightGroupMinX;
 
-  // if (!silent) {
-  //   _log->debug(p) << "Checking right group width..." << endl;
-  //   _log->debug(p) << " └─ rightGroup.width: " << rightGroupWidth << endl;
-  //   _log->debug(p) << " └─ threshold: " << 10 * _doc->avgCharWidth << endl;
-  // }
+  if (!silent) {
+    _log->debug(p) << " └─ rightGroup.firstElem: " << rightGroupFirstElem->toShortString() << endl;
+    _log->debug(p) << " └─ rightGroup.lastElem: " << rightGroupLastElem->toShortString() << endl;
+    _log->debug(p) << " └─ rightGroup.width: " << rightGroupWidth << endl;
+    _log->debug(p) << " └─ threshold: " << widthThreshold << endl;
+  }
 
   if (rightGroupWidth < widthThreshold) {
-    // if (!silent) {
-    //   _log->debug(p) << "\033[1mCut not chosen (right group width too small).\033[0m" << endl;
-    // }
+    if (!silent) {
+      _log->debug(p) << BLUE << BOLD << " yes (rightGroup) → do not choose" << OFF << endl;
+    }
     return Trool::False;
   }
 
@@ -339,44 +410,74 @@ void PageSegmentator::chooseYCuts(const vector<Cut*>& cuts, const vector<PdfElem
     return;
   }
 
+  int p = elements[0]->position->pageNum;
+  if (!silent) {
+    _log->debug(p) << "---------------------------------------" << endl;
+    _log->debug(p) << BOLD << "Choosing y-cuts..." << OFF << endl;
+    _log->debug(p) << " └─ # elements: " << elements.size() << endl;
+    _log->debug(p) << " └─ # cut candidates: " << cuts.size() << endl;
+    _log->debug(p) << "--------------------" << endl;
+  }
+
   // Create the bind required to pass the chooseXCuts() method to xCut().
   auto chooseXCutsBind = std::bind(&PageSegmentator::chooseXCuts, this,
     std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
 
   // Add two "sentinel cuts", representing the top boundary and the bottom boundary of the page, to
   // the vector of cuts. They are not an actual part of the choosable cuts. Their purpose is to
-  // make the code for choosing the y-cuts more compact (and also more readable).
-  Cut topCut(CutDir::Y, 0);
-  Cut bottomCut(CutDir::Y, elements.size());
+  // make the code below for choosing the y-cuts more compact (and also more readable).
+  Cut topCut(CutDir::Y, "(top)", 0);
+  Cut bottomCut(CutDir::Y, "(bottom)", elements.size());
   vector<Cut*> ccuts;
   ccuts.push_back(&topCut);
   for (auto* cut : cuts) { ccuts.push_back(cut); }
   ccuts.push_back(&bottomCut);
 
   // Iterate through the cuts and find a partner cut for each.
-  for (size_t cutIdx = 0; cutIdx < ccuts.size(); cutIdx++) {
-    Cut* cut = ccuts[cutIdx];
+  for (size_t idx = 0; idx < ccuts.size(); idx++) {
+    Cut* cut = ccuts[idx];
+
+    if (!silent) {
+      _log->debug(p) << BLUE << "y-cut #" << (idx + 1)
+          << ": id: " << cut->id << "; page: " << cut->pageNum << "; x1: " << cut->x1
+          << "; y1: " << cut->y1 << "; x2: " << cut->x2 << "; y2: " << cut->y2 << OFF << endl;
+    }
 
     Cut* partnerCut = nullptr;
-    for (size_t otherCutIdx = cutIdx + 1; otherCutIdx < ccuts.size(); otherCutIdx++) {
-      Cut* otherCut = ccuts[otherCutIdx];
+    for (size_t otherIdx = idx + 1; otherIdx < ccuts.size(); otherIdx++) {
+      Cut* otherCut = ccuts[otherIdx];
 
       size_t beginPos = cut->posInElements;
       size_t endPos = otherCut->posInElements;
       vector<PdfElement*> elems(elements.begin() + beginPos, elements.begin() + endPos);
 
+
+      bool cutOk = xCut(elems, getXCutMinGapWidth(_doc), MAX_NUM_X_CUT_OVERLAPPING_ELEMENTS,
+          chooseXCutsBind, true);
+
+      if (!silent) {
+        _log->debug(p) << " other y-cut #" << (otherIdx + 1)
+            << ": id: " << otherCut->id << "; page: " << otherCut->pageNum
+            << "; x1: " << otherCut->x1 << "; y1: " << otherCut->y1
+            << "; x2: " << otherCut->x2 << "; y2: " << otherCut->y2
+            << BOLD << " → cutOk: " << (cutOk ? "yes" : "no") << OFF << endl;
+      }
+
       // Abort the search for a partner cut, when the elements can't be divided by an x-cut.
-      if (!xCut(elems, _minXCutGapWidth, _maxNumXCutOverlappingElements, chooseXCutsBind, true)) {
+      if (!cutOk) {
         break;
       }
 
       partnerCut = otherCut;
-      cutIdx = otherCutIdx;
+      idx = otherIdx;
     }
 
     if (partnerCut) {
       cut->isChosen = true;
       partnerCut->isChosen = true;
+      if (!silent) {
+        _log->debug(p) << BOLD << "choose " << cut->id << " + " << partnerCut->id << OFF << endl;
+      }
     }
   }
 }
@@ -393,7 +494,7 @@ void PageSegmentator::createPageSegment(const vector<PdfElement*>& elements,
   segment->doc = _doc;
 
   // Create a (unique) id.
-  segment->id = string_utils::createRandomString(global_config::ID_LENGTH, "segment-");
+  segment->id = string_utils::createRandomString(ID_LENGTH, "segment-");
 
   // Set the page number.
   segment->position->pageNum = elements[0]->position->pageNum;

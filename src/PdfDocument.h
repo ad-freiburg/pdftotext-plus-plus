@@ -88,12 +88,14 @@ class Cut {
    *
    * @param dir
    *   The direction of this cut.
+   * @param id
+   *   The id of this cut.
    * @param posInElements
    *   The page elements to be split are given in a vector. The parameter `posInElements` is the
    *   position of the cut in this vector. It can be understood as follows: If set to value i, the
    *   cut splits the elements in vector V between V[i-1] and V[i].
    */
-  explicit Cut(const CutDir dir, int posInElements);
+  explicit Cut(const CutDir dir, const string& id, int posInElements);
 
   /** The deconstructor. */
   ~Cut();
@@ -288,6 +290,14 @@ class PdfPosition {
    *    A string representation of this position.
    */
   string toString() const;
+
+  /**
+   * This method returns a short string representation of this position, for debugging purposes.
+   *
+   * @return
+   *    A short string representation of this position.
+   */
+  string toShortString() const;
 };
 
 // =================================================================================================
@@ -323,6 +333,14 @@ class PdfElement {
    *    A string representation of this element.
    */
   virtual string toString() const = 0;
+
+  /**
+   * This method returns a short string representation of this element, for debugging purposes.
+   *
+   * @return
+   *    A short string representation of this element.
+   */
+  virtual string toShortString() const = 0;
 };
 
 // =================================================================================================
@@ -421,6 +439,14 @@ class PdfCharacter : public PdfTextElement {
    *    A string representation of this character.
    */
   string toString() const override;
+
+  /**
+   * This method returns a short string representation of this character, for debugging purposes.
+   *
+   * @return
+   *    A short string representation of this character.
+   */
+  string toShortString() const override;
 };
 
 // =================================================================================================
@@ -478,6 +504,14 @@ class PdfWord : public PdfTextElement {
    *    A string representation of this word.
    */
   string toString() const override;
+
+  /**
+   * This method returns a short string representation of this character, for debugging purposes.
+   *
+   * @return
+   *    A short string representation of this character.
+   */
+  string toShortString() const override;
 };
 
 // =================================================================================================
@@ -564,6 +598,14 @@ class PdfTextLine : public PdfTextElement {
    *    A string representation of this text line.
    */
   string toString() const override;
+
+  /**
+   * This method returns a short string representation of this character, for debugging purposes.
+   *
+   * @return
+   *    A short string representation of this character.
+   */
+  string toShortString() const override;
 };
 
 // =================================================================================================
@@ -628,6 +670,14 @@ class PdfTextBlock : public PdfTextElement {
    *    A string representation of this text block, for debugging purposes.
    */
   string toString() const override;
+
+  /**
+   * This method returns a short string representation of this character, for debugging purposes.
+   *
+   * @return
+   *    A short string representation of this character.
+   */
+  string toShortString() const override;
 };
 
 // =================================================================================================
@@ -673,6 +723,14 @@ class PdfFigure : public PdfNonTextElement {
    *    A string representation of this figure.
    */
   string toString() const override;
+
+  /**
+   * This method returns a short string representation of this character, for debugging purposes.
+   *
+   * @return
+   *    A short string representation of this character.
+   */
+  string toShortString() const override;
 };
 
 // =================================================================================================
@@ -695,6 +753,14 @@ class PdfShape : public PdfNonTextElement {
    *    A string representation of this shape.
    */
   string toString() const override;
+
+  /**
+   * This method returns a short string representation of this character, for debugging purposes.
+   *
+   * @return
+   *    A short string representation of this character.
+   */
+  string toShortString() const override;
 };
 
 // =================================================================================================
@@ -720,6 +786,14 @@ class PdfGraphic : public PdfNonTextElement {
    *    A string representation of this graphic.
    */
   string toString() const override;
+
+  /**
+   * This method returns a short string representation of this character, for debugging purposes.
+   *
+   * @return
+   *    A short string representation of this character.
+   */
+  string toShortString() const override;
 };
 
 // =================================================================================================
@@ -768,6 +842,14 @@ class PdfPageSegment : public PdfElement {
    *    A string representation of this segment.
    */
   string toString() const override;
+
+  /**
+   * This method returns a short string representation of this character, for debugging purposes.
+   *
+   * @return
+   *    A short string representation of this character.
+   */
+  string toShortString() const override;
 };
 
 // =================================================================================================

@@ -27,8 +27,9 @@ Cut::Cut(const CutDir dirA) {
 }
 
 // _________________________________________________________________________________________________
-Cut::Cut(const CutDir dirA, int posInElementsA) {
+Cut::Cut(const CutDir dirA, const string& idA, int posInElementsA) {
   dir = dirA;
+  id = idA;
   posInElements = posInElementsA;
 }
 
@@ -150,7 +151,18 @@ string PdfPosition::toString() const {
      << "rightX=" << math_utils::round(rightX, COORDS_PREC) << "; "
      << "lowerY=" << math_utils::round(lowerY, COORDS_PREC) << "; "
      << "rotation=" << rotation << "; "
-     << "wMode=" << wMode << "; ";
+     << "wMode=" << wMode << ")";
+  return ss.str();
+}
+
+// _________________________________________________________________________________________________
+string PdfPosition::toShortString() const {
+  stringstream ss;
+  ss << "p=" << pageNum
+     << "; leftX=" << math_utils::round(leftX, COORDS_PREC)
+     << "; upperY=" << math_utils::round(upperY, COORDS_PREC)
+     << "; rightX=" << math_utils::round(rightX, COORDS_PREC)
+     << "; lowerY=" << math_utils::round(lowerY, COORDS_PREC);
   return ss.str();
 }
 
@@ -214,6 +226,17 @@ string PdfCharacter::toString() const {
   return ss.str();
 }
 
+// _________________________________________________________________________________________________
+string PdfCharacter::toShortString() const {
+  stringstream ss;
+  ss << "type: char; "
+     << position->toShortString()
+     << "; fn=" << fontName
+     << "; fs=" << fontSize
+     << "; text=\"" << text << "\"";
+  return ss.str();
+}
+
 // =================================================================================================
 // PdfWord
 
@@ -235,6 +258,17 @@ string PdfWord::toString() const {
      << "fontName=" << fontName << "; "
      << "fontSize=" << fontSize << "; "
      << "text=\"" << text << "\")";
+  return ss.str();
+}
+
+// _________________________________________________________________________________________________
+string PdfWord::toShortString() const {
+  stringstream ss;
+  ss << "type: word; "
+     << position->toShortString()
+     << "; fn=" << fontName
+     << "; fs=" << fontSize
+     << "; text=\"" << text << "\"";
   return ss.str();
 }
 
@@ -261,6 +295,17 @@ string PdfTextLine::toString() const {
   return ss.str();
 }
 
+// _________________________________________________________________________________________________
+string PdfTextLine::toShortString() const {
+  stringstream ss;
+  ss << "type: line; "
+     << position->toShortString()
+     << "; fn=" << fontName
+     << "; fs=" << fontSize
+     << "; text=\"" << text << "\"";
+  return ss.str();
+}
+
 // =================================================================================================
 // PdfTextBlock
 
@@ -279,6 +324,17 @@ string PdfTextBlock::toString() const {
      << "isCentered=" << isLinesCentered << "; "
      << "isEmphasized=" << isEmphasized << "; "
      << "text=\"" << text << "\")";
+  return ss.str();
+}
+
+// _________________________________________________________________________________________________
+string PdfTextBlock::toShortString() const {
+  stringstream ss;
+  ss << "type: block; "
+     << position->toShortString()
+     << "; fn=" << fontName
+     << "; fs=" << fontSize
+     << "; text=\"" << text << "\"";
   return ss.str();
 }
 
@@ -313,6 +369,13 @@ string PdfFigure::toString() const {
   return ss.str();
 }
 
+// _________________________________________________________________________________________________
+string PdfFigure::toShortString() const {
+  stringstream ss;
+  ss << "type: figure; " << position->toShortString();
+  return ss.str();
+}
+
 // =================================================================================================
 // PdfShape
 
@@ -329,6 +392,13 @@ string PdfShape::toString() const {
   return ss.str();
 }
 
+// _________________________________________________________________________________________________
+string PdfShape::toShortString() const {
+  stringstream ss;
+  ss << "type: shape; " << position->toShortString();
+  return ss.str();
+}
+
 // =================================================================================================
 // PdfGraphic
 
@@ -342,6 +412,13 @@ PdfGraphic::~PdfGraphic() = default;
 string PdfGraphic::toString() const {
   stringstream ss;
   ss << "PdfGraphic(pos=" << position->toString() << ")";
+  return ss.str();
+}
+
+// _________________________________________________________________________________________________
+string PdfGraphic::toShortString() const {
+  stringstream ss;
+  ss << "type: graphic; " << position->toShortString();
   return ss.str();
 }
 
@@ -364,6 +441,13 @@ string PdfPageSegment::toString() const {
   stringstream ss;
   ss << "PdfPageSegment("
      << "pos=" << position->toString() << "; ";
+  return ss.str();
+}
+
+// _________________________________________________________________________________________________
+string PdfPageSegment::toShortString() const {
+  stringstream ss;
+  ss << "type: segment; " << position->toShortString();
   return ss.str();
 }
 

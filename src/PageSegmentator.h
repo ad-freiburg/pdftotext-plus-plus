@@ -19,13 +19,99 @@
 using std::vector;
 
 // =================================================================================================
+// CONFIG
+
+namespace page_segmentator::config {
+
+// A threshold used by chooseXCut_overlappingElements(). It denotes the minimum number of elements
+// a cut must at least divide, so that the cut is allowed to overlap one or more elements. The
+// purpose of this threshold is to allow for overlapping elements only when the group divided by
+// a cut is large enough (otherwise, small groups are divided accidentally too often).
+const double OVERLAPPING_ELEMENTS_MIN_SIZE = 500;
+
+// A factor used by chooseXCut_overlappingElements(). It is used to compute a threshold for
+// deciding if an overlapping element is positioned at the top or at the bottom of a cut. The
+// threshold is computed as <FACTOR> * _doc->avgCharHeight. If the top margin (= the distance
+// between the upperY of an element and the upperY of the cut) of an overlapping element is smaller
+// than this threshold, it is considered to be positioned at the top of the cut.
+// If the bottom margin (= the distance between the lowerY of the cut and the lowerY of an element)
+// of an overlapping element is smaller than this threshold, it is considered to be positioned at
+// the bottom of the cut.
+const double OVERLAPPING_ELEMENTS_MARGIN_THRESHOLD_FACTOR = 5;
+
+// A factor used by chooseXCut_smallGapWidthHeight(). It is used to compute a threshold for the
+// gap width of an cut. The threshold is computed as <FACTOR> * _doc->avgCharWidth. If the gap
+// width of a cut is smaller than this threshold (and the gap height is smaller than a threshold
+// computed from <MIN_GAP_HEIGHT_THRESHOLD_FACTOR>, see below), the cut will be not chosen.
+const double MIN_GAP_WIDTH_THRESHOLD_FACTOR = 2;
+
+// A factor used by chooseXCut_smallGapWidthHeight(). It is used to compute a threshold for the
+// gap height of an cut. The threshold is computed as <FACTOR> * _doc->avgCharHeight. If the gap
+// height of a cut is smaller than this threshold (and the gap width is smaller than a threshold
+// computed from <MIN_GAP_WIDTH_THRESHOLD_FACTOR>, see above), the cut will be not chosen.
+const double MIN_GAP_HEIGHT_THRESHOLD_FACTOR = 6;
+
+// A threshold used by chooseXCut_contiguousWords(). It is used to check if two words are *not*
+// contiguous because of their maximum y-overlap ratio. If the maximum y-overlap ratio between two
+// words is smaller than this threshold, they are considered to be not contiguous.
+const double CONT_WORDS_MAX_Y_OVERLAP_RATIO_THRESHOLD = 0.1;
+
+// A factor used by chooseXCut_slimGroups(). It is used to compute a threshold for checking if the
+// width of one of the groups resulting from an x-cut is too small. The threshold is computed as:
+// <FACTOR> * _doc->avgCharWidth. If the width of one of the groups resulting from an x-cut is
+// smaller than this threshold, the cut will not be chosen.
+const double SLIM_GROUP_WIDTH_THRESHOLD_FACTOR = 10;
+
+// The maximum number of elements an x-cut is allowed to overlap.
+const int MAX_NUM_X_CUT_OVERLAPPING_ELEMENTS = 1;
 
 /**
- * This class divides the pages of a given PDF document into segments, by using the recursive
- * XY-cut algorithm. Each page is segmented separately. The input are the words, figures, graphics,
- * and shapes of a page. The output is a vector of `PdfPageSegment` objects. The purpose of the
- * segmentation is to separate the elements of different columns. Each segment contains the
- * elements of a single column (no segment contains text from two columns).
+ * This method returns the minimum width of a horizontal gap between two elements for considering
+ * the position between the elements as a valid position for an x-cut candidate. This value is
+ * passed as minXCutGapWidth to the xyCut() and xCut() method.
+ *
+ * @param doc
+ *    The PDF document currently processed.
+ *
+ * @return
+ *    The minimum gap width of an x-cut.
+ */
+constexpr double getXCutMinGapWidth(const PdfDocument* doc) {
+  return 2.0 * doc->mostFreqWordDistance;
+}
+
+/**
+ * This method returns the minimum height of a vertical gap between two elements for considering
+ * the position between the elements as a valid position for an y-cut candidate. This value is
+ * passed as minYCutGapWidth to the xyCut() method.
+ *
+ * @param doc
+ *    The PDF document currently processed.
+ *
+ * @return
+ *    The minimum gap height of an y-cut.
+ */
+constexpr double getYCutMinGapHeight(const PdfDocument* doc) {
+  return 2.0;
+}
+
+}  // namespace page_segmentator::config
+
+// =================================================================================================
+
+using page_segmentator::config::CONT_WORDS_MAX_Y_OVERLAP_RATIO_THRESHOLD;
+using page_segmentator::config::MIN_GAP_HEIGHT_THRESHOLD_FACTOR;
+using page_segmentator::config::MIN_GAP_WIDTH_THRESHOLD_FACTOR;
+using page_segmentator::config::OVERLAPPING_ELEMENTS_MARGIN_THRESHOLD_FACTOR;
+using page_segmentator::config::OVERLAPPING_ELEMENTS_MIN_SIZE;
+using page_segmentator::config::SLIM_GROUP_WIDTH_THRESHOLD_FACTOR;
+
+/**
+ * This class is responsible for dividing the pages of a given PDF document into segments, by using
+ * the recursive XY-cut algorithm. Each page is segmented separately. The input are the words,
+ * figures, graphics, and shapes of a page. The output is a vector of `PdfPageSegment` objects.
+ * The purpose of the segmentation is to separate the elements of different columns. Each segment
+ * contains the elements of a single column (no segment contains text from two columns).
  * The segmentation is a preprocessing step for detecting text lines and detecting text blocks.
  */
 class PageSegmentator {
@@ -121,7 +207,9 @@ class PageSegmentator {
    *    The cut candidate for which to decide whether to choose or not.
    * @param elements
    *    The elements that are divided by the cut.
-   * @param minNumElements
+   * @param silent
+   *   Whether or not this method should output debug information to the console.
+   * @param minSize
    *    The minimum number of elements the given cut must divide. If elements.size() is smaller
    *    than this value (and the cut overlaps at least one element), this method returns false.
    * @param marginThresholdFactor
@@ -138,7 +226,9 @@ class PageSegmentator {
    *    Note that this method never returns Trool::True.
    */
   Trool chooseXCut_overlappingElements(const Cut* cut, const vector<PdfElement*>& elements,
-      double minNumElements = 500, double marginThresholdFactor = 5) const;
+      bool silent = false,
+      double minSize = OVERLAPPING_ELEMENTS_MIN_SIZE,
+      double marginThresholdFactor = OVERLAPPING_ELEMENTS_MARGIN_THRESHOLD_FACTOR) const;
 
   /**
    * This method checks whether the given cut should *not* be chosen, because the gap width *and*
@@ -168,6 +258,8 @@ class PageSegmentator {
    *
    * @param cut
    *    The cut candidate for which to decide whether to choose or not.
+   * @param silent
+   *   Whether or not this method should output debug information to the console.
    * @param widthThresholdFactor
    *    A factor used to compute the threshold for the gap width. The threshold is computed as:
    *      <widthThresholdFactor> * _doc->avgCharWidth.
@@ -186,8 +278,9 @@ class PageSegmentator {
    *    smaller than the computed threshold; Trool::None otherwise. Note that this method never
    *    returns Trool::True.
    */
-  Trool chooseXCut_smallGapWidthHeight(const Cut* cut, double widthThresholdFactor = 2,
-      double heightThresholdFactor = 6) const;
+  Trool chooseXCut_smallGapWidthHeight(const Cut* cut, bool silent,
+      double widthThresholdFactor = MIN_GAP_WIDTH_THRESHOLD_FACTOR,
+      double heightThresholdFactor = MIN_GAP_HEIGHT_THRESHOLD_FACTOR) const;
 
   /**
    * This method checks whether the given cut should *not* be chosen, because it divides contiguous
@@ -207,12 +300,19 @@ class PageSegmentator {
    *   The cut candidate for which to decide whether to choose or not.
    * @param elements
    *   The elements divided by the cut.
+   * @param silent
+   *   Whether or not this method should output debug information to the console.
+   * @param maxYOverlapRatioThreshold
+   *   A threshold that is used to check if two words are *not* contiguous because of their maximum
+   *   y-overlap ratio. If the maximum y-overlap ratio between two words is smaller than this
+   *   threshold, they are considered to be not contiguous.
    *
    * @return
    *    Trool::False if the given cut should not be chosen, because it divides two contiguous words;
    *    Trool::None otherwise. Note that this method never returns Trool::True.
    */
-  Trool chooseXCut_contiguousWords(const Cut* cut, const vector<PdfElement*>& elements) const;
+  Trool chooseXCut_contiguousWords(const Cut* cut, const vector<PdfElement*>& elements, bool silent,
+      double maxYOverlapRatioThreshold = CONT_WORDS_MAX_Y_OVERLAP_RATIO_THRESHOLD) const;
 
   /**
    * This method checks whether the given cut should *not* be chosen, because the width of one of
@@ -239,8 +339,10 @@ class PageSegmentator {
    *   The cut candidate for which to decide whether to choose or not.
    * @param elements
    *   The elements divided by the given x-cut.
+   * @param silent
+   *   Whether or not this method should output debug information to the console.
    * @param widthThresholdFactor
-   *   A factor that is used to compute the treshold for the widths of the resulting groups. The
+   *   A factor that is used to compute the threshold for the widths of the resulting groups. The
    *   threshold is computed as:
    *     <widthThresholdFactor> * _doc->avgCharWidth.
    *   If the width of one of the resulting groups is smaller than this threshold, the cut will be
@@ -252,7 +354,8 @@ class PageSegmentator {
    *    method never returns Trool::True.
    */
   Trool chooseXCut_slimGroups(const Cut* prevChosenCut, const Cut* cut,
-      const vector<PdfElement*>& elements, double widthThresholdFactor = 10) const;
+      const vector<PdfElement*>& elements, bool silent,
+      double widthThresholdFactor = SLIM_GROUP_WIDTH_THRESHOLD_FACTOR) const;
 
   // ===============================================================================================
 
@@ -347,13 +450,6 @@ class PageSegmentator {
 
   // The document to process.
   const PdfDocument* _doc;
-
-  // The maximum number of elements an x-cut is allowed to overlap.
-  double _maxNumXCutOverlappingElements;
-  // The minimum gap width that an x-cut must exhibit.
-  double _minXCutGapWidth;
-  // The minimum gap height that an y-cut must exhibit.
-  double _minYCutGapHeight;
 
   // The logger.
   const Logger* _log;
