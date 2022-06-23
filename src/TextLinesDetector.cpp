@@ -281,7 +281,7 @@ PdfTextLine* TextLinesDetector::createTextLine(const vector<PdfWord*>& words,
   line->doc = _doc;
 
   // Create a (unique) id.
-  line->id = string_utils::createRandomString(global_config::IDS_LENGTH, "line-");
+  line->id = string_utils::createRandomString(global_config::ID_LENGTH, "line-");
 
   // Set the words.
   line->words = words;

@@ -21,6 +21,8 @@
 #include "./utils/TextLinesUtils.h"
 #include "./utils/Trool.h"
 
+using global_config::FONT_SIZE_PREC;
+using global_config::LINE_DIST_PREC;
 using std::max;
 using std::endl;
 using std::string;

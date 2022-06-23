@@ -2026,10 +2026,15 @@ def CheckHeaderFileIncluded(filename, include_state, error):
   if not os.path.exists(headerfile):
     return
   headername = FileInfo(headerfile).RepositoryName()
+  baseheadername = os.path.basename(headername)
   first_include = 0
   for section_list in include_state.include_list:
     for f in section_list:
       if headername in f[0] or f[0] in headername:
+        return
+      #MODIFICATION(Claudius) 22-06-2022: If the cpp file is "src/utils/Utils.cpp", cpplint requires
+      # to include the header file "utils/Utils.h". Also allow "./Utils.h".
+      if baseheadername in f[0] or f[0] in baseheadername:
         return
       if not first_include:
         first_include = f[1]

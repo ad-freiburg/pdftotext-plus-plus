@@ -285,7 +285,7 @@ void text_blocks_utils::createTextBlock(const vector<PdfTextLine*>& lines,
   assert(blocks);
 
   PdfTextBlock* block = new PdfTextBlock();
-  block->id = string_utils::createRandomString(global_config::IDS_LENGTH, "block-");
+  block->id = string_utils::createRandomString(global_config::ID_LENGTH, "block-");
 
   // Set the reference to the document.
   block->doc = lines[0]->doc;

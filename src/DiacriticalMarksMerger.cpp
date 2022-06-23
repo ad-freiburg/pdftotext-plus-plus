@@ -18,6 +18,8 @@
 
 #include "./DiacriticalMarksMerger.h"
 
+using diacritics_merger::config::COMBINING_MAP;
+
 using std::endl;
 using std::max;
 using std::min;
@@ -39,7 +41,9 @@ DiacriticalMarksMerger::~DiacriticalMarksMerger() {
 void DiacriticalMarksMerger::process() const {
   assert(_doc);
 
-  _log->debug() << BOLD << "Diacritical Marks Merging - DEBUG MODE" << OFF << endl;
+  _log->info() << "Merging diacritical marks..." << endl;
+  _log->debug() << "=======================================" << endl;
+  _log->debug() << BOLD << "DEBUG MODE" << OFF << endl;
 
   const UnicodeMap* uMap = globalParams->getTextEncoding();
   if (!uMap) {
@@ -53,32 +57,37 @@ void DiacriticalMarksMerger::process() const {
   // any character.
   for (const auto* page : _doc->pages) {
     int p = page->pageNum;
-    _log->debug(p) << "=========================" << endl;
-    _log->debug(p) << BOLD << "PROCESSING PAGE " << p << OFF << endl;
-    _log->debug(p) << " └─ # characters: " << page->characters.size() << endl;
 
     for (size_t i = 0; i < page->characters.size(); i++) {
       PdfCharacter* prevChar = i > 0 ? page->characters[i - 1] : nullptr;
       PdfCharacter* currChar = page->characters[i];
       PdfCharacter* nextChar = i < page->characters.size() - 1 ? page->characters[i + 1] : nullptr;
 
-      _log->debug(p) << "-------------------------" << endl;
-      _log->debug(p) << BOLD << "Char: \"" << currChar->text << "\"" << OFF << endl;
-      _log->debug(p) << " └─ leftX:  " << currChar->position->leftX << endl;
-      _log->debug(p) << " └─ upperY: " << currChar->position->upperY << endl;
-      _log->debug(p) << " └─ rightX: " << currChar->position->rightX << endl;
-      _log->debug(p) << " └─ lowerY: " << currChar->position->lowerY << endl;
+      _log->debug(p) << "=======================================" << endl;
+      _log->debug(p) << BOLD << "char: \"" << currChar->text << "\"" << OFF << endl;
+      _log->debug(p) << " └─ char.leftX:  " << currChar->position->leftX << endl;
+      _log->debug(p) << " └─ char.upperY: " << currChar->position->upperY << endl;
+      _log->debug(p) << " └─ char.rightX: " << currChar->position->rightX << endl;
+      _log->debug(p) << " └─ char.lowerY: " << currChar->position->lowerY << endl;
+      if (currChar->position->rotation != 0) {
+        _log->debug(p) << " └─ char.rotation:  " << currChar->position->rotation << endl;
+        _log->debug(p) << " └─ char.rotLeftX:  " << currChar->position->getRotLeftX() << endl;
+        _log->debug(p) << " └─ char.rotUpperY: " << currChar->position->getRotUpperY() << endl;
+        _log->debug(p) << " └─ char.rotRightX: " << currChar->position->getRotRightX() << endl;
+        _log->debug(p) << " └─ char.rotLowerY: " << currChar->position->getRotLowerY() << endl;
+      }
 
       // Skip the character if it does not contain exactly one unicode.
       if (currChar->unicodes.size() != 1) {
+         _log->debug(p) << BOLD << "Skipping character (more than one unicode)." << OFF << endl;
         continue;
       }
 
       // Get the unicode of the character. If it is contained in combininMap, replace the unicode
       // by its combining equivalent.
       unsigned int unicode = currChar->unicodes[0];
-      if (combiningMap.count(unicode) > 0) {
-        unicode = combiningMap.at(unicode);
+      if (COMBINING_MAP.count(unicode) > 0) {
+        unicode = COMBINING_MAP.at(unicode);
       }
 
       // The character is a diacritic mark when its unicode falls into one of the categories:
@@ -101,6 +110,7 @@ void DiacriticalMarksMerger::process() const {
 
       // Compute the horizontal overlap with the previous character.
       double prevXOverlapRatio = 0;
+      _log->debug(p) << "---------------------------------------" << endl;
       if (prevChar) {
         _log->debug(p) << BOLD << "prevChar: \"" << prevChar->text << "\"" << OFF << endl;
         _log->debug(p) << " └─ prevChar.leftX:  " << prevChar->position->leftX << endl;
@@ -113,7 +123,9 @@ void DiacriticalMarksMerger::process() const {
         _log->debug(p) << BOLD << "prevChar: -" << OFF << endl;
       }
 
+      // Compute the horizontal overlap with the next character.
       double nextXOverlapRatio = 0;
+      _log->debug(p) << "---------------------------------------" << endl;
       if (nextChar) {
         _log->debug(p) << BOLD << "nextChar: \"" << nextChar->text << "\"" << OFF << endl;
         _log->debug(p) << " └─ nextChar.leftX:  " << nextChar->position->leftX << endl;
@@ -125,8 +137,10 @@ void DiacriticalMarksMerger::process() const {
       } else {
         _log->debug(p) << BOLD << "nextChar: -" << OFF << endl;
       }
-      _log->debug(p) << " └─ xOverlapRatio prev/current char: " << prevXOverlapRatio << endl;
-      _log->debug(p) << " └─ xOverlapRatio current/next char: " << nextXOverlapRatio << endl;
+      _log->debug(p) << "---------------------------------------" << endl;
+
+      _log->debug(p) << "xOverlapRatio prev/current char: " << prevXOverlapRatio << endl;
+      _log->debug(p) << "xOverlapRatio current/next char: " << nextXOverlapRatio << endl;
 
       // Skip the character if both overlap ratios are equal to zero.
       if (math_utils::equal(prevXOverlapRatio, 0) && math_utils::equal(nextXOverlapRatio, 0)) {
@@ -134,14 +148,14 @@ void DiacriticalMarksMerger::process() const {
         continue;
       }
 
-      // Consider the character yielding the larger overlap ratio to be the base character.
+      // Consider the character that yields the larger overlap ratio to be the base character.
       PdfCharacter* mark = currChar;
       PdfCharacter* base;
       if (prevXOverlapRatio > nextXOverlapRatio) {
-        _log->debug(p) << BOLD << "Merge with previous character." << OFF << endl;
+        _log->debug(p) << BOLD << "Merge diacritic with previous character." << OFF << endl;
         base = prevChar;
       } else {
-        _log->debug(p) << BOLD << "Merge with next character." << OFF << endl;
+        _log->debug(p) << BOLD << "Merge diacritic with next character." << OFF << endl;
         base = nextChar;
       }
       mark->isDiacriticMarkOfBaseChar = base;
@@ -180,5 +194,6 @@ void DiacriticalMarksMerger::process() const {
       _log->debug(p) << " └─ base.rightX: " << base->position->rightX << endl;
       _log->debug(p) << " └─ base.lowerY: " << base->position->lowerY << endl;
     }
+    _log->debug() << "=======================================" << endl;
   }
 }

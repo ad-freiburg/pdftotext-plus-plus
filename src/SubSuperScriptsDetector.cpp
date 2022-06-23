@@ -8,48 +8,72 @@
 
 #include <algorithm>  // min, max
 
+#include "./utils/Log.h"
 #include "./utils/MathUtils.h"
 
 #include "./PdfDocument.h"
 #include "./SubSuperScriptsDetector.h"
 
-using global_config::COORDS_EQUAL_TOLERANCE;
+using sub_super_scripts_detector::config::BASE_LINE_EQUAL_TOLERANCE;
+using sub_super_scripts_detector::config::FSIZE_EQUAL_TOLERANCE;
+
+using std::endl;
 using std::max;
 using std::min;
 
 // _________________________________________________________________________________________________
-SubSuperScriptsDetector::SubSuperScriptsDetector(const PdfDocument* doc) {
-  _config = new SubSuperScriptsDetectorConfig();
+SubSuperScriptsDetector::SubSuperScriptsDetector(const PdfDocument* doc, bool debug,
+      int debugPageFilter) {
+  _log = new Logger(debug ? DEBUG : INFO, debugPageFilter);
   _doc = doc;
 }
 
 // _________________________________________________________________________________________________
 SubSuperScriptsDetector::~SubSuperScriptsDetector() {
-  delete _config;
+  delete _log;
 }
 
 // _________________________________________________________________________________________________
 void SubSuperScriptsDetector::process() const {
   assert(_doc);
 
-  double fsTolerance = _config->getFontSizeTolerance(_doc);
+  _log->info() << "Detecting sub-/superscripts..." << endl;
+  _log->debug() << "=======================================" << endl;
+  _log->debug() << BOLD << "DEBUG MODE" << OFF << endl;
 
   for (auto* page : _doc->pages) {
+    int p = page->pageNum;
+
     for (auto* segment : page->segments) {
       for (auto* line : segment->lines) {
+        _log->debug(p) << "=======================================" << endl;
+        _log->debug(p) << BOLD << "line: \"" << line->text << "\"" << OFF << endl;
+        _log->debug(p) << "---------------------------------------" << endl;
+
         for (auto* word : line->words) {
           for (auto* character : word->characters) {
             // Consider a character to be superscripted, if its font size is smaller than the
             // most frequent font size (under consideration of the given tolerance) and its base
             // line is higher than the base line of the text line. Consider a character to be
             // subscripted if its base line is lower than the base line of the text line.
-            if (math_utils::smaller(character->fontSize, _doc->mostFreqFontSize, fsTolerance)) {
-              if (math_utils::smaller(character->base, line->base, COORDS_EQUAL_TOLERANCE)) {
+            _log->debug(p) << BOLD << "char: " << character->text << OFF << endl;
+            _log->debug(p) << " └─ char.fontSize: " << character->fontSize << endl;
+            _log->debug(p) << " └─ doc.mostFrequentFontSize: " << _doc->mostFreqFontSize << endl;
+            _log->debug(p) << " └─ tolerance font-size: " << FSIZE_EQUAL_TOLERANCE << endl;
+            _log->debug(p) << " └─ char.base: " << character->base << endl;
+            _log->debug(p) << " └─ line.base: " << line->base << endl;
+            _log->debug(p) << " └─ tolerance base-line: " << BASE_LINE_EQUAL_TOLERANCE << endl;
+
+            if (math_utils::smaller(character->fontSize, _doc->mostFreqFontSize,
+                  FSIZE_EQUAL_TOLERANCE)) {
+              if (math_utils::smaller(character->base, line->base, BASE_LINE_EQUAL_TOLERANCE)) {
+                _log->debug(p) << BOLD << " superscript (char.base < line.base)" << OFF << endl;
                 character->isSuperscript = true;
                 continue;
               }
 
-              if (math_utils::larger(character->base, line->base, COORDS_EQUAL_TOLERANCE)) {
+              if (math_utils::larger(character->base, line->base, BASE_LINE_EQUAL_TOLERANCE)) {
+                _log->debug(p) << BOLD << " subscript (char.base > line.base)" << OFF << endl;
                 character->isSubscript = true;
                 continue;
               }
@@ -64,5 +88,7 @@ void SubSuperScriptsDetector::process() const {
         }
       }
     }
+
+    _log->debug(p) << "=======================================" << endl;
   }
 }

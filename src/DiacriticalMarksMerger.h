@@ -18,13 +18,16 @@
 using std::unordered_map;
 
 // =================================================================================================
+// CONFIG.
+
+namespace diacritics_merger::config {
 
 // Diacritical marks exist in two variants: a "non-combining" variant and a "combining" variant.
 // For example, for the grave accent ("`"), the non-combining variant is 0x0060 ("GRAVE ACCENT"),
 // and the combining variant is 0x0300 ("COMBINING GRAVE ACCENT"). In PDF, diacritic marks can
 // occur in both variants. But for merging, we need the combining variant. This map maps
 // non-combining diacritic marks to their combining equivalents.
-static const unordered_map<unsigned int, unsigned int> combiningMap = {
+static const unordered_map<unsigned int, unsigned int> COMBINING_MAP = {
   { 0x0022, 0x030B },
   { 0x0027, 0x0301 },
   { 0x005E, 0x0302 },
@@ -66,8 +69,12 @@ static const unordered_map<unsigned int, unsigned int> combiningMap = {
   { 0x204E, 0x0359 }
 };
 
+}  // namespace diacritics_merger::config
+
+// =================================================================================================
+
 /**
- * This class merges diacritical marks with their base characters.
+ * This class is responsible for merging diacritical marks with their base characters.
  *
  * This is needed, because characters with diacritical marks can be represented by two characters.
  * For example, the character "à" can be represented by the base character "a" and the

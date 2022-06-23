@@ -117,6 +117,11 @@ class TextOutputDev : public OutputDev {
   void startPage(int pageNum, GfxState* state, XRef* xref) override;
 
   /**
+   * This method handles the event "end of page".
+   */
+  void endPage() override;
+
+  /**
    * This method handles the event "update the current font" by setting `_fontInfo` to the related
    * `PdfFontInfo` object stored in `_doc->fontInfos` (providing further information about the font,
    * for example: the font name, or whether or not the font is a bold font or an italic font). If

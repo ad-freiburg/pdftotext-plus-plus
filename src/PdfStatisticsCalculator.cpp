@@ -12,35 +12,48 @@
 #include <unordered_map>
 
 #include "./utils/Counter.h"
+#include "./utils/Log.h"
 #include "./utils/MathUtils.h"
 #include "./utils/PdfElementsUtils.h"
 
 #include "./PdfDocument.h"
 #include "./PdfStatisticsCalculator.h"
 
-using global_config::COORDS_PREC;
-using pdf_statistics_calculator::config::FS_EQUAL_TOLERANCE;
+using pdf_statistics_calculator::config::COORDS_PREC;
+using pdf_statistics_calculator::config::FONT_SIZE_PREC;
+using pdf_statistics_calculator::config::FSIZE_EQUAL_TOLERANCE;
+using pdf_statistics_calculator::config::LINE_DIST_PREC;
+
+using std::endl;
 using std::max;
 using std::unordered_map;
 
 // _________________________________________________________________________________________________
-PdfStatisticsCalculator::PdfStatisticsCalculator(PdfDocument* doc) {
+PdfStatisticsCalculator::PdfStatisticsCalculator(PdfDocument* doc, bool debug) {
+  _log = new Logger(debug ? DEBUG : INFO, -1);
   _doc = doc;
 }
 
 // _________________________________________________________________________________________________
-PdfStatisticsCalculator::~PdfStatisticsCalculator() = default;
+PdfStatisticsCalculator::~PdfStatisticsCalculator() {
+  delete _log;
+}
 
 // _________________________________________________________________________________________________
 void PdfStatisticsCalculator::computeCharacterStatistics() const {
   assert(_doc);
 
-  // A counter for the font sizes among the characters.
+  _log->info() << "Computing character statististics..." << endl;
+  _log->debug() << "=======================================" << endl;
+  _log->debug() << BOLD << "DEBUG MODE" << OFF << endl;
+  _log->debug() << "=======================================" << endl;
+
+  // A counter for the font sizes of the characters.
   DoubleCounter fontSizeCounter;
-  // A counter for the font names among the characters.
+  // A counter for the font names of the characters.
   StringCounter fontNameCounter;
 
-  // The sum of the char widths and -heights, for computing the average char width and -height.
+  // The sum of the char widths and -heights, for computing the average char width/-height.
   double sumWidths = 0;
   double sumHeights = 0;
 
@@ -66,15 +79,29 @@ void PdfStatisticsCalculator::computeCharacterStatistics() const {
   _doc->mostFreqFontSize = fontSizeCounter.mostFreq();
   _doc->mostFreqFontName = fontNameCounter.mostFreq();
 
+  _log->debug() << "doc.mostFreqFontSize: " << _doc->mostFreqFontSize << endl;
+  _log->debug() << "doc.mostFreqFontName: " << _doc->mostFreqFontName << endl;
+
   // Compute the average character width and -height.
   _doc->avgCharWidth = sumWidths / static_cast<double>(numChars);
   _doc->avgCharHeight = sumHeights / static_cast<double>(numChars);
+
+  _log->debug() << "doc.avgCharWidth:  " << _doc->avgCharWidth << endl;
+  _log->debug() << "doc.avgCharHeight: " << _doc->avgCharHeight << endl;
+  _log->debug() << "=======================================" << endl;
 }
 
 // _________________________________________________________________________________________________
-void PdfStatisticsCalculator::computeWordStatistics(double yOverlapRatioOverlappingThreshold,
-      double yOverlapRatioNotOverlappingThreshold) const {
+void PdfStatisticsCalculator::computeWordStatistics(double yOverlapRatioOverlapThreshold,
+      double yOverlapRatioNoOverlapThreshold) const {
   assert(_doc);
+
+  _log->info() << "Computing word statististics..." << endl;
+  _log->debug() << "=======================================" << endl;
+  _log->debug() << BOLD << "DEBUG MODE" << OFF << endl;
+  _log->debug() << " └─ threshold overlap ratio: " << yOverlapRatioOverlapThreshold << endl;
+  _log->debug() << " └─ threshold no overlap ratio: " << yOverlapRatioNoOverlapThreshold << endl;
+  _log->debug() << "=======================================" << endl;
 
   // A counter for the horizontal gaps between two consecutive words that overlap vertically.
   DoubleCounter horizontalGapCounter;
@@ -89,7 +116,7 @@ void PdfStatisticsCalculator::computeWordStatistics(double yOverlapRatioOverlapp
       PdfWord* currWord = page->words[i];
 
       // Skip the word if its font size is smaller than the most frequent font size.
-      if (math_utils::smaller(currWord->fontSize, _doc->mostFreqFontSize, FS_EQUAL_TOLERANCE)) {
+      if (math_utils::smaller(currWord->fontSize, _doc->mostFreqFontSize, FSIZE_EQUAL_TOLERANCE)) {
         continue;
       }
 
@@ -114,7 +141,7 @@ void PdfStatisticsCalculator::computeWordStatistics(double yOverlapRatioOverlapp
 
       // Skip to the next word if the font size of the previous word is not equal to the most
       // frequent font size.
-      if (!math_utils::equal(prevWord->fontSize, _doc->mostFreqFontSize, FS_EQUAL_TOLERANCE)) {
+      if (!math_utils::equal(prevWord->fontSize, _doc->mostFreqFontSize, FSIZE_EQUAL_TOLERANCE)) {
         continue;
       }
 
@@ -122,7 +149,7 @@ void PdfStatisticsCalculator::computeWordStatistics(double yOverlapRatioOverlapp
 
       // Add the horizontal gap between the previous word and the current word to the counter,
       // when one word vertically overlaps at least the half of the height of the other word.
-      if (math_utils::equalOrLarger(maxYOverlapRatio, yOverlapRatioOverlappingThreshold)) {
+      if (math_utils::equalOrLarger(maxYOverlapRatio, yOverlapRatioOverlapThreshold)) {
         double gap = element_utils::computeHorizontalGap(prevWord, currWord);
         gap = math_utils::round(gap, COORDS_PREC);
         horizontalGapCounter[gap]++;
@@ -130,7 +157,7 @@ void PdfStatisticsCalculator::computeWordStatistics(double yOverlapRatioOverlapp
 
       // Add the vertical gap between the previous word and the current word to the counter, when
       // they do *not* vertically overlap.
-      if (math_utils::equal(maxYOverlapRatio, yOverlapRatioNotOverlappingThreshold)) {
+      if (math_utils::equal(maxYOverlapRatio, yOverlapRatioNoOverlapThreshold)) {
         double gap = element_utils::computeVerticalGap(prevWord, currWord);
         gap = math_utils::round(gap, COORDS_PREC);
         verticalGapCounter[gap]++;
@@ -141,11 +168,21 @@ void PdfStatisticsCalculator::computeWordStatistics(double yOverlapRatioOverlapp
   _doc->mostFreqWordHeight = wordHeightCounter.mostFreq();
   _doc->mostFreqWordDistance = horizontalGapCounter.mostFreq();
   _doc->mostFreqEstimatedLineDistance = verticalGapCounter.mostFreq();
+
+  _log->debug() << "doc.mostFreqWordHeight: " << _doc->mostFreqWordHeight << endl;
+  _log->debug() << "doc.mostFreqWordDistance: " << _doc->mostFreqWordDistance << endl;
+  _log->debug() << "doc.mostFreqEstimatedLineDist: " << _doc->mostFreqEstimatedLineDistance << endl;
+  _log->debug() << "=======================================" << endl;
 }
 
 // _________________________________________________________________________________________________
 void PdfStatisticsCalculator::computeTextLineStatistics() const {
   assert(_doc);
+
+  _log->info() << "Computing text line statististics..." << endl;
+  _log->debug() << "=======================================" << endl;
+  _log->debug() << BOLD << "DEBUG MODE" << OFF << endl;
+  _log->debug() << "=======================================" << endl;
 
   // A counter for the line distances between two consecutive lines.
   DoubleCounter lineDistanceCounter;
@@ -177,7 +214,7 @@ void PdfStatisticsCalculator::computeTextLineStatistics() const {
         // when one or both lines contain sub- or superscripts. By our experience, computing the
         // line distance with sub- and superscripts ignored results in more accurate line distances.
         double dist = currLine->baseBBoxUpperY - prevLine->baseBBoxLowerY;
-        dist = max(0.0, math_utils::round(dist, COORDS_PREC));
+        dist = max(0.0, math_utils::round(dist, LINE_DIST_PREC));
         lineDistanceCounter[dist]++;
 
         // If the font sizes of the text lines are equal, add the distance also to
@@ -185,7 +222,7 @@ void PdfStatisticsCalculator::computeTextLineStatistics() const {
         // down by font size.
         double prevFontSize = math_utils::round(prevLine->fontSize, FONT_SIZE_PREC);
         double currFontSize = math_utils::round(currLine->fontSize, FONT_SIZE_PREC);
-        if (math_utils::equal(prevFontSize, currFontSize, FS_EQUAL_TOLERANCE)) {
+        if (math_utils::equal(prevFontSize, currFontSize, FSIZE_EQUAL_TOLERANCE)) {
           lineDistanceCountersPerFontSize[currFontSize][dist]++;
         }
       }
@@ -203,4 +240,10 @@ void PdfStatisticsCalculator::computeTextLineStatistics() const {
 
     _doc->mostFreqLineDistancePerFontSize[fontSize] = lineDistanceCounter.mostFreq();
   }
+
+  _log->debug() << "doc.mostFreqLineDist: " << _doc->mostFreqEstimatedLineDistance << endl;
+  for (auto& x : _doc->mostFreqLineDistancePerFontSize) {
+    _log->debug() << "doc.mostFreqLineDistPerFontsize[" << x.first << "]: " << x.second << endl;
+  }
+  _log->debug() << "=======================================" << endl;
 }

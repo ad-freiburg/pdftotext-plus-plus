@@ -75,6 +75,9 @@ class PdfToTextPlusPlus {
    * @param debugPdfParsing
    *  A boolean flag indicating whether or not to print the debug messages, produced while parsing
    *  the content streams of the current PDF file, to the console.
+   * @param debugStatisticsComputation
+   *  A boolean flag indicating whether or not to print the debug messages, produced while
+   *  computing the statistics (about characters, words, lines, etc.) to the console.
    * @param debugDiacriticMarksMerging
    *  A boolean flag indicating whether or not to print the debug messages, produced while merging
    *  diacritical marks with their base characters, to the console.
@@ -87,6 +90,9 @@ class PdfToTextPlusPlus {
    * @param debugTextLinesDetection
    *  A boolean flag indicating whether or not to print the debug messages, produced while
    *  detecting text lines, to the console.
+   * @param debugSubSuperScriptsDetection
+   *  A boolean flag indicating whether or not to print the debug messages, produced while
+   *  detecting sub-/superscripts, to the console.
    * @param debugTextBlocksDetection
    *  A boolean flag indicating whether or not to print the debug messages, produced while
    *  detecting text blocks, to the console.
@@ -102,10 +108,12 @@ class PdfToTextPlusPlus {
     bool noWordsDehyphenation = false,
     bool parseMode = false,
     bool debugPdfParsing = false,
+    bool debugStatisticsComputation = false,
     bool debugDiacriticMarksMerging = false,
     bool debugWordsDetection = false,
     bool debugPageSegmentation = false,
     bool debugTextLinesDetection = false,
+    bool debugSubSuperScriptsDetection = false,
     bool debugTextBlocksDetection = false,
     int debugPageFilter = -1);
 
@@ -138,6 +146,8 @@ class PdfToTextPlusPlus {
   bool _parseMode;
   // Whether or not to print the debug messages produced while parsing the content streams.
   bool _debugPdfParsing;
+  // Whether or not to print the debug messages produced while computing statistics.
+  bool _debugStatisticsComputation;
   // Whether or not to print the debug messages produced while merging diacritical marks.
   bool _debugDiacMarksMerging;
   // Whether or not to print the debug messages produced while detecting words.
@@ -146,6 +156,8 @@ class PdfToTextPlusPlus {
   bool _debugPageSegmentation;
   // Whether or not to print the debug messages produced while detecting text lines.
   bool _debugTextLinesDetection;
+  // Whether or not to print the debug messages produced while detecting sub-/superscripts.
+  bool _debugSubSuperScriptsDetection;
   // Whether or not to print the debug messages produced while detecting text blocks.
   bool _debugTextBlocksDetection;
   // The page filter for the debug messages.

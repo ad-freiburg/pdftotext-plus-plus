@@ -9,6 +9,8 @@
 #ifndef PDFSTATISTICSCALCULATOR_H_
 #define PDFSTATISTICSCALCULATOR_H_
 
+#include "./utils/Log.h"
+
 #include "./PdfDocument.h"
 
 // =================================================================================================
@@ -16,8 +18,17 @@
 
 namespace pdf_statistics_calculator::config {
 
-// Do not use the default FS_EQUAL_TOLERANCE from global_config here, but an alternative value.
-const double FS_EQUAL_TOLERANCE = 0.1;
+// The precision (the number of decimal points) to use when rounding coordinates.
+const double COORDS_PREC = global_config::COORDS_PREC;
+
+// The precision (the number of decimal points) to use when rounding font sizes.
+const double FONT_SIZE_PREC = global_config::FONT_SIZE_PREC;
+
+// The precision (the number of decimal points) to use when rounding line distances.
+const double LINE_DIST_PREC = global_config::LINE_DIST_PREC;
+
+// The maximum allowed difference between two font sizes so that they are considered to be equal.
+const double FSIZE_EQUAL_TOLERANCE = 0.1;
 
 // A threshold that is used while checking if two consecutive words vertically overlap. The
 // doc->mostFreqWordDistance is only measured between those two words for which the maximum
@@ -47,8 +58,10 @@ class PdfStatisticsCalculator {
    *
    * @param doc
    *    The document for which to compute the statistics.
+   * @param debug
+   *    Whether or not this instance should print debug information to the console.
    */
-  explicit PdfStatisticsCalculator(PdfDocument* doc);
+  explicit PdfStatisticsCalculator(PdfDocument* doc, bool debug);
 
   /** The deconstructor. */
   ~PdfStatisticsCalculator();
@@ -104,6 +117,8 @@ class PdfStatisticsCalculator {
  private:
   // The document for which to compute the statistics.
   PdfDocument* _doc;
+  // The logger.
+  const Logger* _log;
 };
 
 #endif  // PDFSTATISTICSCALCULATOR_H_

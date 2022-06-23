@@ -265,7 +265,7 @@ Trool PageSegmentator::chooseXCut_contiguousWords(const Cut* cut,
     // The words are not contiguous, if they do not share the same text line (= if they do
     // not overlap vertically).
     double maxYOverlapRatio = element_utils::computeMaxYOverlapRatio(leftWord, rightWord);
-    if (math_utils::smaller(maxYOverlapRatio, 0.1)) {  // TODO: Parameterize.
+    if (math_utils::smaller(maxYOverlapRatio, 0.1)) {  // TODO(korzen): Parameterize.
       continue;
     }
 
@@ -393,7 +393,7 @@ void PageSegmentator::createPageSegment(const vector<PdfElement*>& elements,
   segment->doc = _doc;
 
   // Create a (unique) id.
-  segment->id = string_utils::createRandomString(global_config::IDS_LENGTH, "segment-");
+  segment->id = string_utils::createRandomString(global_config::ID_LENGTH, "segment-");
 
   // Set the page number.
   segment->position->pageNum = elements[0]->position->pageNum;

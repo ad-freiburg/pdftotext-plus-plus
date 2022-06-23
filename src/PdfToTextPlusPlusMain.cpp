@@ -144,10 +144,12 @@ static bool visualizeSegmentCuts = false;
 static bool visualizeReadingOrderCuts = false;
 static char visualizeFilePath[256] = "";
 static bool debugPdfParsing = false;
+static bool debugStatisticsComputation = false;
 static bool debugDiacriticMarksMerging = false;
 static bool debugWordsDetection = false;
 static bool debugPageSegmentation = false;
 static bool debugTextLinesDetection = false;
+static bool debugSubSuperScriptsDetection = false;
 static bool debugTextBlocksDetection = false;
 static int debugPageFilter = -1;
 static bool printRunningTimes = false;
@@ -231,6 +233,8 @@ static const ArgDesc options[] = {
       "be created, even if one or more of the --visualize-* options is used." },
   { "--debug-pdf-parsing", argFlag, &debugPdfParsing, 0,
       "Print the debug messages produced while parsing the content streams of the PDF file." },
+  { "--debug-statistics", argFlag, &debugStatisticsComputation, 0,
+      "Print the debug messages produced while computing the statistics." },
   { "--debug-diacritic-marks-merging", argFlag, &debugDiacriticMarksMerging, 0,
       "Print the debug messages produced while merging diacritical marks with their base "
       "characters." },
@@ -240,6 +244,8 @@ static const ArgDesc options[] = {
       "Print the debug messages produced while segmenting the pages." },
   { "--debug-text-lines-detection", argFlag, &debugTextLinesDetection, 0,
       "Print the debug messages produced while detecting text lines." },
+  { "--debug-sub-super-scripts-detection", argFlag, &debugSubSuperScriptsDetection, 0,
+      "Print the debug messages produced while detecting sub-/superscripts." },
   { "--debug-text-blocks-detection", argFlag, &debugTextBlocksDetection, 0,
       "Print the debug messages produced while detecting text blocks." },
   { "--debug-page-filter", argInt, &debugPageFilter, 0,
@@ -295,7 +301,8 @@ void printVersionInfo() {
 
 /**
  * This method is the main method of pdftotext++. It is responsible for parsing the command line
- * arguments, starting the extraction process and serializing and visualizing the extracted text.
+ * arguments, running pdftotext++ to extract the text from PDF, and serializing and visualizing the
+ * extracted text.
  */
 int main(int argc, char* argv[]) {
   // Seed the random generator (needed to, for example, create the random ids of the text elements).
@@ -310,19 +317,19 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  // Print the help info if requested by the user.
+  // Print the help info if explicitly requested by the user.
   if (printHelp) {
     printHelpInfo();
     return 0;
   }
 
-  // Print the version info if requested by the user.
+  // Print the version info if explicitly requested by the user.
   if (printVersion) {
     printVersionInfo();
     return 0;
   }
 
-  // Print the usage info if not all required positional arguments were specified by the user.
+  // Print the usage info if not all required arguments were specified by the user.
   if (argc < 3) {
     printUsageInfo();
     return 2;
@@ -345,10 +352,12 @@ int main(int argc, char* argv[]) {
     noDehyphenation,
     parseMode,
     debugPdfParsing,
+    debugStatisticsComputation,
     debugDiacriticMarksMerging,
     debugWordsDetection,
     debugPageSegmentation,
     debugTextLinesDetection,
+    debugSubSuperScriptsDetection,
     debugTextBlocksDetection,
     debugPageFilter);
 
@@ -356,7 +365,7 @@ int main(int argc, char* argv[]) {
   vector<Timing> timings;
 
   int status = 0;
-  // TODO(korzen): Don't use the invalid argument exception; is currently thrown by
+  // TODO(korzen): Don't use the invalid argument exception; it is currently thrown by
   // SemanticRolesPredictor. Instead, use the exit code to check if something went wrong.
   try {
     status = engine.process(pdfFilePathStr, &doc, &timings);
@@ -365,12 +374,12 @@ int main(int argc, char* argv[]) {
     return 3;
   }
 
-  // Abort if the exit code of pdftotext++ is > 0 (menaing that any error occurred).
+  // Abort if the exit code of pdftotext++ is > 0 (meaning that some error occurred).
   if (status > 0) {
     return status;
   }
 
-  // Output the extraction result. If one of the --output-* options is used, output the text in
+  // Serialize the extraction result. If one of the --output-* options is used, output the text in
   // JSONL format. Otherwise, output the text as continuous text.
   auto start = high_resolution_clock::now();
   if (outputPages || outputChars || outputFigures || outputShapes || outputWords|| outputBlocks) {
@@ -393,7 +402,7 @@ int main(int argc, char* argv[]) {
   Timing timingSerializeChars("Serialize", duration_cast<milliseconds>(end - start).count());
   timings.push_back(timingSerializeChars);
 
-  // Visualize the extraction result.
+  // Visualize the extraction result, if requested by the user.
   const string visualizeFilePathStr(visualizeFilePath);
   if (!visualizeFilePathStr.empty()) {
     auto start = high_resolution_clock::now();

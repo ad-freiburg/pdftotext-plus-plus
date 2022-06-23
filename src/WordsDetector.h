@@ -15,6 +15,7 @@
 
 #include "./utils/Log.h"
 
+#include "./Constants.h"
 #include "./PdfDocument.h"
 
 using std::string;
@@ -22,42 +23,62 @@ using std::unordered_set;
 using std::vector;
 
 // =================================================================================================
+// CONFIG.
 
-/**
- * A factor that is used to compute a tolerance for checking if the horizontal gap between two
- * characters is large enough in order to be considered as a word delimiter. The tolerance is
- * computed as: <HGAP_TOLERANCE_FACTOR> * _activeWord.fontSize. If the horizontal gap between the
- * characters is larger than this tolerance, it is considered to be a word delimiter.
- */
-static const double HGAP_TOLERANCE_FACTOR = 0.15;
+namespace words_detector::config {
 
-/**
- * A PDF can contain "stacked math symbols", which we want to merge to a single word (see the
- * preliminary comment of the `WordsDetector` class below for more information about how stacked
- * math symbols are defined). The following three sets are used to identify the base word of a
- * stacked math symbol.
- * The first set contains the *text* of characters that are likely to be part of a base word of a
- * stacked math symbol. If a word indeed contains a character that is part of this set, it is
- * considered to be the base word of a stacked math symbol.
- * The second set contains the *names* of characters that are likely to be part of a base word of a
- * stacked math symbol. If a word contains a character with a name that is part of this set, it is
- * considered to be the base word of a stacked math symbol (NOTE: this set was introduced because,
- * in some PDFs, the text of summation symbols does not contain a summation symbol, but some
- * weird symbols (e.g., a "?"), most typically because of a missing encoding. The names of the
- * characters are simply an additional indicator for identifying the base word of a stacked math
- * symbol).
- * The third set contains *words* that are likely to be a base word of a stacked math symbol.
- */
-static const unordered_set<string> STACKED_MATH_CHAR_TEXTS = { "∑", "∏", "∫", "⊗" };
-static const unordered_set<string> STACKED_MATH_CHAR_NAMES = { "summationdisplay",
+// The maximum allowed difference between two font sizes so that they are considered to be equal.
+const double FSIZE_EQUAL_TOLERANCE = global_config::FS_EQUAL_TOLERANCE;
+
+// A threshold used on checking if the active word and the current character vertically overlap.
+// If the maximum y-overlap ratio between the active word and the current character is smaller than
+// this threshold, the word and the character are considered to not overlap; otherwise they are
+// considered to overlap.
+const double MIN_Y_OVERLAP_RATIO_THRESHOLD = 0.5;
+
+// A factor that is used to compute a threshold for checking if the horizontal gap between two
+// characters is large enough in order to be considered as a word delimiter. The threshold is
+// computed as: <FACTOR> * _activeWord.fontSize. If the horizontal gap between the
+// characters is larger than this threshold, it is considered to be a word delimiter.
+const double HGAP_THRESHOLD_FACTOR = 0.15;
+
+// A threshold that is used while merging staked math symbolds, to check if two words horizontally
+// overlap. If the maximum x-overlap ratio between two words is smaller than this threshold, the
+// words are considered to not horizontally overlap; otherwise they are considered to horizontally
+// overlap.
+const double STACKED_MATH_MIN_X_OVERLAP_RATIO_THRESHOLD = 0.5;
+
+// A PDF can contain "stacked math symbols", which we want to merge to a single word (see the
+// preliminary comment of the `WordsDetector` class below for more information about how stacked
+// math symbols are defined). The following three sets are used to identify the base word of a
+// stacked math symbol.
+// The first set contains the *text* of characters that are likely to be part of a base word of a
+// stacked math symbol. If a word indeed contains a character that is part of this set, it is
+// considered to be the base word of a stacked math symbol.
+// The second set contains the *names* of characters that are likely to be part of a base word of a
+// stacked math symbol. If a word contains a character with a name that is part of this set, it is
+// considered to be the base word of a stacked math symbol (NOTE: this set was introduced because,
+// in some PDFs, the text of summation symbols does not contain a summation symbol, but some
+// weird symbols (e.g., a "?"), most typically because of a missing encoding. The names of the
+// characters are simply an additional indicator for identifying the base word of a stacked math
+// symbol).
+// The third set contains *words* that are likely to be a base word of a stacked math symbol.
+const unordered_set<string> STACKED_MATH_CHAR_TEXTS = { "∑", "∏", "∫", "⊗" };
+const unordered_set<string> STACKED_MATH_CHAR_NAMES = { "summationdisplay",
     "productdisplay", "integraldisplay", "circlemultiplydisplay" };
-static const unordered_set<string> STACKED_MATH_WORDS = { "sup", "lim" };
+const unordered_set<string> STACKED_MATH_WORDS = { "sup", "lim" };
+
+}  // namespace words_detector::config
 
 // =================================================================================================
 
+using words_detector::config::HGAP_THRESHOLD_FACTOR;
+using words_detector::config::MIN_Y_OVERLAP_RATIO_THRESHOLD;
+using words_detector::config::STACKED_MATH_MIN_X_OVERLAP_RATIO_THRESHOLD;
+
 /**
- * This class (a) merges the characters of a PDF document to words, and (b) merges words that are
- * part of the same "stacked math symbol".
+ * This class is responsible for (a) merging the characters of a PDF document to words, and
+ * (b) merging words that are part of the same "stacked math symbol".
  *
  * NOTE: Stacked math symbols are math symbols that are positioned one above the other and
  * logically belong together. A stacked math symbol consists of a base word and one or more
@@ -115,19 +136,26 @@ class WordsDetector {
    *
    * @param currChar
    *   The character for which to decide whether or not it starts a new word.
-   * @param hGapToleranceFactor
-   *  A factor that is used to compute a tolerance for checking if the horizontal gap between
+   * @param minYOverlapRatioThreshold
+   *   A threshold used on checking if the active word and the current character vertically overlap.
+   *   (which is a requirement for the character to be part of the active word). If the maximum
+   *   y-overlap ratio between the active word and the current character is smaller than this
+   *   threshold, the word and the character are considered to not vertically overlap; otherwise
+   *   they are considered to vertically overlap.
+   * @param hGapThresholdFactor
+   *  A factor that is used to compute a threshold for checking if the horizontal gap between
    *  the active word and the given character is "large enough", so that the given
-   *  character is considered to be the start of a new word. The tolerance is computed as:
-   *    <hGapToleranceFactor> * _activeWord.fontSize.
+   *  character is considered to be the start of a new word. The threshold is computed as:
+   *    <hGapThresholdFactor> * _activeWord.fontSize.
    * If the horizontal gap between the active word and the current character is larger than this
-   * tolerance, the character is considered to be the start of a new word.
+   * threshold, the character is considered to be the start of a new word.
    *
    * @return
    *    True if the given character starts a new word, false otherwise.
    */
   bool startsWord(const PdfCharacter* currChar,
-      double hGapToleranceFactor = HGAP_TOLERANCE_FACTOR) const;
+      double minYOverlapRatioThreshold = MIN_Y_OVERLAP_RATIO_THRESHOLD,
+      double hGapThresholdFactor = HGAP_THRESHOLD_FACTOR) const;
 
   /**
    * This method merges stacked math symbols of the given page. The basic procedure is as follows.
@@ -147,8 +175,14 @@ class WordsDetector {
    *
    * @param page
    *    The page to process.
+   * @param minXOverlapRatioThreshold
+   *    A threshold that is used to check if two words horizontally overlap (to check if they
+   *    are part of the same stacked math symbol). If the maximum x-overlap ratio between two words
+   *    is smaller than this threshold, the words are considered to not horizontally overlap;
+   *    otherwise they are considered to horizontally overlap.
    */
-  void mergeStackedMathSymbols(const PdfPage* page) const;
+  void mergeStackedMathSymbols(const PdfPage* page,
+      double minXOverlapRatioThreshold = STACKED_MATH_MIN_X_OVERLAP_RATIO_THRESHOLD) const;
 
   /**
    * This method (a) creates a new `PdfWord` instance from the given vector of characters,

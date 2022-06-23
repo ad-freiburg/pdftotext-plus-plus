@@ -26,6 +26,8 @@
 #include "./TextOutputDev.h"
 
 using global_config::COORDS_EQUAL_TOLERANCE;
+using global_config::FONT_SIZE_PREC;
+using global_config::ID_LENGTH;
 using std::endl;
 using std::get;
 using std::max;
@@ -42,8 +44,9 @@ TextOutputDev::TextOutputDev(bool parseEmbeddedFontFiles, PdfDocument* doc, bool
   _parseEmbeddedFontFiles = parseEmbeddedFontFiles;
   _doc = doc;
 
+  _log->info() << "Parsing PDF file..." << endl;
   _log->debug() << "=======================================" << endl;
-  _log->debug() << BOLD << "PDF parsing - DEBUG MODE" << OFF << endl;
+  _log->debug() << BOLD << "DEBUG MODE" << OFF << endl;
   _log->debug() << " └─ parse embedded font files: " << parseEmbeddedFontFiles << endl;
 }
 
@@ -60,7 +63,6 @@ void TextOutputDev::startPage(int pageNum, GfxState* state, XRef* xref) {
   _page = new PdfPage();
   _page->pageNum = _p = pageNum;
   state->getClipBBox(&_page->clipLeftX, &_page->clipUpperY, &_page->clipRightX, &_page->clipLowerY);
-
   _doc->pages.push_back(_page);
   _xref = xref;
 
@@ -73,6 +75,11 @@ void TextOutputDev::startPage(int pageNum, GfxState* state, XRef* xref) {
   _log->debug(_p) << " └─ page.clipLowerY: " << _page->clipLowerY << endl;
   _log->debug(_p) << " └─ page.width:  " << _page->getWidth() << endl;
   _log->debug(_p) << " └─ page.height: " << _page->getHeight() << endl;
+}
+
+// _________________________________________________________________________________________________
+void TextOutputDev::endPage() {
+  _log->debug(_p) << "=======================================" << endl;
 }
 
 // _________________________________________________________________________________________________
@@ -128,23 +135,24 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   _log->debug(_p) << "=======================================" << endl;
   _log->debug(_p) << BOLD << "Event: DRAW CHAR" << OFF << endl;
 
+  // Skip the event if there is no current font info.
   if (!_fontInfo) {
     _log->debug(_p) << " └─ fontInfo: -" << endl;
     return;
   }
 
-  // Parse the information about the character and store it in form of a `PdfCharacter`.
+  // Parse different information about the character and store it in form of a `PdfCharacter`.
   PdfCharacter* ch = new PdfCharacter();
   ch->doc = _doc;
 
   // ----------------------------------
-  // Create a (unique) id.
+  // Create and set a (unique) id.
 
-  ch->id = string_utils::createRandomString(global_config::IDS_LENGTH, "char-");
+  ch->id = string_utils::createRandomString(ID_LENGTH, "char-");
   _log->debug(_p) << " └─ char.id: \"" << ch->id << "\"" << endl;
 
   // ----------------------------------
-  // Get the character name provided by the PDF (e.g., "summationdisplay" for "Σ").
+  // Set the character name, as it is provided by the PDF (e.g., "summationdisplay" for "Σ").
 
   const Gfx8BitFont* gfx8BitFont = dynamic_cast<Gfx8BitFont*>(state->getFont());
   if (gfx8BitFont) {
@@ -156,7 +164,7 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   _log->debug(_p) << " └─ char.name: \"" << ch->name << "\"" << endl;
 
   // ----------------------------------
-  // Get the text of the character.
+  // Set the text of the character.
 
   // If the character map contains an entry for the given char name, use the text provided by this
   // entry. Otherwise, map the character code(s) to Unicode.
@@ -183,10 +191,10 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   }
   _log->debug(_p) << " └─ char.text: \"" << ch->text << "\"" << endl;
 
-  // Ignore the character if it represents a whitespace. We also want to consider the "non-breaking
-  // space" character (\u00a0) as a whitespace, but std::isspace does not. So we have to check the
-  // char for a non-breaking space manually. To do so, convert the text to a wide character, as the
-  // non-breaking space is a 2-byte character.
+  // Ignore the character if it represents a whitespace.
+  // NOTE: We also want to consider the "non-breaking space" character (\u00a0) as a whitespace,
+  // but std::isspace does not. So we have to check the char for a non-breaking space manually.
+  // To do so, convert the text to a wide character, as the non-breaking space is a 2-byte char.
   wstring wText = _wStringConverter.from_bytes(ch->text);
   bool isWhitespace = !wText.empty();
   for (wchar_t& ch : wText) {
@@ -202,13 +210,13 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   }
 
   // ----------------------------------
-  // Get the page number.
+  // Set the page number.
 
   ch->position->pageNum = _page->pageNum;
   _log->debug(_p) << " └─ char.pageNum: " << ch->position->pageNum << endl;
 
   // ----------------------------------
-  // Get the rotation (this code is stolen from Poppler).
+  // Set the rotation (this code is stolen from Poppler).
 
   const double* fontm;
   double m[4], m2[4];
@@ -237,13 +245,13 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   _log->debug(_p) << " └─ char.rotation: " << ch->position->rotation << endl;
 
   // ----------------------------------
-  // Get the writing mode.
+  // Set the writing mode.
 
   ch->position->wMode = gfxFont->getWMode();
   _log->debug(_p) << " └─ char.wMode: " << ch->position->wMode << endl;
 
   // ----------------------------------
-  // Compute the bounding box.
+  // Compute and set the bounding box.
   // NOTE: There are two methods to compute the bounding box:
   // (1) Computing the bounding box from the text rendering matrix and the ascent, and descent.
   //     This results in bounding boxes that are usually taller than the actual character, because
@@ -302,10 +310,6 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   double nextTrm[6];
   concat(tdXtm, ctm, nextTrm);
 
-  // double x0 = math_utils::round(trm[4], 1);
-  // double y0 = math_utils::round(trm[5], 1);
-  // double x1 = math_utils::round(nextTrm[4], 1);
-  // double y1 = math_utils::round(nextTrm[5], 1);
   double x0 = trm[4];
   double y0 = trm[5];
   double x1 = nextTrm[4];
@@ -427,31 +431,31 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   }
 
   // ----------------------------------
-  // Get the font name.
+  // Set the font name.
 
   ch->fontName = _fontInfo ? _fontInfo->fontName : "";
   _log->debug(_p) << " └─ char.fontName: " << ch->fontName << endl;
 
   // ----------------------------------
-  // Get the font size.
+  // Set the font size.
 
   ch->fontSize = math_utils::round(transformedFontSize, FONT_SIZE_PREC);
   _log->debug(_p) << " └─ char.fontSize: " << ch->fontSize << endl;
 
   // ----------------------------------
-  // Get the extraction rank.
+  // Set the extraction rank.
 
   ch->rank = _numElements++;
   _log->debug(_p) << " └─ char.rank: " << ch->rank << endl;
 
   // ----------------------------------
-  // Get the opacity.
+  // Set the opacity.
 
   ch->opacity = state->getStrokeOpacity();
   _log->debug(_p) << " └─ char.opacity: " << ch->opacity << endl;
 
   // ----------------------------------
-  // Get the stroking color in RGB format (three doubles between 0 and 1).
+  // Set the stroking color in RGB format (three doubles between 0 and 1).
 
   GfxRGB rgb;
   state->getStrokeRGB(&rgb);
@@ -487,8 +491,8 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
     return;
   }
 
-  // Iterate through the figures to check if there is a figure with a clip box equal to the current
-  // clip box. If so, append the character to this figure.
+  // Iterate through the figures to check if there is a figure with a clip box equal to the
+  // current clip box. If so, append the character to this figure.
   for (auto* figure : _page->figures) {
     if (math_utils::equal(clipLeftX, figure->clipLeftX, COORDS_EQUAL_TOLERANCE)
           && math_utils::equal(clipUpperY, figure->clipUpperY, COORDS_EQUAL_TOLERANCE)
@@ -505,9 +509,9 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
     }
   }
 
-  // There is no figure with a clip box equal to the current clip box yet. Create one.
+  // If there is no figure with a clip box equal to the current clip box, create one.
   PdfFigure* figure = new PdfFigure();
-  figure->id = string_utils::createRandomString(global_config::IDS_LENGTH, "figure-");
+  figure->id = string_utils::createRandomString(ID_LENGTH, "figure-");
   figure->doc = _doc;
   figure->position->pageNum = _page->pageNum;
   figure->position->leftX = ch->position->leftX;
@@ -519,6 +523,7 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   figure->clipRightX = clipRightX;
   figure->clipLowerY = clipLowerY;
   figure->characters.push_back(ch);
+
   _page->figures.push_back(figure);
 
   _log->debug(_p) << "Create new figure and append the char to it." << endl;
@@ -559,8 +564,7 @@ void TextOutputDev::stroke(GfxState* state) {
     for (int j = 0; j < subpath->getNumPoints(); j++) {
       state->transform(subpath->getX(j), subpath->getY(j), &x, &y);
 
-      // Ignore points that lies outside the clip box (since points outside the clip box are
-      // not visible).
+      // Ignore points that lies outside the clip box (points outside the clip box are not visible).
       // TODO(korzen): This is dangerous, since we may ignore a path that is actually visible, for
       // example, when the first endpoint of a line lies left to the clip box and the second
       // endpoint lies right to the clip box (and the connecting line goes straight through the
@@ -581,7 +585,7 @@ void TextOutputDev::stroke(GfxState* state) {
 
   // Store the information about the path in form of a `PdfShape`.
   PdfShape* shape = new PdfShape();
-  shape->id = string_utils::createRandomString(global_config::IDS_LENGTH, "shape-");
+  shape->id = string_utils::createRandomString(ID_LENGTH, "shape-");
   shape->doc = _doc;
   shape->position->pageNum = _page->pageNum;
   shape->position->leftX = leftX;
@@ -638,9 +642,9 @@ void TextOutputDev::stroke(GfxState* state) {
     }
   }
 
-  // There is no figure with a clip box equal to the current clip box yet. Create one.
+  // If there is no figure with a clip box equal to the current clip box, create one.
   PdfFigure* figure = new PdfFigure();
-  figure->id = string_utils::createRandomString(global_config::IDS_LENGTH, "figure-");
+  figure->id = string_utils::createRandomString(ID_LENGTH, "figure-");
   figure->doc = _doc;
   figure->position->pageNum = _page->pageNum;
   figure->position->leftX = shape->position->leftX;
@@ -652,6 +656,7 @@ void TextOutputDev::stroke(GfxState* state) {
   figure->clipRightX = clipRightX;
   figure->clipLowerY = clipLowerY;
   figure->shapes.push_back(shape);
+
   _page->figures.push_back(figure);
 
   _log->debug(_p) << "Create new figure and append the shape to it." << endl;
@@ -710,7 +715,7 @@ void TextOutputDev::drawGraphic(GfxState* state) {
   double clipLeftX, clipUpperY, clipRightX, clipLowerY;
   state->getClipBBox(&clipLeftX, &clipUpperY, &clipRightX, &clipLowerY);
 
-  // Compute the bounding box of the graphic from the ctm.
+  // Compute the bounding box of the graphic from the current transformation matrix.
   const double* ctm = state->getCTM();
   double leftX = ctm[4];  // ctm[4] = translateX
   double upperY = ctm[5];  // ctm[5] = translateY
@@ -718,7 +723,7 @@ void TextOutputDev::drawGraphic(GfxState* state) {
   double lowerY = upperY + ctm[3];  // ctm[3] = scaleY
 
   // Ignore the graphic if it lies outside the clip box (since graphics outside the clip box are
-  // not visible). Example PDF where a graphic lies outside the clip box: 1001.5159
+  // not visible). Example PDF where a graphic lies outside the clip box: 1001.5159.
   if (math_utils::equalOrSmaller(leftX, clipLeftX, COORDS_EQUAL_TOLERANCE)
       || math_utils::equalOrSmaller(upperY, clipUpperY, COORDS_EQUAL_TOLERANCE)
       || math_utils::equalOrLarger(rightX, clipRightX, COORDS_EQUAL_TOLERANCE)
@@ -726,9 +731,9 @@ void TextOutputDev::drawGraphic(GfxState* state) {
     return;
   }
 
-  // Handle each graphic as a `PdfGraphic`.
+  // Store the information about the graphic in form of a `PdfGraphic`.
   PdfGraphic* graphic = new PdfGraphic();
-  graphic->id = string_utils::createRandomString(global_config::IDS_LENGTH, "graphic-");
+  graphic->id = string_utils::createRandomString(ID_LENGTH, "graphic-");
   graphic->doc = _doc;
   graphic->position->pageNum = _page->pageNum;
   graphic->position->leftX = max(min(leftX, rightX), clipLeftX);
@@ -785,9 +790,9 @@ void TextOutputDev::drawGraphic(GfxState* state) {
     }
   }
 
-  // There is no figure with a clip box equal to the current clip box yet. Create one.
+  // If there is no figure with a clip box equal to the current clip box, create one.
   PdfFigure* figure = new PdfFigure();
-  figure->id = string_utils::createRandomString(global_config::IDS_LENGTH, "figure-");
+  figure->id = string_utils::createRandomString(global_config::ID_LENGTH, "figure-");
   figure->doc = _doc;
   figure->position->pageNum = _page->pageNum;
   figure->position->leftX = graphic->position->leftX;
@@ -799,6 +804,7 @@ void TextOutputDev::drawGraphic(GfxState* state) {
   figure->clipRightX = clipRightX;
   figure->clipLowerY = clipLowerY;
   figure->graphics.push_back(graphic);
+
   _page->figures.push_back(figure);
 
   _log->debug(_p) << "Create new figure and append the graphic to it." << endl;

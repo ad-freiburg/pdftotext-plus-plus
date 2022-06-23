@@ -20,12 +20,14 @@ using std::unordered_set;
 namespace global_config {
 
 const int COORDS_PREC = 1;
+const int FONT_SIZE_PREC = 1;
+const int LINE_DIST_PREC = 1;
 
 const double DOUBLE_EQUAL_TOLERANCE = 0.0001;
 const double FS_EQUAL_TOLERANCE = 1;
 const double COORDS_EQUAL_TOLERANCE = 0.1;
 
-const int IDS_LENGTH = 8;
+const int ID_LENGTH = 8;
 
 /**
  * The characters we use as an identifier for formulas.
@@ -70,9 +72,6 @@ const char* const SUPER_ITEM_LABEL_ALPHABET = "*∗abcdefghijklmnopqrstuvwxyz012
 
 }  // namespace global_config
 
-const int FONT_SIZE_PREC = 1;
-
-const int LINE_DIST_PREC = 1;
 const int LEFT_MARGIN_PREC = 0;
 
 // The resolution in DPI.

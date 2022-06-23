@@ -105,7 +105,12 @@ void TextSerializer::serializeToStream(std::ostream& outStream) {
               if (_excludeSubSuperscripts && (ch->isSubscript || ch->isSuperscript)) {
                 continue;
               }
-              outStream << ch->text;
+
+              if (ch->isBaseCharOfDiacriticMark) {
+                outStream << ch->textWithDiacriticMark;
+              } else if (!ch->isDiacriticMarkOfBaseChar) {
+                outStream << ch->text;
+              }
             }
           }
 

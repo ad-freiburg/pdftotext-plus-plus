@@ -89,10 +89,10 @@ ostream& Logger::log(const LogLevel& logLevel, int pageNum) const {
       logLevelStr << BOLD << GREEN << "DEBUG:" << OFF;
       break;
     case INFO:
-      logLevelStr << BOLD << BLUE << "INFO:" << OFF;
+      logLevelStr << BOLD << BLUE << "INFO: " << OFF;
       break;
     case WARN:
-      logLevelStr << BOLD << YELLOW << "WARN:" << OFF;
+      logLevelStr << BOLD << YELLOW << "WARN: " << OFF;
       break;
     case ERROR:
       logLevelStr << BOLD << RED << "ERROR:" << OFF;

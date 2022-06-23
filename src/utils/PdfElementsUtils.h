@@ -16,6 +16,8 @@
 #include "../PdfDocument.h"
 
 using global_config::COORDS_EQUAL_TOLERANCE;
+using global_config::FS_EQUAL_TOLERANCE;
+
 using std::pair;
 using std::vector;
 
@@ -397,7 +399,7 @@ bool computeHasEqualFont(const PdfTextElement* element1, const PdfTextElement* e
  *    True if the given elements exhibit (approximately) the same font size, false otherwise.
  */
 bool computeHasEqualFontSize(const PdfTextElement* element1, const PdfTextElement* element2,
-    double equalTolerance = FONT_SIZE_EQUAL_TOLERANCE);
+    double equalTolerance = FS_EQUAL_TOLERANCE);
 
 /**
  * This method returns true if the text of the given element ends with a sentence delimiter (that
@@ -448,7 +450,7 @@ bool computeStartsWithUpper(const PdfTextElement* element);
  *    True if the text of the given element is emphasized, false otherwise.
  */
 bool computeIsEmphasized(const PdfTextElement* element,
-    double fontSizeEqualTolerance = FONT_SIZE_EQUAL_TOLERANCE,
+    double fontSizeEqualTolerance = FS_EQUAL_TOLERANCE,
     double fontWeightEqualTolerance = FONT_WEIGHT_EQUAL_TOLERANCE);
 
 }  // namespace text_element_utils
