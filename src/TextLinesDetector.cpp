@@ -7,6 +7,7 @@
  */
 
 #include <algorithm>  // min, max
+#include <sstream>  // std::stringstream
 #include <string>
 #include <tuple>
 #include <unordered_map>
@@ -35,16 +36,16 @@ using std::tuple;
 using std::unordered_map;
 using std::vector;
 
+using text_lines_detector::config::getYOverlapRatioThreshold;
+
 // _________________________________________________________________________________________________
 TextLinesDetector::TextLinesDetector(const PdfDocument* doc, bool debug, int debugPageFilter) {
   _log = new Logger(debug ? DEBUG : INFO, debugPageFilter);
-  _config = new TextLinesDetectorConfig();
   _doc = doc;
 }
 
 // _________________________________________________________________________________________________
 TextLinesDetector::~TextLinesDetector() {
-  delete _config;
   delete _log;
 }
 
@@ -52,24 +53,23 @@ TextLinesDetector::~TextLinesDetector() {
 void TextLinesDetector::process() {
   assert(_doc);
 
-  _log->debug() << BOLD << "Text Lines Detection - DEBUG MODE" << OFF << endl;
-
-  // Do nothing if the document does not contain any pages.
-  if (_doc->pages.empty()) {
-    return;
-  }
+  _log->info() << "Detecting text lines..." << endl;
+  _log->debug() << "=========================================================" << endl;
+  _log->debug() << BOLD << "DEBUG MODE" << OFF << endl;
+  _log->debug() << "=========================================================" << endl;
 
   // Process the PDF document page-wise and segment-wise.
   int numLines = 0;
   for (const auto* page : _doc->pages) {
     int p = page->pageNum;
-    _log->debug(p) << "=======================================" << endl;
-    _log->debug(p) << BOLD << "PROCESSING PAGE " << p << OFF << endl;
-    _log->debug(p) << " └─ # segments: " << page->segments.size() << endl;
-
     for (auto* segment : page->segments) {
-      _log->debug(p) << "---------------------------------------" << endl;
-      _log->debug(p) << "PROCESSING SEGMENT " << segment->id << endl;
+      _log->debug(p) << BOLD << "PROCESSING SEGMENT \"" << segment->id << "\"." << OFF << endl;
+      _log->debug(p) << "=========================================================" << endl;
+
+      // Prefix each subsequent log message with the segment id, for convenience purposes.
+      std::stringstream s;
+      s << GRAY << "(" << segment->id << ") " << OFF;
+      string q = s.str();
 
       // Create a vector containing only the words (but not figures or shapes) of the segment.
       vector<PdfWord*> words;
@@ -85,90 +85,120 @@ void TextLinesDetector::process() {
         continue;
       }
 
-      _log->debug(p) << "----------- CLUSTERING WORDS -----------" << endl;
+      _log->debug(p) << q << BOLD << "Clustering words" << OFF << endl;
+      _log->debug(p) << "=========================================================" << endl;
 
       // Cluster the words first by their rotations, then by their lowerY values.
       unordered_map<int, unordered_map<double, vector<PdfWord*>>> clusters;
-      for (auto* word : words) {
+      for (size_t i = 0; i < words.size(); i++) {
+        PdfWord* word = words[i];
         int p = word->position->pageNum;
 
-        _log->debug(p) << BOLD << "word: \"" << word->text << "\"" << OFF << endl;
-        _log->debug(p) << " └─ word.page: " << word->position->pageNum << endl;
-        _log->debug(p) << " └─ word.leftX: " << word->position->leftX << endl;
-        _log->debug(p) << " └─ word.upperY: " << word->position->upperY << endl;
-        _log->debug(p) << " └─ word.rightX: " << word->position->rightX << endl;
-        _log->debug(p) << " └─ word.lowerY: " << word->position->lowerY << endl;
+        if (i > 0) {
+          _log->debug(p) << "---------------------------------------------------------" << endl;
+        }
+        _log->debug(p) << q << BOLD << "word: \"" << word->text << "\"" << OFF << endl;
+        _log->debug(p) << q << " └─ word.page: " << word->position->pageNum << endl;
+        _log->debug(p) << q << " └─ word.leftX: " << word->position->leftX << endl;
+        _log->debug(p) << q << " └─ word.upperY: " << word->position->upperY << endl;
+        _log->debug(p) << q << " └─ word.rightX: " << word->position->rightX << endl;
+        _log->debug(p) << q << " └─ word.lowerY: " << word->position->lowerY << endl;
+        _log->debug(p) << q << " └─ word.rot: " << word->position->rotation << endl;
         if (word->position->rotation != 0) {
-          _log->debug(p) << " └─ word.rot: " << word->position->rotation << endl;
-          _log->debug(p) << " └─ word.rotLeftX: " << word->position->getRotLeftX() << endl;
-          _log->debug(p) << " └─ word.rotUpperY: " << word->position->getRotUpperY() << endl;
-          _log->debug(p) << " └─ word.rotRightX: " << word->position->getRotRightX() << endl;
-          _log->debug(p) << " └─ word.rotLowerY: " << word->position->getRotLowerY() << endl;
+          _log->debug(p) << q << " └─ word.rotLeftX: " << word->position->getRotLeftX() << endl;
+          _log->debug(p) << q << " └─ word.rotUpperY: " << word->position->getRotUpperY() << endl;
+          _log->debug(p) << q << " └─ word.rotRightX: " << word->position->getRotRightX() << endl;
+          _log->debug(p) << q << " └─ word.rotLowerY: " << word->position->getRotLowerY() << endl;
         }
 
         // Skip the word if it is part of a stacked math symbol.
         if (word->isPartOfStackedMathSymbol) {
-          _log->debug(p) << BOLD << "skipping word (part of stacked math symbol)." << OFF << endl;
+          _log->debug(p) << q << BOLD << "skipping word (part of stacked symbol)." << OFF << endl;
           continue;
         }
 
         double rotation = word->position->rotation;
         double lowerY = math_utils::round(word->position->getRotLowerY(), COORDS_PREC);
         clusters[rotation][lowerY].push_back(word);
-        _log->debug(p) << " └─ cluster: (" << rotation << ", " << lowerY << ")" << endl;
+        _log->debug(p) << q << "cluster: (" << rotation << ", " << lowerY << ")" << endl;
 
         // If the word is the base word of a stacked math symbol, add each word that is part
         // of the same stacked math symbol to the same cluster.
         for (auto* w : word->isBaseOfStackedMathSymbol) {
-          _log->debug(p) << "Is base word of stacked math symbol; adding " << w->text << endl;
+          _log->debug(p) << "adding \"" << w->text << "\" (part of stacked math symbol)" << endl;
           clusters[rotation][lowerY].push_back(w);
         }
       }
 
-      _log->debug(p) << "--------- CREATING TEXT LINES ---------" << endl;
-
       // Iterate through the clusters and create a text line for each.
       for (const auto& pair : clusters) {  // pair: (rotation, words per leftX value)
         int rot = pair.first;
+
+        _log->debug(p) << "=========================================================" << endl;
+        _log->debug(p) << q << BOLD << "PROCESSING CLUSTERS, ROTATION " << rot << OFF << endl;
+        _log->debug(p) << "=========================================================" << endl;
+
+        // Prefix each subsequent log message with the segment id and the rotation.
+        std::stringstream ss;
+        ss << q << GRAY << "(rot-" << rot << ") " << OFF;
+        string qq = ss.str();
+
+        _log->debug(p) << qq << BOLD << "Creating text lines" << OFF << endl;
+        _log->debug(p) << "=========================================================" << endl;
 
         vector<PdfTextLine*> lines;
         for (const auto& e : pair.second) {  // e: (leftX, words)
           double lowerY = e.first;
 
           PdfTextLine* line = createTextLine(e.second, segment, &lines);
-
-          _log->debug(p) << "Created line from cluster (" << rot << ", " << lowerY << ")" << endl;
-          _log->debug(p) << " └─ line.pageNum: " << line->position->pageNum << endl;
-          _log->debug(p) << " └─ line.leftX: " << line->position->leftX << endl;
-          _log->debug(p) << " └─ line.upperY: " << line->position->upperY << endl;
-          _log->debug(p) << " └─ line.rightX: " << line->position->rightX << endl;
-          _log->debug(p) << " └─ line.lowerY: " << line->position->lowerY << endl;
-          _log->debug(p) << " └─ line.text: \"" << line->text << "\"" << endl;
+          if (lines.size() > 1) {
+            _log->debug(p) << "---------------------------------------------------------" << endl;
+          }
+          _log->debug(p) << qq << BOLD << "cluster (" << rot << ", " << lowerY << ")" << OFF << endl;
+          _log->debug(p) << qq << "  └─ line.text: \"" << line->text << "\"" << endl;
+          _log->debug(p) << qq << "  └─ line.pageNum: " << line->position->pageNum << endl;
+          _log->debug(p) << qq << "  └─ line.leftX: " << line->position->leftX << endl;
+          _log->debug(p) << qq << "  └─ line.upperY: " << line->position->upperY << endl;
+          _log->debug(p) << qq << "  └─ line.rightX: " << line->position->rightX << endl;
+          _log->debug(p) << qq << "  └─ line.lowerY: " << line->position->lowerY << endl;
         }
 
-        // Skip the cluster if it contains no text lines.
+        // Skip the cluster if it does not contain any text lines.
         if (lines.empty()) {
           continue;
         }
 
         // Sort the lines by their lower y-values in asc or desc order, depending on the rotation.
         // This should sort the lines from "top to bottom".
-        _log->debug(p) << "-------" << endl;
-        _log->debug(p) << BOLD << "Sorting text lines..." << OFF << endl;
+        _log->debug(p) << "=========================================================" << endl;
+        _log->debug(p) << qq << BOLD << "Sorting text lines" << OFF << endl;
+        _log->debug(p) << "=========================================================" << endl;
+
         if (rot == 0 || rot == 1) {
           sort(lines.begin(), lines.end(), comparators::RotLowerYAscComparator());
         } else {
           sort(lines.begin(), lines.end(), comparators::RotLowerYDescComparator());
         }
 
+        for (const auto* line : lines) {
+          _log->debug(p) << qq << line->text << endl;
+        }
+
         // Merge consecutive text lines that vertically overlap in rounds. Repeat this until there
         // are no text lines anymore which vertically overlap. This should merge words that were
         // assigned to different clusters but actually belong to the same text line, because they
         // are sub- or superscripted, or they are parts of fractions in formulas.
-        int round = 0;
+        int r = 0;
         while (true) {
-          _log->debug(p) << "=======" << endl;
-          _log->debug(p) << BOLD << "Merging overlapping lines, round " << ++round << OFF << endl;
+          r++;
+          _log->debug(p) << "=========================================================" << endl;
+          _log->debug(p) << qq << BOLD << "Merging overlapping lines, round " << r << OFF << endl;
+          _log->debug(p) << "=========================================================" << endl;
+
+          // Prefix each subsequent log message with the segment id, the rotation, and the round.
+          std::stringstream sss;
+          sss << qq << GRAY << "(round-" << r << ") " << OFF;
+          string qqq = sss.str();
 
           bool merged = false;
           vector<PdfTextLine*> mergedLines;
@@ -176,23 +206,28 @@ void TextLinesDetector::process() {
             PdfTextLine* prevLine = !mergedLines.empty() ? mergedLines.back() : nullptr;
             PdfTextLine* currLine = lines[i];
 
-            _log->debug(p) << "-------" << endl;
-
-            if (prevLine) {
-              _log->debug(p) << BOLD << "prevLine: \"" << prevLine->text << "\"" << OFF << endl;
-              _log->debug(p) << " └─ prevLine.pageNum: " << prevLine->position->pageNum << endl;
-              _log->debug(p) << " └─ prevLine.leftX: " << prevLine->position->leftX << endl;
-              _log->debug(p) << " └─ prevLine.upperY: " << prevLine->position->upperY << endl;
-              _log->debug(p) << " └─ prevLine.rightX: " << prevLine->position->rightX << endl;
-              _log->debug(p) << " └─ prevLine.lowerY: " << prevLine->position->lowerY << endl;
+            if (i > 0) {
+              _log->debug(p) << "-------------------------------------------------------" << endl;
             }
 
-            _log->debug(p) << BOLD << "currLine: \"" << currLine->text << "\"" << OFF << endl;
-            _log->debug(p) << " └─ currLine.pageNum: " << currLine->position->pageNum << endl;
-            _log->debug(p) << " └─ currLine.leftX: " << currLine->position->leftX << endl;
-            _log->debug(p) << " └─ currLine.upperY: " << currLine->position->upperY << endl;
-            _log->debug(p) << " └─ currLine.rightX: " << currLine->position->rightX << endl;
-            _log->debug(p) << " └─ currLine.lowerY: " << currLine->position->lowerY << endl;
+            if (prevLine) {
+              _log->debug(p) << qqq << BOLD << "prevLine: " << OFF << prevLine->text << endl;
+              _log->debug(p) << qqq << " └─ prevLine.page: " << prevLine->position->pageNum << endl;
+              _log->debug(p) << qqq << " └─ prevLine.leftX: " << prevLine->position->leftX << endl;
+              _log->debug(p) << qqq << " └─ prevLine.upperY: " << prevLine->position->upperY << endl;
+              _log->debug(p) << qqq << " └─ prevLine.rightX: " << prevLine->position->rightX << endl;
+              _log->debug(p) << qqq << " └─ prevLine.lowerY: " << prevLine->position->lowerY << endl;
+            } else {
+              _log->debug(p) << qqq << BOLD << "prevLine: -" << OFF << endl;
+            }
+
+            _log->debug(p) << qqq << BOLD << "currLine: " << OFF << currLine->text << endl;
+            _log->debug(p) << qqq << " └─ currLine.page: " << currLine->position->pageNum << endl;
+            _log->debug(p) << qqq << " └─ currLine.leftX: " << currLine->position->leftX << endl;
+            _log->debug(p) << qqq << " └─ currLine.upperY: " << currLine->position->upperY << endl;
+            _log->debug(p) << qqq << " └─ currLine.rightX: " << currLine->position->rightX << endl;
+            _log->debug(p) << qqq << " └─ currLine.lowerY: " << currLine->position->lowerY << endl;
+            _log->debug(p) << qqq << "------------------" << endl;
 
             // Compute the horizontal gap and the vertical overlap ratio to the previous line.
             double xGap = 0.0;
@@ -201,8 +236,6 @@ void TextLinesDetector::process() {
               xGap = element_utils::computeHorizontalGap(prevLine, currLine);
               yOverlapRatio = element_utils::computeMaxYOverlapRatio(prevLine, currLine);
             }
-            _log->debug(p) << " └─ xGap (prevLine/currLine): " << xGap << endl;
-            _log->debug(p) << " └─ yOverlapRatio (prevLine/currLine): " << yOverlapRatio << endl;
 
             // Define a threshold for the vertical overlap ratio between the current line and the
             // previous line. The current line must exceed this threshold in order to be merged
@@ -211,25 +244,30 @@ void TextLinesDetector::process() {
             // rationale behind is as follows: If the horizontal gap between two lines is small,
             // the threshold should be less restrictive. If the horizontal gap is large, the
             // threshold should be more restrictive.
-            double yOverlapRatioThreshold = _config->getYOverlapRatioThreshold(_doc, xGap);
-            _log->debug(p) << " └─ yOverlapThreshold: " << yOverlapRatioThreshold << endl;
+            double yOverlapRatioThreshold = getYOverlapRatioThreshold(_doc, xGap);
+
+            _log->debug(p) << qqq << "max y-overlap ratio: " << yOverlapRatio << endl;
+            _log->debug(p) << qqq << "threshold: " << yOverlapRatioThreshold << endl;
 
             // Merge the current line with the previous line when the vertical overlap between the
             // lines is larger or equal to the threshold.
             if (math_utils::equalOrLarger(yOverlapRatio, yOverlapRatioThreshold)) {
               mergeTextLines(currLine, prevLine);
 
-              _log->debug(p) << BOLD << "Merged curr line with prev line." << OFF << endl;
-              _log->debug(p) << " └─ prevLine.pageNum: " << prevLine->position->pageNum << endl;
-              _log->debug(p) << " └─ prevLine.leftX: " << prevLine->position->leftX << endl;
-              _log->debug(p) << " └─ prevLine.upperY: " << prevLine->position->upperY << endl;
-              _log->debug(p) << " └─ prevLine.rightX: " << prevLine->position->rightX << endl;
-              _log->debug(p) << " └─ prevLine.lowerY: " << prevLine->position->lowerY << endl;
-              _log->debug(p) << " └─ prevLine.text: \"" << prevLine->text << "\"" << endl;
+              _log->debug(p) << qqq << BOLD << "merge currLine with prevLine" << OFF << endl;
+              _log->debug(p) << qqq << " └─ prevLine.text: \"" << prevLine->text << "\"" << endl;
+              _log->debug(p) << qqq << " └─ prevLine.page: " << prevLine->position->pageNum << endl;
+              _log->debug(p) << qqq << " └─ prevLine.leftX: " << prevLine->position->leftX << endl;
+              _log->debug(p) << qqq << " └─ prevLine.upperY: " << prevLine->position->upperY << endl;
+              _log->debug(p) << qqq << " └─ prevLine.rightX: " << prevLine->position->rightX << endl;
+              _log->debug(p) << qqq << " └─ prevLine.lowerY: " << prevLine->position->lowerY << endl;
 
               merged = true;
               continue;
+            } else {
+              _log->debug(p) << qqq << BOLD << "do not merge" << OFF << endl;
             }
+
 
             // Do not merge the lines. Instead, append the current line to the vector.
             mergedLines.push_back(currLine);
@@ -263,6 +301,16 @@ void TextLinesDetector::process() {
       segment->trimUpperY = get<1>(trimBox);
       segment->trimRightX = get<2>(trimBox);
       segment->trimLowerY = get<3>(trimBox);
+
+      _log->debug(p) << "---------------------------------------------------------" << endl;
+
+      _log->debug(p) << q << BOLD << "Computed trim box" << OFF << endl;
+      _log->debug(p) << q << " └─ segment.trimLeftX: " << segment->trimLeftX << endl;
+      _log->debug(p) << q << " └─ segment.trimUpperY: " << segment->trimUpperY << endl;
+      _log->debug(p) << q << " └─ segment.trimRightX: " << segment->trimRightX << endl;
+      _log->debug(p) << q << " └─ segment.trimLowerY: " << segment->trimLowerY << endl;
+
+      _log->debug(p) << "=========================================================" << endl;
     }
 
     // Compute the text lines hierarchies.

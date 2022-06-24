@@ -18,8 +18,33 @@
 using std::vector;
 
 // =================================================================================================
+// CONFIG
 
-struct TextLinesDetectorConfig;
+namespace text_lines_detector::config {
+
+/**
+ * This method returns a threshold which the maximum vertical overlap ratio between two
+ * consecutive text lines must achieve so that the text lines are merged while detecting text
+ * lines. If the maximum vertical overlap ratio between two consecutive lines is larger or equal
+ * to the returned value, the text lines are merged; otherwise the text lines are not merged.
+ *
+ * @param doc
+ *    A reference to the PDF document currently processed, which can be used to get general
+ *    statistics about the document, for example: the average character width and -height.
+ * @param xGap
+ *    The horizontal gap between the two text lines for which it is to be decided whether or not
+ *    they should be merged.
+ *
+ * @return
+ *    The threshold for the maximum vertical overlap ratio between two text lines.
+ */
+constexpr double getYOverlapRatioThreshold(const PdfDocument* doc, double xGap) {
+  return xGap < 3 * doc->avgCharWidth ? 0.4 : 0.8;
+}
+
+}  // namespace text_lines_detector::config
+
+// =================================================================================================
 
 /**
  * This class is responsible for detecting text lines from the words of a PDF document.
@@ -53,7 +78,7 @@ class TextLinesDetector {
   ~TextLinesDetector();
 
   /**
-   * This method starts the process of detecting text lines in the given PDF document.
+   * This method starts the detection of text lines in the given PDF document.
    */
   void process();
 
@@ -102,39 +127,8 @@ class TextLinesDetector {
   // The PDF document to process.
   const PdfDocument* _doc;
 
-  // The config.
-  const TextLinesDetectorConfig* _config;
-
   // The logger.
   const Logger* _log;
-};
-
-// =================================================================================================
-
-/**
- * This struct provides the configuration (= thresholds and parameters) to be used by the
- * `TextLinesDetector` class while detecting text lines.
- */
-struct TextLinesDetectorConfig {
-  /**
-   * This method returns a threshold which the maximum vertical overlap ratio between two
-   * consecutive text lines must achieve so that the text lines are merged while detecting text
-   * lines. If the maximum vertical overlap ratio between two consecutive lines is larger or equal
-   * to the returned value, the text lines are merged; otherwise the text lines are not merged.
-   *
-   * @param doc
-   *    A reference to the PDF document currently processed, which can be used to get general
-   *    statistics about the document, for example: the average character width and -height.
-   * @param xGap
-   *    The horizontal gap between the two text lines for which it is to be decided whether or not
-   *    they should be merged.
-   *
-   * @return
-   *    The threshold for the maximum vertical overlap ratio between two text lines.
-   */
-  double getYOverlapRatioThreshold(const PdfDocument* doc, double xGap) const {
-    return xGap < 3 * doc->avgCharWidth ? 0.4 : 0.8;
-  }
 };
 
 #endif  // TEXTLINESDETECTOR_H_
