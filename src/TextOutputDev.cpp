@@ -28,6 +28,7 @@
 using global_config::COORDS_EQUAL_TOLERANCE;
 using global_config::FONT_SIZE_PREC;
 using global_config::ID_LENGTH;
+
 using std::endl;
 using std::get;
 using std::max;
@@ -212,8 +213,8 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   // ----------------------------------
   // Set the page number.
 
-  ch->position->pageNum = _page->pageNum;
-  _log->debug(_p) << " └─ char.pageNum: " << ch->position->pageNum << endl;
+  ch->pos->pageNum = _page->pageNum;
+  _log->debug(_p) << " └─ char.pageNum: " << ch->pos->pageNum << endl;
 
   // ----------------------------------
   // Set the rotation (this code is stolen from Poppler).
@@ -234,21 +235,21 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
     m[3] = m2[3];
   }
   if (fabs(m[0] * m[3]) > fabs(m[1] * m[2])) {
-    ch->position->rotation = (m[0] > 0 || m[3] < 0) ? 0 : 2;
+    ch->pos->rotation = (m[0] > 0 || m[3] < 0) ? 0 : 2;
   } else {
-    ch->position->rotation = (m[2] > 0) ? 1 : 3;
+    ch->pos->rotation = (m[2] > 0) ? 1 : 3;
   }
   // In vertical writing mode, the lines are effectively rotated by 90 degrees.
   if (gfxFont && gfxFont->getWMode()) {
-    ch->position->rotation = (ch->position->rotation + 1) & 3;
+    ch->pos->rotation = (ch->pos->rotation + 1) & 3;
   }
-  _log->debug(_p) << " └─ char.rotation: " << ch->position->rotation << endl;
+  _log->debug(_p) << " └─ char.rotation: " << ch->pos->rotation << endl;
 
   // ----------------------------------
   // Set the writing mode.
 
-  ch->position->wMode = gfxFont->getWMode();
-  _log->debug(_p) << " └─ char.wMode: " << ch->position->wMode << endl;
+  ch->pos->wMode = gfxFont->getWMode();
+  _log->debug(_p) << " └─ char.wMode: " << ch->pos->wMode << endl;
 
   // ----------------------------------
   // Compute and set the bounding box.
@@ -322,63 +323,63 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   double descent = _fontInfo ? _fontInfo->descent * transformedFontSize : 0;
 
   // Compute leftX, upperY, rightX, lowerY dependent on the writing mode and rotation.
-  ch->position->leftX = x0 - transformedFontSize;
-  ch->position->upperY = y0 - transformedFontSize;
-  ch->position->rightX = x0;
-  ch->position->lowerY = y0;
+  ch->pos->leftX = x0 - transformedFontSize;
+  ch->pos->upperY = y0 - transformedFontSize;
+  ch->pos->rightX = x0;
+  ch->pos->lowerY = y0;
 
   int wMode = gfxFont->getWMode();
   if (wMode) {  // vertical writing mode
-    switch (ch->position->rotation) {
+    switch (ch->pos->rotation) {
       case 0:
         break;
       case 1:
-        ch->position->leftX = x0;
-        ch->position->upperY = y0 - transformedFontSize;
-        ch->position->rightX = x0 + transformedFontSize;
-        ch->position->lowerY = y0;
+        ch->pos->leftX = x0;
+        ch->pos->upperY = y0 - transformedFontSize;
+        ch->pos->rightX = x0 + transformedFontSize;
+        ch->pos->lowerY = y0;
         break;
       case 2:
-        ch->position->leftX = x0;
-        ch->position->upperY = y0;
-        ch->position->rightX = x0 + transformedFontSize;
-        ch->position->lowerY = y0 + transformedFontSize;
+        ch->pos->leftX = x0;
+        ch->pos->upperY = y0;
+        ch->pos->rightX = x0 + transformedFontSize;
+        ch->pos->lowerY = y0 + transformedFontSize;
         break;
       case 3:
-        ch->position->leftX = x0 - transformedFontSize;
-        ch->position->upperY = y0;
-        ch->position->rightX = x0;
-        ch->position->lowerY = y0 + transformedFontSize;
+        ch->pos->leftX = x0 - transformedFontSize;
+        ch->pos->upperY = y0;
+        ch->pos->rightX = x0;
+        ch->pos->lowerY = y0 + transformedFontSize;
         break;
     }
   } else {  // horizontal writing mode
-    switch (ch->position->rotation) {
+    switch (ch->pos->rotation) {
       case 0:
-        ch->position->leftX = x0;
-        ch->position->upperY = y0 - ascent;
-        ch->position->rightX = x0 + (x1 - x0);
-        ch->position->lowerY = y0 - descent;
+        ch->pos->leftX = x0;
+        ch->pos->upperY = y0 - ascent;
+        ch->pos->rightX = x0 + (x1 - x0);
+        ch->pos->lowerY = y0 - descent;
         ch->base = y0;
         break;
       case 1:
-        ch->position->leftX = x0 + descent;
-        ch->position->upperY = y0;
-        ch->position->rightX = x0 + ascent;
-        ch->position->lowerY = y0 + (y1 - y0);
+        ch->pos->leftX = x0 + descent;
+        ch->pos->upperY = y0;
+        ch->pos->rightX = x0 + ascent;
+        ch->pos->lowerY = y0 + (y1 - y0);
         ch->base = x0;
         break;
       case 2:
-        ch->position->leftX = x0;
-        ch->position->upperY = y0 + descent;
-        ch->position->rightX = x0 + (x1 - x0);
-        ch->position->lowerY = y0 + ascent;
+        ch->pos->leftX = x0;
+        ch->pos->upperY = y0 + descent;
+        ch->pos->rightX = x0 + (x1 - x0);
+        ch->pos->lowerY = y0 + ascent;
         ch->base = y0;
         break;
       case 3:
-        ch->position->leftX = x0 - ascent;
-        ch->position->upperY = y0 + (y1 - y0);
-        ch->position->rightX = x0 - descent;
-        ch->position->lowerY = y0;
+        ch->pos->leftX = x0 - ascent;
+        ch->pos->upperY = y0 + (y1 - y0);
+        ch->pos->rightX = x0 - descent;
+        ch->pos->lowerY = y0;
         ch->base = x0;
         break;
     }
@@ -409,25 +410,25 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
     lowerY = max(upperY3, lowerY3);
 
     // Update the bounding box when the alternative bounding box has a larger vertical extent.
-    if (upperY < ch->position->upperY || lowerY > ch->position->lowerY) {
-      ch->position->leftX = leftX;
-      ch->position->upperY = upperY;
-      ch->position->rightX = rightX;
-      ch->position->lowerY = lowerY;
+    if (upperY < ch->pos->upperY || lowerY > ch->pos->lowerY) {
+      ch->pos->leftX = leftX;
+      ch->pos->upperY = upperY;
+      ch->pos->rightX = rightX;
+      ch->pos->lowerY = lowerY;
       ch->base = lowerY;
     }
   }
 
-  _log->debug(_p) << " └─ char.leftX:  " << ch->position->leftX << endl;
-  _log->debug(_p) << " └─ char.upperY: " << ch->position->upperY << endl;
-  _log->debug(_p) << " └─ char.rightX: " << ch->position->rightX << endl;
-  _log->debug(_p) << " └─ char.lowerY: " << ch->position->lowerY << endl;
+  _log->debug(_p) << " └─ char.leftX:  " << ch->pos->leftX << endl;
+  _log->debug(_p) << " └─ char.upperY: " << ch->pos->upperY << endl;
+  _log->debug(_p) << " └─ char.rightX: " << ch->pos->rightX << endl;
+  _log->debug(_p) << " └─ char.lowerY: " << ch->pos->lowerY << endl;
   _log->debug(_p) << " └─ char.base: " << ch->base << endl;
-  if (ch->position->rotation > 0) {
-    _log->debug(_p) << " └─ char.rotLeftX:  " << ch->position->getRotLeftX() << endl;
-    _log->debug(_p) << " └─ char.rotUpperY: " << ch->position->getRotUpperY() << endl;
-    _log->debug(_p) << " └─ char.rotRightX: " << ch->position->getRotRightX() << endl;
-    _log->debug(_p) << " └─ char.rotLowerY: " << ch->position->getRotLowerY() << endl;
+  if (ch->pos->rotation > 0) {
+    _log->debug(_p) << " └─ char.rotLeftX:  " << ch->pos->getRotLeftX() << endl;
+    _log->debug(_p) << " └─ char.rotUpperY: " << ch->pos->getRotUpperY() << endl;
+    _log->debug(_p) << " └─ char.rotRightX: " << ch->pos->getRotRightX() << endl;
+    _log->debug(_p) << " └─ char.rotLowerY: " << ch->pos->getRotLowerY() << endl;
   }
 
   // ----------------------------------
@@ -499,10 +500,10 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
           && math_utils::equal(clipRightX, figure->clipRightX, COORDS_EQUAL_TOLERANCE)
           && math_utils::equal(clipLowerY, figure->clipLowerY, COORDS_EQUAL_TOLERANCE)) {
       // Update the bounding box of the figure.
-      figure->position->leftX = min(figure->position->leftX, ch->position->leftX);
-      figure->position->upperY = min(figure->position->upperY, ch->position->upperY);
-      figure->position->rightX = max(figure->position->rightX, ch->position->rightX);
-      figure->position->lowerY = max(figure->position->lowerY, ch->position->lowerY);
+      figure->pos->leftX = min(figure->pos->leftX, ch->pos->leftX);
+      figure->pos->upperY = min(figure->pos->upperY, ch->pos->upperY);
+      figure->pos->rightX = max(figure->pos->rightX, ch->pos->rightX);
+      figure->pos->lowerY = max(figure->pos->lowerY, ch->pos->lowerY);
       figure->characters.push_back(ch);
       _log->debug(_p) << "Append to figure " << figure->id << "." << endl;
       return;
@@ -513,11 +514,11 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   PdfFigure* figure = new PdfFigure();
   figure->id = string_utils::createRandomString(ID_LENGTH, "figure-");
   figure->doc = _doc;
-  figure->position->pageNum = _page->pageNum;
-  figure->position->leftX = ch->position->leftX;
-  figure->position->upperY = ch->position->upperY;
-  figure->position->rightX = ch->position->rightX;
-  figure->position->lowerY = ch->position->lowerY;
+  figure->pos->pageNum = _page->pageNum;
+  figure->pos->leftX = ch->pos->leftX;
+  figure->pos->upperY = ch->pos->upperY;
+  figure->pos->rightX = ch->pos->rightX;
+  figure->pos->lowerY = ch->pos->lowerY;
   figure->clipLeftX = clipLeftX;
   figure->clipUpperY = clipUpperY;
   figure->clipRightX = clipRightX;
@@ -528,11 +529,11 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
 
   _log->debug(_p) << "Create new figure and append the char to it." << endl;
   _log->debug(_p) << " └─ figure.id: " << figure->id << endl;
-  _log->debug(_p) << " └─ figure.pageNum: " << figure->position->pageNum << endl;
-  _log->debug(_p) << " └─ figure.leftX:  " << figure->position->leftX << endl;
-  _log->debug(_p) << " └─ figure.upperY: " << figure->position->upperY << endl;
-  _log->debug(_p) << " └─ figure.rightX: " << figure->position->rightX << endl;
-  _log->debug(_p) << " └─ figure.lowerY: " << figure->position->lowerY << endl;
+  _log->debug(_p) << " └─ figure.pageNum: " << figure->pos->pageNum << endl;
+  _log->debug(_p) << " └─ figure.leftX:  " << figure->pos->leftX << endl;
+  _log->debug(_p) << " └─ figure.upperY: " << figure->pos->upperY << endl;
+  _log->debug(_p) << " └─ figure.rightX: " << figure->pos->rightX << endl;
+  _log->debug(_p) << " └─ figure.lowerY: " << figure->pos->lowerY << endl;
   _log->debug(_p) << " └─ figure.clipLeftX:  " << figure->clipLeftX << endl;
   _log->debug(_p) << " └─ figure.clipUpperY: " << figure->clipUpperY << endl;
   _log->debug(_p) << " └─ figure.clipRightX: " << figure->clipRightX << endl;
@@ -587,19 +588,19 @@ void TextOutputDev::stroke(GfxState* state) {
   PdfShape* shape = new PdfShape();
   shape->id = string_utils::createRandomString(ID_LENGTH, "shape-");
   shape->doc = _doc;
-  shape->position->pageNum = _page->pageNum;
-  shape->position->leftX = leftX;
-  shape->position->upperY = upperY;
-  shape->position->rightX = rightX;
-  shape->position->lowerY = lowerY;
+  shape->pos->pageNum = _page->pageNum;
+  shape->pos->leftX = leftX;
+  shape->pos->upperY = upperY;
+  shape->pos->rightX = rightX;
+  shape->pos->lowerY = lowerY;
   shape->rank = _numElements++;
 
   _log->debug(_p) << " └─ shape.id: " << shape->id << endl;
-  _log->debug(_p) << " └─ shape.pageNum: " << shape->position->pageNum << endl;
-  _log->debug(_p) << " └─ shape.leftX:  " << shape->position->leftX << endl;
-  _log->debug(_p) << " └─ shape.upperY: " << shape->position->upperY << endl;
-  _log->debug(_p) << " └─ shape.rightX: " << shape->position->rightX << endl;
-  _log->debug(_p) << " └─ shape.lowerY: " << shape->position->lowerY << endl;
+  _log->debug(_p) << " └─ shape.pageNum: " << shape->pos->pageNum << endl;
+  _log->debug(_p) << " └─ shape.leftX:  " << shape->pos->leftX << endl;
+  _log->debug(_p) << " └─ shape.upperY: " << shape->pos->upperY << endl;
+  _log->debug(_p) << " └─ shape.rightX: " << shape->pos->rightX << endl;
+  _log->debug(_p) << " └─ shape.lowerY: " << shape->pos->lowerY << endl;
   _log->debug(_p) << " └─ shape.rank: " << shape->rank << endl;
   _log->debug(_p) << " └─ clipBox: leftX: " << clipLeftX << "; upperY: " << clipUpperY
       << "; rightX: " << clipRightX << "; lowerY: " << clipLowerY << endl;
@@ -632,10 +633,10 @@ void TextOutputDev::stroke(GfxState* state) {
           && math_utils::equal(clipRightX, figure->clipRightX, COORDS_EQUAL_TOLERANCE)
           && math_utils::equal(clipLowerY, figure->clipLowerY, COORDS_EQUAL_TOLERANCE)) {
       // Update the bounding box of the figure.
-      figure->position->leftX = min(figure->position->leftX, shape->position->leftX);
-      figure->position->upperY = min(figure->position->upperY, shape->position->upperY);
-      figure->position->rightX = max(figure->position->rightX, shape->position->rightX);
-      figure->position->lowerY = max(figure->position->lowerY, shape->position->lowerY);
+      figure->pos->leftX = min(figure->pos->leftX, shape->pos->leftX);
+      figure->pos->upperY = min(figure->pos->upperY, shape->pos->upperY);
+      figure->pos->rightX = max(figure->pos->rightX, shape->pos->rightX);
+      figure->pos->lowerY = max(figure->pos->lowerY, shape->pos->lowerY);
       figure->shapes.push_back(shape);
       _log->debug(_p) << "Append to figure " << figure->id << "." << endl;
       return;
@@ -646,11 +647,11 @@ void TextOutputDev::stroke(GfxState* state) {
   PdfFigure* figure = new PdfFigure();
   figure->id = string_utils::createRandomString(ID_LENGTH, "figure-");
   figure->doc = _doc;
-  figure->position->pageNum = _page->pageNum;
-  figure->position->leftX = shape->position->leftX;
-  figure->position->upperY = shape->position->upperY;
-  figure->position->rightX = shape->position->rightX;
-  figure->position->lowerY = shape->position->lowerY;
+  figure->pos->pageNum = _page->pageNum;
+  figure->pos->leftX = shape->pos->leftX;
+  figure->pos->upperY = shape->pos->upperY;
+  figure->pos->rightX = shape->pos->rightX;
+  figure->pos->lowerY = shape->pos->lowerY;
   figure->clipLeftX = clipLeftX;
   figure->clipUpperY = clipUpperY;
   figure->clipRightX = clipRightX;
@@ -661,11 +662,11 @@ void TextOutputDev::stroke(GfxState* state) {
 
   _log->debug(_p) << "Create new figure and append the shape to it." << endl;
   _log->debug(_p) << " └─ figure.id: " << figure->id << endl;
-  _log->debug(_p) << " └─ figure.pageNum: " << figure->position->pageNum << endl;
-  _log->debug(_p) << " └─ figure.leftX:  " << figure->position->leftX << endl;
-  _log->debug(_p) << " └─ figure.upperY: " << figure->position->upperY << endl;
-  _log->debug(_p) << " └─ figure.rightX: " << figure->position->rightX << endl;
-  _log->debug(_p) << " └─ figure.lowerY: " << figure->position->lowerY << endl;
+  _log->debug(_p) << " └─ figure.pageNum: " << figure->pos->pageNum << endl;
+  _log->debug(_p) << " └─ figure.leftX:  " << figure->pos->leftX << endl;
+  _log->debug(_p) << " └─ figure.upperY: " << figure->pos->upperY << endl;
+  _log->debug(_p) << " └─ figure.rightX: " << figure->pos->rightX << endl;
+  _log->debug(_p) << " └─ figure.lowerY: " << figure->pos->lowerY << endl;
   _log->debug(_p) << " └─ figure.clipLeftX: " << figure->clipLeftX << endl;
   _log->debug(_p) << " └─ figure.clipUpperY: " << figure->clipUpperY << endl;
   _log->debug(_p) << " └─ figure.clipRightX: " << figure->clipRightX << endl;
@@ -735,19 +736,19 @@ void TextOutputDev::drawGraphic(GfxState* state) {
   PdfGraphic* graphic = new PdfGraphic();
   graphic->id = string_utils::createRandomString(ID_LENGTH, "graphic-");
   graphic->doc = _doc;
-  graphic->position->pageNum = _page->pageNum;
-  graphic->position->leftX = max(min(leftX, rightX), clipLeftX);
-  graphic->position->upperY = max(min(upperY, lowerY), clipUpperY);
-  graphic->position->rightX = min(max(leftX, rightX), clipRightX);
-  graphic->position->lowerY = min(max(upperY, lowerY), clipLowerY);
+  graphic->pos->pageNum = _page->pageNum;
+  graphic->pos->leftX = max(min(leftX, rightX), clipLeftX);
+  graphic->pos->upperY = max(min(upperY, lowerY), clipUpperY);
+  graphic->pos->rightX = min(max(leftX, rightX), clipRightX);
+  graphic->pos->lowerY = min(max(upperY, lowerY), clipLowerY);
   graphic->rank = _numElements++;
 
   _log->debug(_p) << " └─ graphic.id: " << graphic->id << endl;
-  _log->debug(_p) << " └─ graphic.pageNum: " << graphic->position->pageNum << endl;
-  _log->debug(_p) << " └─ graphic.leftX:  " << graphic->position->leftX << endl;
-  _log->debug(_p) << " └─ graphic.upperY: " << graphic->position->upperY << endl;
-  _log->debug(_p) << " └─ graphic.rightX: " << graphic->position->rightX << endl;
-  _log->debug(_p) << " └─ graphic.lowerY: " << graphic->position->lowerY << endl;
+  _log->debug(_p) << " └─ graphic.pageNum: " << graphic->pos->pageNum << endl;
+  _log->debug(_p) << " └─ graphic.leftX:  " << graphic->pos->leftX << endl;
+  _log->debug(_p) << " └─ graphic.upperY: " << graphic->pos->upperY << endl;
+  _log->debug(_p) << " └─ graphic.rightX: " << graphic->pos->rightX << endl;
+  _log->debug(_p) << " └─ graphic.lowerY: " << graphic->pos->lowerY << endl;
   _log->debug(_p) << " └─ graphic.rank: " << graphic->rank << endl;
   _log->debug(_p) << " └─ clipBox: leftX: " << clipLeftX << "; upperY: " << clipUpperY
       << "; rightX: " << clipRightX << "; lowerY: " << clipLowerY << endl;
@@ -780,10 +781,10 @@ void TextOutputDev::drawGraphic(GfxState* state) {
           && math_utils::equal(clipRightX, figure->clipRightX, COORDS_EQUAL_TOLERANCE)
           && math_utils::equal(clipLowerY, figure->clipLowerY, COORDS_EQUAL_TOLERANCE)) {
       // Update the bounding box of the figure.
-      figure->position->leftX = min(figure->position->leftX, graphic->position->leftX);
-      figure->position->upperY = min(figure->position->upperY, graphic->position->upperY);
-      figure->position->rightX = max(figure->position->rightX, graphic->position->rightX);
-      figure->position->lowerY = max(figure->position->lowerY, graphic->position->lowerY);
+      figure->pos->leftX = min(figure->pos->leftX, graphic->pos->leftX);
+      figure->pos->upperY = min(figure->pos->upperY, graphic->pos->upperY);
+      figure->pos->rightX = max(figure->pos->rightX, graphic->pos->rightX);
+      figure->pos->lowerY = max(figure->pos->lowerY, graphic->pos->lowerY);
       figure->graphics.push_back(graphic);
       _log->debug(_p) << "Append to figure " << figure->id << "." << endl;
       return;
@@ -794,11 +795,11 @@ void TextOutputDev::drawGraphic(GfxState* state) {
   PdfFigure* figure = new PdfFigure();
   figure->id = string_utils::createRandomString(global_config::ID_LENGTH, "figure-");
   figure->doc = _doc;
-  figure->position->pageNum = _page->pageNum;
-  figure->position->leftX = graphic->position->leftX;
-  figure->position->upperY = graphic->position->upperY;
-  figure->position->rightX = graphic->position->rightX;
-  figure->position->lowerY = graphic->position->lowerY;
+  figure->pos->pageNum = _page->pageNum;
+  figure->pos->leftX = graphic->pos->leftX;
+  figure->pos->upperY = graphic->pos->upperY;
+  figure->pos->rightX = graphic->pos->rightX;
+  figure->pos->lowerY = graphic->pos->lowerY;
   figure->clipLeftX = clipLeftX;
   figure->clipUpperY = clipUpperY;
   figure->clipRightX = clipRightX;
@@ -809,11 +810,11 @@ void TextOutputDev::drawGraphic(GfxState* state) {
 
   _log->debug(_p) << "Create new figure and append the graphic to it." << endl;
   _log->debug(_p) << " └─ figure.id: " << figure->id << endl;
-  _log->debug(_p) << " └─ figure.pageNum: " << figure->position->pageNum << endl;
-  _log->debug(_p) << " └─ figure.leftX:  " << figure->position->leftX << endl;
-  _log->debug(_p) << " └─ figure.upperY: " << figure->position->upperY << endl;
-  _log->debug(_p) << " └─ figure.rightX: " << figure->position->rightX << endl;
-  _log->debug(_p) << " └─ figure.lowerY: " << figure->position->lowerY << endl;
+  _log->debug(_p) << " └─ figure.pageNum: " << figure->pos->pageNum << endl;
+  _log->debug(_p) << " └─ figure.leftX:  " << figure->pos->leftX << endl;
+  _log->debug(_p) << " └─ figure.upperY: " << figure->pos->upperY << endl;
+  _log->debug(_p) << " └─ figure.rightX: " << figure->pos->rightX << endl;
+  _log->debug(_p) << " └─ figure.lowerY: " << figure->pos->lowerY << endl;
   _log->debug(_p) << " └─ figure.clipLeftX:  " << figure->clipLeftX << endl;
   _log->debug(_p) << " └─ figure.clipUpperY: " << figure->clipUpperY << endl;
   _log->debug(_p) << " └─ figure.clipRightX: " << figure->clipRightX << endl;

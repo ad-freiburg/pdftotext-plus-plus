@@ -318,7 +318,7 @@ class PdfElement {
   string id;
 
   // The position of this element in the PDF.
-  PdfPosition* position = nullptr;
+  PdfPosition* pos = nullptr;
 
   // The rank of this element, that is: its position in the extraction order.
   int rank = -1;

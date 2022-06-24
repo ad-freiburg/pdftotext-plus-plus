@@ -14,12 +14,11 @@
 #include "./PdfDocument.h"
 #include "./SubSuperScriptsDetector.h"
 
-using sub_super_scripts_detector::config::BASE_LINE_EQUAL_TOLERANCE;
-using sub_super_scripts_detector::config::FSIZE_EQUAL_TOLERANCE;
-
 using std::endl;
 using std::max;
 using std::min;
+
+namespace config = sub_super_scripts_detector::config;
 
 // _________________________________________________________________________________________________
 SubSuperScriptsDetector::SubSuperScriptsDetector(const PdfDocument* doc, bool debug,
@@ -36,6 +35,9 @@ SubSuperScriptsDetector::~SubSuperScriptsDetector() {
 // _________________________________________________________________________________________________
 void SubSuperScriptsDetector::process() const {
   assert(_doc);
+
+  double baseLineEqualTolerance = config::getBaselineEqualTolerance(_doc);
+  double fontSizeEqualTolerance = config::getFontsizeEqualTolerance(_doc);
 
   _log->info() << "Detecting sub-/superscripts..." << endl;
   _log->debug() << "=======================================" << endl;
@@ -59,20 +61,20 @@ void SubSuperScriptsDetector::process() const {
             _log->debug(p) << BOLD << "char: " << character->text << OFF << endl;
             _log->debug(p) << " └─ char.fontSize: " << character->fontSize << endl;
             _log->debug(p) << " └─ doc.mostFrequentFontSize: " << _doc->mostFreqFontSize << endl;
-            _log->debug(p) << " └─ tolerance font-size: " << FSIZE_EQUAL_TOLERANCE << endl;
+            _log->debug(p) << " └─ tolerance font-size: " << fontSizeEqualTolerance << endl;
             _log->debug(p) << " └─ char.base: " << character->base << endl;
             _log->debug(p) << " └─ line.base: " << line->base << endl;
-            _log->debug(p) << " └─ tolerance base-line: " << BASE_LINE_EQUAL_TOLERANCE << endl;
+            _log->debug(p) << " └─ tolerance base-line: " << baseLineEqualTolerance << endl;
 
             if (math_utils::smaller(character->fontSize, _doc->mostFreqFontSize,
-                  FSIZE_EQUAL_TOLERANCE)) {
-              if (math_utils::smaller(character->base, line->base, BASE_LINE_EQUAL_TOLERANCE)) {
+                  fontSizeEqualTolerance)) {
+              if (math_utils::smaller(character->base, line->base, baseLineEqualTolerance)) {
                 _log->debug(p) << BOLD << " superscript (char.base < line.base)" << OFF << endl;
                 character->isSuperscript = true;
                 continue;
               }
 
-              if (math_utils::larger(character->base, line->base, BASE_LINE_EQUAL_TOLERANCE)) {
+              if (math_utils::larger(character->base, line->base, baseLineEqualTolerance)) {
                 _log->debug(p) << BOLD << " subscript (char.base > line.base)" << OFF << endl;
                 character->isSubscript = true;
                 continue;
@@ -80,10 +82,10 @@ void SubSuperScriptsDetector::process() const {
             }
 
             // Compute the coordinates of the base bounding box of the line.
-            line->baseBBoxLeftX = min(line->baseBBoxLeftX, character->position->leftX);
-            line->baseBBoxUpperY = min(line->baseBBoxUpperY, character->position->upperY);
-            line->baseBBoxRightX = max(line->baseBBoxRightX, character->position->rightX);
-            line->baseBBoxLowerY = max(line->baseBBoxLowerY, character->position->lowerY);
+            line->baseBBoxLeftX = min(line->baseBBoxLeftX, character->pos->leftX);
+            line->baseBBoxUpperY = min(line->baseBBoxUpperY, character->pos->upperY);
+            line->baseBBoxRightX = max(line->baseBBoxRightX, character->pos->rightX);
+            line->baseBBoxLowerY = max(line->baseBBoxLowerY, character->pos->lowerY);
           }
         }
       }

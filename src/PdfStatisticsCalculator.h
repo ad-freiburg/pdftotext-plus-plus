@@ -18,34 +18,41 @@
 
 namespace pdf_statistics_calculator::config {
 
+// TODO
 // The precision (the number of decimal points) to use when rounding coordinates.
 const double COORDS_PREC = global_config::COORDS_PREC;
 
+// TODO
 // The precision (the number of decimal points) to use when rounding font sizes.
 const double FONT_SIZE_PREC = global_config::FONT_SIZE_PREC;
 
+// TODO
 // The precision (the number of decimal points) to use when rounding line distances.
 const double LINE_DIST_PREC = global_config::LINE_DIST_PREC;
 
+// TODO
 // The maximum allowed difference between two font sizes so that they are considered to be equal.
 const double FSIZE_EQUAL_TOLERANCE = 0.1;
 
+// TODO
 // A threshold that is used while checking if two consecutive words vertically overlap. The
 // doc->mostFreqWordDistance is only measured between those two words for which the maximum
 // y-overlap ratio is larger or equal to this threshold.
-const double Y_OVERLAP_RATIO_OVERLAPPING_THRESH = 0.5;
+constexpr double getSameLineYOverlapRatioThreshold(const PdfDocument* doc) {
+  return 0.5;
+}
 
-//  A threshold that is used while checking if two consecutive words do *not* vertically overlap.
+// TODO
+// A threshold that is used while checking if two consecutive words do *not* vertically overlap.
 // The doc->mostFreqEstimatedLineDistance is only measured between those two words for which the
 // maximum y-overlap ratio is smaller or equal to this threshold.
-const double Y_OVERLAP_RATIO_NOT_OVERLAPPING_THRESH = 0;
+constexpr double getOtherLineYOverlapRatioThreshold(const PdfDocument* doc) {
+  return 0;
+}
 
 }  // namespace pdf_statistics_calculator::config
 
 // =================================================================================================
-
-using pdf_statistics_calculator::config::Y_OVERLAP_RATIO_OVERLAPPING_THRESH;
-using pdf_statistics_calculator::config::Y_OVERLAP_RATIO_NOT_OVERLAPPING_THRESH;
 
 /**
  * This class computes some statistics about the characters, words and text lines in a PDF document,
@@ -85,19 +92,8 @@ class PdfStatisticsCalculator {
    *     estimated by analyzing the vertical gaps between consecutive words that do not vertically
    *     overlap (this is needed for tasks that require the most frequent line distance, but
    *     need to be executed before text lines were detected).
-   *
-   * @param yOverlapRatioOverlappingThreshold
-   *    A threshold that is used while checking if two consecutive words vertically overlap. The
-   *    mostFreqWordDistance is only measured between those two words for which the maximum
-   *    y-overlap ratio is larger or equal to this threshold.
-   * @param yOverlapRatioNotOverlappingThreshold
-   *    A threshold that is used while checking if two consecutive words do *not* vertically
-   *    overlap. The mostFreqEstimatedLineDistance is only measured between those two words for
-   *    which the maximum y-overlap ratio is smaller or equal to this threshold.
    */
-  void computeWordStatistics(
-    double yOverlapRatioOverlappingThreshold = Y_OVERLAP_RATIO_OVERLAPPING_THRESH,
-    double yOverlapRatioNotOverlappingThreshold = Y_OVERLAP_RATIO_NOT_OVERLAPPING_THRESH) const;
+  void computeWordStatistics() const;
 
   /**
    * This method computes statistics about the text lines in a PDF document and stores them in the

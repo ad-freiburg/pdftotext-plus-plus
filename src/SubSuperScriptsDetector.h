@@ -22,15 +22,21 @@
  */
 namespace sub_super_scripts_detector::config {
 
+// TODO
 // The maximum allowed difference between the baselines of two characters, so that the characters
 // are considered to "sit" on the same baseline. This is needed to identify sub- and superscripts.
 // If the baseline of a character is larger than the baseline of the parent text line (under
 // consideration of the tolerance), the character is considered to be a superscript. If the
 // baseline is smaller, the character is considered to be a subscript.
-const double BASE_LINE_EQUAL_TOLERANCE = 0.1;
+constexpr double getBaselineEqualTolerance(const PdfDocument* doc) {
+  return 0.1;
+}
 
+// TODO
 // The maximum allowed difference between two font sizes so that they are considered to be equal.
-const double FSIZE_EQUAL_TOLERANCE = 0.9;
+constexpr double getFontsizeEqualTolerance(const PdfDocument* doc) {
+  return 0.9;
+}
 
 }  // namespace sub_super_scripts_detector::config
 

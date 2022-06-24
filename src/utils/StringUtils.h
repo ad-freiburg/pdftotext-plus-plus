@@ -86,6 +86,21 @@ string createRandomString(size_t len, const string& prefix = "");
  */
 string escapeJson(const string& str);
 
+/**
+ * If the given string is longer than the given length, this method shortens the string to the
+ * given length and appends "..." to it. Otherwise, this method returns a copy of the string, with
+ * its content untouched.
+ *
+ * @param str
+ *    The string to shorten.
+ * @param len
+ *    The target length.
+ *
+ * @return
+ *    The shortened string.
+ */
+string shorten(const string& str, size_t len = 40);  // TODO: Parameterize.
+
 }  // namespace string_utils
 
 #endif  // UTILS_STRINGUTILS_H_

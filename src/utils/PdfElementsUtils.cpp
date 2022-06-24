@@ -30,7 +30,7 @@ double element_utils::computeHorizontalGap(const PdfElement* element1, const Pdf
   // Determine the leftmost element, that is: the element with the minimum leftX.
   const PdfElement* leftElement;
   const PdfElement* rightElement;
-  if (element1->position->leftX < element2->position->leftX) {
+  if (element1->pos->leftX < element2->pos->leftX) {
     leftElement = element1;
     rightElement = element2;
   } else {
@@ -39,14 +39,14 @@ double element_utils::computeHorizontalGap(const PdfElement* element1, const Pdf
   }
 
   // Compute the horizontal gap between the elements, under consideration of the rotation.
-  switch (element1->position->rotation) {
+  switch (element1->pos->rotation) {
     case 0:
     case 1:
     default:
-      return rightElement->position->leftX - leftElement->position->rightX;
+      return rightElement->pos->leftX - leftElement->pos->rightX;
     case 2:
     case 3:
-      return leftElement->position->rightX - rightElement->position->leftX;
+      return leftElement->pos->rightX - rightElement->pos->leftX;
   }
 }
 
@@ -58,7 +58,7 @@ double element_utils::computeVerticalGap(const PdfElement* element1, const PdfEl
   // Determine the upper element, that is: the element with the minimum upperY.
   const PdfElement* upperElement;
   const PdfElement* lowerElement;
-  if (element1->position->upperY < element2->position->upperY) {
+  if (element1->pos->upperY < element2->pos->upperY) {
     upperElement = element1;
     lowerElement = element2;
   } else {
@@ -67,14 +67,14 @@ double element_utils::computeVerticalGap(const PdfElement* element1, const PdfEl
   }
 
   // Compute the vertical gap between the elements, under consideration of the rotation.
-  switch (element1->position->rotation) {
+  switch (element1->pos->rotation) {
     case 0:
     case 1:
     default:
-      return lowerElement->position->upperY - upperElement->position->lowerY;
+      return lowerElement->pos->upperY - upperElement->pos->lowerY;
     case 2:
     case 3:
-      return upperElement->position->lowerY - lowerElement->position->upperY;
+      return upperElement->pos->lowerY - lowerElement->pos->upperY;
   }
 }
 
@@ -109,10 +109,10 @@ pair<double, double> element_utils::computeXOverlapRatios(const PdfElement* elem
   assert(element1);
   assert(element2);
 
-  double s1 = element1->position->leftX;
-  double e1 = element1->position->rightX;
-  double s2 = element2->position->leftX;
-  double e2 = element2->position->rightX;
+  double s1 = element1->pos->leftX;
+  double e1 = element1->pos->rightX;
+  double s2 = element2->pos->leftX;
+  double e2 = element2->pos->rightX;
   return element_utils::computeOverlapRatios(s1, e1, s2, e2);
 }
 
@@ -122,10 +122,10 @@ pair<double, double> element_utils::computeYOverlapRatios(const PdfElement* elem
   assert(element1);
   assert(element2);
 
-  double s1 = element1->position->upperY;
-  double e1 = element1->position->lowerY;
-  double s2 = element2->position->upperY;
-  double e2 = element2->position->lowerY;
+  double s1 = element1->pos->upperY;
+  double e1 = element1->pos->lowerY;
+  double s2 = element2->pos->upperY;
+  double e2 = element2->pos->lowerY;
   return element_utils::computeOverlapRatios(s1, e1, s2, e2);
 }
 
@@ -146,7 +146,7 @@ bool element_utils::computeHasEqualLeftX(const PdfElement* elem1, const PdfEleme
       double tolerance) {
   assert(elem1);
   assert(elem2);
-  return math_utils::equal(elem1->position->leftX, elem2->position->leftX, tolerance);
+  return math_utils::equal(elem1->pos->leftX, elem2->pos->leftX, tolerance);
 }
 
 // _________________________________________________________________________________________________
@@ -154,7 +154,7 @@ bool element_utils::computeHasEqualUpperY(const PdfElement* elem1, const PdfElem
       double tolerance) {
   assert(elem1);
   assert(elem2);
-  return math_utils::equal(elem1->position->upperY, elem2->position->upperY, tolerance);
+  return math_utils::equal(elem1->pos->upperY, elem2->pos->upperY, tolerance);
 }
 
 // _________________________________________________________________________________________________
@@ -162,7 +162,7 @@ bool element_utils::computeHasEqualRightX(const PdfElement* elem1, const PdfElem
       double tolerance) {
   assert(elem1);
   assert(elem2);
-  return math_utils::equal(elem1->position->rightX, elem2->position->rightX, tolerance);
+  return math_utils::equal(elem1->pos->rightX, elem2->pos->rightX, tolerance);
 }
 
 // _________________________________________________________________________________________________
@@ -170,21 +170,21 @@ bool element_utils::computeHasEqualLowerY(const PdfElement* elem1, const PdfElem
       double tolerance) {
   assert(elem1);
   assert(elem2);
-  return math_utils::equal(elem1->position->lowerY, elem2->position->lowerY, tolerance);
+  return math_utils::equal(elem1->pos->lowerY, elem2->pos->lowerY, tolerance);
 }
 
 // _________________________________________________________________________________________________
 double element_utils::computeLeftXOffset(const PdfElement* elem1, const PdfElement* elem2) {
   assert(elem1);
   assert(elem2);
-  return elem1->position->leftX - elem2->position->leftX;
+  return elem1->pos->leftX - elem2->pos->leftX;
 }
 
 // _________________________________________________________________________________________________
 double element_utils::computeRightXOffset(const PdfElement* elem1, const PdfElement* elem2) {
   assert(elem1);
   assert(elem2);
-  return elem1->position->rightX - elem2->position->rightX;
+  return elem1->pos->rightX - elem2->pos->rightX;
 }
 
 // _________________________________________________________________________________________________

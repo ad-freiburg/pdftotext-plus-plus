@@ -17,27 +17,28 @@
 #include "./utils/Log.h"
 #include "./utils/MathUtils.h"
 #include "./utils/PdfElementsUtils.h"
+#include "./utils/StringUtils.h"
 #include "./utils/TextBlocksUtils.h"
 #include "./utils/TextLinesUtils.h"
 #include "./utils/Trool.h"
 
-using global_config::FONT_SIZE_PREC;
-using global_config::LINE_DIST_PREC;
 using std::max;
 using std::endl;
 using std::string;
 using std::vector;
 
+using string_utils::shorten;
+
+namespace config = text_blocks_detector::config;
+
 // _________________________________________________________________________________________________
 TextBlocksDetector::TextBlocksDetector(const PdfDocument* doc, bool debug, int debugPageFilter) {
   _log = new Logger(debug ? DEBUG : INFO, debugPageFilter);
-  _config = new TextBlocksDetectorConfig();
   _doc = doc;
 }
 
 // _________________________________________________________________________________________________
 TextBlocksDetector::~TextBlocksDetector() {
-  delete _config;
   delete _log;
 }
 
@@ -45,18 +46,45 @@ TextBlocksDetector::~TextBlocksDetector() {
 void TextBlocksDetector::process() {
   assert(_doc);
 
-  _log->debug() << BOLD << "Text Block Detection - DEBUG MODE" << OFF << endl;
+  _log->info() << "Detecting text blocks..." << endl;
+  _log->debug() << "=======================================" << endl;
+  _log->debug() << BOLD << "DEBUG MODE" << OFF << endl;
+  _log->debug() << "=======================================" << endl;
+  _log->debug() << BOLD << "Detecting preliminary text blocks..." << OFF << endl;
+  _log->debug() << "=======================================" << endl;
+  _q = "(pre) ";
 
-  _log->debug() << "Detecting preliminary text blocks..." << endl;
   for (auto* page : _doc->pages) {
+    int p = page->pageNum;
     for (auto* segment : page->segments) {
       vector<PdfTextLine*> currentBlockLines;
       for (auto* line : segment->lines) {
+        _log->debug(p) << _q << BOLD << "line: \"" << shorten(line->text) << "\"" << OFF << endl;
+        _log->debug(p) << _q << " └─ line.page:   " << line->pos->pageNum << endl;
+        _log->debug(p) << _q << " └─ line.leftX:  " << line->pos->leftX << endl;
+        _log->debug(p) << _q << " └─ line.upperY: " << line->pos->upperY << endl;
+        _log->debug(p) << _q << " └─ line.rightX: " << line->pos->rightX << endl;
+        _log->debug(p) << _q << " └─ line.lowerY: " << line->pos->lowerY << endl;
+        if (line->pos->rotation != 0) {
+          _log->debug(p) << _q << " └─ line.rotation:  " << line->pos->rotation << endl;
+          _log->debug(p) << _q << " └─ line.rotLeftX:  " << line->pos->getRotLeftX() << endl;
+          _log->debug(p) << _q << " └─ line.rotUpperY: " << line->pos->getRotUpperY() << endl;
+          _log->debug(p) << _q << " └─ line.rotRightX: " << line->pos->getRotRightX() << endl;
+          _log->debug(p) << _q << " └─ line.rotLowerY: " << line->pos->getRotLowerY() << endl;
+        }
+        string prevLineStr = line->prevLine ? line->prevLine->text : "-";
+        string nextLineStr = line->nextLine ? line->nextLine->text : "-";
+        _log->debug(p) << _q << " └─ line.prevLine: " << shorten(prevLineStr) << endl;
+        _log->debug(p) << _q << " └─ line.nextLine: " << shorten(nextLineStr) << endl;
+        _log->debug(p) << "---------------------------------------" << endl;
+
         if (startsPreliminaryBlock(line) && !currentBlockLines.empty()) {
           text_blocks_utils::createTextBlock(currentBlockLines, &segment->blocks);
           currentBlockLines.clear();
         }
+
         currentBlockLines.push_back(line);
+        _log->debug(p) << "=======================================" << endl;
       }
       if (!currentBlockLines.empty()) {
         text_blocks_utils::createTextBlock(currentBlockLines, &segment->blocks);
@@ -64,15 +92,43 @@ void TextBlocksDetector::process() {
     }
   }
 
-  _log->debug() << "Splitting preliminary text blocks..." << endl;
+  _log->debug() << BOLD << "Splitting preliminary text blocks..." << OFF << endl;
+  _log->debug() << "=======================================" << endl;
+  _q = "(fin) ";
+
   for (auto* page : _doc->pages) {
+    int p = page->pageNum;
     for (auto* segment : page->segments) {
       for (auto* block : segment->blocks) {
         vector<PdfTextLine*> currentBlockLines;
         for (auto* line : block->lines) {
-          // Detect potential footnote labels in the line (= superscripted numbers and/or
-          // characters). This is needed to detect the start of footnotes (we want to detect each
-          // footnote as a separate block).
+          _log->debug(p) << _q << BOLD << "line: \"" << line->text << "\"" << OFF << endl;
+          _log->debug(p) << _q << " └─ line.page:   " << line->pos->pageNum << endl;
+          _log->debug(p) << _q << " └─ line.leftX:  " << line->pos->leftX << endl;
+          _log->debug(p) << _q << " └─ line.upperY: " << line->pos->upperY << endl;
+          _log->debug(p) << _q << " └─ line.rightX: " << line->pos->rightX << endl;
+          _log->debug(p) << _q << " └─ line.lowerY: " << line->pos->lowerY << endl;
+          if (line->pos->rotation != 0) {
+            _log->debug(p) << _q << " └─ line.rotation:  " << line->pos->rotation << endl;
+            _log->debug(p) << _q << " └─ line.rotLeftX:  " << line->pos->getRotLeftX() << endl;
+            _log->debug(p) << _q << " └─ line.rotUpperY: " << line->pos->getRotUpperY() << endl;
+            _log->debug(p) << _q << " └─ line.rotRightX: " << line->pos->getRotRightX() << endl;
+            _log->debug(p) << _q << " └─ line.rotLowerY: " << line->pos->getRotLowerY() << endl;
+          }
+          string prevLineStr = line->prevLine ? shorten(line->prevLine->text) : "-";
+          string nextLineStr = line->nextLine ? shorten(line->nextLine->text) : "-";
+          string parentLineStr = line->parentLine ? shorten(line->parentLine->text) : "-";
+          string prevSibStr = line->prevSiblingLine ? shorten(line->prevSiblingLine->text) : "-";
+          string nextSibStr = line->nextSiblingLine ? shorten(line->nextSiblingLine->text) : "-";
+          _log->debug(p) << _q << " └─ line.prevLine: " << prevLineStr << endl;
+          _log->debug(p) << _q << " └─ line.nextLine: " << nextLineStr << endl;
+          _log->debug(p) << _q << " └─ line.parentLine: " << parentLineStr << endl;
+          _log->debug(p) << _q << " └─ line.prevSiblingLine: " << prevSibStr << endl;
+          _log->debug(p) << _q << " └─ line.nextSiblingLine: " << nextSibStr << endl;
+          _log->debug(p) << "---------------------------------------" << endl;
+
+          // Detect potential footnote labels in the line (= superscripted characters). This is
+          // needed to detect the start of footnotes (we want to detect each footnote separately).
           text_lines_utils::computePotentialFootnoteLabels(line, &_potentFnLabels);
 
           if (startsBlock(block, line) && !currentBlockLines.empty()) {
@@ -80,6 +136,7 @@ void TextBlocksDetector::process() {
             currentBlockLines.clear();
           }
           currentBlockLines.push_back(line);
+          _log->debug(p) << "=======================================" << endl;
         }
         if (!currentBlockLines.empty()) {
           text_blocks_utils::createTextBlock(currentBlockLines, &page->blocks);
@@ -92,30 +149,6 @@ void TextBlocksDetector::process() {
 // _________________________________________________________________________________________________
 bool TextBlocksDetector::startsPreliminaryBlock(const PdfTextLine* line) const {
   assert(line);
-
-  int p = line->position->pageNum;
-  string prevLineStr = line->prevLine ? line->prevLine->text : "-";
-  string nextLineStr = line->nextLine ? line->nextLine->text : "-";
-
-  _log->debug(p) << "= (pre) =================" << endl;
-  _log->debug(p) << BOLD << "Line: \"" << line->text << "\"" << OFF << endl;
-  _log->debug(p) << " └─ line.page:   " << line->position->pageNum << endl;
-  _log->debug(p) << " └─ line.leftX:  " << line->position->leftX << endl;
-  _log->debug(p) << " └─ line.upperY: " << line->position->upperY << endl;
-  _log->debug(p) << " └─ line.rightX: " << line->position->rightX << endl;
-  _log->debug(p) << " └─ line.lowerY: " << line->position->lowerY << endl;
-
-  if (line->position->rotation != 0) {
-    _log->debug(p) << " └─ line.rotation:  " << line->position->rotation << endl;
-    _log->debug(p) << " └─ line.rotLeftX:  " << line->position->getRotLeftX() << endl;
-    _log->debug(p) << " └─ line.rotUpperY: " << line->position->getRotUpperY() << endl;
-    _log->debug(p) << " └─ line.rotRightX: " << line->position->getRotRightX() << endl;
-    _log->debug(p) << " └─ line.rotLowerY: " << line->position->getRotLowerY() << endl;
-  }
-
-  _log->debug(p) << " └─ line.prevLine: " << prevLineStr << endl;
-  _log->debug(p) << " └─ line.nextLine: " << nextLineStr << endl;
-  _log->debug(p) << "-------------------------" << endl;
 
   // Check if the line starts a block because no previous line exists.
   Trool res = startsBlock_existsPrevLine(line);
@@ -175,7 +208,9 @@ bool TextBlocksDetector::startsPreliminaryBlock(const PdfTextLine* line) const {
     return false;
   }
 
-  _log->debug(p) << BLUE << "no rule applied → continues block" << OFF << endl;
+  int p = line->pos->pageNum;
+  _log->debug(p) << _q << BOLD << BLUE << "no rule applied → continues block" << OFF << endl;
+
   return false;
 }
 
@@ -183,36 +218,6 @@ bool TextBlocksDetector::startsPreliminaryBlock(const PdfTextLine* line) const {
 bool TextBlocksDetector::startsBlock(const PdfTextBlock* pBlock, const PdfTextLine* line) const {
   assert(pBlock);
   assert(line);
-
-  int p = line->position->pageNum;
-  string prevLineStr = line->prevLine ? line->prevLine->text : "-";
-  string nextLineStr = line->nextLine ? line->nextLine->text : "-";
-  string parentLineStr = line->parentLine ? line->parentLine->text : "-";
-  string prevSibLineStr = line->prevSiblingLine ? line->prevSiblingLine->text : "-";
-  string nextSibLineStr = line->nextSiblingLine ? line->nextSiblingLine->text : "-";
-
-  _log->debug(p) << "=========================" << endl;
-  _log->debug(p) << BOLD << "Line: \"" << line->text << "\"" << OFF << endl;
-  _log->debug(p) << " └─ line.page:   " << line->position->pageNum << endl;
-  _log->debug(p) << " └─ line.leftX:  " << line->position->leftX << endl;
-  _log->debug(p) << " └─ line.upperY: " << line->position->upperY << endl;
-  _log->debug(p) << " └─ line.rightX: " << line->position->rightX << endl;
-  _log->debug(p) << " └─ line.lowerY: " << line->position->lowerY << endl;
-
-  if (line->position->rotation != 0) {
-    _log->debug(p) << " └─ line.rotation:  " << line->position->rotation << endl;
-    _log->debug(p) << " └─ line.rotLeftX:  " << line->position->getRotLeftX() << endl;
-    _log->debug(p) << " └─ line.rotUpperY: " << line->position->getRotUpperY() << endl;
-    _log->debug(p) << " └─ line.rotRightX: " << line->position->getRotRightX() << endl;
-    _log->debug(p) << " └─ line.rotLowerY: " << line->position->getRotLowerY() << endl;
-  }
-
-  _log->debug(p) << " └─ line.prevLine: " << prevLineStr << endl;
-  _log->debug(p) << " └─ line.nextLine: " << nextLineStr << endl;
-  _log->debug(p) << " └─ line.parentLine: " << parentLineStr << endl;
-  _log->debug(p) << " └─ line.prevSiblingLine: " << prevSibLineStr << endl;
-  _log->debug(p) << " └─ line.nextSiblingLine: " << nextSibLineStr << endl;
-  _log->debug(p) << "-------------------------" << endl;
 
   // Check if the line starts a block because no previous line exists.
   Trool res = startsBlock_existsPrevLine(line);
@@ -264,7 +269,9 @@ bool TextBlocksDetector::startsBlock(const PdfTextBlock* pBlock, const PdfTextLi
     return false;
   }
 
-  _log->debug(p) << BLUE << "no rule applied → continues block" << OFF << endl;
+  int p = line->pos->pageNum;
+  _log->debug(p) << _q << BOLD << BLUE << "no rule applied → continues block" << OFF << endl;
+
   return false;
 }
 
@@ -272,15 +279,15 @@ bool TextBlocksDetector::startsBlock(const PdfTextBlock* pBlock, const PdfTextLi
 Trool TextBlocksDetector::startsBlock_existsPrevLine(const PdfTextLine* line) const {
   assert(line);
 
-  int p = line->position->pageNum;
-  const PdfTextLine* prevLine = line->prevLine;
+  int p = line->pos->pageNum;
+  const PdfTextLine* prev = line->prevLine;
 
-  _log->debug(p) << BLUE << "Does the line has no previous line?" << OFF << endl;
-  _log->debug(p) << " └─ line.prevLine: " << (prevLine ? prevLine->text : "-") << endl;
+  _log->debug(p) << _q << BLUE << "Does it have no previous line?" << OFF << endl;
+  _log->debug(p) << _q << " └─ line.prevLine: " << (prev ? shorten(prev->text) : "-") << endl;
 
   // The line starts a new block if it has no previous line.
-  if (!prevLine) {
-    _log->debug(p) << BLUE << BOLD << " yes → starts block" << OFF << endl;
+  if (!prev) {
+    _log->debug(p) << _q << BLUE << BOLD << " yes → starts block" << OFF << endl;
     return Trool::True;
   }
 
@@ -292,7 +299,7 @@ Trool TextBlocksDetector::startsBlock_sameFigure(const PdfTextLine* line) const 
   assert(line);
   assert(line->prevLine);
 
-  int p = line->position->pageNum;
+  int p = line->pos->pageNum;
   const PdfTextLine* prevLine = line->prevLine;
 
   // Compute the figure overlapped by the previous and the current line.
@@ -300,13 +307,13 @@ Trool TextBlocksDetector::startsBlock_sameFigure(const PdfTextLine* line) const 
   PdfFigure* prevLineOverlapsFigure = element_utils::computeOverlapsFigure(prevLine, figures);
   PdfFigure* currLineOverlapsFigure = element_utils::computeOverlapsFigure(line, figures);
 
-  _log->debug(p) << BLUE << "Does the line overlap the same fig as the prev line?" << OFF << endl;
-  _log->debug(p) << " └─ prevLine.overlapsFigure: " << prevLineOverlapsFigure << endl;
-  _log->debug(p) << " └─ currLine.overlapsFigure: " << currLineOverlapsFigure << endl;
+  _log->debug(p) << _q << BLUE << "Does it overlap the same fig as the prev line?" << OFF << endl;
+  _log->debug(p) << _q << " └─ prevLine.overlapsFigure: " << prevLineOverlapsFigure << endl;
+  _log->debug(p) << _q << " └─ currLine.overlapsFigure: " << currLineOverlapsFigure << endl;
 
   // The line does *not* start a new block if it overlaps the same figure as the previous line.
   if (prevLineOverlapsFigure && prevLineOverlapsFigure == currLineOverlapsFigure) {
-    _log->debug(p) << BLUE << BOLD << " yes → continues block" << OFF << endl;
+    _log->debug(p) << _q << BLUE << BOLD << " yes → continues block" << OFF << endl;
     return Trool::False;
   }
 
@@ -318,16 +325,16 @@ Trool TextBlocksDetector::startsBlock_rotation(const PdfTextLine* line) const {
   assert(line);
   assert(line->prevLine);
 
-  int p = line->position->pageNum;
+  int p = line->pos->pageNum;
   const PdfTextLine* prevLine = line->prevLine;
 
-  _log->debug(p) << BLUE << "Does the line have another rotation than prev line?" << OFF << endl;
-  _log->debug(p) << " └─ prevLine.rotation: " << prevLine->position->rotation << endl;
-  _log->debug(p) << " └─ currLine.rotation: " << line->position->rotation << endl;
+  _log->debug(p) << _q << BLUE << "Does it have another rotation than prev line?" << OFF << endl;
+  _log->debug(p) << _q << " └─ prevLine.rotation: " << prevLine->pos->rotation << endl;
+  _log->debug(p) << _q << " └─ currLine.rotation: " << line->pos->rotation << endl;
 
   // The line starts a block if it has another rotation than the previous line.
-  if (prevLine->position->rotation != line->position->rotation) {
-    _log->debug(p) << BLUE << BOLD << " yes → starts block" << OFF << endl;
+  if (prevLine->pos->rotation != line->pos->rotation) {
+    _log->debug(p) << _q << BLUE << BOLD << " yes → starts block" << OFF << endl;
     return Trool::True;
   }
 
@@ -339,16 +346,16 @@ Trool TextBlocksDetector::startsBlock_wMode(const PdfTextLine* line) const {
   assert(line);
   assert(line->prevLine);
 
-  int p = line->position->pageNum;
+  int p = line->pos->pageNum;
   const PdfTextLine* prevLine = line->prevLine;
 
-  _log->debug(p) << BLUE << "Does the line have another wMode than the prev line?" << OFF << endl;
-  _log->debug(p) << " └─ prevLine.wMode: " << prevLine->position->wMode << endl;
-  _log->debug(p) << " └─ currLine.wMode: " << line->position->wMode << endl;
+  _log->debug(p) << _q << BLUE << "Does it have another wMode than the prev line?" << OFF << endl;
+  _log->debug(p) << _q << " └─ prevLine.wMode: " << prevLine->pos->wMode << endl;
+  _log->debug(p) << _q << " └─ currLine.wMode: " << line->pos->wMode << endl;
 
   // The line starts a block if it has another writing mode than the previous line.
-  if (prevLine->position->wMode != line->position->wMode) {
-    _log->debug(p) << BLUE << BOLD << " yes → starts block" << OFF << endl;
+  if (prevLine->pos->wMode != line->pos->wMode) {
+    _log->debug(p) << _q << BLUE << BOLD << " yes → starts block" << OFF << endl;
     return Trool::True;
   }
 
@@ -360,16 +367,16 @@ Trool TextBlocksDetector::startsBlock_fontSize(const PdfTextLine* line) const {
   assert(line);
   assert(line->prevLine);
 
-  int p = line->position->pageNum;
+  int p = line->pos->pageNum;
   const PdfTextLine* prevLine = line->prevLine;
-  double tolerance = _config->getFontSizeEqualTolerance(_doc);
+  double tolerance = config::getFontSizeEqualTolerance(_doc);
 
-  _log->debug(p) << BLUE << "Does the line have another font size than prev line?" << OFF << endl;
-  _log->debug(p) << " └─ prevLine.mostFreqFontSize: " << prevLine->fontSize << endl;
-  _log->debug(p) << " └─ currLine.mostFreqFontSize: " << line->fontSize << endl;
-  _log->debug(p) << " └─ prevLine.maxFontSize:      " << prevLine->maxFontSize << endl;
-  _log->debug(p) << " └─ currLine.maxFontSize:      " << line->maxFontSize << endl;
-  _log->debug(p) << " └─ tolerance: " << tolerance << endl;
+  _log->debug(p) << _q << BLUE << "Does it have another font size than prev line?" << OFF << endl;
+  _log->debug(p) << _q << " └─ prevLine.mostFreqFontSize: " << prevLine->fontSize << endl;
+  _log->debug(p) << _q << " └─ currLine.mostFreqFontSize: " << line->fontSize << endl;
+  _log->debug(p) << _q << " └─ prevLine.maxFontSize: " << prevLine->maxFontSize << endl;
+  _log->debug(p) << _q << " └─ currLine.maxFontSize: " << line->maxFontSize << endl;
+  _log->debug(p) << _q << " └─ tolerance: " << tolerance << endl;
 
   // The line starts a block if neither the most frequent font size of the line is equal to
   // the most frequent font size in the prev line (under consideration of the given tolerance), nor
@@ -382,7 +389,7 @@ Trool TextBlocksDetector::startsBlock_fontSize(const PdfTextLine* line) const {
   bool isEqualFontSize = math_utils::equal(prevLine->fontSize, line->fontSize, tolerance);
   bool isEqualMaxFontSize = math_utils::equal(prevLine->maxFontSize, line->maxFontSize, tolerance);
   if (!isEqualFontSize && !isEqualMaxFontSize) {
-    _log->debug(p) << BLUE << BOLD << " yes → starts block" << OFF << endl;
+    _log->debug(p) << _q << BLUE << BOLD << " yes → starts block" << OFF << endl;
     return Trool::True;
   }
 
@@ -394,11 +401,11 @@ Trool TextBlocksDetector::startsBlock_lineDistance(const PdfTextLine* line) cons
   assert(line);
   assert(line->prevLine);
 
-  int p = line->position->pageNum;
+  int p = line->pos->pageNum;
   const PdfTextLine* prevLine = line->prevLine;
 
   // Compute the expected line distance.
-  double fontSize = math_utils::round(line->fontSize, FONT_SIZE_PREC);
+  double fontSize = math_utils::round(line->fontSize, config::FONT_SIZE_PREC);
   double expectedLineDistance = 0;
   if (_doc->mostFreqLineDistancePerFontSize.count(fontSize) > 0) {
     double eld = _doc->mostFreqLineDistancePerFontSize.at(fontSize);
@@ -408,29 +415,29 @@ Trool TextBlocksDetector::startsBlock_lineDistance(const PdfTextLine* line) cons
 
   // Compute the actual line distance.
   double actualLineDistance = element_utils::computeVerticalGap(prevLine, line);
-  actualLineDistance = math_utils::round(actualLineDistance, LINE_DIST_PREC);
+  actualLineDistance = math_utils::round(actualLineDistance, config::LINE_DIST_PREC);
 
   double lineDistanceDiff = actualLineDistance - expectedLineDistance;
 
   // Compute the tolerance.
-  double tolerance = _config->getExpectedLineDistanceTolerance(_doc, expectedLineDistance);
+  double tolerance = config::getExpectedLineDistanceTolerance(_doc, expectedLineDistance);
 
-  _log->debug(p) << BLUE << "Is the dist to the prev line larger than expected?" << OFF << endl;
-  _log->debug(p) << " └─ actual line distance:   " << actualLineDistance << endl;
-  _log->debug(p) << " └─ expected line distance: " << expectedLineDistance << endl;
-  _log->debug(p) << " └─ line distance diff:     " << lineDistanceDiff << endl;
-  _log->debug(p) << " └─ tolerance:       " << tolerance << endl;
+  _log->debug(p) << _q << BLUE << "Is the dist to prev line larger than expected?" << OFF << endl;
+  _log->debug(p) << _q << " └─ actual line distance: " << actualLineDistance << endl;
+  _log->debug(p) << _q << " └─ expected line distance: " << expectedLineDistance << endl;
+  _log->debug(p) << _q << " └─ line distance diff: " << lineDistanceDiff << endl;
+  _log->debug(p) << _q << " └─ tolerance: " << tolerance << endl;
 
   // The line does *not* start a new block if the actual line distance is negative.
   if (math_utils::equalOrSmaller(actualLineDistance, 0)) {
-    _log->debug(p) << BLUE << BOLD << " no, distance is negative → continues block" << OFF << endl;
+    _log->debug(p) << _q << BLUE << BOLD << " no, distance < 0 → continues block" << OFF << endl;
     return Trool::False;
   }
 
   // The line starts a new block if the actual line distance is larger than the expected line
   // distance, under consideration of the computed tolerance.
   if (math_utils::larger(actualLineDistance, expectedLineDistance, tolerance)) {
-    _log->debug(p) << BLUE << BOLD << " yes → starts block" << OFF << endl;
+    _log->debug(p) << _q << BLUE << BOLD << " yes → starts block" << OFF << endl;
     return Trool::True;
   }
 
@@ -448,28 +455,28 @@ Trool TextBlocksDetector::startsBlock_increasedLineDistance(const PdfTextLine* l
     return Trool::None;
   }
 
-  int p = line->position->pageNum;
+  int p = line->pos->pageNum;
 
   // Compute the distance between the previous but one line and the previous line.
   double prevDistance = element_utils::computeVerticalGap(prevPrevLine, prevLine);
-  prevDistance = math_utils::round(prevDistance, LINE_DIST_PREC);
+  prevDistance = math_utils::round(prevDistance, config::LINE_DIST_PREC);
 
   // Compute the distance between the previous line and the current line.
   double distance = element_utils::computeVerticalGap(prevLine, line);
-  distance = math_utils::round(distance, LINE_DIST_PREC);
+  distance = math_utils::round(distance, config::LINE_DIST_PREC);
 
   // Compute the tolerance.
-  double tolerance = _config->getPrevCurrNextLineDistanceTolerance(_doc);
+  double tolerance = config::getPrevCurrNextLineDistanceTolerance(_doc);
 
-  _log->debug(p) << BLUE << "Is the curr+prev distance > prev+prevPrev distance?" << OFF << endl;
-  _log->debug(p) << " └─ curr+prev line distance:     " << distance << endl;
-  _log->debug(p) << " └─ prev+prevPrev line distance: " << prevDistance << endl;
-  _log->debug(p) << " └─ tolerance:       " << tolerance << endl;
+  _log->debug(p) << _q << BLUE << "Is curr+prev distance > prev+prevPrev distance?" << OFF << endl;
+  _log->debug(p) << _q << " └─ curr+prev line distance: " << distance << endl;
+  _log->debug(p) << _q << " └─ prev+prevPrev line distance: " << prevDistance << endl;
+  _log->debug(p) << _q << " └─ tolerance: " << tolerance << endl;
 
   // The line starts a block if the curr+prev line distance is larger than the prev+prevPrev line
   // distance, under consideration of the computed tolerance.
   if (math_utils::larger(distance, prevDistance, tolerance)) {
-    _log->debug(p) << BLUE << BOLD << " yes → starts block" << OFF << endl;
+    _log->debug(p) << _q << BLUE << BOLD << " yes → starts block" << OFF << endl;
     return Trool::True;
   }
 
@@ -485,10 +492,10 @@ Trool TextBlocksDetector::startsBlock_centered(const PdfTextBlock* pBlock, const
   // Check if the line is the first line of an enumeration item.
   bool isFirstLineOfItem = text_lines_utils::computeIsFirstLineOfItem(line);
 
-  int p = line->position->pageNum;
-  _log->debug(p) << BLUE << "Is the line part of a centered block?" << OFF << endl;
-  _log->debug(p) << " └─ block.isCentered: " << pBlock->isLinesCentered << endl;
-  _log->debug(p) << " └─ line.isFirstLineOfItem: " << isFirstLineOfItem << endl;
+  int p = line->pos->pageNum;
+  _log->debug(p) << _q << BLUE << "Is the line part of a centered block?" << OFF << endl;
+  _log->debug(p) << _q << " └─ block.isCentered: " << pBlock->isLinesCentered << endl;
+  _log->debug(p) << _q << " └─ line.isFirstLineOfItem: " << isFirstLineOfItem << endl;
 
   // Do nothing if the block is not centered.
   if (!pBlock->isLinesCentered) {
@@ -496,11 +503,11 @@ Trool TextBlocksDetector::startsBlock_centered(const PdfTextBlock* pBlock, const
   }
 
   if (isFirstLineOfItem) {
-    _log->debug(p) << BLUE << BOLD << " yes + line is 1st item line → starts block" << OFF << endl;
+    _log->debug(p) << _q << BLUE << BOLD << " yes + is 1st item line → starts block" << OFF << endl;
     return Trool::True;
   }
 
-  _log->debug(p) << BLUE << BOLD << " yes → continues block" << OFF << endl;
+  _log->debug(p) << _q << BLUE << BOLD << " yes → continues block" << OFF << endl;
   return Trool::False;
 }
 
@@ -510,7 +517,7 @@ Trool TextBlocksDetector::startsBlock_item(const PdfTextBlock* pBlock, const Pdf
   assert(pBlock);
   assert(line);
 
-  int p = line->position->pageNum;
+  int p = line->pos->pageNum;
   const PdfTextLine* prevLine = line->prevLine;
 
   bool isPrevFirstLine = text_lines_utils::computeIsFirstLineOfItem(prevLine, &_potentFnLabels);
@@ -521,46 +528,46 @@ Trool TextBlocksDetector::startsBlock_item(const PdfTextBlock* pBlock, const Pdf
   bool isCurrPartOfItem = isCurrFirstLine || isCurrContLine;
   double leftXOffset = element_utils::computeLeftXOffset(prevLine, line);
   bool hasPrevLineCapacity = text_lines_utils::computeHasPrevLineCapacity(line);
-  pair<double, double> leftXOffsetTolInterval = _config->getLeftXOffsetToleranceInterval(_doc);
+  pair<double, double> leftXOffsetTolInterval = config::getLeftXOffsetToleranceInterval(_doc);
   double leftXOffsetToleranceLow = leftXOffsetTolInterval.first;
   double leftXOffsetToleranceHigh = leftXOffsetTolInterval.second;
 
-  _log->debug(p) << BLUE << "Is the curr line or prev line part of an item?" << OFF << endl;
-  _log->debug(p) << " └─ prevLine.isFirstLineOfItem: " << isPrevFirstLine << endl;
-  _log->debug(p) << " └─ currLine.isFirstLineOfItem: " << isCurrFirstLine << endl;
-  _log->debug(p) << " └─ prevLine.isContinuationOfItem: " << isPrevContLine << endl;
-  _log->debug(p) << " └─ currLine.isContinuationOfItem: " << isCurrContLine << endl;
-  _log->debug(p) << " └─ leftXOffset prevLine/currLine: " << leftXOffset << endl;
-  _log->debug(p) << " └─ prevLine.hasCapacity: " << hasPrevLineCapacity << endl;
-  _log->debug(p) << " └─ block.isCentered: " << pBlock->isLinesCentered << endl;
-  _log->debug(p) << " └─ leftXOffsetToleranceLow:  " << leftXOffsetToleranceLow << endl;
-  _log->debug(p) << " └─ leftXOffsetToleranceHigh: " << leftXOffsetToleranceHigh << endl;
+  _log->debug(p) << _q << BLUE << "Is the curr line or prev line part of an item?" << OFF << endl;
+  _log->debug(p) << _q << " └─ prevLine.isFirstLineOfItem: " << isPrevFirstLine << endl;
+  _log->debug(p) << _q << " └─ currLine.isFirstLineOfItem: " << isCurrFirstLine << endl;
+  _log->debug(p) << _q << " └─ prevLine.isContinuationOfItem: " << isPrevContLine << endl;
+  _log->debug(p) << _q << " └─ currLine.isContinuationOfItem: " << isCurrContLine << endl;
+  _log->debug(p) << _q << " └─ leftXOffset prevLine/currLine: " << leftXOffset << endl;
+  _log->debug(p) << _q << " └─ prevLine.hasCapacity: " << hasPrevLineCapacity << endl;
+  _log->debug(p) << _q << " └─ block.isCentered: " << pBlock->isLinesCentered << endl;
+  _log->debug(p) << _q << " └─ leftXOffsetToleranceLow:  " << leftXOffsetToleranceLow << endl;
+  _log->debug(p) << _q << " └─ leftXOffsetToleranceHigh: " << leftXOffsetToleranceHigh << endl;
 
   // The line starts a block if it is the first line of an item.
   if (isCurrFirstLine) {
-    _log->debug(p) << BLUE << BOLD << " yes, line is 1st item line → starts block" << OFF << endl;
+    _log->debug(p) << _q << BLUE << BOLD << " yes, is 1st item line → starts block" << OFF << endl;
     return Trool::True;
   }
 
   if (isCurrContLine) {
-    _log->debug(p) << BLUE << BOLD << " yes, line is continuation of item" << OFF << endl;
+    _log->debug(p) << _q << BLUE << BOLD << " yes, is continuation of item" << OFF << endl;
 
     // The line does *not* start a block if it is a continuation of an item + the block is centered.
     if (pBlock->isLinesCentered) {
-      _log->debug(p) << BLUE << BOLD << " + block is centered → continues block" << OFF << endl;
+      _log->debug(p) << _q << BLUE << BOLD << " + block centered → continues block" << OFF << endl;
       return Trool::False;
     }
 
     // The line starts a block if it is a continuation of an item + the prev line has capacity.
     if (hasPrevLineCapacity) {
-      _log->debug(p) << BLUE << BOLD << " + prev line has capacity → starts block" << OFF << endl;
+      _log->debug(p) << _q << BLUE << BOLD << " + prevLine capacity → starts block" << OFF << endl;
       return Trool::True;
     }
 
     // The line does *not* start a block if it is a continuation of an item and the previous line
     // is the first line of an item.
     if (isPrevFirstLine) {
-      _log->debug(p) << BLUE << BOLD << " + prev line is first line of item → continues block"
+      _log->debug(p) << _q << BLUE << BOLD << " + prev line is first line of item → continues block"
           << OFF << endl;
       return Trool::False;
     }
@@ -569,30 +576,30 @@ Trool TextBlocksDetector::startsBlock_item(const PdfTextBlock* pBlock, const Pdf
       // The line does *not* start a block if the line and the previous line are a continuation
       // of an item, and the leftX-offset between the lines is in the given tolerance.
       if (math_utils::between(leftXOffset, leftXOffsetToleranceLow, leftXOffsetToleranceHigh)) {
-        _log->debug(p) << BLUE << BOLD << " + prev line is continuation of item + leftX-offset in "
-            << "tolerance → continues block" << OFF << endl;
+        _log->debug(p) << _q << BLUE << BOLD << " + prev line is continuation of item "
+            << "+ leftX-offset in tolerance → continues block" << OFF << endl;
         return Trool::False;
       }
 
       // The line starts a block if the line and the previous line are a continuation of an item,
       // and the leftX-offset between the lines is *not* in the given tolerance.
-      _log->debug(p) << BLUE << BOLD << " + prev line is continuation of item + leftX-offset not "
-            << "in tolerance → starts block" << OFF << endl;
+      _log->debug(p) << _q << BLUE << BOLD << " + prev line is continuation of item "
+            << "+ leftX-offset not in tolerance → starts block" << OFF << endl;
       return Trool::True;
     }
 
-    _log->debug(p) << BLUE << BOLD << " + no further rule applied → continues block" << OFF << endl;
+    _log->debug(p) << _q << BLUE << BOLD << " + no rule applied → continues block" << OFF << endl;
     return Trool::False;
   }
 
   if (isPrevPartOfItem && !isCurrPartOfItem) {
-    _log->debug(p) << BLUE << BOLD << " no, but prev line is part of an item" << OFF << endl;
+    _log->debug(p) << _q << BLUE << BOLD << " no, but prev line is part of an item" << OFF << endl;
 
     // The line starts a block if the previous line is part of an item (= is either the first
     // line or the continuation of an item), the current line is *not* part of an item, and the
     // previous line has capacity.
     if (hasPrevLineCapacity) {
-      _log->debug(p) << BLUE << BOLD << " + prev line has capacity → starts block" << OFF << endl;
+      _log->debug(p) << _q << BLUE << BOLD << " + prevLine capacity → starts block" << OFF << endl;
       return Trool::True;
     }
 
@@ -604,8 +611,8 @@ Trool TextBlocksDetector::startsBlock_item(const PdfTextBlock* pBlock, const Pdf
     //  line. Note the smaller leftX of the second line.
     if (!text_element_utils::computeEndsWithSentenceDelimiter(prevLine) &&
           !text_element_utils::computeStartsWithUpper(line)) {
-      _log->debug(p) << BLUE << BOLD << " + prev line does not end with sentence delimiter + "
-          << "curr line does not start with an uppercase → continues block" << OFF << endl;
+      _log->debug(p) << _q << BLUE << BOLD << " + prev line does not end with sentence delimiter "
+          << "+ curr line does not start with an uppercase → continues block" << OFF << endl;
       return Trool::False;
     }
   }
@@ -618,7 +625,7 @@ Trool TextBlocksDetector::startsBlock_emphasized(const PdfTextLine* line) const 
   assert(line);
   assert(line->prevLine);
 
-  int p = line->position->pageNum;
+  int p = line->pos->pageNum;
   const PdfTextLine* prevLine = line->prevLine;
 
   bool isPrevLineEmphasized = text_element_utils::computeIsEmphasized(prevLine);
@@ -626,18 +633,18 @@ Trool TextBlocksDetector::startsBlock_emphasized(const PdfTextLine* line) const 
   bool hasEqualFontName = text_element_utils::computeHasEqualFont(prevLine, line);
   bool hasEqualFontSize = text_element_utils::computeHasEqualFontSize(prevLine, line);
 
-  _log->debug(p) << BLUE << "Is the line and prev line emphasized with same font?" << OFF << endl;
-  _log->debug(p) << " └─ prevLine.isEmphasized: " << isPrevLineEmphasized << endl;
-  _log->debug(p) << " └─ currLine.isEmphasized: " << isCurrLineEmphasized << endl;
-  _log->debug(p) << " └─ prevLine.fontName: " << line->prevLine->fontName << endl;
-  _log->debug(p) << " └─ currLine.fontName: " << line->fontName << endl;
-  _log->debug(p) << " └─ prevLine.fontSize: " << line->prevLine->fontSize << endl;
-  _log->debug(p) << " └─ currLine.fontSize: " << line->fontSize << endl;
+  _log->debug(p) << _q << BLUE << "Is line and prevLine emphasized by same font?" << OFF << endl;
+  _log->debug(p) << _q << " └─ prevLine.isEmphasized: " << isPrevLineEmphasized << endl;
+  _log->debug(p) << _q << " └─ currLine.isEmphasized: " << isCurrLineEmphasized << endl;
+  _log->debug(p) << _q << " └─ prevLine.fontName: " << line->prevLine->fontName << endl;
+  _log->debug(p) << _q << " └─ currLine.fontName: " << line->fontName << endl;
+  _log->debug(p) << _q << " └─ prevLine.fontSize: " << line->prevLine->fontSize << endl;
+  _log->debug(p) << _q << " └─ currLine.fontSize: " << line->fontSize << endl;
 
   // The line does *not* start a block if the previous line and the current line are emphasized,
   // and if both lines exhibits the same font and the same font size.
   if (isPrevLineEmphasized && isCurrLineEmphasized && hasEqualFontName && hasEqualFontSize) {
-    _log->debug(p) << BLUE << BOLD << " yes → continues block" << OFF << endl;
+    _log->debug(p) << _q << BLUE << BOLD << " yes → continues block" << OFF << endl;
     return Trool::False;
   }
 
@@ -651,7 +658,7 @@ Trool TextBlocksDetector::startsBlock_hangingIndent(const PdfTextBlock* pBlock,
   assert(line);
   assert(line->prevLine);
 
-  int p = line->position->pageNum;
+  int p = line->pos->pageNum;
   const PdfTextLine* prevLine = line->prevLine;
 
   double hangingIndent = pBlock->hangingIndent;
@@ -665,24 +672,24 @@ Trool TextBlocksDetector::startsBlock_hangingIndent(const PdfTextBlock* pBlock,
   bool isCurrMoreIndented = math_utils::larger(currLeftMargin, hangingIndent, _doc->avgCharWidth);
   double leftXOffset = element_utils::computeLeftXOffset(prevLine, line);
   bool hasPrevLineCapacity = text_lines_utils::computeHasPrevLineCapacity(line);
-  pair<double, double> leftXOffsetTolInterval = _config->getLeftXOffsetToleranceInterval(_doc);
+  pair<double, double> leftXOffsetTolInterval = config::getLeftXOffsetToleranceInterval(_doc);
   double leftXOffsetToleranceLow = leftXOffsetTolInterval.first;
   double leftXOffsetToleranceHigh = leftXOffsetTolInterval.second;
 
-  _log->debug(p) << BLUE << "Is the line part of a block in hanging indent format?" << OFF << endl;
-  _log->debug(p) << " └─ block.hangingIndent:     " << hangingIndent << endl;
-  _log->debug(p) << " └─ prevLine.leftMargin:     " << prevLeftMargin << endl;
-  _log->debug(p) << " └─ prevLine.isNotIndented:  " << isPrevNotIndented << endl;
-  _log->debug(p) << " └─ prevLine.isIndented:     " << isPrevIndented << endl;
-  _log->debug(p) << " └─ prevLine.isMoreIndented: " << isPrevMoreIndented << endl;
-  _log->debug(p) << " └─ prevLine.hasCapacity:    " << hasPrevLineCapacity << endl;
-  _log->debug(p) << " └─ currLine.leftMargin:     " << currLeftMargin << endl;
-  _log->debug(p) << " └─ currLine.isNotIndented:  " << isCurrNotIndented << endl;
-  _log->debug(p) << " └─ currLine.isIndented:     " << isCurrIndented << endl;
-  _log->debug(p) << " └─ currLine.isMoreIndented: " << isCurrMoreIndented << endl;
-  _log->debug(p) << " └─ leftXOffset prevLine/currLine: " << leftXOffset << endl;
-  _log->debug(p) << " └─ leftXOffsetToleranceLow: " << leftXOffsetToleranceLow << endl;
-  _log->debug(p) << " └─ leftXOffsetToleranceHigh: " << leftXOffsetToleranceHigh << endl;
+  _log->debug(p) << _q << BLUE << "Is it part of a block in hanging indent format?" << OFF << endl;
+  _log->debug(p) << _q << " └─ block.hangingIndent:     " << hangingIndent << endl;
+  _log->debug(p) << _q << " └─ prevLine.leftMargin:     " << prevLeftMargin << endl;
+  _log->debug(p) << _q << " └─ prevLine.isNotIndented:  " << isPrevNotIndented << endl;
+  _log->debug(p) << _q << " └─ prevLine.isIndented:     " << isPrevIndented << endl;
+  _log->debug(p) << _q << " └─ prevLine.isMoreIndented: " << isPrevMoreIndented << endl;
+  _log->debug(p) << _q << " └─ prevLine.hasCapacity:    " << hasPrevLineCapacity << endl;
+  _log->debug(p) << _q << " └─ currLine.leftMargin:     " << currLeftMargin << endl;
+  _log->debug(p) << _q << " └─ currLine.isNotIndented:  " << isCurrNotIndented << endl;
+  _log->debug(p) << _q << " └─ currLine.isIndented:     " << isCurrIndented << endl;
+  _log->debug(p) << _q << " └─ currLine.isMoreIndented: " << isCurrMoreIndented << endl;
+  _log->debug(p) << _q << " └─ leftXOffset prevLine/currLine: " << leftXOffset << endl;
+  _log->debug(p) << _q << " └─ leftXOffsetToleranceLow: " << leftXOffsetToleranceLow << endl;
+  _log->debug(p) << _q << " └─ leftXOffsetToleranceHigh: " << leftXOffsetToleranceHigh << endl;
 
   // Do nothing if the block is not in hanging indent format.
   if (math_utils::equalOrSmaller(hangingIndent, 0.0)) {
@@ -691,63 +698,67 @@ Trool TextBlocksDetector::startsBlock_hangingIndent(const PdfTextBlock* pBlock,
 
   // The line starts a block if it is not indented.
   if (isCurrNotIndented) {
-    _log->debug(p) << BLUE << BOLD << " yes + line is not indented → starts block" << OFF << endl;
+    _log->debug(p) << _q << BLUE << BOLD << " yes + is not indented → starts block" << OFF << endl;
     return Trool::True;
   }
 
   if (isCurrIndented) {
-    _log->debug(p) << BLUE << BOLD << " yes + line is indented." << OFF << endl;
+    _log->debug(p) << _q << BLUE << BOLD << " yes + is indented." << OFF << endl;
 
     if (isPrevMoreIndented) {
-      _log->debug(p) << BLUE << BOLD << " + prev line is more indented." << OFF << endl;
+      _log->debug(p) << _q << BLUE << BOLD << " + prev line is more indented." << OFF << endl;
 
       // The line does *not* start a block if it is indented, the prev. line is more indented
       // than the tolerance, and the leftX-offset between both lines is in the given tolerance.
       if (math_utils::between(leftXOffset, leftXOffsetToleranceLow, leftXOffsetToleranceHigh)) {
-        _log->debug(p) << BLUE << BOLD << " + offset in tolerance → continues block" << OFF << endl;
+        _log->debug(p) << _q << BLUE << BOLD << " + x-offset is in tolerance → continues block"
+            << OFF << endl;
         return Trool::False;
       }
 
       // The line starts a block if it is indented, the prev. line is more indented than the
       // the tolerance, and the leftX-offset between both lines is *not* in the given tolerance.
-      _log->debug(p) << BLUE << BOLD << " + offset not in tolerance → starts block" << OFF << endl;
+      _log->debug(p) << _q << BLUE << BOLD << " + x-offset is not in tolerance → starts block"
+          << OFF << endl;
       return Trool::True;
     }
 
     // The line starts a block if it is indented and the prev. line has capacity.
     if (hasPrevLineCapacity) {
-      _log->debug(p) << BLUE << BOLD << " + prev line has capacity → starts block" << OFF << endl;
+      _log->debug(p) << _q << BLUE << BOLD << " + prev line capacity → starts block" << OFF << endl;
       return Trool::True;
     }
 
-    _log->debug(p) << BLUE << BOLD << " + no further rule applied → continues block" << OFF << endl;
+    _log->debug(p) << _q << BLUE << BOLD << " + no rule applied → continues block" << OFF << endl;
     return Trool::False;
   }
 
   if (isCurrMoreIndented) {
-    _log->debug(p) << BLUE << BOLD << " yes + line is more indented." << OFF << endl;
+    _log->debug(p) << _q << BLUE << BOLD << " yes + line is more indented." << OFF << endl;
 
     if (isPrevMoreIndented) {
-      _log->debug(p) << BLUE << BOLD << " + prev line is more indented." << OFF << endl;
+      _log->debug(p) << _q << BLUE << BOLD << " + prev line is more indented." << OFF << endl;
 
       // The line does *not* start a block if the current and previous line are more indented
       // than the tolerance, and the leftX-offset between both lines is in the given tolerance.
       if (math_utils::between(leftXOffset, leftXOffsetToleranceLow, leftXOffsetToleranceHigh)) {
-        _log->debug(p) << BLUE << BOLD << " + offset in tolerance → continues block" << OFF << endl;
+        _log->debug(p) << _q << BLUE << BOLD << " + x-offset is in tolerance → continues block"
+            << OFF << endl;
         return Trool::False;
       }
 
       // The line starts a block if the current and previous line are more indented than the
       // tolerance, and the leftX-Offset between both lines is *not* in the tolerance.
-      _log->debug(p) << BLUE << BOLD << " + offset not in tolerance → starts block" << OFF << endl;
+      _log->debug(p) << _q << BLUE << BOLD << " + offset not in tolerance → starts block"
+          << OFF << endl;
       return Trool::True;
     }
 
-    _log->debug(p) << BLUE << BOLD << " + no further rule applied → continues block" << OFF << endl;
+    _log->debug(p) << _q << BLUE << BOLD << " + no rule applied → continues block" << OFF << endl;
     return Trool::True;
   }
 
-  _log->debug(p) << BLUE << BOLD << " yes, no rule applied → continues block" << OFF << endl;
+  _log->debug(p) << _q << BLUE << BOLD << " yes, no rule applied → continues block" << OFF << endl;
   return Trool::False;
 }
 
@@ -756,12 +767,12 @@ Trool TextBlocksDetector::startsBlock_indent(const PdfTextLine* line) const {
   assert(line);
   assert(line->prevLine);
 
-  int p = line->position->pageNum;
+  int p = line->pos->pageNum;
   const PdfTextLine* prevLine = line->prevLine;
 
   double prevLeftMargin = prevLine->leftMargin;
   double currLeftMargin = line->leftMargin;
-  pair<double, double> indentToleranceInterval = _config->getIndentToleranceInterval(_doc);
+  pair<double, double> indentToleranceInterval = config::getIndentToleranceInterval(_doc);
   double indentTolLow = indentToleranceInterval.first;
   double indentTolHigh = indentToleranceInterval.second;
   bool isPrevIndented = math_utils::between(prevLeftMargin, indentTolLow, indentTolHigh);
@@ -771,62 +782,62 @@ Trool TextBlocksDetector::startsBlock_indent(const PdfTextLine* line) const {
   double absLeftXOffset = abs(element_utils::computeLeftXOffset(prevLine, line));
   bool hasPrevLineCapacity = text_lines_utils::computeHasPrevLineCapacity(line);
 
-  _log->debug(p) << BLUE <<  "Is the line indented?" << OFF << endl;
-  _log->debug(p) << " └─ prevLine.leftMargin:     " << prevLeftMargin << endl;
-  _log->debug(p) << " └─ prevLine.isIndented:     " << isPrevIndented << endl;
-  _log->debug(p) << " └─ prevLine.isMoreIndented: " << isPrevMoreIndented << endl;
-  _log->debug(p) << " └─ prevLine.hasCapacity:    " << hasPrevLineCapacity << endl;
-  _log->debug(p) << " └─ currLine.leftMargin:     " << currLeftMargin << endl;
-  _log->debug(p) << " └─ currLine.isIndented:     " << isCurrIndented << endl;
-  _log->debug(p) << " └─ currLine.isMoreIndented: " << isCurrMoreIndented << endl;
-  _log->debug(p) << " └─ absLeftXOffset prevLine/currLine: " << absLeftXOffset << endl;
-  _log->debug(p) << " └─ indentToleranceLow:  " << indentTolLow << endl;
-  _log->debug(p) << " └─ indentToleranceHigh: " << indentTolHigh << endl;
-  _log->debug(p) << " └─ absLeftXOffset prevLine/currLine: " << absLeftXOffset << endl;
+  _log->debug(p) << _q << BLUE <<  "Is the line indented?" << OFF << endl;
+  _log->debug(p) << _q << " └─ prevLine.leftMargin:     " << prevLeftMargin << endl;
+  _log->debug(p) << _q << " └─ prevLine.isIndented:     " << isPrevIndented << endl;
+  _log->debug(p) << _q << " └─ prevLine.isMoreIndented: " << isPrevMoreIndented << endl;
+  _log->debug(p) << _q << " └─ prevLine.hasCapacity:    " << hasPrevLineCapacity << endl;
+  _log->debug(p) << _q << " └─ currLine.leftMargin:     " << currLeftMargin << endl;
+  _log->debug(p) << _q << " └─ currLine.isIndented:     " << isCurrIndented << endl;
+  _log->debug(p) << _q << " └─ currLine.isMoreIndented: " << isCurrMoreIndented << endl;
+  _log->debug(p) << _q << " └─ absLeftXOffset prevLine/currLine: " << absLeftXOffset << endl;
+  _log->debug(p) << _q << " └─ indentToleranceLow:  " << indentTolLow << endl;
+  _log->debug(p) << _q << " └─ indentToleranceHigh: " << indentTolHigh << endl;
+  _log->debug(p) << _q << " └─ absLeftXOffset prevLine/currLine: " << absLeftXOffset << endl;
 
   if (isCurrMoreIndented) {
-    _log->debug(p) << BLUE << BOLD <<  " yes, curr line is more indented." << OFF << endl;
+    _log->debug(p) << _q << BLUE << BOLD <<  " yes, curr line is more indented." << OFF << endl;
 
     // The line does *not* start a block if it is more indented than the given tolerance and
     // its leftX offset is equal to zero (under consideration of a small threshold).
     if (math_utils::equal(absLeftXOffset, 0, _doc->avgCharWidth)) {
-      _log->debug(p) << BLUE << BOLD << " + leftXOffset ≈ 0 → continues block" << OFF << endl;
+      _log->debug(p) << _q << BLUE << BOLD << " + leftXOffset ≈ 0 → continues block" << OFF << endl;
       return Trool::False;
     }
 
     // The line starts a block if the current and previous line are more indented
     // than the tolerance, and the leftX-offset between both lines is *not* equal to 0.
-    _log->debug(p) << BLUE << BOLD << " + leftXOffset !≈ 0 → starts block" << OFF << endl;
+    _log->debug(p) << _q << BLUE << BOLD << " + leftXOffset !≈ 0 → starts block" << OFF << endl;
     return Trool::True;
   }
 
   if (isPrevMoreIndented) {
-    _log->debug(p) << BLUE << BOLD << " unknown, but previous line is more indented." << endl;
+    _log->debug(p) << _q << BLUE << BOLD << " unknown, but previous line is more indented." << endl;
 
     // The line starts a block if the current and previous line are more indented
     // than the tolerance, and the leftX-offset between both lines is equal to 0 (under
     // consideration of a small threshold).
     if (math_utils::equal(absLeftXOffset, 0, _doc->avgCharWidth)) {
-      _log->debug(p) << BLUE << BOLD << " + leftXOffset ≈ 0 → continues block" << OFF << endl;
+      _log->debug(p) << _q << BLUE << BOLD << " + leftXOffset ≈ 0 → continues block" << OFF << endl;
       return Trool::False;
     }
 
     // The line starts a block if the current and previous line are more indented
     // than the tolerance, and the leftX-offset between both lines is *not* equal to 0 (under
     // consideration of a small threshold).
-    _log->debug(p) << BLUE << BOLD << " + leftXOffset !≈ 0 → starts block" << OFF << endl;
+    _log->debug(p) << _q << BLUE << BOLD << " + leftXOffset !≈ 0 → starts block" << OFF << endl;
     return Trool::True;
   }
 
   // The line starts a block if it is indented.
   if (isCurrIndented) {
-    _log->debug(p) << BLUE << BOLD << " yes → starts block" << OFF << endl;
+    _log->debug(p) << _q << BLUE << BOLD << " yes → starts block" << OFF << endl;
     return Trool::True;
   }
 
   // The line starts a block if the previous line has capacity.
   if (hasPrevLineCapacity) {
-    _log->debug(p) << BLUE << BOLD << " prev line has capacity → starts block" << OFF << endl;
+    _log->debug(p) << _q << BLUE << BOLD << " prev line has capacity → starts block" << OFF << endl;
     return Trool::True;
   }
 

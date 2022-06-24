@@ -19,14 +19,11 @@
 #include "./PdfDocument.h"
 #include "./PdfStatisticsCalculator.h"
 
-using pdf_statistics_calculator::config::COORDS_PREC;
-using pdf_statistics_calculator::config::FONT_SIZE_PREC;
-using pdf_statistics_calculator::config::FSIZE_EQUAL_TOLERANCE;
-using pdf_statistics_calculator::config::LINE_DIST_PREC;
-
 using std::endl;
 using std::max;
 using std::unordered_map;
+
+namespace config = pdf_statistics_calculator::config;
 
 // _________________________________________________________________________________________________
 PdfStatisticsCalculator::PdfStatisticsCalculator(PdfDocument* doc, bool debug) {
@@ -64,8 +61,8 @@ void PdfStatisticsCalculator::computeCharacterStatistics() const {
     for (const auto* character : page->characters) {
       fontSizeCounter[character->fontSize]++;
       fontNameCounter[character->fontName]++;
-      sumWidths += character->position->getWidth();
-      sumHeights += character->position->getHeight();
+      sumWidths += character->pos->getWidth();
+      sumHeights += character->pos->getHeight();
       numChars++;
     }
   }
@@ -92,15 +89,17 @@ void PdfStatisticsCalculator::computeCharacterStatistics() const {
 }
 
 // _________________________________________________________________________________________________
-void PdfStatisticsCalculator::computeWordStatistics(double yOverlapRatioOverlapThreshold,
-      double yOverlapRatioNoOverlapThreshold) const {
+void PdfStatisticsCalculator::computeWordStatistics() const {
   assert(_doc);
+
+  double sameLineYOverlapRatioThreshold = config::getSameLineYOverlapRatioThreshold(_doc);
+  double otherLineYOverlapRatioThreshold = config::getOtherLineYOverlapRatioThreshold(_doc);
 
   _log->info() << "Computing word statististics..." << endl;
   _log->debug() << "=======================================" << endl;
   _log->debug() << BOLD << "DEBUG MODE" << OFF << endl;
-  _log->debug() << " └─ threshold overlap ratio: " << yOverlapRatioOverlapThreshold << endl;
-  _log->debug() << " └─ threshold no overlap ratio: " << yOverlapRatioNoOverlapThreshold << endl;
+  _log->debug() << " └─ sameLineYOverlapRatioThresh: " << sameLineYOverlapRatioThreshold << endl;
+  _log->debug() << " └─ otherLineYOverlapRatioThresh: " << otherLineYOverlapRatioThreshold << endl;
   _log->debug() << "=======================================" << endl;
 
   // A counter for the horizontal gaps between two consecutive words that overlap vertically.
@@ -116,12 +115,13 @@ void PdfStatisticsCalculator::computeWordStatistics(double yOverlapRatioOverlapT
       PdfWord* currWord = page->words[i];
 
       // Skip the word if its font size is smaller than the most frequent font size.
-      if (math_utils::smaller(currWord->fontSize, _doc->mostFreqFontSize, FSIZE_EQUAL_TOLERANCE)) {
+      if (math_utils::smaller(currWord->fontSize, _doc->mostFreqFontSize,
+          config::FSIZE_EQUAL_TOLERANCE)) {
         continue;
       }
 
       // Count the word height.
-      double height = math_utils::round(currWord->position->getHeight(), COORDS_PREC);
+      double height = math_utils::round(currWord->pos->getHeight(), config::COORDS_PREC);
       wordHeightCounter[height]++;
 
       // Skip to the next word if there is no previous word.
@@ -130,18 +130,19 @@ void PdfStatisticsCalculator::computeWordStatistics(double yOverlapRatioOverlapT
       }
 
       // Skip to the next word if the word does not have the same rotation than the previous word.
-      if (prevWord->position->rotation != currWord->position->rotation) {
+      if (prevWord->pos->rotation != currWord->pos->rotation) {
         continue;
       }
 
       // Skip to the next word if the word does not have the same writing mode than the prev word.
-      if (prevWord->position->wMode != currWord->position->wMode) {
+      if (prevWord->pos->wMode != currWord->pos->wMode) {
         continue;
       }
 
       // Skip to the next word if the font size of the previous word is not equal to the most
       // frequent font size.
-      if (!math_utils::equal(prevWord->fontSize, _doc->mostFreqFontSize, FSIZE_EQUAL_TOLERANCE)) {
+      if (!math_utils::equal(prevWord->fontSize, _doc->mostFreqFontSize,
+          config::FSIZE_EQUAL_TOLERANCE)) {
         continue;
       }
 
@@ -149,17 +150,17 @@ void PdfStatisticsCalculator::computeWordStatistics(double yOverlapRatioOverlapT
 
       // Add the horizontal gap between the previous word and the current word to the counter,
       // when one word vertically overlaps at least the half of the height of the other word.
-      if (math_utils::equalOrLarger(maxYOverlapRatio, yOverlapRatioOverlapThreshold)) {
+      if (math_utils::equalOrLarger(maxYOverlapRatio, sameLineYOverlapRatioThreshold)) {
         double gap = element_utils::computeHorizontalGap(prevWord, currWord);
-        gap = math_utils::round(gap, COORDS_PREC);
+        gap = math_utils::round(gap, config::COORDS_PREC);
         horizontalGapCounter[gap]++;
       }
 
       // Add the vertical gap between the previous word and the current word to the counter, when
       // they do *not* vertically overlap.
-      if (math_utils::equal(maxYOverlapRatio, yOverlapRatioNoOverlapThreshold)) {
+      if (math_utils::equal(maxYOverlapRatio, otherLineYOverlapRatioThreshold)) {
         double gap = element_utils::computeVerticalGap(prevWord, currWord);
-        gap = math_utils::round(gap, COORDS_PREC);
+        gap = math_utils::round(gap, config::COORDS_PREC);
         verticalGapCounter[gap]++;
       }
     }
@@ -198,12 +199,12 @@ void PdfStatisticsCalculator::computeTextLineStatistics() const {
         PdfTextLine* currLine = segment->lines.at(i);
 
         // Skip to the next line if the line does not have the same rotation than the previous line.
-        if (prevLine->position->rotation != currLine->position->rotation) {
+        if (prevLine->pos->rotation != currLine->pos->rotation) {
           continue;
         }
 
         // Skip to the next line if the line does not have the same writing mode than the prev line.
-        if (prevLine->position->wMode != currLine->position->wMode) {
+        if (prevLine->pos->wMode != currLine->pos->wMode) {
           continue;
         }
 
@@ -214,15 +215,15 @@ void PdfStatisticsCalculator::computeTextLineStatistics() const {
         // when one or both lines contain sub- or superscripts. By our experience, computing the
         // line distance with sub- and superscripts ignored results in more accurate line distances.
         double dist = currLine->baseBBoxUpperY - prevLine->baseBBoxLowerY;
-        dist = max(0.0, math_utils::round(dist, LINE_DIST_PREC));
+        dist = max(0.0, math_utils::round(dist, config::LINE_DIST_PREC));
         lineDistanceCounter[dist]++;
 
         // If the font sizes of the text lines are equal, add the distance also to
         // lineDistanceCountersPerFontSize, for computing the most frequent line distances broken
         // down by font size.
-        double prevFontSize = math_utils::round(prevLine->fontSize, FONT_SIZE_PREC);
-        double currFontSize = math_utils::round(currLine->fontSize, FONT_SIZE_PREC);
-        if (math_utils::equal(prevFontSize, currFontSize, FSIZE_EQUAL_TOLERANCE)) {
+        double prevFontSize = math_utils::round(prevLine->fontSize, config::FONT_SIZE_PREC);
+        double currFontSize = math_utils::round(currLine->fontSize, config::FONT_SIZE_PREC);
+        if (math_utils::equal(prevFontSize, currFontSize, config::FSIZE_EQUAL_TOLERANCE)) {
           lineDistanceCountersPerFontSize[currFontSize][dist]++;
         }
       }

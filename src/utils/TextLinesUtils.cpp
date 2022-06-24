@@ -209,7 +209,7 @@ bool text_lines_utils::computeHasPrevLineCapacity(const PdfTextLine* line, doubl
   }
 
   // Compute the width of the first word of the given line.
-  double firstWordWidth = line->words[0]->position->getWidth();
+  double firstWordWidth = line->words[0]->pos->getWidth();
 
   // The previous line has capacity if its right margin is larger than the width of the first word
   // of the given line, under consideration of a tolerance.
@@ -242,8 +242,8 @@ void text_lines_utils::computeTextLineHierarchy(const PdfPage* page,
       // threshold. This should prevent to consider a line to be the parent line or a sibling line
       // of another line when the distance between the lines is too large.
       if (prevLine) {
-        bool hasSameRotation = prevLine->position->rotation == line->position->rotation;
-        bool hasSameWMode = prevLine->position->wMode == line->position->wMode;
+        bool hasSameRotation = prevLine->pos->rotation == line->pos->rotation;
+        bool hasSameWMode = prevLine->pos->wMode == line->pos->wMode;
         if (hasSameRotation && hasSameWMode) {
           double absLineDistance = abs(element_utils::computeVerticalGap(prevLine, line));
           if (math_utils::larger(absLineDistance, maxLineDistance, COORDS_EQUAL_TOLERANCE)) {
@@ -256,8 +256,8 @@ void text_lines_utils::computeTextLineHierarchy(const PdfPage* page,
       // Remove all lines from the stack with a larger leftX than the current line, because
       // they can't be a parent line or any sibling line of the current line.
       while (!lineStack.empty()) {
-        double topStackLeftX = lineStack.top()->position->leftX;
-        double lineLeftX = line->position->leftX;
+        double topStackLeftX = lineStack.top()->pos->leftX;
+        double lineLeftX = line->pos->leftX;
         if (!math_utils::larger(topStackLeftX, lineLeftX, leftXOffsetThreshold)) {
           break;
         }
@@ -275,8 +275,8 @@ void text_lines_utils::computeTextLineHierarchy(const PdfPage* page,
       // topmost line in the stack (that is: if the current line is positioned above the topmost
       // line in the stack). This should prevent to consider a line to be the parent line or a
       // sibling line of a line in a different column.
-      double topStackLowerY = lineStack.top()->position->lowerY;
-      double lineLowerY = line->position->lowerY;
+      double topStackLowerY = lineStack.top()->pos->lowerY;
+      double lineLowerY = line->pos->lowerY;
       if (math_utils::equalOrLarger(topStackLowerY, lineLowerY, COORDS_EQUAL_TOLERANCE)) {
         continue;
       }
@@ -287,8 +287,8 @@ void text_lines_utils::computeTextLineHierarchy(const PdfPage* page,
       // (2) the topmost line in the stack is the previous sibling line of the current line;
       // (3) the parent line of the topmost line in the stack is also the parent line of the
       //     current line.
-      double topStackLeftX = lineStack.top()->position->leftX;
-      double lineLeftX = line->position->leftX;
+      double topStackLeftX = lineStack.top()->pos->leftX;
+      double lineLeftX = line->pos->leftX;
       if (math_utils::equal(topStackLeftX, lineLeftX, leftXOffsetThreshold)) {
         lineStack.top()->nextSiblingLine = line;
         line->prevSiblingLine = lineStack.top();

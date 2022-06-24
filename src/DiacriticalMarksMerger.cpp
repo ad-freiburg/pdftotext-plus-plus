@@ -18,12 +18,12 @@
 
 #include "./DiacriticalMarksMerger.h"
 
-using diacritics_merger::config::COMBINING_MAP;
-
 using std::endl;
 using std::max;
 using std::min;
 using std::vector;
+
+namespace config = diacritics_merger::config;
 
 // _________________________________________________________________________________________________
 DiacriticalMarksMerger::DiacriticalMarksMerger(const PdfDocument* doc, bool debug,
@@ -65,16 +65,16 @@ void DiacriticalMarksMerger::process() const {
 
       _log->debug(p) << "=======================================" << endl;
       _log->debug(p) << BOLD << "char: \"" << currChar->text << "\"" << OFF << endl;
-      _log->debug(p) << " └─ char.leftX:  " << currChar->position->leftX << endl;
-      _log->debug(p) << " └─ char.upperY: " << currChar->position->upperY << endl;
-      _log->debug(p) << " └─ char.rightX: " << currChar->position->rightX << endl;
-      _log->debug(p) << " └─ char.lowerY: " << currChar->position->lowerY << endl;
-      if (currChar->position->rotation != 0) {
-        _log->debug(p) << " └─ char.rotation:  " << currChar->position->rotation << endl;
-        _log->debug(p) << " └─ char.rotLeftX:  " << currChar->position->getRotLeftX() << endl;
-        _log->debug(p) << " └─ char.rotUpperY: " << currChar->position->getRotUpperY() << endl;
-        _log->debug(p) << " └─ char.rotRightX: " << currChar->position->getRotRightX() << endl;
-        _log->debug(p) << " └─ char.rotLowerY: " << currChar->position->getRotLowerY() << endl;
+      _log->debug(p) << " └─ char.leftX:  " << currChar->pos->leftX << endl;
+      _log->debug(p) << " └─ char.upperY: " << currChar->pos->upperY << endl;
+      _log->debug(p) << " └─ char.rightX: " << currChar->pos->rightX << endl;
+      _log->debug(p) << " └─ char.lowerY: " << currChar->pos->lowerY << endl;
+      if (currChar->pos->rotation != 0) {
+        _log->debug(p) << " └─ char.rotation:  " << currChar->pos->rotation << endl;
+        _log->debug(p) << " └─ char.rotLeftX:  " << currChar->pos->getRotLeftX() << endl;
+        _log->debug(p) << " └─ char.rotUpperY: " << currChar->pos->getRotUpperY() << endl;
+        _log->debug(p) << " └─ char.rotRightX: " << currChar->pos->getRotRightX() << endl;
+        _log->debug(p) << " └─ char.rotLowerY: " << currChar->pos->getRotLowerY() << endl;
       }
 
       // Skip the character if it does not contain exactly one unicode.
@@ -86,8 +86,8 @@ void DiacriticalMarksMerger::process() const {
       // Get the unicode of the character. If it is contained in combininMap, replace the unicode
       // by its combining equivalent.
       unsigned int unicode = currChar->unicodes[0];
-      if (COMBINING_MAP.count(unicode) > 0) {
-        unicode = COMBINING_MAP.at(unicode);
+      if (config::COMBINING_MAP.count(unicode) > 0) {
+        unicode = config::COMBINING_MAP.at(unicode);
       }
 
       // The character is a diacritic mark when its unicode falls into one of the categories:
@@ -113,10 +113,10 @@ void DiacriticalMarksMerger::process() const {
       _log->debug(p) << "---------------------------------------" << endl;
       if (prevChar) {
         _log->debug(p) << BOLD << "prevChar: \"" << prevChar->text << "\"" << OFF << endl;
-        _log->debug(p) << " └─ prevChar.leftX:  " << prevChar->position->leftX << endl;
-        _log->debug(p) << " └─ prevChar.upperY: " << prevChar->position->upperY << endl;
-        _log->debug(p) << " └─ prevChar.rightX: " << prevChar->position->rightX << endl;
-        _log->debug(p) << " └─ prevChar.lowerY: " << prevChar->position->lowerY << endl;
+        _log->debug(p) << " └─ prevChar.leftX:  " << prevChar->pos->leftX << endl;
+        _log->debug(p) << " └─ prevChar.upperY: " << prevChar->pos->upperY << endl;
+        _log->debug(p) << " └─ prevChar.rightX: " << prevChar->pos->rightX << endl;
+        _log->debug(p) << " └─ prevChar.lowerY: " << prevChar->pos->lowerY << endl;
 
         prevXOverlapRatio = element_utils::computeMaxXOverlapRatio(prevChar, currChar);
       } else {
@@ -128,10 +128,10 @@ void DiacriticalMarksMerger::process() const {
       _log->debug(p) << "---------------------------------------" << endl;
       if (nextChar) {
         _log->debug(p) << BOLD << "nextChar: \"" << nextChar->text << "\"" << OFF << endl;
-        _log->debug(p) << " └─ nextChar.leftX:  " << nextChar->position->leftX << endl;
-        _log->debug(p) << " └─ nextChar.upperY: " << nextChar->position->upperY << endl;
-        _log->debug(p) << " └─ nextChar.rightX: " << nextChar->position->rightX << endl;
-        _log->debug(p) << " └─ nextChar.lowerY: " << nextChar->position->lowerY << endl;
+        _log->debug(p) << " └─ nextChar.leftX:  " << nextChar->pos->leftX << endl;
+        _log->debug(p) << " └─ nextChar.upperY: " << nextChar->pos->upperY << endl;
+        _log->debug(p) << " └─ nextChar.rightX: " << nextChar->pos->rightX << endl;
+        _log->debug(p) << " └─ nextChar.lowerY: " << nextChar->pos->lowerY << endl;
 
         nextXOverlapRatio = element_utils::computeMaxXOverlapRatio(currChar, nextChar);
       } else {
@@ -183,16 +183,16 @@ void DiacriticalMarksMerger::process() const {
       base->textWithDiacriticMark = reinterpret_cast<char*>(output);
 
       // Update the bounding box.
-      base->position->leftX = min(base->position->leftX, mark->position->leftX);
-      base->position->upperY = min(base->position->upperY, mark->position->upperY);
-      base->position->rightX = max(base->position->rightX, mark->position->rightX);
-      base->position->lowerY = max(base->position->lowerY, mark->position->lowerY);
+      base->pos->leftX = min(base->pos->leftX, mark->pos->leftX);
+      base->pos->upperY = min(base->pos->upperY, mark->pos->upperY);
+      base->pos->rightX = max(base->pos->rightX, mark->pos->rightX);
+      base->pos->lowerY = max(base->pos->lowerY, mark->pos->lowerY);
 
       _log->debug(p) << " └─ base.textWithDiacMark: " << base->textWithDiacriticMark << endl;
-      _log->debug(p) << " └─ base.leftX: " << base->position->leftX << endl;
-      _log->debug(p) << " └─ base.upperY: " << base->position->upperY << endl;
-      _log->debug(p) << " └─ base.rightX: " << base->position->rightX << endl;
-      _log->debug(p) << " └─ base.lowerY: " << base->position->lowerY << endl;
+      _log->debug(p) << " └─ base.leftX: " << base->pos->leftX << endl;
+      _log->debug(p) << " └─ base.upperY: " << base->pos->upperY << endl;
+      _log->debug(p) << " └─ base.rightX: " << base->pos->rightX << endl;
+      _log->debug(p) << " └─ base.lowerY: " << base->pos->lowerY << endl;
     }
     _log->debug() << "=======================================" << endl;
   }

@@ -262,8 +262,8 @@ void text_blocks_utils::computeTextLineMargins(const PdfTextBlock* block) {
   // TODO(korzen): What does this mean?
   double blockTrimRightX = block->trimRightX;
   if (block->lines.size() == 2) {
-    double leftMargin = block->position->leftX - block->segment->position->leftX;
-    double rightMargin = block->segment->position->rightX - block->position->rightX;
+    double leftMargin = block->pos->leftX - block->segment->pos->leftX;
+    double rightMargin = block->segment->pos->rightX - block->pos->rightX;
     double isCentered = math_utils::equal(leftMargin, rightMargin, block->doc->avgCharWidth);
     if (!isCentered) {
       if (prevBlock) { blockTrimRightX = max(blockTrimRightX, prevBlock->trimRightX); }
@@ -273,8 +273,8 @@ void text_blocks_utils::computeTextLineMargins(const PdfTextBlock* block) {
 
   for (auto* line : block->lines) {
     // TODO(korzen): Should this really be rounded?
-    line->leftMargin = math_utils::round(line->position->leftX - block->trimLeftX);
-    line->rightMargin = math_utils::round(blockTrimRightX - line->position->rightX);
+    line->leftMargin = math_utils::round(line->pos->leftX - block->trimLeftX);
+    line->rightMargin = math_utils::round(blockTrimRightX - line->pos->rightX);
   }
 }
 
@@ -297,13 +297,13 @@ void text_blocks_utils::createTextBlock(const vector<PdfTextLine*>& lines,
   block->lines = lines;
 
   // Set the page number.
-  block->position->pageNum = lines[0]->position->pageNum;
+  block->pos->pageNum = lines[0]->pos->pageNum;
 
   // Set the writing mode.
-  block->position->wMode = lines[0]->position->wMode;
+  block->pos->wMode = lines[0]->pos->wMode;
 
   // Set the rotation value.
-  block->position->rotation = lines[0]->position->rotation;
+  block->pos->rotation = lines[0]->pos->rotation;
 
   // Set the rank.
   block->rank = blocks->size();
@@ -316,22 +316,22 @@ void text_blocks_utils::createTextBlock(const vector<PdfTextLine*>& lines,
     PdfTextLine* currLine = lines[i];
     PdfTextLine* nextLine = i < lines.size() - 1 ? lines[i+1] : nullptr;
 
-    double lineMinX = min(currLine->position->leftX, currLine->position->rightX);
-    double lineMinY = min(currLine->position->upperY, currLine->position->lowerY);
-    double lineMaxX = max(currLine->position->leftX, currLine->position->rightX);
-    double lineMaxY = max(currLine->position->upperY, currLine->position->lowerY);
+    double lineMinX = min(currLine->pos->leftX, currLine->pos->rightX);
+    double lineMinY = min(currLine->pos->upperY, currLine->pos->lowerY);
+    double lineMaxX = max(currLine->pos->leftX, currLine->pos->rightX);
+    double lineMaxY = max(currLine->pos->upperY, currLine->pos->lowerY);
 
     // Compute the bounding box.
-    block->position->leftX = min(block->position->leftX, lineMinX);
-    block->position->upperY = min(block->position->upperY, lineMinY);
-    block->position->rightX = max(block->position->rightX, lineMaxX);
-    block->position->lowerY = max(block->position->lowerY, lineMaxY);
+    block->pos->leftX = min(block->pos->leftX, lineMinX);
+    block->pos->upperY = min(block->pos->upperY, lineMinY);
+    block->pos->rightX = max(block->pos->rightX, lineMaxX);
+    block->pos->lowerY = max(block->pos->lowerY, lineMaxY);
 
     // Compute the trim box.
-    block->trimLeftX = max(block->position->leftX, block->segment->trimLeftX);
-    block->trimUpperY = max(block->position->upperY, block->segment->trimUpperY);
-    block->trimRightX = min(block->position->rightX, block->segment->trimRightX);
-    block->trimLowerY = min(block->position->lowerY, block->segment->trimLowerY);
+    block->trimLeftX = max(block->pos->leftX, block->segment->trimLeftX);
+    block->trimUpperY = max(block->pos->upperY, block->segment->trimUpperY);
+    block->trimRightX = min(block->pos->rightX, block->segment->trimRightX);
+    block->trimLowerY = min(block->pos->lowerY, block->segment->trimLowerY);
 
     // Count the font names and font sizes, for computing the most frequent font name / font size.
     fontNameCounter[currLine->fontName]++;

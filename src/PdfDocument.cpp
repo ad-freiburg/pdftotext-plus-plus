@@ -15,6 +15,7 @@
 #include "./PdfDocument.h"
 
 using global_config::COORDS_PREC;
+
 using std::string;
 using std::stringstream;
 
@@ -171,12 +172,12 @@ string PdfPosition::toShortString() const {
 
 // _________________________________________________________________________________________________
 PdfElement::PdfElement() {
-  position = new PdfPosition();
+  pos = new PdfPosition();
 }
 
 // _________________________________________________________________________________________________
 PdfElement::~PdfElement() {
-  delete position;
+  delete pos;
 }
 
 // =================================================================================================
@@ -210,7 +211,7 @@ PdfCharacter::~PdfCharacter() = default;
 string PdfCharacter::toString() const {
   stringstream ss;
   ss << "PdfCharacter("
-     << "pos=" << position->toString() << "; "
+     << "pos=" << pos->toString() << "; "
      << "fontName=" << fontName << "; "
      << "fontSize=" << fontSize << "; "
      << "color=(" << color[0] << ", " << color[1] << ", " << color[2] << "); "
@@ -230,7 +231,7 @@ string PdfCharacter::toString() const {
 string PdfCharacter::toShortString() const {
   stringstream ss;
   ss << "type: char; "
-     << position->toShortString()
+     << pos->toShortString()
      << "; fn=" << fontName
      << "; fs=" << fontSize
      << "; text=\"" << text << "\"";
@@ -254,7 +255,7 @@ PdfWord::~PdfWord() {
 string PdfWord::toString() const {
   stringstream ss;
   ss << "PdfWord("
-     << "pos=" << position->toString() << "; "
+     << "pos=" << pos->toString() << "; "
      << "fontName=" << fontName << "; "
      << "fontSize=" << fontSize << "; "
      << "text=\"" << text << "\")";
@@ -265,7 +266,7 @@ string PdfWord::toString() const {
 string PdfWord::toShortString() const {
   stringstream ss;
   ss << "type: word; "
-     << position->toShortString()
+     << pos->toShortString()
      << "; fn=" << fontName
      << "; fs=" << fontSize
      << "; text=\"" << text << "\"";
@@ -286,7 +287,7 @@ string PdfTextLine::toString() const {
   stringstream ss;
   ss << "PdfTextLine("
      << "text=\"" << text << "\"; "
-     << "pos=" << position->toString() << "; "
+     << "pos=" << pos->toString() << "; "
      << "leftMargin=" << leftMargin << "; "
      << "rightMargin=" << rightMargin << "; "
      << "fontName=" << fontName << "; "
@@ -299,7 +300,7 @@ string PdfTextLine::toString() const {
 string PdfTextLine::toShortString() const {
   stringstream ss;
   ss << "type: line; "
-     << position->toShortString()
+     << pos->toShortString()
      << "; fn=" << fontName
      << "; fs=" << fontSize
      << "; text=\"" << text << "\"";
@@ -319,7 +320,7 @@ PdfTextBlock::~PdfTextBlock() = default;
 string PdfTextBlock::toString() const {
   stringstream ss;
   ss << "PdfTextBlock("
-     << "pos=" << position->toString() << "; "
+     << "pos=" << pos->toString() << "; "
      << "role=" << role << "; "
      << "isCentered=" << isLinesCentered << "; "
      << "isEmphasized=" << isEmphasized << "; "
@@ -331,7 +332,7 @@ string PdfTextBlock::toString() const {
 string PdfTextBlock::toShortString() const {
   stringstream ss;
   ss << "type: block; "
-     << position->toShortString()
+     << pos->toShortString()
      << "; fn=" << fontName
      << "; fs=" << fontSize
      << "; text=\"" << text << "\"";
@@ -365,14 +366,14 @@ PdfFigure::~PdfFigure() {
 // _________________________________________________________________________________________________
 string PdfFigure::toString() const {
   stringstream ss;
-  ss << "PdfFigure(pos=" << position->toString() << ")";
+  ss << "PdfFigure(pos=" << pos->toString() << ")";
   return ss.str();
 }
 
 // _________________________________________________________________________________________________
 string PdfFigure::toShortString() const {
   stringstream ss;
-  ss << "type: figure; " << position->toShortString();
+  ss << "type: figure; " << pos->toShortString();
   return ss.str();
 }
 
@@ -388,14 +389,14 @@ PdfShape::~PdfShape() = default;
 // _________________________________________________________________________________________________
 string PdfShape::toString() const {
   stringstream ss;
-  ss << "PdfShape(pos=" << position->toString() << ")";
+  ss << "PdfShape(pos=" << pos->toString() << ")";
   return ss.str();
 }
 
 // _________________________________________________________________________________________________
 string PdfShape::toShortString() const {
   stringstream ss;
-  ss << "type: shape; " << position->toShortString();
+  ss << "type: shape; " << pos->toShortString();
   return ss.str();
 }
 
@@ -411,14 +412,14 @@ PdfGraphic::~PdfGraphic() = default;
 // _________________________________________________________________________________________________
 string PdfGraphic::toString() const {
   stringstream ss;
-  ss << "PdfGraphic(pos=" << position->toString() << ")";
+  ss << "PdfGraphic(pos=" << pos->toString() << ")";
   return ss.str();
 }
 
 // _________________________________________________________________________________________________
 string PdfGraphic::toShortString() const {
   stringstream ss;
-  ss << "type: graphic; " << position->toShortString();
+  ss << "type: graphic; " << pos->toShortString();
   return ss.str();
 }
 
@@ -440,14 +441,14 @@ PdfPageSegment::~PdfPageSegment() {
 string PdfPageSegment::toString() const {
   stringstream ss;
   ss << "PdfPageSegment("
-     << "pos=" << position->toString() << "; ";
+     << "pos=" << pos->toString() << "; ";
   return ss.str();
 }
 
 // _________________________________________________________________________________________________
 string PdfPageSegment::toShortString() const {
   stringstream ss;
-  ss << "type: segment; " << position->toShortString();
+  ss << "type: segment; " << pos->toShortString();
   return ss.str();
 }
 

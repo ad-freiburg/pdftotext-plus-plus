@@ -113,3 +113,12 @@ string string_utils::escapeJson(const string& str) {
   }
   return std::move(o).str();
 }
+
+// _________________________________________________________________________________________________
+string string_utils::shorten(const string& str, size_t len) {
+  if (str.size() <= len) {
+    return str;
+  }
+
+  return str.substr(0, len) + "...";
+}

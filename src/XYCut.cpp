@@ -98,8 +98,8 @@ bool xCut(const vector<PdfElement*>& elements, double minGapWidth, int maxNumOve
   double elementsMinY = numeric_limits<double>::max();
   double elementsMaxY = numeric_limits<double>::min();
   for (const auto* element : sElements) {
-    elementsMinY = min(elementsMinY, element->position->upperY);
-    elementsMaxY = max(elementsMaxY, element->position->lowerY);
+    elementsMinY = min(elementsMinY, element->pos->upperY);
+    elementsMaxY = max(elementsMaxY, element->pos->lowerY);
   }
 
   // Create a fixed-size queue for storing the elements with the <maxNumOverlappingElements + 1>-th
@@ -144,7 +144,7 @@ bool xCut(const vector<PdfElement*>& elements, double minGapWidth, int maxNumOve
       // Compute the gap width (= the horizontal gap between prevElement and element).
       double gapWidth = element_utils::computeHorizontalGap(prevElement, element);
       // Compute the x-coordinate of the cut (= the horizontal midpoint of the gap).
-      double gapX = prevElement->position->rightX + ((gapWidth) / 2.0);
+      double gapX = prevElement->pos->rightX + ((gapWidth) / 2.0);
 
       if (gapWidth >= minGapWidth) {
         Cut* cut = new Cut(CutDir::X);
@@ -152,7 +152,7 @@ bool xCut(const vector<PdfElement*>& elements, double minGapWidth, int maxNumOve
         cut->posInElements = pos;
         cut->elementBefore = prevElement;
         cut->elementAfter = element;
-        cut->pageNum = element->position->pageNum;
+        cut->pageNum = element->pos->pageNum;
         cut->x1 = gapX;
         cut->y1 = elementsMinY;
         cut->x2 = gapX;
@@ -169,7 +169,7 @@ bool xCut(const vector<PdfElement*>& elements, double minGapWidth, int maxNumOve
     }
 
     // Add the element to the queue if its rightX is larger than the smallest rightX in the queue.
-    if (element->position->rightX > elementsLargestRightXQueue.top()->position->rightX) {
+    if (element->pos->rightX > elementsLargestRightXQueue.top()->pos->rightX) {
       elementsLargestRightXQueue.push(element);
     }
   }
@@ -229,8 +229,8 @@ bool yCut(const vector<PdfElement*>& elements, double minGapHeight,
   double elementsMinX = numeric_limits<double>::max();
   double elementsMaxX = numeric_limits<double>::min();
   for (const auto* element : sElements) {
-    elementsMinX = min(elementsMinX, element->position->leftX);
-    elementsMaxX = max(elementsMaxX, element->position->rightX);
+    elementsMinX = min(elementsMinX, element->pos->leftX);
+    elementsMaxX = max(elementsMaxX, element->pos->rightX);
   }
 
   // The element with the largest lowerY seen so far.
@@ -246,7 +246,7 @@ bool yCut(const vector<PdfElement*>& elements, double minGapHeight,
     // Compute the gap height (= the vertical gap between the elementLargestLowerY and element).
     double gapHeight = element_utils::computeVerticalGap(elementLargestLowerY, element);
     // Compute the y-coordinate of the cut (= the vertical midpoint of the gap).
-    double gapY = elementLargestLowerY->position->lowerY + ((gapHeight) / 2.0);
+    double gapY = elementLargestLowerY->pos->lowerY + ((gapHeight) / 2.0);
 
     if (gapHeight >= minGapHeight) {
       Cut* cut = new Cut(CutDir::Y);
@@ -254,7 +254,7 @@ bool yCut(const vector<PdfElement*>& elements, double minGapHeight,
       cut->posInElements = pos;
       cut->elementBefore = elementLargestLowerY;
       cut->elementAfter = element;
-      cut->pageNum = element->position->pageNum;
+      cut->pageNum = element->pos->pageNum;
       cut->x1 = elementsMinX;
       cut->y1 = gapY;
       cut->x2 = elementsMaxX;
@@ -266,7 +266,7 @@ bool yCut(const vector<PdfElement*>& elements, double minGapHeight,
     }
 
     // Update elementLargestLowerY if lowerY of the current element is larger.
-    if (element->position->lowerY > elementLargestLowerY->position->lowerY) {
+    if (element->pos->lowerY > elementLargestLowerY->pos->lowerY) {
       elementLargestLowerY = element;
     }
   }

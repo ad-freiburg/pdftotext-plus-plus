@@ -24,7 +24,7 @@ class LeftXAscComparator {
   bool operator() (const PdfElement* e1, const PdfElement* e2) const {
     assert(e1);
     assert(e2);
-    return e1->position->leftX < e2->position->leftX;
+    return e1->pos->leftX < e2->pos->leftX;
   }
 };
 
@@ -37,7 +37,7 @@ class RotLeftXAscComparator {
   bool operator() (const PdfElement* e1, const PdfElement* e2) const {
     assert(e1);
     assert(e2);
-    return e1->position->getRotLeftX() < e2->position->getRotLeftX();
+    return e1->pos->getRotLeftX() < e2->pos->getRotLeftX();
   }
 };
 
@@ -50,7 +50,7 @@ class RotLeftXDescComparator {
   bool operator() (const PdfElement* e1, const PdfElement* e2) const {
     assert(e1);
     assert(e2);
-    return e1->position->getRotLeftX() > e2->position->getRotLeftX();
+    return e1->pos->getRotLeftX() > e2->pos->getRotLeftX();
   }
 };
 
@@ -63,7 +63,7 @@ class RightXAscComparator {
   bool operator() (const PdfElement* e1, const PdfElement* e2) const {
     assert(e1);
     assert(e2);
-    return e1->position->rightX < e2->position->rightX;
+    return e1->pos->rightX < e2->pos->rightX;
   }
 };
 
@@ -76,7 +76,7 @@ class RightXDescComparator {
   bool operator() (const PdfElement* e1, const PdfElement* e2) const {
     assert(e1);
     assert(e2);
-    return e1->position->rightX > e2->position->rightX;
+    return e1->pos->rightX > e2->pos->rightX;
   }
 };
 
@@ -89,7 +89,7 @@ class UpperYAscComparator {
   bool operator() (const PdfElement* e1, const PdfElement* e2) const {
     assert(e1);
     assert(e2);
-    return e1->position->upperY < e2->position->upperY;
+    return e1->pos->upperY < e2->pos->upperY;
   }
 };
 
@@ -102,7 +102,7 @@ class RotLowerYAscComparator {
   bool operator() (const PdfElement* e1, const PdfElement* e2) const {
     assert(e1);
     assert(e2);
-    return e1->position->getRotLowerY() < e2->position->getRotLowerY();
+    return e1->pos->getRotLowerY() < e2->pos->getRotLowerY();
   }
 };
 
@@ -115,7 +115,7 @@ class RotLowerYDescComparator {
   bool operator() (const PdfElement* e1, const PdfElement* e2) const {
     assert(e1);
     assert(e2);
-    return e1->position->getRotLowerY() > e2->position->getRotLowerY();
+    return e1->pos->getRotLowerY() > e2->pos->getRotLowerY();
   }
 };
 

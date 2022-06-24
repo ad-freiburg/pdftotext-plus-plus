@@ -36,7 +36,7 @@ using std::tuple;
 using std::unordered_map;
 using std::vector;
 
-using text_lines_detector::config::getYOverlapRatioThreshold;
+namespace config = text_lines_detector::config;
 
 // _________________________________________________________________________________________________
 TextLinesDetector::TextLinesDetector(const PdfDocument* doc, bool debug, int debugPageFilter) {
@@ -92,23 +92,23 @@ void TextLinesDetector::process() {
       unordered_map<int, unordered_map<double, vector<PdfWord*>>> clusters;
       for (size_t i = 0; i < words.size(); i++) {
         PdfWord* word = words[i];
-        int p = word->position->pageNum;
+        int p = word->pos->pageNum;
 
         if (i > 0) {
           _log->debug(p) << "---------------------------------------------------------" << endl;
         }
         _log->debug(p) << q << BOLD << "word: \"" << word->text << "\"" << OFF << endl;
-        _log->debug(p) << q << " └─ word.page: " << word->position->pageNum << endl;
-        _log->debug(p) << q << " └─ word.leftX: " << word->position->leftX << endl;
-        _log->debug(p) << q << " └─ word.upperY: " << word->position->upperY << endl;
-        _log->debug(p) << q << " └─ word.rightX: " << word->position->rightX << endl;
-        _log->debug(p) << q << " └─ word.lowerY: " << word->position->lowerY << endl;
-        _log->debug(p) << q << " └─ word.rot: " << word->position->rotation << endl;
-        if (word->position->rotation != 0) {
-          _log->debug(p) << q << " └─ word.rotLeftX: " << word->position->getRotLeftX() << endl;
-          _log->debug(p) << q << " └─ word.rotUpperY: " << word->position->getRotUpperY() << endl;
-          _log->debug(p) << q << " └─ word.rotRightX: " << word->position->getRotRightX() << endl;
-          _log->debug(p) << q << " └─ word.rotLowerY: " << word->position->getRotLowerY() << endl;
+        _log->debug(p) << q << " └─ word.page: " << word->pos->pageNum << endl;
+        _log->debug(p) << q << " └─ word.leftX: " << word->pos->leftX << endl;
+        _log->debug(p) << q << " └─ word.upperY: " << word->pos->upperY << endl;
+        _log->debug(p) << q << " └─ word.rightX: " << word->pos->rightX << endl;
+        _log->debug(p) << q << " └─ word.lowerY: " << word->pos->lowerY << endl;
+        _log->debug(p) << q << " └─ word.rot: " << word->pos->rotation << endl;
+        if (word->pos->rotation != 0) {
+          _log->debug(p) << q << " └─ word.rotLeftX: " << word->pos->getRotLeftX() << endl;
+          _log->debug(p) << q << " └─ word.rotUpperY: " << word->pos->getRotUpperY() << endl;
+          _log->debug(p) << q << " └─ word.rotRightX: " << word->pos->getRotRightX() << endl;
+          _log->debug(p) << q << " └─ word.rotLowerY: " << word->pos->getRotLowerY() << endl;
         }
 
         // Skip the word if it is part of a stacked math symbol.
@@ -117,8 +117,8 @@ void TextLinesDetector::process() {
           continue;
         }
 
-        double rotation = word->position->rotation;
-        double lowerY = math_utils::round(word->position->getRotLowerY(), COORDS_PREC);
+        double rotation = word->pos->rotation;
+        double lowerY = math_utils::round(word->pos->getRotLowerY(), COORDS_PREC);
         clusters[rotation][lowerY].push_back(word);
         _log->debug(p) << q << "cluster: (" << rotation << ", " << lowerY << ")" << endl;
 
@@ -156,11 +156,11 @@ void TextLinesDetector::process() {
           }
           _log->debug(p) << qq << BOLD << "cluster (" << rot << ", " << lowerY << ")" << OFF << endl;
           _log->debug(p) << qq << "  └─ line.text: \"" << line->text << "\"" << endl;
-          _log->debug(p) << qq << "  └─ line.pageNum: " << line->position->pageNum << endl;
-          _log->debug(p) << qq << "  └─ line.leftX: " << line->position->leftX << endl;
-          _log->debug(p) << qq << "  └─ line.upperY: " << line->position->upperY << endl;
-          _log->debug(p) << qq << "  └─ line.rightX: " << line->position->rightX << endl;
-          _log->debug(p) << qq << "  └─ line.lowerY: " << line->position->lowerY << endl;
+          _log->debug(p) << qq << "  └─ line.pageNum: " << line->pos->pageNum << endl;
+          _log->debug(p) << qq << "  └─ line.leftX: " << line->pos->leftX << endl;
+          _log->debug(p) << qq << "  └─ line.upperY: " << line->pos->upperY << endl;
+          _log->debug(p) << qq << "  └─ line.rightX: " << line->pos->rightX << endl;
+          _log->debug(p) << qq << "  └─ line.lowerY: " << line->pos->lowerY << endl;
         }
 
         // Skip the cluster if it does not contain any text lines.
@@ -212,21 +212,21 @@ void TextLinesDetector::process() {
 
             if (prevLine) {
               _log->debug(p) << qqq << BOLD << "prevLine: " << OFF << prevLine->text << endl;
-              _log->debug(p) << qqq << " └─ prevLine.page: " << prevLine->position->pageNum << endl;
-              _log->debug(p) << qqq << " └─ prevLine.leftX: " << prevLine->position->leftX << endl;
-              _log->debug(p) << qqq << " └─ prevLine.upperY: " << prevLine->position->upperY << endl;
-              _log->debug(p) << qqq << " └─ prevLine.rightX: " << prevLine->position->rightX << endl;
-              _log->debug(p) << qqq << " └─ prevLine.lowerY: " << prevLine->position->lowerY << endl;
+              _log->debug(p) << qqq << " └─ prevLine.page: " << prevLine->pos->pageNum << endl;
+              _log->debug(p) << qqq << " └─ prevLine.leftX: " << prevLine->pos->leftX << endl;
+              _log->debug(p) << qqq << " └─ prevLine.upperY: " << prevLine->pos->upperY << endl;
+              _log->debug(p) << qqq << " └─ prevLine.rightX: " << prevLine->pos->rightX << endl;
+              _log->debug(p) << qqq << " └─ prevLine.lowerY: " << prevLine->pos->lowerY << endl;
             } else {
               _log->debug(p) << qqq << BOLD << "prevLine: -" << OFF << endl;
             }
 
             _log->debug(p) << qqq << BOLD << "currLine: " << OFF << currLine->text << endl;
-            _log->debug(p) << qqq << " └─ currLine.page: " << currLine->position->pageNum << endl;
-            _log->debug(p) << qqq << " └─ currLine.leftX: " << currLine->position->leftX << endl;
-            _log->debug(p) << qqq << " └─ currLine.upperY: " << currLine->position->upperY << endl;
-            _log->debug(p) << qqq << " └─ currLine.rightX: " << currLine->position->rightX << endl;
-            _log->debug(p) << qqq << " └─ currLine.lowerY: " << currLine->position->lowerY << endl;
+            _log->debug(p) << qqq << " └─ currLine.page: " << currLine->pos->pageNum << endl;
+            _log->debug(p) << qqq << " └─ currLine.leftX: " << currLine->pos->leftX << endl;
+            _log->debug(p) << qqq << " └─ currLine.upperY: " << currLine->pos->upperY << endl;
+            _log->debug(p) << qqq << " └─ currLine.rightX: " << currLine->pos->rightX << endl;
+            _log->debug(p) << qqq << " └─ currLine.lowerY: " << currLine->pos->lowerY << endl;
             _log->debug(p) << qqq << "------------------" << endl;
 
             // Compute the horizontal gap and the vertical overlap ratio to the previous line.
@@ -244,7 +244,7 @@ void TextLinesDetector::process() {
             // rationale behind is as follows: If the horizontal gap between two lines is small,
             // the threshold should be less restrictive. If the horizontal gap is large, the
             // threshold should be more restrictive.
-            double yOverlapRatioThreshold = getYOverlapRatioThreshold(_doc, xGap);
+            double yOverlapRatioThreshold = config::getYOverlapRatioThreshold(_doc, xGap);
 
             _log->debug(p) << qqq << "max y-overlap ratio: " << yOverlapRatio << endl;
             _log->debug(p) << qqq << "threshold: " << yOverlapRatioThreshold << endl;
@@ -256,11 +256,11 @@ void TextLinesDetector::process() {
 
               _log->debug(p) << qqq << BOLD << "merge currLine with prevLine" << OFF << endl;
               _log->debug(p) << qqq << " └─ prevLine.text: \"" << prevLine->text << "\"" << endl;
-              _log->debug(p) << qqq << " └─ prevLine.page: " << prevLine->position->pageNum << endl;
-              _log->debug(p) << qqq << " └─ prevLine.leftX: " << prevLine->position->leftX << endl;
-              _log->debug(p) << qqq << " └─ prevLine.upperY: " << prevLine->position->upperY << endl;
-              _log->debug(p) << qqq << " └─ prevLine.rightX: " << prevLine->position->rightX << endl;
-              _log->debug(p) << qqq << " └─ prevLine.lowerY: " << prevLine->position->lowerY << endl;
+              _log->debug(p) << qqq << " └─ prevLine.page: " << prevLine->pos->pageNum << endl;
+              _log->debug(p) << qqq << " └─ prevLine.leftX: " << prevLine->pos->leftX << endl;
+              _log->debug(p) << qqq << " └─ prevLine.upperY: " << prevLine->pos->upperY << endl;
+              _log->debug(p) << qqq << " └─ prevLine.rightX: " << prevLine->pos->rightX << endl;
+              _log->debug(p) << qqq << " └─ prevLine.lowerY: " << prevLine->pos->lowerY << endl;
 
               merged = true;
               continue;
@@ -364,13 +364,13 @@ void TextLinesDetector::computeTextLineProperties(PdfTextLine* line) const {
   }
 
   // Set the rotation value.
-  double rotation = line->position->rotation = line->words[0]->position->rotation;
+  double rotation = line->pos->rotation = line->words[0]->pos->rotation;
 
   // Set the writing mode.
-  line->position->wMode = line->words[0]->position->wMode;
+  line->pos->wMode = line->words[0]->pos->wMode;
 
   // Set the page number.
-  line->position->pageNum = line->words[0]->position->pageNum;
+  line->pos->pageNum = line->words[0]->pos->pageNum;
 
   // Sort the words by their leftX-coordinates, in ascending or descending order, depending
   // on the rotation.
@@ -389,15 +389,15 @@ void TextLinesDetector::computeTextLineProperties(PdfTextLine* line) const {
   for (size_t i = 0; i < line->words.size(); i++) {
     PdfWord* word = line->words[i];
 
-    double wordMinX = min(word->position->leftX, word->position->rightX);
-    double wordMinY = min(word->position->lowerY, word->position->upperY);
-    double wordMaxX = max(word->position->leftX, word->position->rightX);
-    double wordMaxY = max(word->position->lowerY, word->position->upperY);
+    double wordMinX = min(word->pos->leftX, word->pos->rightX);
+    double wordMinY = min(word->pos->lowerY, word->pos->upperY);
+    double wordMaxX = max(word->pos->leftX, word->pos->rightX);
+    double wordMaxY = max(word->pos->lowerY, word->pos->upperY);
 
-    line->position->leftX = min(line->position->leftX, wordMinX);
-    line->position->upperY = min(line->position->upperY, wordMinY);
-    line->position->rightX = max(line->position->rightX, wordMaxX);
-    line->position->lowerY = max(line->position->lowerY, wordMaxY);
+    line->pos->leftX = min(line->pos->leftX, wordMinX);
+    line->pos->upperY = min(line->pos->upperY, wordMinY);
+    line->pos->rightX = max(line->pos->rightX, wordMaxX);
+    line->pos->lowerY = max(line->pos->lowerY, wordMaxY);
 
     // Compute the most frequent font name, font size and baseline among the characters.
     for (const auto* ch : word->characters) {

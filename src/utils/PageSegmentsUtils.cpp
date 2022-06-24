@@ -26,15 +26,15 @@ tuple<double, double, double, double> page_segment_utils::computeTrimBox(
   assert(segment);
 
   // Initialize the coordinates of the trim box with the respective coordinates of the bounding box.
-  double trimLeftX = segment->position->leftX;
-  double trimUpperY = segment->position->upperY;
-  double trimRightX = segment->position->rightX;
-  double trimLowerY = segment->position->lowerY;
+  double trimLeftX = segment->pos->leftX;
+  double trimUpperY = segment->pos->upperY;
+  double trimRightX = segment->pos->rightX;
+  double trimLowerY = segment->pos->lowerY;
 
   // Compute the most frequent rightX among the text lines.
   DoubleCounter rightXCounter;
   for (auto* line : segment->lines) {
-    double rightX = math_utils::round(line->position->getRotRightX(), COORDS_PREC);
+    double rightX = math_utils::round(line->pos->getRotRightX(), COORDS_PREC);
     rightXCounter[rightX]++;
   }
   pair<double, double> mostFreqRightXPair = rightXCounter.mostFreqAndCount();

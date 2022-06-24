@@ -79,10 +79,10 @@ void ReadingOrderDetector::detectReadingOrder() {
     _pageElementsMaxX = numeric_limits<double>::min();
     _pageElementsMaxY = numeric_limits<double>::min();
     for (const auto* element : pageElements) {
-      _pageElementsMinX = min(_pageElementsMinX, element->position->leftX);
-      _pageElementsMinY = min(_pageElementsMinY, element->position->upperY);
-      _pageElementsMaxX = max(_pageElementsMaxX, element->position->rightX);
-      _pageElementsMaxY = max(_pageElementsMaxY, element->position->lowerY);
+      _pageElementsMinX = min(_pageElementsMinX, element->pos->leftX);
+      _pageElementsMinY = min(_pageElementsMinY, element->pos->upperY);
+      _pageElementsMaxX = max(_pageElementsMaxX, element->pos->rightX);
+      _pageElementsMaxY = max(_pageElementsMaxY, element->pos->lowerY);
     }
 
     vector<vector<PdfElement*>> groups;
@@ -109,7 +109,7 @@ void ReadingOrderDetector::detectReadingOrder() {
     vector<PdfTextBlock*> blocksSorted;
     for (auto& group : groups) {
       std::sort(group.begin(), group.end(), [](const PdfElement* e1, const PdfElement* e2) {
-        return e1->position->upperY < e2->position->upperY;
+        return e1->pos->upperY < e2->pos->upperY;
       });
 
       for (auto* element : group) {
@@ -147,7 +147,7 @@ void ReadingOrderDetector::choosePrimaryXCuts(const vector<Cut*>& cuts,
   for (Cut* cut : cuts) {
     const PdfTextBlock* blockLeft = dynamic_cast<const PdfTextBlock*>(cut->elementBefore);
     if (blockLeft) {
-      if (blockLeft->position->wMode != 0 || blockLeft->position->rotation != 0) {
+      if (blockLeft->pos->wMode != 0 || blockLeft->pos->rotation != 0) {
         cut->isChosen = true;
         continue;
       }
@@ -155,7 +155,7 @@ void ReadingOrderDetector::choosePrimaryXCuts(const vector<Cut*>& cuts,
 
     const PdfTextBlock* blockRight = dynamic_cast<const PdfTextBlock*>(cut->elementAfter);
     if (blockRight) {
-      if (blockRight->position->wMode != 0 || blockRight->position->rotation != 0) {
+      if (blockRight->pos->wMode != 0 || blockRight->pos->rotation != 0) {
         cut->isChosen = true;
         continue;
       }
@@ -164,14 +164,14 @@ void ReadingOrderDetector::choosePrimaryXCuts(const vector<Cut*>& cuts,
     if (blockLeft && blockRight) {
       // Consider the gap to be a primary x-cut when the rotations of the element to the left and
       // to the right of the cut differ.
-      if (blockLeft->position->wMode != blockRight->position->wMode) {
+      if (blockLeft->pos->wMode != blockRight->pos->wMode) {
         cut->isChosen = true;
         continue;
       }
 
       // Consider the gap to be a primary x-cut when the writing modes of the element to the left
       // and to the right of the cut differ.
-      if (blockLeft->position->rotation != blockRight->position->rotation) {
+      if (blockLeft->pos->rotation != blockRight->pos->rotation) {
         cut->isChosen = true;
         continue;
       }
@@ -193,9 +193,9 @@ void ReadingOrderDetector::choosePrimaryXCuts(const vector<Cut*>& cuts,
     const PdfElement* elementLeft = cut->elementBefore;
     const PdfNonTextElement* nonTextLeft = dynamic_cast<const PdfNonTextElement*>(elementLeft);
     if (nonTextLeft != nullptr) {
-      double upperY = nonTextLeft->position->upperY;
-      double lowerY = nonTextLeft->position->lowerY;
-      double height = nonTextLeft->position->getHeight();
+      double upperY = nonTextLeft->pos->upperY;
+      double lowerY = nonTextLeft->pos->lowerY;
+      double height = nonTextLeft->pos->getHeight();
       // The element must exceed a certain width; one end point must start in the left half of the
       // bounding box around the page elements; and the other end point in the right half.
       if (height > 10 * _doc->avgCharHeight && upperY < pageElemsMid && lowerY > pageElemsMid) {
@@ -207,9 +207,9 @@ void ReadingOrderDetector::choosePrimaryXCuts(const vector<Cut*>& cuts,
     const PdfElement* elementRight = cut->elementAfter;
     const PdfNonTextElement* nonTextRight = dynamic_cast<const PdfNonTextElement*>(elementRight);
     if (nonTextRight != nullptr) {
-      double upperY = nonTextRight->position->upperY;
-      double lowerY = nonTextRight->position->lowerY;
-      double height = nonTextRight->position->getHeight();
+      double upperY = nonTextRight->pos->upperY;
+      double lowerY = nonTextRight->pos->lowerY;
+      double height = nonTextRight->pos->getHeight();
       // The element must exceed a certain width; one end point must start in the left half of the
       // bounding box around the page elements; and the other end point in the right half.
       if (height > 10 * _doc->avgCharHeight && upperY < pageElemsMid && lowerY > pageElemsMid) {
@@ -276,9 +276,9 @@ void ReadingOrderDetector::choosePrimaryYCuts(const vector<Cut*>& cuts,
     const PdfElement* elementAbove = cut->elementBefore;
     const PdfNonTextElement* nonTextAbove = dynamic_cast<const PdfNonTextElement*>(elementAbove);
     if (nonTextAbove != nullptr) {
-      double leftX = nonTextAbove->position->leftX;
-      double rightX = nonTextAbove->position->rightX;
-      double width = nonTextAbove->position->getWidth();
+      double leftX = nonTextAbove->pos->leftX;
+      double rightX = nonTextAbove->pos->rightX;
+      double width = nonTextAbove->pos->getWidth();
       // The element must exceed a certain width; one end point must start in the left half of the
       // bounding box around the page elements; and the other end point in the right half.
       if (width > 10 * _doc->avgCharWidth && leftX < pageElementsMid && rightX > pageElementsMid) {
@@ -289,9 +289,9 @@ void ReadingOrderDetector::choosePrimaryYCuts(const vector<Cut*>& cuts,
     const PdfElement* elementBelow = cut->elementAfter;
     const PdfNonTextElement* nonTextBelow = dynamic_cast<const PdfNonTextElement*>(elementBelow);
     if (nonTextBelow != nullptr) {
-      double leftX = nonTextBelow->position->leftX;
-      double rightX = nonTextBelow->position->rightX;
-      double width = nonTextBelow->position->getWidth();
+      double leftX = nonTextBelow->pos->leftX;
+      double rightX = nonTextBelow->pos->rightX;
+      double width = nonTextBelow->pos->getWidth();
       // The element must exceed a certain width; one end point must start in the left half of the
       // bounding box around the page elements; and the other end point in the right half.
       if (width > 10 * _doc->avgCharWidth && leftX < pageElementsMid && rightX > pageElementsMid) {
