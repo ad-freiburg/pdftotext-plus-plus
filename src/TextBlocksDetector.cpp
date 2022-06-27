@@ -369,7 +369,7 @@ Trool TextBlocksDetector::startsBlock_fontSize(const PdfTextLine* line) const {
 
   int p = line->pos->pageNum;
   const PdfTextLine* prevLine = line->prevLine;
-  double tolerance = config::getFontSizeEqualTolerance(_doc);
+  double tolerance = config::FONT_SIZE_EQUAL_TOLERANCE;
 
   _log->debug(p) << _q << BLUE << "Does it have another font size than prev line?" << OFF << endl;
   _log->debug(p) << _q << " └─ prevLine.mostFreqFontSize: " << prevLine->fontSize << endl;
@@ -419,14 +419,14 @@ Trool TextBlocksDetector::startsBlock_lineDistance(const PdfTextLine* line) cons
 
   double lineDistanceDiff = actualLineDistance - expectedLineDistance;
 
-  // Compute the tolerance.
-  double tolerance = config::getExpectedLineDistanceTolerance(_doc, expectedLineDistance);
+  // Compute the threshold.
+  double threshold = config::getExpectedLineDistanceThreshold(_doc, expectedLineDistance);
 
   _log->debug(p) << _q << BLUE << "Is the dist to prev line larger than expected?" << OFF << endl;
   _log->debug(p) << _q << " └─ actual line distance: " << actualLineDistance << endl;
   _log->debug(p) << _q << " └─ expected line distance: " << expectedLineDistance << endl;
   _log->debug(p) << _q << " └─ line distance diff: " << lineDistanceDiff << endl;
-  _log->debug(p) << _q << " └─ tolerance: " << tolerance << endl;
+  _log->debug(p) << _q << " └─ threshold: " << threshold << endl;
 
   // The line does *not* start a new block if the actual line distance is negative.
   if (math_utils::equalOrSmaller(actualLineDistance, 0)) {
@@ -436,7 +436,7 @@ Trool TextBlocksDetector::startsBlock_lineDistance(const PdfTextLine* line) cons
 
   // The line starts a new block if the actual line distance is larger than the expected line
   // distance, under consideration of the computed tolerance.
-  if (math_utils::larger(actualLineDistance, expectedLineDistance, tolerance)) {
+  if (math_utils::larger(actualLineDistance, expectedLineDistance, threshold)) {
     _log->debug(p) << _q << BLUE << BOLD << " yes → starts block" << OFF << endl;
     return Trool::True;
   }
@@ -466,16 +466,16 @@ Trool TextBlocksDetector::startsBlock_increasedLineDistance(const PdfTextLine* l
   distance = math_utils::round(distance, config::LINE_DIST_PREC);
 
   // Compute the tolerance.
-  double tolerance = config::getPrevCurrNextLineDistanceTolerance(_doc);
+  double threshold = config::getPrevCurrNextLineDistanceTolerance(_doc);
 
   _log->debug(p) << _q << BLUE << "Is curr+prev distance > prev+prevPrev distance?" << OFF << endl;
   _log->debug(p) << _q << " └─ curr+prev line distance: " << distance << endl;
   _log->debug(p) << _q << " └─ prev+prevPrev line distance: " << prevDistance << endl;
-  _log->debug(p) << _q << " └─ tolerance: " << tolerance << endl;
+  _log->debug(p) << _q << " └─ threshold: " << threshold << endl;
 
   // The line starts a block if the curr+prev line distance is larger than the prev+prevPrev line
   // distance, under consideration of the computed tolerance.
-  if (math_utils::larger(distance, prevDistance, tolerance)) {
+  if (math_utils::larger(distance, prevDistance, threshold)) {
     _log->debug(p) << _q << BLUE << BOLD << " yes → starts block" << OFF << endl;
     return Trool::True;
   }

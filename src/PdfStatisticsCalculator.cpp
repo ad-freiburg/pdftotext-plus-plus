@@ -92,8 +92,8 @@ void PdfStatisticsCalculator::computeCharacterStatistics() const {
 void PdfStatisticsCalculator::computeWordStatistics() const {
   assert(_doc);
 
-  double sameLineYOverlapRatioThreshold = config::getSameLineYOverlapRatioThreshold(_doc);
-  double otherLineYOverlapRatioThreshold = config::getOtherLineYOverlapRatioThreshold(_doc);
+  double sameLineYOverlapRatioThreshold = config::SAME_LINE_Y_OVERLAP_RATIO_THRESHOLD;
+  double otherLineYOverlapRatioThreshold = config::OTHER_LINE_Y_OVERLAP_RATIO_THRESHOLD;
 
   _log->info() << "Computing word statististics..." << endl;
   _log->debug() << "=======================================" << endl;
@@ -158,7 +158,7 @@ void PdfStatisticsCalculator::computeWordStatistics() const {
 
       // Add the vertical gap between the previous word and the current word to the counter, when
       // they do *not* vertically overlap.
-      if (math_utils::equal(maxYOverlapRatio, otherLineYOverlapRatioThreshold)) {
+      if (math_utils::equalOrSmaller(maxYOverlapRatio, otherLineYOverlapRatioThreshold)) {
         double gap = element_utils::computeVerticalGap(prevWord, currWord);
         gap = math_utils::round(gap, config::COORDS_PREC);
         verticalGapCounter[gap]++;

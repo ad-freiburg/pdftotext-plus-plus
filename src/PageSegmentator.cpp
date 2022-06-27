@@ -9,6 +9,7 @@
 #include <algorithm>  // std::max, std::min
 #include <functional>  // std::function, std::bind
 #include <limits>  // std::numeric_limits
+#include <utility>
 #include <vector>
 
 #include "./utils/Log.h"
@@ -26,6 +27,7 @@ using global_config::ID_LENGTH;
 using std::endl;
 using std::max;
 using std::min;
+using std::pair;
 using std::vector;
 
 namespace config = page_segmentator::config;
@@ -89,7 +91,7 @@ void PageSegmentator::processPage(PdfPage* page, vector<PdfPageSegment*>* segmen
   // Segment the page using the XY-cut algorithm.
   vector<vector<PdfElement*>> groups;
   xyCut(pageElements, config::getXCutMinGapWidth(_doc), config::getYCutMinGapHeight(_doc),
-      config::getXCutMaxNumOverlappingElements(_doc), chooseXCutsBind, chooseYCutsBind, false,
+      config::X_CUT_MAX_NUM_OVERLAPPING_ELEMENTS, chooseXCutsBind, chooseYCutsBind, false,
       &groups, &page->blockDetectionCuts);
 
   // Create a `PdfPageSegment` from each group and append it to the result vector.
@@ -182,14 +184,13 @@ Trool PageSegmentator::chooseXCut_overlappingElements(const Cut* cut, const vect
   assert(cut);
 
   int p = cut->pageNum;
-  size_t numElementsThreshold = config::getOverlappingElementsNumElementsThreshold(_doc);
   double marginThreshold = config::getOverlappingElementsMarginThreshold(_doc);
 
   if (!silent) {
     _log->debug(p) << BLUE << "Are there overlapping elements at the top/bottom?" << OFF << endl;
     _log->debug(p) << " └─ #overlappingElements: " << cut->overlappingElements.size() << endl;
     _log->debug(p) << " └─ #elements: " << elements.size() << endl;
-    _log->debug(p) << " └─ numElementsThreshold: " << numElementsThreshold << endl;
+    _log->debug(p) << " └─ numElementsThreshold: " << config::OVERLAPPING_MIN_NUM_ELEMENTS << endl;
     _log->debug(p) << " └─ marginThreshold: " << marginThreshold << endl;
   }
 
@@ -199,7 +200,7 @@ Trool PageSegmentator::chooseXCut_overlappingElements(const Cut* cut, const vect
   }
 
   // Do not choose the cut when the number of elements is smaller than the threshold.
-  if (elements.size() < numElementsThreshold) {
+  if (elements.size() < config::OVERLAPPING_MIN_NUM_ELEMENTS) {
     if (!silent) {
       _log->debug(p) << BLUE << BOLD << " #elements < threshold → do not choose" << OFF << endl;
     }
@@ -240,8 +241,9 @@ Trool PageSegmentator::chooseXCut_smallGapWidthHeight(const Cut* cut, bool silen
   assert(cut);
 
   int p = cut->pageNum;
-  double wThreshold = config::getSmallGapWidthThreshold(_doc);
-  double hThreshold = config::getSmallGapHeightThreshold(_doc);
+  pair<double, double> thresholds = config::getSmallGapWidthHeightThresholds(_doc);
+  double wThreshold = thresholds.first;
+  double hThreshold = thresholds.second;
 
   if (!silent) {
     _log->debug(p) << BLUE << "Are the width and height of the gap too small?" << OFF << endl;
@@ -251,7 +253,8 @@ Trool PageSegmentator::chooseXCut_smallGapWidthHeight(const Cut* cut, bool silen
     _log->debug(p) << " └─ threshold gapHeight: " << hThreshold << endl;
   }
 
-  if (cut->gapWidth < wThreshold && cut->gapHeight < hThreshold) {
+  if (math_utils::smaller(cut->gapWidth, wThreshold)
+        && math_utils::smaller(cut->gapHeight, hThreshold)) {
     _log->debug(p) << BLUE << BOLD << " si → do not choose" << OFF << endl;
     return Trool::False;
   }
@@ -267,7 +270,7 @@ Trool PageSegmentator::chooseXCut_contiguousWords(const Cut* cut,
   // Determine the rightmost word to the left of the cut.
   int p = cut->pageNum;
   const PdfWord* leftWord = dynamic_cast<const PdfWord*>(cut->elementBefore);
-  double yOverlapRatioThreshold = config::getContiguousWordsYOverlapRatioThreshold(_doc);
+  double yOverlapRatioThreshold = config::CONTIGUOUS_WORDS_Y_OVERLAP_RATIO_THRESHOLD;
 
   if (!silent) {
     _log->debug(p) << BLUE << "Does the cut divide contiguous words?" << OFF << endl;
@@ -431,7 +434,7 @@ void PageSegmentator::chooseYCuts(const vector<Cut*>& cuts, const vector<PdfElem
       vector<PdfElement*> elems(elements.begin() + beginPos, elements.begin() + endPos);
 
       bool cutOk = xCut(elems, config::getXCutMinGapWidth(_doc),
-          config::getXCutMaxNumOverlappingElements(_doc), chooseXCutsBind, true);
+          config::X_CUT_MAX_NUM_OVERLAPPING_ELEMENTS, chooseXCutsBind, true);
 
       if (!silent) {
         _log->debug(p) << " other y-cut #" << (otherIdx + 1)

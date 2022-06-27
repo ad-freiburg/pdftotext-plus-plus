@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "./utils/Log.h"
+#include "./utils/MathUtils.h"
 
 #include "./PdfDocument.h"
 
@@ -22,21 +23,24 @@ using std::vector;
 
 namespace text_lines_detector::config {
 
+// A parameter used for detecting text lines. It denotes the precision to use when rounding the
+// lowerY of a word for computing the cluster to which the word should be assigned.
+const double COORDS_PREC = global_config::COORDS_PREC;
+
 /**
- * This method returns a threshold which the maximum vertical overlap ratio between two
- * consecutive text lines must achieve so that the text lines are merged while detecting text
- * lines. If the maximum vertical overlap ratio between two consecutive lines is larger or equal
- * to the returned value, the text lines are merged; otherwise the text lines are not merged.
+ * This method returns a threshold to be used for detecting text lines. It denotes the maximum
+ * vertical overlap ratio that two consecutive text lines must achieve so that the text lines are
+ * merged. If the maximum vertical overlap ratio between two consecutive lines is larger or equal
+ * to the returned threshold, the text lines are merged; otherwise the text lines are not merged.
  *
  * @param doc
- *    A reference to the PDF document currently processed, which can be used to get general
- *    statistics about the document, for example: the average character width and -height.
+ *    The currently processed PDF document.
  * @param xGap
  *    The horizontal gap between the two text lines for which it is to be decided whether or not
  *    they should be merged.
  *
  * @return
- *    The threshold for the maximum vertical overlap ratio between two text lines.
+ *    The threshold.
  */
 constexpr double getYOverlapRatioThreshold(const PdfDocument* doc, double xGap) {
   return xGap < 3 * doc->avgCharWidth ? 0.4 : 0.8;

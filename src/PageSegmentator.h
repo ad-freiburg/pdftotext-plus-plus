@@ -9,6 +9,7 @@
 #ifndef PAGESEGMENTATOR_H_
 #define PAGESEGMENTATOR_H_
 
+#include <utility>  // pair
 #include <vector>
 
 #include "./utils/Log.h"
@@ -16,6 +17,8 @@
 
 #include "./PdfDocument.h"
 
+using std::make_pair;
+using std::pair;
 using std::vector;
 
 // =================================================================================================
@@ -23,74 +26,16 @@ using std::vector;
 
 namespace page_segmentator::config {
 
-// TODO
-// A threshold used by chooseXCut_overlappingElements(). It denotes the minimum number of elements
-// a cut must at least divide, so that the cut is allowed to overlap one or more elements. The
-// purpose of this threshold is to allow for overlapping elements only when the group divided by
-// a cut is large enough (otherwise, small groups are divided accidentally too often).
-constexpr size_t getOverlappingElementsNumElementsThreshold(const PdfDocument* doc) {
-  return 500;
-}
+// ----------
+// processPage()
 
-// TODO
-// A factor used by chooseXCut_overlappingElements(). It is used to compute a threshold for
-// deciding if an overlapping element is positioned at the top or at the bottom of a cut. The
-// threshold is computed as <FACTOR> * _doc->avgCharHeight. If the top margin (= the distance
-// between the upperY of an element and the upperY of the cut) of an overlapping element is smaller
-// than this threshold, it is considered to be positioned at the top of the cut.
-// If the bottom margin (= the distance between the lowerY of the cut and the lowerY of an element)
-// of an overlapping element is smaller than this threshold, it is considered to be positioned at
-// the bottom of the cut.
-constexpr double getOverlappingElementsMarginThreshold(const PdfDocument* doc) {
-  return 5.0 * doc->avgCharHeight;
-}
-
-// TODO
-// A factor used by chooseXCut_smallGapWidthHeight(). It is used to compute a threshold for the
-// gap width of an cut. The threshold is computed as <FACTOR> * _doc->avgCharWidth. If the gap
-// width of a cut is smaller than this threshold (and the gap height is smaller than a threshold
-// computed from <MIN_GAP_HEIGHT_THRESHOLD_FACTOR>, see below), the cut will be not chosen.
-constexpr double getSmallGapWidthThreshold(const PdfDocument* doc) {
-  return 2.0 * doc->avgCharWidth;
-}
-
-// TODO
-// A factor used by chooseXCut_smallGapWidthHeight(). It is used to compute a threshold for the
-// gap height of an cut. The threshold is computed as <FACTOR> * _doc->avgCharHeight. If the gap
-// height of a cut is smaller than this threshold (and the gap width is smaller than a threshold
-// computed from <MIN_GAP_WIDTH_THRESHOLD_FACTOR>, see above), the cut will be not chosen.
-constexpr double getSmallGapHeightThreshold(const PdfDocument* doc) {
-  return 6.0 * doc->avgCharHeight;
-}
-
-// TODO
-// A threshold used by chooseXCut_contiguousWords(). It is used to check if two words are *not*
-// contiguous because of their maximum y-overlap ratio. If the maximum y-overlap ratio between two
-// words is smaller than this threshold, they are considered to be not contiguous.
-constexpr double getContiguousWordsYOverlapRatioThreshold(const PdfDocument* doc) {
-  return 0.1;
-}
-
-// TODO
-// A factor used by chooseXCut_slimGroups(). It is used to compute a threshold for checking if the
-// width of one of the groups resulting from an x-cut is too small. The threshold is computed as:
-// <FACTOR> * _doc->avgCharWidth. If the width of one of the groups resulting from an x-cut is
-// smaller than this threshold, the cut will not be chosen.
-constexpr double getSlimGroupWidthThreshold(const PdfDocument* doc) {
-  return 10 * doc->avgCharWidth;
-}
-
-// TODO
-// The maximum number of elements an x-cut is allowed to overlap.
-constexpr double getXCutMaxNumOverlappingElements(const PdfDocument* doc) {
-  return 1;
-}
+// A parameter that denotes the maximum number of elements an x-cut is allowed to overlap.
+const double X_CUT_MAX_NUM_OVERLAPPING_ELEMENTS = 1;
 
 /**
- * TODO
  * This method returns the minimum width of a horizontal gap between two elements for considering
  * the position between the elements as a valid position for an x-cut candidate. This value is
- * passed as minXCutGapWidth to the xyCut() and xCut() method.
+ * passed as the `minXCutGapWidth` parameter to the xyCut() and xCut() method.
  *
  * @param doc
  *    The PDF document currently processed.
@@ -103,10 +48,9 @@ constexpr double getXCutMinGapWidth(const PdfDocument* doc) {
 }
 
 /**
- * TODO
  * This method returns the minimum height of a vertical gap between two elements for considering
  * the position between the elements as a valid position for an y-cut candidate. This value is
- * passed as minYCutGapWidth to the xyCut() method.
+ * passed as the `minYCutGapWidth` parameter to the xyCut() method.
  *
  * @param doc
  *    The PDF document currently processed.
@@ -118,9 +62,83 @@ constexpr double getYCutMinGapHeight(const PdfDocument* doc) {
   return 2.0;
 }
 
+// ----------
+// chooseXCut_overlappingElements()
+
+// A parameter that is used for choosing x-cut candidates. It denotes the minimum number of
+// elements an x-cut must at least divide, so that the cut is allowed to overlap one or more
+// elements. The purpose of this threshold is to allow for overlapping elements only when the
+// group divided by a cut is large enough (small groups are divided accidentally too often).
+const size_t OVERLAPPING_MIN_NUM_ELEMENTS = 500;
+
+/**
+ * This method returns a threshold that is used for deciding if an element overlapped by an x-cut
+ * is positioned at the top or at the bottom of an x-cut. If the top margin of an overlapped
+ * element (= the vertical distance between the upperY of the element and the upperY of the cut) is
+ * smaller than this threshold, the element is considered to be positioned at the top of the cut.
+ * If the bottom margin of an overlapped element (= the vertical distance between the lowerY of the
+ * cut and the lowerY of an element) is smaller than this threshold, it is considered to be
+ * positioned at the bottom of the cut.
+ *
+ * @param doc
+ *    The currently processed document.
+ *
+ * @return
+ *    The threshold.
+ */
+constexpr double getOverlappingElementsMarginThreshold(const PdfDocument* doc) {
+  return 5.0 * doc->avgCharHeight;
+}
+
+// ----------
+// chooseXCut_smallGapWidthHeight()
+
+/**
+ * This method returns two thresholds that are used for deciding if the gap width *and* gap height
+ * of a given x-cut is too small in order to be a valid x-cut. The first value denotes the
+ * threshold for the gap width, the second value denotes the threshold for the gap height. If the
+ * gap width of an x-cut is smaller than the first value *and* the gap height of the same x-cut is
+ * smaller than the second value, the cut will *not* be chosen.
+ *
+ * @param doc
+ *    The currently processed document.
+ *
+ * @return
+ *    The two thresholds.
+ */
+constexpr pair<double, double> getSmallGapWidthHeightThresholds(const PdfDocument* doc) {
+  return make_pair(2.0 * doc->avgCharWidth, 6.0 * doc->avgCharHeight);
+}
+
+// ----------
+// chooseXCut_contiguousWords()
+
+// A parameter that is used for choosing x-cut candidates. It denotes the minimum y-overlap ratio
+// between two words so that the words are considered to be contiguous.
+const double CONTIGUOUS_WORDS_Y_OVERLAP_RATIO_THRESHOLD = 0.1;
+
+// ----------
+// chooseXCut_slimGroups()
+
+/**
+ * This method returns a threshold that is used for checking if the width of one of the groups
+ * resulting from an x-cut is too small. If the width of one of the groups resulting from an x-cut
+ * is smaller than this threshold, the cut will not be chosen.
+ *
+ * @param doc
+ *    The currently processed document.
+ *
+ * @return
+ *    The threshold.
+ */
+constexpr double getSlimGroupWidthThreshold(const PdfDocument* doc) {
+  return 10 * doc->avgCharWidth;
+}
+
 }  // namespace page_segmentator::config
 
 // =================================================================================================
+
 
 /**
  * This class is responsible for dividing the pages of a given PDF document into segments, by using

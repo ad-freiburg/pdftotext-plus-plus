@@ -11,6 +11,7 @@
 #include <utility>  // make_pair, pair
 
 #include "./Counter.h"
+#include "./MathUtils.h"
 
 using std::make_pair;
 using std::numeric_limits;
@@ -48,7 +49,7 @@ pair<double, int> DoubleCounter::mostFreqAndCount() const {
 double DoubleCounter::max() const {
   double max = numeric_limits<double>::min();
   for (auto it = begin(); it != end(); ++it) {
-    if (it->first > max) {
+    if (math_utils::larger(it->first, max)) {
       max = it->first;
     }
   }

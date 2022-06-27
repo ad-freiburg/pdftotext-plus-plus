@@ -31,35 +31,30 @@ using std::unordered_set;
 
 namespace text_blocks_detector::config {
 
-// TODO
+// A parameter that denotes the precision to use when rounding the font size of a line, before
+// looking up the expected line distance computed among the text lines with the same font size.
 const double FONT_SIZE_PREC = global_config::FONT_SIZE_PREC;
 
-// TODO
+// ----------
+// startsBlock_fontSize()
+
+// A parameter that denotes the maximum allowed difference between two font sizes in order to be
+// considered equal. If the font size of a text line is larger than the font size of the previous
+// line by this threshold, it is assumed that the text line introduces a new text block.
+const double FONT_SIZE_EQUAL_TOLERANCE = 1.0;
+
+// ----------
+// startsBlock_lineDistance()
+
+// A parameter that denotes the precision to use for rounding the vertical distance between two
+// text lines.
 const double LINE_DIST_PREC = global_config::LINE_DIST_PREC;
 
 /**
- * // TODO
- * This method is used by TextBlocksDetector::startsBlock_fontSize(). It returns the maximum allowed
- * difference between font sizes in order to be considered equal.
- *
- * @param doc
- *    The PDF document currently processed.
- *
- * @return
- *    The value by which two font sizes may differ in order to be considered equal.
- */
-constexpr double getFontSizeEqualTolerance(const PdfDocument* doc) {
-  return 1.0;
-}
-
-/**
- * // TODO
- * This method returns a tolerance to be used on checking if the distance between two text lines
+ * This method returns a threshold to be used for checking if the distance between two text lines
  * is larger than the given expected line distance. The line distance is only then considered to
- * be larger than the given expected line distance when the difference between the two distances
- * is larger than the returned tolerance.
- *
- * NOTE: This method is used by TextBlocksDetector::startsBlock_lineDistance().
+ * be larger than the given expected line distance, when the difference between the two distances
+ * is larger than the returned threshold.
  *
  * @param doc
  *    The PDF document currently processed.
@@ -67,45 +62,40 @@ constexpr double getFontSizeEqualTolerance(const PdfDocument* doc) {
  *    The expected line distance.
  *
  * @return
- *    The tolerance to be used on checking if the distance between two text lines is larger than
- *    the given expected line distance.
+ *    The threshold.
  */
-constexpr double getExpectedLineDistanceTolerance(const PdfDocument* doc, double expectedLineDist) {
+constexpr double getExpectedLineDistanceThreshold(const PdfDocument* doc, double expectedLineDist) {
   return max(1.0, 0.1 * expectedLineDist);
 }
 
+// ----------
+// startsBlock_increasedLineDistance()
+
 /**
- * // TODO
- * This method returns a tolerance to be used on checking if the distance between the current
+ * This method returns a threshold to be used for checking if the distance between the current
  * line and the next line (= "curr/next distance") is larger than the distance between the
- * current line and previous line (= "curr/prev distance").
+ * current line and the previous line (= "curr/prev distance").
  * The curr/next distance is only then considered to be larger than the "curr/prev distance" if
  * the difference between the two distances is larger than the returned tolerance.
- *
- * NOTE: This method is used by TextBlocksDetector::startsBlock_increasedLineDistance().
  *
  * @param doc
  *    The PDF document currently processed.
  *
  * @return
- *    The tolerance to be used on checking if the "curr/next distance" is larger than the
- *    "curr/prev distance".
+ *    The threshold.
  */
 constexpr double getPrevCurrNextLineDistanceTolerance(const PdfDocument* doc) {
   return 0.5 * doc->mostFreqWordHeight;
 }
 
+// ----------
+// startsBlock_item()
+
 /**
- * // TODO
- * This method returns an interval into which the "leftX offset" of a line and its previous line
- * must fall so that both lines are considered to be part of the same block. The "leftX offset"
- * of a line and its previous line is computed as:
- *    line.prevLine.leftX - line.leftX
- * If the offset falls into the returned interval, the line and the previous line are considered
- * to be part of the same block. Otherwise, the line is considered to be the start of a new block.
- *
- * NOTE: This method is used by TextBlocksDetector::startsBlock_item() and
- * TextBlocksDetector::startsBlock_hangingIndent().
+ * This method returns an interval to be used for checking if the leftX-offset between a line and
+ * its previous line falls into. If the offset falls into the returned interval, the line and the
+ * previous line are considered to be part of the same block. Otherwise, the line is considered to
+ * be the start of a new text block.
  *
  * @param doc
  *    The PDF document currently processed.
@@ -118,16 +108,14 @@ constexpr pair<double, double> getLeftXOffsetToleranceInterval(const PdfDocument
   return make_pair(-1 * doc->avgCharWidth, 6 * doc->avgCharWidth);
 }
 
+// ----------
+// startsBlock_indent()
+
 /**
- * // TODO
- * This method returns an interval into which the left margin of a line must fall so that the
- * line is considered to be the start of a new text block because it denotes the indented first
- * line of a text block.
- * If the left margin of a line falls into the returned interval (and if the parent segment is
- * not in hanging indent format), the line is considered to be the indented first line of a text
- * block. Otherwise it is not considered to be the first line of a text block.
- *
- * NOTE: This method is used by TextBlocksDetector::startsBlock_indent().
+ * This method returns an interval to be used for checking if the left margin of a line falls into.
+ * If the left margin of a line falls into the interval (and if the parent segment is not in
+ * hanging indent format), the line is considered to be the indented first line of a text block.
+ * Otherwise it is not considered to be the first line of a text block.
  *
  * @param doc
  *    The PDF document currently processed.

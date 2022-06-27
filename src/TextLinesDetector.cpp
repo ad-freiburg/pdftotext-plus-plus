@@ -25,7 +25,7 @@
 #include "./PdfDocument.h"
 #include "./TextLinesDetector.h"
 
-using global_config::COORDS_PREC;
+using global_config::ID_LENGTH;
 
 using std::endl;
 using std::get;
@@ -118,7 +118,7 @@ void TextLinesDetector::process() {
         }
 
         double rotation = word->pos->rotation;
-        double lowerY = math_utils::round(word->pos->getRotLowerY(), COORDS_PREC);
+        double lowerY = math_utils::round(word->pos->getRotLowerY(), config::COORDS_PREC);
         clusters[rotation][lowerY].push_back(word);
         _log->debug(p) << q << "cluster: (" << rotation << ", " << lowerY << ")" << endl;
 
@@ -329,7 +329,7 @@ PdfTextLine* TextLinesDetector::createTextLine(const vector<PdfWord*>& words,
   line->doc = _doc;
 
   // Create a (unique) id.
-  line->id = string_utils::createRandomString(global_config::ID_LENGTH, "line-");
+  line->id = string_utils::createRandomString(ID_LENGTH, "line-");
 
   // Set the words.
   line->words = words;

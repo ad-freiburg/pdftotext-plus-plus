@@ -234,10 +234,10 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
     m[2] = m2[2];
     m[3] = m2[3];
   }
-  if (fabs(m[0] * m[3]) > fabs(m[1] * m[2])) {
-    ch->pos->rotation = (m[0] > 0 || m[3] < 0) ? 0 : 2;
+  if (math_utils::larger(fabs(m[0] * m[3]), fabs(m[1] * m[2]))) {
+    ch->pos->rotation = (math_utils::larger(m[0], 0) || math_utils::smaller(m[3], 0)) ? 0 : 2;
   } else {
-    ch->pos->rotation = (m[2] > 0) ? 1 : 3;
+    ch->pos->rotation = (math_utils::larger(m[2], 0)) ? 1 : 3;
   }
   // In vertical writing mode, the lines are effectively rotated by 90 degrees.
   if (gfxFont && gfxFont->getWMode()) {
@@ -410,7 +410,8 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
     lowerY = max(upperY3, lowerY3);
 
     // Update the bounding box when the alternative bounding box has a larger vertical extent.
-    if (upperY < ch->pos->upperY || lowerY > ch->pos->lowerY) {
+    if (math_utils::smaller(upperY, ch->pos->upperY)
+        || math_utils::larger(lowerY, ch->pos->lowerY)) {
       ch->pos->leftX = leftX;
       ch->pos->upperY = upperY;
       ch->pos->rightX = rightX;
@@ -793,7 +794,7 @@ void TextOutputDev::drawGraphic(GfxState* state) {
 
   // If there is no figure with a clip box equal to the current clip box, create one.
   PdfFigure* figure = new PdfFigure();
-  figure->id = string_utils::createRandomString(global_config::ID_LENGTH, "figure-");
+  figure->id = string_utils::createRandomString(ID_LENGTH, "figure-");
   figure->doc = _doc;
   figure->pos->pageNum = _page->pageNum;
   figure->pos->leftX = graphic->pos->leftX;

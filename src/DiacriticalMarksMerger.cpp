@@ -151,7 +151,7 @@ void DiacriticalMarksMerger::process() const {
       // Consider the character that yields the larger overlap ratio to be the base character.
       PdfCharacter* mark = currChar;
       PdfCharacter* base;
-      if (prevXOverlapRatio > nextXOverlapRatio) {
+      if (math_utils::larger(prevXOverlapRatio, nextXOverlapRatio)) {
         _log->debug(p) << BOLD << "Merge diacritic with previous character." << OFF << endl;
         base = prevChar;
       } else {

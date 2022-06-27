@@ -27,8 +27,35 @@ using std::vector;
 
 namespace words_detector::config {
 
-// The maximum allowed difference between two font sizes so that they are considered to be equal.
-const double FSIZE_EQUAL_TOLERANCE = global_config::FS_EQUAL_TOLERANCE;
+// ----------
+// startsWord()
+
+// A parameter that is used for detecting words. It denotes a threshold for the vertical overlap
+// between the current character and the active word. If the maximum y-overlap ratio between the
+// active word and the current character is larger or equal to this threshold, the character is
+// considered to be a part of the active word; otherwise it is considered to be not a part.
+const double Y_OVERLAP_RATIO_THRESHOLD = 0.5;
+
+/**
+ * This method returns a threshold to be used for checking if the horizontal gap between the given
+ * active word and a character is large enough in order to be considered as a word delimiter. If
+ * the horizontal gap between the word and the character is larger than this threshold, it is
+ * considered to be a word delimiter.
+ *
+ * @param doc
+ *    The currently processed document.
+ * @param activeWord
+ *    The active word.
+ *
+ * @return
+ *    The threshold.
+ */
+constexpr double getHorizontalGapThreshold(const PdfDocument* doc, const PdfWord* activeWord) {
+  return 0.15 * activeWord->fontSize;
+}
+
+// ----------
+// mergeStackedMathSymbols()
 
 // A PDF can contain "stacked math symbols", which we want to merge to a single word (see the
 // preliminary comment of the `WordsDetector` class below for more information about how stacked
@@ -50,32 +77,17 @@ const unordered_set<string> STACKED_MATH_CHAR_NAMES = { "summationdisplay",
     "productdisplay", "integraldisplay", "circlemultiplydisplay" };
 const unordered_set<string> STACKED_MATH_WORDS = { "sup", "lim" };
 
-// TODO
-// A threshold used on checking if the active word and the current character vertically overlap.
-// If the maximum y-overlap ratio between the active word and the current character is smaller than
-// this threshold, the word and the character are considered to not overlap; otherwise they are
-// considered to overlap.
-constexpr double getYOverlapRatioThreshold(const PdfDocument* doc) {
-  return 0.5;
-}
+// A parameter that is used for detecting words that are part of a stacked math symbol.
+// It denotes the maximum allowed difference between two font sizes so that the font sizes are
+// considered to be equal. A word is only then considered to be part of a stacked math symbol if
+// its font size is smaller than the base word of the stacked math symbol (under consideration
+// of a small threshold).
+const double FSIZE_EQUAL_TOLERANCE = global_config::FS_EQUAL_TOLERANCE;
 
-// TODO
-// A factor that is used to compute a threshold for checking if the horizontal gap between two
-// characters is large enough in order to be considered as a word delimiter. The threshold is
-// computed as: <FACTOR> * _activeWord.fontSize. If the horizontal gap between the
-// characters is larger than this threshold, it is considered to be a word delimiter.
-constexpr double getHorizontalGapThreshold(const PdfDocument* doc, const PdfWord* activeWord) {
-  return 0.15 * activeWord->fontSize;
-}
-
-// TODO
-// A threshold that is used while merging staked math symbolds, to check if two words horizontally
-// overlap. If the maximum x-overlap ratio between two words is smaller than this threshold, the
-// words are considered to not horizontally overlap; otherwise they are considered to horizontally
-// overlap.
-constexpr double getStackedMathSymbolXOverlapRatioThreshold(const PdfDocument* doc) {
-  return 0.5;
-}
+// A parameter that is used for detecting words that are part of a stacked math symbol. It denotes
+// the minimum x-overlap ratio between a word w and the base word of the stacked math symbol, so
+// that w is considered to be a part of the stacked math symbol.
+const double STACKED_MATH_SYMBOL_X_OVERLAP_RATIO_THRESHOLD = 0.5;
 
 }  // namespace words_detector::config
 

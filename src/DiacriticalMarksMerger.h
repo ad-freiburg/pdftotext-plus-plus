@@ -18,7 +18,7 @@
 using std::unordered_map;
 
 // =================================================================================================
-// CONFIG.
+// CONFIG
 
 namespace diacritics_merger::config {
 

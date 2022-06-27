@@ -36,9 +36,6 @@ SubSuperScriptsDetector::~SubSuperScriptsDetector() {
 void SubSuperScriptsDetector::process() const {
   assert(_doc);
 
-  double baseLineEqualTolerance = config::getBaselineEqualTolerance(_doc);
-  double fontSizeEqualTolerance = config::getFontsizeEqualTolerance(_doc);
-
   _log->info() << "Detecting sub-/superscripts..." << endl;
   _log->debug() << "=======================================" << endl;
   _log->debug() << BOLD << "DEBUG MODE" << OFF << endl;
@@ -61,20 +58,20 @@ void SubSuperScriptsDetector::process() const {
             _log->debug(p) << BOLD << "char: " << character->text << OFF << endl;
             _log->debug(p) << " └─ char.fontSize: " << character->fontSize << endl;
             _log->debug(p) << " └─ doc.mostFrequentFontSize: " << _doc->mostFreqFontSize << endl;
-            _log->debug(p) << " └─ tolerance font-size: " << fontSizeEqualTolerance << endl;
+            _log->debug(p) << " └─ tolerance font-size: " << config::FSIZE_EQUAL_TOLERANCE << endl;
             _log->debug(p) << " └─ char.base: " << character->base << endl;
             _log->debug(p) << " └─ line.base: " << line->base << endl;
-            _log->debug(p) << " └─ tolerance base-line: " << baseLineEqualTolerance << endl;
+            _log->debug(p) << " └─ tolerance base-line: " << config::BASE_EQUAL_TOLERANCE << endl;
 
             if (math_utils::smaller(character->fontSize, _doc->mostFreqFontSize,
-                  fontSizeEqualTolerance)) {
-              if (math_utils::smaller(character->base, line->base, baseLineEqualTolerance)) {
+                  config::FSIZE_EQUAL_TOLERANCE)) {
+              if (math_utils::smaller(character->base, line->base, config::BASE_EQUAL_TOLERANCE)) {
                 _log->debug(p) << BOLD << " superscript (char.base < line.base)" << OFF << endl;
                 character->isSuperscript = true;
                 continue;
               }
 
-              if (math_utils::larger(character->base, line->base, baseLineEqualTolerance)) {
+              if (math_utils::larger(character->base, line->base, config::BASE_EQUAL_TOLERANCE)) {
                 _log->debug(p) << BOLD << " subscript (char.base > line.base)" << OFF << endl;
                 character->isSubscript = true;
                 continue;

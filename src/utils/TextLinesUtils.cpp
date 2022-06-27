@@ -206,13 +206,12 @@ bool text_lines_utils::computeHasPrevLineCapacity(const PdfTextLine* line) {
     return false;
   }
 
-  double threshold = config::getPrevTextLineCapacityThreshold(line->doc);
-
   // Compute the width of the first word of the given line.
   double firstWordWidth = line->words[0]->pos->getWidth();
 
   // The previous line has capacity if its right margin is larger than the width of the first word
   // of the given line, under consideration of the threshold.
+  double threshold = config::getPrevTextLineCapacityThreshold(line->doc);
   return math_utils::larger(line->prevLine->rightMargin, firstWordWidth, threshold);
 }
 
@@ -379,13 +378,10 @@ bool text_lines_utils::computeIsCentered(const PdfTextLine* line1, const PdfText
   assert(line1);
   assert(line2);
 
-  double xOverlapRatioThreshold = config::CENTERING_X_OVERLAP_RATIO_THRESHOLD;
-  double xOffsetTolerance = config::getCenteringXOffsetEqualTolerance(line1->doc);
-
   // The lines are not centered when the maximum x-overlap ratio between the lines is smaller than
   // the threshold.
   double maxXOverlapRatio = element_utils::computeMaxXOverlapRatio(line1, line2);
-  if (math_utils::smaller(maxXOverlapRatio, xOverlapRatioThreshold)) {
+  if (math_utils::smaller(maxXOverlapRatio, config::CENTERING_X_OVERLAP_RATIO_THRESHOLD)) {
     return false;
   }
 
@@ -393,6 +389,7 @@ bool text_lines_utils::computeIsCentered(const PdfTextLine* line1, const PdfText
   // are not equal.
   double absLeftXOffset = abs(element_utils::computeLeftXOffset(line1, line2));
   double absRightXOffset = abs(element_utils::computeRightXOffset(line1, line2));
+  double xOffsetTolerance = config::getCenteringXOffsetEqualTolerance(line1->doc);
   if (!math_utils::equal(absLeftXOffset, absRightXOffset, xOffsetTolerance)) {
     return false;
   }

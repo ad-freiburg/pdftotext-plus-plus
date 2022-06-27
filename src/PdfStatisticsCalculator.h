@@ -14,45 +14,46 @@
 #include "./PdfDocument.h"
 
 // =================================================================================================
-// CONFIG.
+// CONFIG
 
 namespace pdf_statistics_calculator::config {
 
-// TODO
-// The precision (the number of decimal points) to use when rounding coordinates.
+// A parameter that denotes the precision to use when rounding the coordinates of elements before
+// computing the most frequent coordinates.
 const double COORDS_PREC = global_config::COORDS_PREC;
 
-// TODO
-// The precision (the number of decimal points) to use when rounding font sizes.
+// A parameter that denotes the precision to use when rounding the font sizes of text elements
+// before computing the most frequent font size.
 const double FONT_SIZE_PREC = global_config::FONT_SIZE_PREC;
 
-// TODO
-// The precision (the number of decimal points) to use when rounding line distances.
-const double LINE_DIST_PREC = global_config::LINE_DIST_PREC;
-
-// TODO
-// The maximum allowed difference between two font sizes so that they are considered to be equal.
+// A parameter used for computing if two given font sizes are equal. It denotes the maximum allowed
+// difference between two font sizes so that the font sizes are considered to be equal.
 const double FSIZE_EQUAL_TOLERANCE = 0.1;
 
-// TODO
-// A threshold that is used while checking if two consecutive words vertically overlap. The
-// doc->mostFreqWordDistance is only measured between those two words for which the maximum
-// y-overlap ratio is larger or equal to this threshold.
-constexpr double getSameLineYOverlapRatioThreshold(const PdfDocument* doc) {
-  return 0.5;
-}
+// ----------
+// computeWordStatistics()
 
-// TODO
-// A threshold that is used while checking if two consecutive words do *not* vertically overlap.
-// The doc->mostFreqEstimatedLineDistance is only measured between those two words for which the
-// maximum y-overlap ratio is smaller or equal to this threshold.
-constexpr double getOtherLineYOverlapRatioThreshold(const PdfDocument* doc) {
-  return 0;
-}
+// A parameter that is used for computing whether or not two words are part of the same text line.
+// If the maximum y-overlap ratio between two words is larger or eqaul to the returned threshold,
+// the words are considered to be part of the same text line.
+const double SAME_LINE_Y_OVERLAP_RATIO_THRESHOLD = 0.5;
+
+// A parameter that is used for computing whether or not two words are part of different text lines.
+// If the maximum y-overlap ratio between two words is smaller or eqaul to the returned threshold,
+// the words are considered to be part of different text lines.
+const double OTHER_LINE_Y_OVERLAP_RATIO_THRESHOLD = 0;
+
+// ----------
+// computeTextLineStatistics()
+
+// A parameter that denotes the precision to use when rounding the distances between text lines
+// before computing the most frequent line distance.
+const double LINE_DIST_PREC = global_config::LINE_DIST_PREC;
 
 }  // namespace pdf_statistics_calculator::config
 
 // =================================================================================================
+
 
 /**
  * This class computes some statistics about the characters, words and text lines in a PDF document,

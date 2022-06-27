@@ -29,7 +29,7 @@ double element_utils::computeHorizontalGap(const PdfElement* element1, const Pdf
   // Determine the leftmost element, that is: the element with the minimum leftX.
   const PdfElement* leftElement;
   const PdfElement* rightElement;
-  if (element1->pos->leftX < element2->pos->leftX) {
+  if (math_utils::smaller(element1->pos->leftX, element2->pos->leftX)) {
     leftElement = element1;
     rightElement = element2;
   } else {
@@ -57,7 +57,7 @@ double element_utils::computeVerticalGap(const PdfElement* element1, const PdfEl
   // Determine the upper element, that is: the element with the minimum upperY.
   const PdfElement* upperElement;
   const PdfElement* lowerElement;
-  if (element1->pos->upperY < element2->pos->upperY) {
+  if (math_utils::smaller(element1->pos->upperY, element2->pos->upperY)) {
     upperElement = element1;
     lowerElement = element2;
   } else {
@@ -196,8 +196,8 @@ PdfFigure* element_utils::computeOverlapsFigure(const PdfElement* element,
     pair<double, double> yOverlapRatios = element_utils::computeYOverlapRatios(element, figure);
 
     // Check if the figure overlaps the element by the required overlap ratios.
-    if (xOverlapRatios.first >= config::FIGURE_X_OVERLAP_THRESHOLD
-        && yOverlapRatios.first >= config::FIGURE_Y_OVERLAP_THRESHOLD) {
+    if (math_utils::equalOrLarger(xOverlapRatios.first, config::FIGURE_X_OVERLAP_THRESHOLD)
+        && math_utils::equalOrLarger(yOverlapRatios.first, config::FIGURE_Y_OVERLAP_THRESHOLD)) {
       return figure;
     }
   }
@@ -252,25 +252,23 @@ bool text_element_utils::computeIsEmphasized(const PdfTextElement* element) {
   const PdfFontInfo* elemFontInfo = element->doc->fontInfos.at(element->fontName);
   double mostFreqFontSize = element->doc->mostFreqFontSize;
 
-  double fontSizeEqualTolerance = config::FSIZE_EQUAL_TOLERANCE;
-  double fontWeightEqualTolerance = config::FWEIGHT_EQUAL_TOLERANCE;
-
   // The element is emphasized if...
 
   // ... its font size is larger than the most frequent font size in the document.
-  if (math_utils::larger(element->fontSize, mostFreqFontSize, fontSizeEqualTolerance)) {
+  if (math_utils::larger(element->fontSize, mostFreqFontSize, config::FSIZE_EQUAL_TOLERANCE)) {
     return true;
   }
 
   // ... its font weight is larger than the most frequent font weight (and its font size is not
   // smaller than the most frequent font size).
-  if (math_utils::equalOrLarger(element->fontSize, mostFreqFontSize, fontSizeEqualTolerance)
-      && math_utils::larger(elemFontInfo->weight, docFontInfo->weight, fontWeightEqualTolerance)) {
+  double fontWeightTolerance = config::FWEIGHT_EQUAL_TOLERANCE;
+  if (math_utils::equalOrLarger(element->fontSize, mostFreqFontSize, config::FSIZE_EQUAL_TOLERANCE)
+      && math_utils::larger(elemFontInfo->weight, docFontInfo->weight, fontWeightTolerance)) {
     return true;
   }
 
   // ... it is printed in italics (and its font size is not smaller than the most freq font size).
-  if (math_utils::equalOrLarger(element->fontSize, mostFreqFontSize, fontSizeEqualTolerance)
+  if (math_utils::equalOrLarger(element->fontSize, mostFreqFontSize, config::FSIZE_EQUAL_TOLERANCE)
       && elemFontInfo->isItalic) {
     return true;
   }

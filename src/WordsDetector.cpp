@@ -160,7 +160,6 @@ bool WordsDetector::startsWord(const PdfCharacter* currChar) const {
   assert(currChar);
 
   int p = currChar->pos->pageNum;
-  double yOverlapRatioThreshold = config::getYOverlapRatioThreshold(_doc);
 
   PdfCharacter* prevChar = nullptr;
   if (!_activeWord.characters.empty()) {
@@ -208,8 +207,8 @@ bool WordsDetector::startsWord(const PdfCharacter* currChar) const {
   _log->debug(p) << BLUE << "Is the maximum y-overlap ratio between the character and the active "
       << "word smaller than a threshold?" << endl;
   _log->debug(p) << " └─ maxYRatio: " << maxYOverlapRatio << endl;
-  _log->debug(p) << " └─ threshold: " << yOverlapRatioThreshold << endl;
-  if (maxYOverlapRatio < yOverlapRatioThreshold) {
+  _log->debug(p) << " └─ threshold: " << config::Y_OVERLAP_RATIO_THRESHOLD << endl;
+  if (math_utils::smaller(maxYOverlapRatio, config::Y_OVERLAP_RATIO_THRESHOLD)) {
     _log->debug(p) << BLUE << BOLD << " yes → starts word" << OFF << endl;
     return true;
   }
@@ -228,11 +227,11 @@ bool WordsDetector::startsWord(const PdfCharacter* currChar) const {
   _log->debug(p) << " └─ hGapRight: " << hGapRight << endl;
   _log->debug(p) << " └─ threshold: " << hGapThreshold << endl;
 
-  if (hGapLeft > hGapThreshold) {
+  if (math_utils::larger(hGapLeft, hGapThreshold)) {
     _log->debug(p) << BLUE << BOLD << " yes (hGapLeft) → starts word" << OFF << endl;
     return true;
   }
-  if (hGapRight > hGapThreshold) {
+  if (math_utils::larger(hGapRight, hGapThreshold)) {
     _log->debug(p) << BLUE << BOLD << " yes (hGapRight) → starts word" << OFF << endl;
     return true;
   }
@@ -246,7 +245,7 @@ void WordsDetector::mergeStackedMathSymbols(const PdfPage* page) const {
   assert(page);
 
   int p = page->pageNum;
-  double xOverlapRatioThreshold = config::getStackedMathSymbolXOverlapRatioThreshold(_doc);
+  double xOverlapRatioThreshold = config::STACKED_MATH_SYMBOL_X_OVERLAP_RATIO_THRESHOLD;
 
   for (size_t i = 0; i < page->words.size(); i++) {
     PdfWord* word = page->words.at(i);
@@ -312,7 +311,7 @@ void WordsDetector::mergeStackedMathSymbols(const PdfPage* page) const {
       double maxXOverlapRatio = element_utils::computeMaxXOverlapRatio(word, prevWord);
       _log->debug(p) << " └─ maxXOverlapRatio: " << maxXOverlapRatio << endl;
       _log->debug(p) << " └─ xOverlapRatioThreshold: " << xOverlapRatioThreshold << endl;
-      if (maxXOverlapRatio < xOverlapRatioThreshold) {
+      if (math_utils::smaller(maxXOverlapRatio, xOverlapRatioThreshold)) {
         _log->debug(p) << BOLD << "is *not* part of the stacked math symbol "
             << "(maxXOverlapRatio < threshold)." << OFF << endl;
         break;
@@ -354,7 +353,7 @@ void WordsDetector::mergeStackedMathSymbols(const PdfPage* page) const {
       double maxXOverlapRatio = element_utils::computeMaxXOverlapRatio(word, nextWord);
       _log->debug(p) << " └─ maxXOverlapRatio:          " << maxXOverlapRatio << endl;
       _log->debug(p) << " └─ minXOverlapRatioThreshold: " << xOverlapRatioThreshold << endl;
-      if (maxXOverlapRatio < xOverlapRatioThreshold) {
+      if (math_utils::smaller(maxXOverlapRatio, xOverlapRatioThreshold)) {
         _log->debug(p) << BOLD << "is *not* part of the stacked math symbol "
             << "(maxXOverlapRatio < threshold)." << OFF << endl;
         break;

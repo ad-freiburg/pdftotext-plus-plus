@@ -16,27 +16,21 @@
 // =================================================================================================
 // CONFIG
 
-/**
- * This struct provides the configuration (= thresholds and parameters) to be used by the
- * `SubSuperScriptsDetector` class while detecting sub- and superscripted characters.
- */
 namespace sub_super_scripts_detector::config {
 
-// TODO
-// The maximum allowed difference between the baselines of two characters, so that the characters
-// are considered to "sit" on the same baseline. This is needed to identify sub- and superscripts.
-// If the baseline of a character is larger than the baseline of the parent text line (under
-// consideration of the tolerance), the character is considered to be a superscript. If the
-// baseline is smaller, the character is considered to be a subscript.
-constexpr double getBaselineEqualTolerance(const PdfDocument* doc) {
-  return 0.1;
-}
+// A parameter that is used to detect sub- and superscripts. It denotes the maximum allowed
+// difference between the baseline of a character and the baseline of a text line, so that the
+// character "sit" on the same baseline. If the baseline of a character is larger than the baseline
+// of the text line (under consideration of the threshold), the character is considered to
+// be a superscript. If the baseline is smaller, the character is considered to be a subscript.
+const double BASE_EQUAL_TOLERANCE = 0.1;
 
-// TODO
-// The maximum allowed difference between two font sizes so that they are considered to be equal.
-constexpr double getFontsizeEqualTolerance(const PdfDocument* doc) {
-  return 0.9;
-}
+// A parameter that is used to detect sub- and superscripts. It denotes the maximum allowed
+// difference between the font size of a character and the most frequent font size in the document,
+// so that the font sizes are considered to be equal. If the font size of a character is smaller
+// than the most frequent font size (under consideration of the threshold), the character is
+// considered to be a sub- or superscript. Otherwise, it is not considered to be a sub-/superscript.
+const double FSIZE_EQUAL_TOLERANCE = 0.9;
 
 }  // namespace sub_super_scripts_detector::config
 

@@ -18,6 +18,8 @@
 #include <utility>  // std::move
 #include <vector>
 
+#include "./utils/MathUtils.h"
+
 #include "./PdfDocument.h"
 #include "./PdfDocumentVisualizer.h"
 #include "./TextOutputDev.h"
@@ -328,8 +330,8 @@ void PdfDocumentVisualizer::drawPageSegmentBoundingBoxes(
     double lowerY = pdfPage->getMediaHeight() - segment->trimUpperY;
     // Vertical/horizontal lines can have a width/height of zero, in which case they are not
     // visible in the visualization. So ensure a minimal width/height of 1.
-    if (fabs(leftX - rightX) < 1) { rightX += 1; }
-    if (fabs(upperY - lowerY) < 1) { lowerY += 1; }
+    if (math_utils::smaller(fabs(leftX - rightX), 1)) { rightX += 1; }
+    if (math_utils::smaller(fabs(upperY - lowerY), 1)) { lowerY += 1; }
     PDFRectangle rect(leftX, upperY, rightX, lowerY);
 
     // Create the bounding box.
@@ -354,8 +356,8 @@ void PdfDocumentVisualizer::drawPageSegmentBoundingBoxes(
       double lowerY = pdfPage->getMediaHeight() - block->pos->upperY;
       // Vertical/horizontal lines can have a width/height of zero, in which case they are not
       // visible in the visualization. So ensure a minimal width/height of 1.
-      if (fabs(leftX - rightX) < 1) { rightX += 1; }
-      if (fabs(upperY - lowerY) < 1) { lowerY += 1; }
+      if (math_utils::smaller(fabs(leftX - rightX), 1)) { rightX += 1; }
+      if (math_utils::smaller(fabs(upperY - lowerY), 1)) { lowerY += 1; }
       PDFRectangle rect(leftX, upperY, rightX, lowerY);
 
       // Create the bounding box.
@@ -386,8 +388,8 @@ void PdfDocumentVisualizer::drawBoundingBox(const PdfElement* element, const Col
   double lowerY = pdfPage->getMediaHeight() - element->pos->upperY;
   // Vertical/horizontal lines can have a width/height of zero, in which case they are not
   // visible in the visualization. So ensure a minimal width/height of 1.
-  if (fabs(leftX - rightX) < 1) { rightX += 1; }
-  if (fabs(upperY - lowerY) < 1) { lowerY += 1; }
+  if (math_utils::smaller(fabs(leftX - rightX), 1)) { rightX += 1; }
+  if (math_utils::smaller(fabs(upperY - lowerY), 1)) { lowerY += 1; }
   PDFRectangle rect(leftX, upperY, rightX, lowerY);
 
   // Create the bounding box.
