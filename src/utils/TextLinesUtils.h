@@ -25,36 +25,85 @@ using std::unordered_set;
 
 namespace text_lines_utils::config {
 
-// The maximum line distance between two text lines so that the one text line is considered to be
-// the parent text line or a sibling text line of the other text line.
-const double HIERARCHY_MAX_LINE_DIST = 10.0;
+// A parameter used for computing whether or not two coordinates are (approximately) equal. It
+// denotes the maximum allowed difference between two coordinates so that both coordinates are
+// considered to be equal.
+const double COORDS_EQUAL_TOLERANCE = global_config::COORDS_EQUAL_TOLERANCE;
 
-// A factor that is used to compute a threshold for checking if the leftX offset of a text line
-// is smaller, equal or larger than the leftX offset of another text line. The threshold is
-// computed as <FACTOR> * doc->avgCharWidth.
-const double HIERARCHY_LEFT_X_OFFSET_THRESHOLD_FACTOR = 1.0;
+// -------
+// Config for computeHasPrevLineCapacity().
 
-// A factor that is used to compute a tolerance for comparing the leftX offset and rightX offset
-// between the two lines and thus, for checking if the one line is centered compared to the other.
-// The tolerance is computed as follows:
-//   <xOffsetToleranceFactor> * doc->avgCharWidth
-// If the difference between the leftX offset and the rightX offset is smaller than this
-// threshold, the offsets are considered to be equal, otherwise they are considered to be not equal.
-const double CENTERING_X_OFFSET_EQUAL_TOLERANCE_FACTOR = 1.0;
+/**
+ * This method returns a threshold that is used for computing whether or not the previous text line
+ * has capacity. If the difference between the right margin of the previous line and the width of
+ * the first word of the current text line is larger than this threshold, the previous line is
+ * considered to have capacity. Otherwise, the previous line is considered to have *no* capacity.
+ *
+ * @param doc
+ *    The currently processed PDF document.
+ *
+ * @return
+ *    The threshold.
+ */
+constexpr double getPrevTextLineCapacityThreshold(const PdfDocument* doc) {
+  return 2.0 * doc->avgCharWidth;
+}
 
-// A tolerance that is used while checking if one text line completely overlaps another text line
-// horizontally. If the maximum x-overlap ratio between both text lines is larger or equal to
-// 1 - <FACTOR>, it is assumed that one text line completely overlaps the other text line.
-const double CENTERING_MAX_X_OVERLAP_RATIO_TOLERANCE = 0.01;
+// -------
+// Config for computeTextLineHierarchy().
 
-// A factor that is used to compute a tolerance for comparing the right margin of the previous
-// line with the width of the first word of the current line. The tolerance is computed as
-// <FACTOR> * doc.avgCharWidth. If the difference between the right margin and the word width is
-// larger than this tolerance, the previous line is considered to have capacity. Otherwise, the
-// previous line is considered to have *no* capacity.
-const double CAPACITY_TOLERANCE_FACTOR = 2.0;
+// A parameter that is used for computing the text line hierarchy. It denotes the maximum line
+// distance between two text lines so that the one text line is considered to be a candidate for
+// the parent text line (or a sibling text line) of the other text line.
+const double LINE_HIERARCHY_MAX_LINE_DIST = 10.0;
 
-// Some regular expressions to find item labels.
+/**
+ * This method returns a threshold that is used for computing whether or not a text line is a
+ * parent text line or a sibling text line of another text line. If the leftX value of a text line
+ * L is larger than the leftX value of another text line M, M is considered to be the parent text
+ * line of L. If the difference between the leftX values is smaller than this threshold, the text
+ * lines are considered to be sibling text lines.
+ *
+ * @param doc
+ *    The currently processed PDF document.
+ *
+ * @return
+ *    The threshold.
+ */
+constexpr double getTextLineHierarchyLeftXOffsetThreshold(const PdfDocument* doc) {
+  return 1.0 * doc->avgCharWidth;
+}
+
+// -------
+// Config for computeIsCentered().
+
+// A parameter used for computing whether or not a text line is centered compared to another
+// text line. It denotes the minimum ratio by which one of the text line must horizontally overlap
+// the the other text line, so that the text lines are considered to be centered to each other.
+// If the maximum x-overlap ratio between both text lines is smaller than this value, the
+// text lines are considered to be *not* centered.
+const double CENTERING_X_OVERLAP_RATIO_THRESHOLD = 0.99;
+
+/**
+ * This method returns the maximum allowed difference between the left x-offset and right x-offset
+ * of a text line (computed relatively to the previous text line), so that both offsets are
+ * considered to be equal and that the text line is considered to be centered compared to the
+ * previous text line.
+ *
+ * @param doc
+ *    The currently processed PDF document.
+ *
+ * @return
+ *    The maximum allowed difference between the left x-offset and right x-offset of a text line.
+ */
+constexpr double getCenteringXOffsetEqualTolerance(const PdfDocument* doc) {
+  return 2.0 * doc->avgCharWidth;
+}
+
+// -------
+// Config for computeIsPrefixedByItemLabel().
+
+// The regular expressions we use to detect enumeration item labels.
 const regex ITEM_LABEL_REGEXES[] = {
   // A regex to find item labels of form "• ", or "- ", or "+ ", etc.
   regex("^(•|-|–|\\+)\\s+"),
@@ -76,18 +125,12 @@ const regex ITEM_LABEL_REGEXES[] = {
   regex("^PACS\\s+", std::regex_constants::icase)
 };
 
-// The characters which we consider to be a valid part of a superscripted item label.
-const char* const SUPER_ITEM_LABEL_ALPHABET = global_config::SUPER_ITEM_LABEL_ALPHABET;
+// An alphabet of characters which we consider to be a valid part of a superscripted item label.
+const char* const SUPER_ITEM_LABEL_ALPHABET = "*∗abcdefghijklmnopqrstuvwxyz01234567890()";
 
 }  // namespace text_lines_utils::config
 
 // =================================================================================================
-
-using text_lines_utils::config::CAPACITY_TOLERANCE_FACTOR;
-using text_lines_utils::config::CENTERING_X_OFFSET_EQUAL_TOLERANCE_FACTOR;
-using text_lines_utils::config::HIERARCHY_LEFT_X_OFFSET_THRESHOLD_FACTOR;
-using text_lines_utils::config::HIERARCHY_MAX_LINE_DIST;
-using text_lines_utils::config::CENTERING_MAX_X_OVERLAP_RATIO_TOLERANCE;
 
 /**
  * A collection of some useful and commonly used functions in context of text lines.
@@ -202,19 +245,11 @@ bool computeIsPrefixedByFootnoteLabel(const PdfTextLine* line, const unordered_s
  *
  * @param line
  *    The line to process.
- * @param toleranceFactor
- *    A factor that is used to compute a tolerance for comparing the right margin of the previous
- *    line with the width of the first word of the given line. The tolerance is computed as:
- *      <toleranceFactor> * doc.avgCharWidth.
- *    If the difference between the right margin and the word width is larger than this tolerance,
- *    the previous line is considered to have capacity. Otherwise, the previous line is considered
- *    to have *no* capacity.
  *
  * @return
  *    True if the previous line of the given line has capacity, false otherwise.
  */
-bool computeHasPrevLineCapacity(const PdfTextLine* line,
-    double toleranceFactor = CAPACITY_TOLERANCE_FACTOR);
+bool computeHasPrevLineCapacity(const PdfTextLine* line);
 
 /**
  * This method computes the parent text line, the previous sibling text line and the next sibling
@@ -271,18 +306,8 @@ bool computeHasPrevLineCapacity(const PdfTextLine* line,
  *
  * @param page
  *    The page to process.
- * @param leftXOffsetThresholdFactor
- *    A factor that is used to compute a threshold for checking if the leftX offset of a text line
- *    is smaller, equal or larger than the leftX offset of another text line. The threshold is
- *    computed as <FACTOR> * doc->avgCharWidth.
- * @param maxLineDistance
- *    The maximum distance between two text lines so that the one text line is considered to be
- *    the parent text line or a sibling text line of the other text line.
  */
-void computeTextLineHierarchy(const PdfPage* page,
-    double leftXOffsetThresholdFactor = HIERARCHY_LEFT_X_OFFSET_THRESHOLD_FACTOR,
-    double maxLineDistance = HIERARCHY_MAX_LINE_DIST
-);
+void computeTextLineHierarchy(const PdfPage* page);
 
 /**
  * This method computes potential footnote labels contained in the given line and appends it to
@@ -324,26 +349,12 @@ void computePotentialFootnoteLabels(const PdfTextLine* line, unordered_set<strin
  *   The first line to process.
  * @param line2
  *   The second line to process.
- * @param xOffsetEqualToleranceFactor
- *    A factor that is used to compute a tolerance for comparing the leftX offset and rightX offset
- *    between the two lines. The tolerance is computed as follows:
- *      <xOffsetToleranceFactor> * doc->avgCharWidth
- *    If the difference between the leftX offset and the rightX offset is smaller than this
- *    threshold, the offsets are considered to be equal, otherwise they are considered to be not
- *    equal.
- * @param maxXOverlapRatioTolerance
- *    A tolerance that is used while checking if one of the given text line completely overlaps the
- *    other text line horizontally. If the maximum x-overlap ratio between both text lines is
- *    larger or equal to 1 - <maxXOverlapRatioTolerance>, it is assumed that one text line
- *    completely overlaps the other text line.
  *
  * @return
  *    True, if the two given lines are centered with respect to the requirements mentioned above,
  *    false otherwise.
  */
-bool computeIsCentered(const PdfTextLine* line1, const PdfTextLine* line2,
-    double xOffsetEqualToleranceFactor = CENTERING_X_OFFSET_EQUAL_TOLERANCE_FACTOR,
-    double maxXOverlapRatioTolerance = CENTERING_MAX_X_OVERLAP_RATIO_TOLERANCE);
+bool computeIsCentered(const PdfTextLine* line1, const PdfTextLine* line2);
 
 }  // namespace text_lines_utils
 

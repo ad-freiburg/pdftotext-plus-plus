@@ -64,11 +64,6 @@ const char* const SENTENCE_DELIMITER_ALPHABET = "?!.);";
  */
 const unordered_set<string> LAST_NAME_PREFIXES = { "van", "von", "de" };
 
-/**
- * The characters which we consider to be a valid part of a superscripted item label. This is used
- * by, for example, the text_lines_utils::computeIsPrefixedByItemLabel() method.
- */
-const char* const SUPER_ITEM_LABEL_ALPHABET = "*∗abcdefghijklmnopqrstuvwxyz01234567890()";
 
 }  // namespace global_config
 

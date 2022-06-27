@@ -22,15 +22,13 @@ using std::string;
 using std::stringstream;
 using std::vector;
 using std::wstring;
-using string_utils::config::ALPHA_NUM_ALPHABET;
-using string_utils::config::WORD_DELIMITERS_ALPHABET;
 
 // _________________________________________________________________________________________________
 void string_utils::splitIntoWords(const wstring& text, vector<wstring>* words) {
   assert(words);
 
   size_t n = text.length();
-  const string delimiters = WORD_DELIMITERS_ALPHABET;
+  const string delimiters = config::WORD_DELIMITERS_ALPHABET;
   // The following works because all characters are single-byte.
   const wstring wdelimiters(delimiters.begin(), delimiters.end());
   size_t start = text.find_first_not_of(wdelimiters);
@@ -48,7 +46,7 @@ void string_utils::splitIntoWords(const string& text, vector<string>* words) {
   assert(words);
 
   size_t n = text.length();
-  const string delimiters = WORD_DELIMITERS_ALPHABET;
+  const string delimiters = config::WORD_DELIMITERS_ALPHABET;
   size_t start = text.find_first_not_of(delimiters);
 
   while (start < n) {
@@ -66,9 +64,9 @@ string string_utils::createRandomString(size_t len, const string& prefix) {
   tmp_s.reserve(prefix.length() + len);
 
   // Append <len>-many random characters from our alphabet of alphanumerical characters.
-  int alphabetSize = strlen(ALPHA_NUM_ALPHABET);
+  int alphabetSize = strlen(config::ALPHA_NUM_ALPHABET);
   for (size_t i = 0; i < len; i++) {
-    tmp_s += ALPHA_NUM_ALPHABET[rand() % (alphabetSize - 1)];
+    tmp_s += config::ALPHA_NUM_ALPHABET[rand() % (alphabetSize - 1)];
   }
 
   return tmp_s;

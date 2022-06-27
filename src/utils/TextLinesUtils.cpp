@@ -6,6 +6,7 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
+#include <iostream>
 #include <regex>
 #include <stack>
 #include <string>
@@ -18,14 +19,11 @@
 #include "./PdfElementsUtils.h"
 #include "./TextLinesUtils.h"
 
-using global_config::COORDS_EQUAL_TOLERANCE;
 using std::smatch;
 using std::stack;
 using std::string;
 using std::unordered_set;
 using std::vector;
-using text_lines_utils::config::ITEM_LABEL_REGEXES;
-using text_lines_utils::config::SUPER_ITEM_LABEL_ALPHABET;
 
 // _________________________________________________________________________________________________
 bool text_lines_utils::computeIsFirstLineOfItem(const PdfTextLine* line,
@@ -147,14 +145,14 @@ bool text_lines_utils::computeIsPrefixedByItemLabel(const PdfTextLine* line) {
   // This would identify also lines that are prefixed by something like "a)".
   PdfCharacter* ch = firstWordChars[0];
   string charStr = ch->text;
-  if (ch->isSuperscript && strstr(SUPER_ITEM_LABEL_ALPHABET, charStr.c_str()) != nullptr) {
+  if (ch->isSuperscript && strstr(config::SUPER_ITEM_LABEL_ALPHABET, charStr.c_str()) != nullptr) {
     return true;
   }
 
   // The line is prefixed by an enumeration item label if it matches one of our regexes we defined
   // for identifying item labels. The matching parts must not be superscripted.
   smatch m;
-  for (const auto& regex : ITEM_LABEL_REGEXES) {
+  for (const auto& regex : config::ITEM_LABEL_REGEXES) {
     if (regex_search(line->text, m, regex)) {
       return true;
     }
@@ -195,7 +193,7 @@ bool text_lines_utils::computeIsPrefixedByFootnoteLabel(const PdfTextLine* line,
 }
 
 // _________________________________________________________________________________________________
-bool text_lines_utils::computeHasPrevLineCapacity(const PdfTextLine* line, double toleranceFactor) {
+bool text_lines_utils::computeHasPrevLineCapacity(const PdfTextLine* line) {
   assert(line);
 
   // The previous line has of course no capacity if there is no previous line.
@@ -208,19 +206,19 @@ bool text_lines_utils::computeHasPrevLineCapacity(const PdfTextLine* line, doubl
     return false;
   }
 
+  double threshold = config::getPrevTextLineCapacityThreshold(line->doc);
+
   // Compute the width of the first word of the given line.
   double firstWordWidth = line->words[0]->pos->getWidth();
 
   // The previous line has capacity if its right margin is larger than the width of the first word
-  // of the given line, under consideration of a tolerance.
-  double tolerance = toleranceFactor * line->doc->avgCharWidth;
-  return math_utils::larger(line->prevLine->rightMargin, firstWordWidth, tolerance);
+  // of the given line, under consideration of the threshold.
+  return math_utils::larger(line->prevLine->rightMargin, firstWordWidth, threshold);
 }
 
 
 // _________________________________________________________________________________________________
-void text_lines_utils::computeTextLineHierarchy(const PdfPage* page,
-      double leftXOffsetThresholdFactor, double maxLineDistance) {
+void text_lines_utils::computeTextLineHierarchy(const PdfPage* page) {
   assert(page);
 
   // Do nothing if the page does not contain any segments.
@@ -228,8 +226,9 @@ void text_lines_utils::computeTextLineHierarchy(const PdfPage* page,
     return;
   }
 
-  double avgCharWidth = page->segments[0]->doc->avgCharWidth;
-  double leftXOffsetThreshold = leftXOffsetThresholdFactor * avgCharWidth;
+  const PdfDocument* doc = page->segments[0]->doc;
+  double leftXOffsetThreshold = config::getTextLineHierarchyLeftXOffsetThreshold(doc);
+  double maxLineDist = config::LINE_HIERARCHY_MAX_LINE_DIST;
 
   // Maintain a stack to keep track of the parent and sibling lines.
   stack<PdfTextLine*> lineStack;
@@ -246,7 +245,7 @@ void text_lines_utils::computeTextLineHierarchy(const PdfPage* page,
         bool hasSameWMode = prevLine->pos->wMode == line->pos->wMode;
         if (hasSameRotation && hasSameWMode) {
           double absLineDistance = abs(element_utils::computeVerticalGap(prevLine, line));
-          if (math_utils::larger(absLineDistance, maxLineDistance, COORDS_EQUAL_TOLERANCE)) {
+          if (math_utils::larger(absLineDistance, maxLineDist, config::COORDS_EQUAL_TOLERANCE)) {
             lineStack = stack<PdfTextLine*>();
           }
         }
@@ -277,7 +276,7 @@ void text_lines_utils::computeTextLineHierarchy(const PdfPage* page,
       // sibling line of a line in a different column.
       double topStackLowerY = lineStack.top()->pos->lowerY;
       double lineLowerY = line->pos->lowerY;
-      if (math_utils::equalOrLarger(topStackLowerY, lineLowerY, COORDS_EQUAL_TOLERANCE)) {
+      if (math_utils::equalOrLarger(topStackLowerY, lineLowerY, config::COORDS_EQUAL_TOLERANCE)) {
         continue;
       }
 
@@ -376,24 +375,25 @@ void text_lines_utils::computePotentialFootnoteLabels(const PdfTextLine* line,
 }
 
 // _________________________________________________________________________________________________
-bool text_lines_utils::computeIsCentered(const PdfTextLine* line1, const PdfTextLine* line2,
-      double xOffsetEqualToleranceFactor, double maxXOverlapRatioTolerance) {
+bool text_lines_utils::computeIsCentered(const PdfTextLine* line1, const PdfTextLine* line2) {
   assert(line1);
   assert(line2);
 
-  // The lines are not centered when neither the first line nor the second line is completely
-  // overlapped horizontally by the respective other line.
+  double xOverlapRatioThreshold = config::CENTERING_X_OVERLAP_RATIO_THRESHOLD;
+  double xOffsetTolerance = config::getCenteringXOffsetEqualTolerance(line1->doc);
+
+  // The lines are not centered when the maximum x-overlap ratio between the lines is smaller than
+  // the threshold.
   double maxXOverlapRatio = element_utils::computeMaxXOverlapRatio(line1, line2);
-  if (math_utils::smaller(maxXOverlapRatio, 1, maxXOverlapRatioTolerance)) {
+  if (math_utils::smaller(maxXOverlapRatio, xOverlapRatioThreshold)) {
     return false;
   }
 
   // The lines are not centered when the leftX-offset and the rightX-offset between the lines
-  // is not equal).
+  // are not equal.
   double absLeftXOffset = abs(element_utils::computeLeftXOffset(line1, line2));
   double absRightXOffset = abs(element_utils::computeRightXOffset(line1, line2));
-  double tolerance = xOffsetEqualToleranceFactor * line1->doc->avgCharWidth;
-  if (!math_utils::equal(absLeftXOffset, absRightXOffset, tolerance)) {
+  if (!math_utils::equal(absLeftXOffset, absRightXOffset, xOffsetTolerance)) {
     return false;
   }
 

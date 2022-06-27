@@ -22,14 +22,19 @@ using std::wstring;
 // CONFIG
 
 namespace string_utils::config {
-  // The characters we consider to be alphanumerical.
-  const char* const ALPHA_NUM_ALPHABET = global_config::ALPHA_NUM_ALPHABET;
 
-  // The characters we consider to be word delimiters.
-  const char* const WORD_DELIMITERS_ALPHABET = global_config::WORD_DELIMITERS_ALPHABET;
-}
+// An alphabet that is used for creating random strings. It contains all characters we consider to
+// be alphanumerical.
+const char* const ALPHA_NUM_ALPHABET = global_config::ALPHA_NUM_ALPHABET;
+
+// An alphabet that is used for splitting a string into words. It contains all characters we
+// consider to be a word delimiter.
+const char* const WORD_DELIMITERS_ALPHABET = global_config::WORD_DELIMITERS_ALPHABET;
+
+}  // namespace string_utils::config
 
 // =================================================================================================
+
 
 /**
  * A collection of some useful and commonly used functions in context of strings.

@@ -15,7 +15,6 @@
 #include "./MathUtils.h"
 #include "./PdfElementsUtils.h"
 
-using element_utils::config::SENTENCE_DELIMITER_ALPHABET;
 using std::make_pair;
 using std::max;
 using std::min;
@@ -143,7 +142,7 @@ double element_utils::computeMaxYOverlapRatio(const PdfElement* elem1, const Pdf
 
 // _________________________________________________________________________________________________
 bool element_utils::computeHasEqualLeftX(const PdfElement* elem1, const PdfElement* elem2,
-      double tolerance) {
+    double tolerance) {
   assert(elem1);
   assert(elem2);
   return math_utils::equal(elem1->pos->leftX, elem2->pos->leftX, tolerance);
@@ -151,7 +150,7 @@ bool element_utils::computeHasEqualLeftX(const PdfElement* elem1, const PdfEleme
 
 // _________________________________________________________________________________________________
 bool element_utils::computeHasEqualUpperY(const PdfElement* elem1, const PdfElement* elem2,
-      double tolerance) {
+    double tolerance) {
   assert(elem1);
   assert(elem2);
   return math_utils::equal(elem1->pos->upperY, elem2->pos->upperY, tolerance);
@@ -159,7 +158,7 @@ bool element_utils::computeHasEqualUpperY(const PdfElement* elem1, const PdfElem
 
 // _________________________________________________________________________________________________
 bool element_utils::computeHasEqualRightX(const PdfElement* elem1, const PdfElement* elem2,
-      double tolerance) {
+    double tolerance) {
   assert(elem1);
   assert(elem2);
   return math_utils::equal(elem1->pos->rightX, elem2->pos->rightX, tolerance);
@@ -167,7 +166,7 @@ bool element_utils::computeHasEqualRightX(const PdfElement* elem1, const PdfElem
 
 // _________________________________________________________________________________________________
 bool element_utils::computeHasEqualLowerY(const PdfElement* elem1, const PdfElement* elem2,
-      double tolerance) {
+    double tolerance) {
   assert(elem1);
   assert(elem2);
   return math_utils::equal(elem1->pos->lowerY, elem2->pos->lowerY, tolerance);
@@ -189,7 +188,7 @@ double element_utils::computeRightXOffset(const PdfElement* elem1, const PdfElem
 
 // _________________________________________________________________________________________________
 PdfFigure* element_utils::computeOverlapsFigure(const PdfElement* element,
-      const vector<PdfFigure*>& figures, double minXOverlapRatio, double minYOverlapRatio) {
+      const vector<PdfFigure*>& figures) {
   assert(element);
 
   for (auto* figure : figures) {
@@ -197,7 +196,8 @@ PdfFigure* element_utils::computeOverlapsFigure(const PdfElement* element,
     pair<double, double> yOverlapRatios = element_utils::computeYOverlapRatios(element, figure);
 
     // Check if the figure overlaps the element by the required overlap ratios.
-    if (xOverlapRatios.first >= minXOverlapRatio && yOverlapRatios.first >= minYOverlapRatio) {
+    if (xOverlapRatios.first >= config::FIGURE_X_OVERLAP_THRESHOLD
+        && yOverlapRatios.first >= config::FIGURE_Y_OVERLAP_THRESHOLD) {
       return figure;
     }
   }
@@ -216,10 +216,10 @@ bool text_element_utils::computeHasEqualFont(const PdfTextElement* e1, const Pdf
 
 // _________________________________________________________________________________________________
 bool text_element_utils::computeHasEqualFontSize(const PdfTextElement* e1,
-      const PdfTextElement* e2, double equalTolerance) {
+      const PdfTextElement* e2) {
   assert(e1);
   assert(e2);
-  return math_utils::equal(e1->fontSize, e2->fontSize, equalTolerance);
+  return math_utils::equal(e1->fontSize, e2->fontSize, config::FSIZE_EQUAL_TOLERANCE);
 }
 
 // _________________________________________________________________________________________________
@@ -230,7 +230,7 @@ bool text_element_utils::computeEndsWithSentenceDelimiter(const PdfTextElement* 
     return false;
   }
 
-  return strchr(SENTENCE_DELIMITER_ALPHABET, element->text.back()) != nullptr;
+  return strchr(config::SENTENCE_DELIMITER_ALPHABET, element->text.back()) != nullptr;
 }
 
 // _________________________________________________________________________________________________
@@ -245,13 +245,15 @@ bool text_element_utils::computeStartsWithUpper(const PdfTextElement* element) {
 }
 
 // _________________________________________________________________________________________________
-bool text_element_utils::computeIsEmphasized(const PdfTextElement* element,
-      double fontSizeEqualTolerance, double fontWeightEqualTolerance) {
+bool text_element_utils::computeIsEmphasized(const PdfTextElement* element) {
   assert(element);
 
   const PdfFontInfo* docFontInfo = element->doc->fontInfos.at(element->doc->mostFreqFontName);
   const PdfFontInfo* elemFontInfo = element->doc->fontInfos.at(element->fontName);
   double mostFreqFontSize = element->doc->mostFreqFontSize;
+
+  double fontSizeEqualTolerance = config::FSIZE_EQUAL_TOLERANCE;
+  double fontWeightEqualTolerance = config::FWEIGHT_EQUAL_TOLERANCE;
 
   // The element is emphasized if...
 
