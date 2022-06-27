@@ -6,7 +6,7 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include <algorithm>
+#include <algorithm>  // transform
 #include <fstream>  // ofstream
 #include <iostream>
 #include <string>
@@ -75,28 +75,34 @@ void TextSerializer::serializeToStream(std::ostream& outStream) {
         outStream << endl;
       }
 
-      // Prefix each block with its semantic role if the respective option is enabled.
+      // Prefix each block with its semantic role, if requested by the user.
       if (_addSemanticRoles) {
         string role = block->role;
         std::transform(role.begin(), role.end(), role.begin(), ::toupper);
         outStream << "[" << role << "] ";
       }
 
-      // Prefix each emphasized block with "^A" (start of heading), if the resp. option is enabled.
+      // Prefix each emphasized block with "^A" (start of heading), if requested by the user.
       if (_addControlCharacters && block->isEmphasized) {
         outStream << string(1, 0x01);
       }
 
       for (auto* line : block->lines) {
         for (auto* word : line->words) {
+          // Ignore the second part of hyphenated words, their text is included in the text of the
+          // first part of the hyphenated word.
           if (word->isSecondPartOfHyphenatedWord) {
             continue;
           }
 
+          // Split the words by a whitespace.
           if (prevWord) {
             outStream << " ";
           }
 
+          // Write the word character-wise. Exclude sub- and superscripts if requested by the user.
+          // Ignore diacritic marks that were merged with their base character (their text is part
+          // of the base character).
           if (word->isFirstPartOfHyphenatedWord) {
             // TODO(korzen): Hyphenated words should be also processed character-wise.
             outStream << word->isFirstPartOfHyphenatedWord->text;
@@ -120,7 +126,7 @@ void TextSerializer::serializeToStream(std::ostream& outStream) {
       prevBlock = block;
     }
 
-    // Mark each page break with "^L" (form feed).
+    // Mark each page break with "^L" (form feed), if requested by the user.
     if (_addControlCharacters) {
       outStream << endl << string(1, 0x0C);
     }

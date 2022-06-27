@@ -30,38 +30,8 @@ using std::string;
 using std::unique_ptr;
 using std::vector;
 
-
-/** The resolution in DPI. */
-static double resolution = 72.0;
-
-/**
- * The appearance of a semantic role.
- * "/Helv" is the font name (= Helvetica), "7" is the font size, "0 0 1" is the color (= blue).
- */
-static GooString semanticRoleAppearance("/Helv 7 Tf 0 0 1 rg");
-
-/** The width of a line that connects consecutive text blocks (wrt. the reading order). */
-static double readingOrderLineWidth = 4.0;
-
-/** The radius of a circle containing a reading order index. */
-static double readingOrderCircleRadius = 5;
-
-/** The appearance of a reading order index (= the number in a reading order circle). */
-static GooString readingOrderIndexAppearance("/Helv 7 Tf 1 1 1 rg");
-
-/** The width of a line that represents a XY-cut. */
-static double cutWidth = 2.0;
-
-/** The font appearance of a cut index. */
-static GooString cutIndexAppearance("/Helv 7 Tf 1 1 1 rg");
-
-/** The radius of a square containing a cut index. */
-static double cutSquareRadius = 5;
-
-/** The font appearance of a cut id. */
-static GooString cutIdAppearance("/Helv 3 Tf .9 .9 .9 rg");
-
-// =================================================================================================
+namespace config = visualizer::config;
+namespace color_schemes = visualizer::color_schemes;
 
 // _________________________________________________________________________________________________
 PdfDocumentVisualizer::PdfDocumentVisualizer(const string& pdfFilePath) {
@@ -76,8 +46,8 @@ PdfDocumentVisualizer::PdfDocumentVisualizer(const string& pdfFilePath) {
   _gfxs.push_back(nullptr);  // Make the vector 1-based.
   for (int i = 1; i <= _pdfDoc->getNumPages(); i++) {
     Page* page = _pdfDoc->getPage(i);
-    Gfx* gfx = page->createGfx(_out, resolution, resolution, 0, true, false, -1, -1, -1, -1,
-        true, nullptr, nullptr, nullptr);
+    Gfx* gfx = page->createGfx(_out, config::RESOLUTION, config::RESOLUTION, 0, true, false, -1,
+        -1, -1, -1, true, nullptr, nullptr, nullptr);
     _gfxs.push_back(gfx);
   }
 }
@@ -321,7 +291,7 @@ void PdfDocumentVisualizer::drawPageSegmentBoundingBoxes(
     drawBoundingBox(segment, cs);
 
     // Draw the trim box of the segment.
-    const ColorScheme& cs1 = green;
+    const ColorScheme& cs1 = color_schemes::green;
     Page* pdfPage = _pdfDoc->getPage(segment->pos->pageNum);
     Gfx* gfx = _gfxs[segment->pos->pageNum];
     double leftX = segment->trimLeftX;
@@ -347,7 +317,7 @@ void PdfDocumentVisualizer::drawPageSegmentBoundingBoxes(
 
     // Draw the (preliminary) text blocks stored in the segment
     for (const auto* block : segment->blocks) {
-      const ColorScheme& cs2 = red;
+      const ColorScheme& cs2 = color_schemes::red;
       Page* pdfPage = _pdfDoc->getPage(segment->pos->pageNum);
       Gfx* gfx = _gfxs[segment->pos->pageNum];
       double leftX = block->pos->leftX;
@@ -386,6 +356,7 @@ void PdfDocumentVisualizer::drawBoundingBox(const PdfElement* element, const Col
   double upperY = pdfPage->getMediaHeight() - element->pos->lowerY;
   double rightX = element->pos->rightX;
   double lowerY = pdfPage->getMediaHeight() - element->pos->upperY;
+
   // Vertical/horizontal lines can have a width/height of zero, in which case they are not
   // visible in the visualization. So ensure a minimal width/height of 1.
   if (math_utils::smaller(fabs(leftX - rightX), 1)) { rightX += 1; }
@@ -419,7 +390,7 @@ void PdfDocumentVisualizer::drawTextBlockSemanticRoles(const vector<PdfTextBlock
     PDFRectangle rect(leftX, lowerY, leftX + 100, lowerY + 7);
 
     // Define the font appearance of the semantic role.
-    const DefaultAppearance appearance(&semanticRoleAppearance);
+    const DefaultAppearance appearance(&config::SEMANTIC_ROLE_APPEARANCE);
 
     // Create the annotation.
     AnnotFreeText* annot = new AnnotFreeText(_pdfDoc.get(), &rect, appearance);
@@ -471,7 +442,7 @@ void PdfDocumentVisualizer::drawReadingOrder(const vector<PdfTextBlock*>& blocks
 
     // Define the width of the reading order line.
     std::unique_ptr<AnnotBorder> lineBorder(new AnnotBorderArray());
-    lineBorder->setWidth(readingOrderLineWidth);
+    lineBorder->setWidth(config::READING_ORDER_LINE_WIDTH);
     lineAnnot->setBorder(move(lineBorder));
 
     // Define the color of the reading order line.
@@ -499,8 +470,8 @@ void PdfDocumentVisualizer::drawReadingOrderIndexCircle(Page* page, Gfx* gfx, do
     double y, int readingOrderIndex, const ColorScheme& cs) const {
   // Define the position of the circle.
   PDFRectangle circleRect(
-    x - readingOrderCircleRadius, y - readingOrderCircleRadius,
-    x + readingOrderCircleRadius, y + readingOrderCircleRadius);
+    x - config::READING_ORDER_CIRCLE_RADIUS, y - config::READING_ORDER_CIRCLE_RADIUS,
+    x + config::READING_ORDER_CIRCLE_RADIUS, y + config::READING_ORDER_CIRCLE_RADIUS);
   AnnotGeometry* circleAnnot = new AnnotGeometry(_pdfDoc.get(), &circleRect,
     Annot::AnnotSubtype::typeCircle);
 
@@ -519,12 +490,12 @@ void PdfDocumentVisualizer::drawReadingOrderIndexCircle(Page* page, Gfx* gfx, do
   // --------
 
   // Define the appearance of the reading order index within the circle.
-  const DefaultAppearance indexAppearance(&readingOrderIndexAppearance);
+  const DefaultAppearance indexAppearance(&config::READING_ORDER_INDEX_APPEARANCE);
 
   // Define the position of the index.
   PDFRectangle indexRect(
-    x - readingOrderCircleRadius, y - readingOrderCircleRadius,
-    x + readingOrderCircleRadius, y + readingOrderCircleRadius * 0.6);
+    x - config::READING_ORDER_CIRCLE_RADIUS, y - config::READING_ORDER_CIRCLE_RADIUS,
+    x + config::READING_ORDER_CIRCLE_RADIUS, y + config::READING_ORDER_CIRCLE_RADIUS * 0.6);
   AnnotFreeText* indexAnnot = new AnnotFreeText(_pdfDoc.get(), &indexRect, indexAppearance);
 
   // Define the text of the annot (= the reading order index).
@@ -550,7 +521,7 @@ void PdfDocumentVisualizer::drawCuts(const vector<Cut*>& cuts, const ColorScheme
   for (size_t i = 0; i < cuts.size(); i++) {
     const auto* cut = cuts[i];
 
-    const ColorScheme& cos = cut->isChosen ? cs : gray;
+    const ColorScheme& cos = cut->isChosen ? cs : color_schemes::gray;
 
     Page* pdfPage = _pdfDoc->getPage(cut->pageNum);
     Gfx* gfx = _gfxs[cut->pageNum];
@@ -570,7 +541,7 @@ void PdfDocumentVisualizer::drawCuts(const vector<Cut*>& cuts, const ColorScheme
 
     // Define the line width.
     std::unique_ptr<AnnotBorder> lineBorder(new AnnotBorderArray());
-    lineBorder->setWidth(cutWidth);
+    lineBorder->setWidth(config::CUT_WIDTH);
     lineAnnot->setBorder(move(lineBorder));
 
     // Define the line color.
@@ -587,8 +558,8 @@ void PdfDocumentVisualizer::drawCuts(const vector<Cut*>& cuts, const ColorScheme
 
       // Define the position of the square.
       PDFRectangle squareRect(
-        x1 - cutSquareRadius, y1 - cutSquareRadius,
-        x1 + cutSquareRadius, y1 + cutSquareRadius);
+        x1 - config::CUT_SQUARE_RADIUS, y1 - config::CUT_SQUARE_RADIUS,
+        x1 + config::CUT_SQUARE_RADIUS, y1 + config::CUT_SQUARE_RADIUS);
       AnnotGeometry* squareAnnot = new AnnotGeometry(_pdfDoc.get(), &squareRect,
           Annot::AnnotSubtype::typeSquare);
 
@@ -608,12 +579,12 @@ void PdfDocumentVisualizer::drawCuts(const vector<Cut*>& cuts, const ColorScheme
       // ----------
 
       // Define the appearance of the cut index.
-      const DefaultAppearance indexAppearance(&cutIndexAppearance);
+      const DefaultAppearance indexAppearance(&config::CUT_INDEX_APPEARANCE);
 
       // Define the position of the cut index.
       PDFRectangle indexRect(
-        x1 - cutSquareRadius, y1 - cutSquareRadius,
-        x1 + cutSquareRadius, y1 + cutSquareRadius * 0.6);
+        x1 - config::CUT_SQUARE_RADIUS, y1 - config::CUT_SQUARE_RADIUS,
+        x1 + config::CUT_SQUARE_RADIUS, y1 + config::CUT_SQUARE_RADIUS * 0.6);
       AnnotFreeText* indexAnnot = new AnnotFreeText(_pdfDoc.get(), &indexRect, indexAppearance);
 
       // Define the text of the annot (= the how many-th chosen cut the index is).
@@ -636,7 +607,7 @@ void PdfDocumentVisualizer::drawCuts(const vector<Cut*>& cuts, const ColorScheme
     // Draw the id of the cut.
 
     // Define the appearance of the id.
-    const DefaultAppearance idAppearance(&cutIdAppearance);
+    const DefaultAppearance idAppearance(&config::CUT_ID_APPEARANCE);
 
     // Define the position of the id.
     double rectWidth = 30;

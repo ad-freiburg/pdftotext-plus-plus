@@ -22,11 +22,8 @@ using std::vector;
 // =================================================================================================
 
 /**
- * This class is responsible for writing selected elements extracted from a PDF to a specified file.
- * The file will contain one line per element, each in the following JSON format:
- *
- * { "id": "14c3x", "rank": 12, "page": 2, "leftX": 12.4, "minY": 42.1, "rightX": 64.1,
- *   "font": "Arial", "fontSize": 12, "text": "Hello ...", "word" "p2322" }
+ * This class is responsible for writing the (text) elements extracted from a PDF to a specified
+ * file in JSONL format.
  */
 class JsonlSerializer {
  public:
@@ -64,13 +61,15 @@ class JsonlSerializer {
   ~JsonlSerializer();
 
   /**
-   * This method writes the elements extracted from the given PDF document to the file specified by
-   * `targetPath`. If the target path is specified as "-", the elements are written to the console
-   * instead. The output will contain one line per element, each in JSONL format. See the
-   * preliminary comment of this class for details about the exact format.
+   * This method writes the (text) elements extracted from the given PDF document to the file
+   * specified by `targetPath`. If the target path is specified as "-", the elements are written to
+   * the console instead. The output will contain one line per element, each in JSONL format. The
+   * exact format of a single line depends on the element type and is described in the comment of
+   * the respective serialize* method below.
    *
    * @param targetPath
-   *   The path to the file to which the elements should be written.
+   *   The path to the file to which the elements should be written. If specified as "-", the JSONL
+   *   will be printed to std::cout instead.
    */
   void serialize(const string& targetPath) const;
 
@@ -86,7 +85,12 @@ class JsonlSerializer {
   void serializeToStream(ostream& out) const;
 
   /**
-   * This method writes the information about the given page to the given output stream.
+   * This method writes the information about the given page in the following format to the given
+   * output stream:
+   *
+   * { "type": "page", "num": 1, "width": 120.1, "height": 345.2 }
+   *
+   *  The file will contain one line per element, each in the following JSON format:
    *
    * @param page
    *    The page to write to the stream.
@@ -97,6 +101,12 @@ class JsonlSerializer {
 
   /**
    * This method writes the information about the given characters to the given output stream.
+   * For each character, a line in the following format will be written:
+   *
+   * {"type": "char", "id\": "abc", "rank": 1, "page": 2, "minX": 12.1, "minY": 54.1,
+   *    "maxX": 432.4, "maxY": 125.2, "wMode": 0, "rotation": 0, "font": "arial",
+   *    "fontSize": 12.0, "weight": 100, "italic": true, "type-3": false,
+   *    "color": [1, 1, 1], opacity": 1, "text": "x", "origin": "pdftotext++" }
    *
    * @param characters
    *    The characters to write to the stream.
@@ -107,6 +117,10 @@ class JsonlSerializer {
 
   /**
    * This method writes the information about the given figures to the given output stream.
+   * For each figure, a line in the following format will be written:
+   *
+   * {"type": "figure", "id\": "abc", "rank": 1, "page": 2, "minX": 12.1, "minY": 54.1,
+   *    "maxX": 432.4, "maxY": 125.2, "origin": "pdftotext++" }
    *
    * @param figures
    *    The figures to write to the stream.
@@ -117,6 +131,10 @@ class JsonlSerializer {
 
   /**
    * This method writes the information about the given shapes to the given output stream.
+   * For each shape, a line in the following format will be written:
+   *
+   * {"type": "shape", "id\": "abc", "rank": 1, "page": 2, "minX": 12.1, "minY": 54.1,
+   *    "maxX": 432.4, "maxY": 125.2, "origin": "pdftotext++" }
    *
    * @param shapes
    *    The shapes to write to the stream.
@@ -127,6 +145,11 @@ class JsonlSerializer {
 
   /**
    * This method writes the information about the given words to the given output stream.
+   * For each word, a line in the following format will be written:
+   *
+   * {"type": "word", "id\": "abc", "rank": 1, "page": 2, "minX": 12.1, "minY": 54.1,
+   *    "maxX": 432.4, "maxY": 125.2, "font": "arial", "fontSize": 12.0, "text": "xyz",
+   *    "origin": "pdftotext++" }
    *
    * @param words
    *    The words to write to the stream.
@@ -137,6 +160,12 @@ class JsonlSerializer {
 
   /**
    * This method writes the information about the given text blocks to the given output stream.
+   * For each text block, a line in the following format will be written:
+   *
+   * {"type": "block", "id\": "abc", "rank": 1, "page": 2, "minX": 12.1, "minY": 54.1,
+   *    "maxX": 432.4, "maxY": 125.2, "font": "arial", "fontSize": 12.0, "text": "xyz",
+   *    "origin": "pdftotext++" }
+   *
    *
    * @param blocks
    *    The text blocks to write to the stream.

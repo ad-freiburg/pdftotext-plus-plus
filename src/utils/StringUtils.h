@@ -104,7 +104,7 @@ string escapeJson(const string& str);
  * @return
  *    The shortened string.
  */
-string shorten(const string& str, size_t len = 40);  // TODO: Parameterize.
+string shorten(const string& str, size_t len = 40);  // TODO(korzen): Parameterize.
 
 }  // namespace string_utils
 

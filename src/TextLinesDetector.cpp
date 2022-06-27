@@ -154,7 +154,7 @@ void TextLinesDetector::process() {
           if (lines.size() > 1) {
             _log->debug(p) << "---------------------------------------------------------" << endl;
           }
-          _log->debug(p) << qq << BOLD << "cluster (" << rot << ", " << lowerY << ")" << OFF << endl;
+          _log->debug(p) << qq << BOLD << "cluster(" << rot << ", " << lowerY << ")" << OFF << endl;
           _log->debug(p) << qq << "  └─ line.text: \"" << line->text << "\"" << endl;
           _log->debug(p) << qq << "  └─ line.pageNum: " << line->pos->pageNum << endl;
           _log->debug(p) << qq << "  └─ line.leftX: " << line->pos->leftX << endl;

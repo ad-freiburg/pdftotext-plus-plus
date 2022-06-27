@@ -21,6 +21,7 @@
 #include "../PdfDocument.h"
 
 using global_config::COORDS_PREC;
+
 using std::cout;
 using std::cerr;
 using std::endl;

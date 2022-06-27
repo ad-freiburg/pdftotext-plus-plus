@@ -407,17 +407,39 @@ int main(int argc, char* argv[]) {
   if (!visualizeFilePathStr.empty()) {
     auto start = high_resolution_clock::now();
     PdfDocumentVisualizer visualizer(pdfFilePathStr);
-    if (visualizeChars) { visualizer.visualizeCharacters(doc, blue); }
-    if (visualizeFigures) { visualizer.visualizeFigures(doc, blue); }
-    if (visualizeShapes) { visualizer.visualizeShapes(doc, blue); }
-    if (visualizeGraphics) { visualizer.visualizeGraphics(doc, blue); }
-    if (visualizeWords) { visualizer.visualizeWords(doc, blue); }
-    if (visualizeTextLines) { visualizer.visualizeTextLines(doc, blue); }
-    if (visualizeTextBlocks) { visualizer.visualizeTextBlocks(doc, red); }
-    if (visualizePageSegments) { visualizer.visualizePageSegments(doc, blue); }
-    if (visualizeReadingOrder) { visualizer.visualizeReadingOrder(doc, blue); }
-    if (visualizeSegmentCuts) { visualizer.visualizeSegmentCuts(doc, blue); }
-    if (visualizeReadingOrderCuts) { visualizer.visualizeReadingOrderCuts(doc, blue); }
+    if (visualizeChars) {
+      visualizer.visualizeCharacters(doc, visualizer::color_schemes::blue);
+    }
+    if (visualizeFigures) {
+      visualizer.visualizeFigures(doc, visualizer::color_schemes::blue);
+    }
+    if (visualizeShapes) {
+      visualizer.visualizeShapes(doc, visualizer::color_schemes::blue);
+    }
+    if (visualizeGraphics) {
+      visualizer.visualizeGraphics(doc, visualizer::color_schemes::blue);
+    }
+    if (visualizeWords) {
+      visualizer.visualizeWords(doc, visualizer::color_schemes::blue);
+    }
+    if (visualizeTextLines) {
+      visualizer.visualizeTextLines(doc, visualizer::color_schemes::blue);
+    }
+    if (visualizeTextBlocks) {
+      visualizer.visualizeTextBlocks(doc, visualizer::color_schemes::red);
+    }
+    if (visualizePageSegments) {
+      visualizer.visualizePageSegments(doc, visualizer::color_schemes::blue);
+    }
+    if (visualizeReadingOrder) {
+      visualizer.visualizeReadingOrder(doc, visualizer::color_schemes::blue);
+    }
+    if (visualizeSegmentCuts) {
+      visualizer.visualizeSegmentCuts(doc, visualizer::color_schemes::blue);
+    }
+    if (visualizeReadingOrderCuts) {
+      visualizer.visualizeReadingOrderCuts(doc, visualizer::color_schemes::blue);
+    }
     visualizer.save(visualizeFilePathStr);
     auto end = high_resolution_clock::now();
     Timing timingVisualizing("Visualize", duration_cast<milliseconds>(end - start).count());
