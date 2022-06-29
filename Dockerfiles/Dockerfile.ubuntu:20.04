@@ -203,6 +203,7 @@ COPY --from=gtest-builder /opt/lib/ /usr/local/lib/
 RUN ldconfig
 
 COPY src src
+COPY test test
 COPY Makefile.Docker Makefile
 RUN make install
 

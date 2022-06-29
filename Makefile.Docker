@@ -1,8 +1,9 @@
 PROJECT_NAME = pdftotext-plus-plus
 
 SRC_DIR = src
+TEST_DIR = test
 MAIN_BINARY_FILE = src/PdfToTextPlusPlusMain
-TEST_BINARY_FILES = $(basename $(wildcard $(SRC_DIR)/*Test.cpp $(SRC_DIR)/*/*Test.cpp))
+TEST_BINARY_FILES = $(basename $(wildcard $(TEST_DIR)/*Test.cpp $(TEST_DIR)/*/*Test.cpp))
 HEADER_FILES = $(wildcard $(SRC_DIR)/*.h $(SRC_DIR)/*/*.h)
 OBJECT_FILES = $(addsuffix .o, $(basename $(filter-out %Main.cpp %Test.cpp, $(wildcard $(SRC_DIR)/*.cpp $(SRC_DIR)/*/*.cpp))))
 

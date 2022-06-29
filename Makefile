@@ -106,3 +106,10 @@ install: build-docker
 	$(DOCKER_CMD) cp $(PROJECT_NAME)-install:/usr/local/lib $(INSTALL_DIR)/
 	$(DOCKER_CMD) cp $(PROJECT_NAME)-install:/usr/local/bin $(INSTALL_DIR)/
 	$(DOCKER_CMD) rm $(PROJECT_NAME)-install
+
+# ==================================================================================================
+
+test: build-docker
+	@echo "\033[34;1mTesting pdftotext++ ...\033[0m"
+
+	$(DOCKER_CMD) run --rm --entrypoint make $(DOCKER_IMAGE) test

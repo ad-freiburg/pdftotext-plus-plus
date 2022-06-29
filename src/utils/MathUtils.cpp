@@ -48,7 +48,7 @@ double math_utils::round(double d, int numDecimals) {
   if (numDecimals == 0) {
     return std::round(d);
   } else {
-    double divisor = 10.0 * numDecimals;
-    return static_cast<double>(static_cast<int>(d * divisor)) / divisor;
+    double divisor = std::pow(10.0, numDecimals);
+    return std::round(d * divisor) / divisor;
   }
 }
