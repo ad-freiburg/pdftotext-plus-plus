@@ -205,6 +205,18 @@ PdfNonTextElement::~PdfNonTextElement() = default;
 PdfCharacter::PdfCharacter() = default;
 
 // _________________________________________________________________________________________________
+PdfCharacter::PdfCharacter(int pageNum, double leftX, double upperY, double rightX,
+    double lowerY, int rotation, int wMode) {
+  pos->pageNum = pageNum;
+  pos->leftX = leftX;
+  pos->upperY = upperY;
+  pos->rightX = rightX;
+  pos->lowerY = lowerY;
+  pos->rotation = rotation;
+  pos->wMode = wMode;
+}
+
+// _________________________________________________________________________________________________
 PdfCharacter::~PdfCharacter() = default;
 
 // _________________________________________________________________________________________________

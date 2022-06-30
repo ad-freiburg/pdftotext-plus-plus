@@ -398,6 +398,27 @@ class PdfCharacter : public PdfTextElement {
   /** This constructor creates and initializes a new instance of this class. */
   PdfCharacter();
 
+  /**
+   * This constructor creates and initializes a new instance of this class.
+   *
+   * @param pageNum
+   *    The page number.
+   * @param leftX
+   *    The leftX coordinate.
+   * @param upperY
+   *    The upperY coordinate.
+   * @param rightX
+   *    The rightX coordinate.
+   * @param lowerY
+   *    The lowerY coordinate.
+   * @param rotation
+   *    The rotation.
+   * @param wMode
+   *    The writing mode.
+   */
+  PdfCharacter(int pageNum, double leftX, double upperY, double rightX, double lowerY,
+      int rotation, int wMode);
+
   /** The deconstructor. */
   ~PdfCharacter();
 
