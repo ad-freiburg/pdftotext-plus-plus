@@ -1050,7 +1050,7 @@ class PdfDocument {
   // The most frequent line distances in this PDF document, per font sizes. The entry stored at
   // mostFreqLineDistancePerFontSize[x] denotes the most frequent line distance between two
   // consecutive lines with font size x.
-  unordered_map<double, double> mostFreqLineDistancePerFontSize;
+  unordered_map<double, double> mostFreqLineDistancePerFontSize = {};
 
   // The most frequent word height in this PDF document.
   double mostFreqWordHeight = 0.0;

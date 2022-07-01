@@ -260,25 +260,149 @@ TEST(PdfElementsUtils, computeOverlapsFigure) {
 
 // _________________________________________________________________________________________________
 TEST(PdfTextElementsUtils, computeHasEqualFont) {
-
+  PdfWord word1;
+  word1.fontName = "Arial";
+  PdfWord word2;
+  word2.fontName = "Arial";
+  PdfWord word3;
+  word3.fontName = "Times";
+  ASSERT_TRUE(text_element_utils::computeHasEqualFont(&word1, &word2));
+  ASSERT_FALSE(text_element_utils::computeHasEqualFont(&word1, &word3));
 }
 
 // _________________________________________________________________________________________________
 TEST(PdfTextElementsUtils, computeHasEqualFontSize) {
-
+  PdfWord word1;
+  word1.fontSize = 11.0;
+  PdfWord word2;
+  word2.fontSize = 11.2;
+  PdfWord word3;
+  word3.fontSize = 13.4;
+  ASSERT_TRUE(text_element_utils::computeHasEqualFontSize(&word1, &word2));
+  ASSERT_FALSE(text_element_utils::computeHasEqualFontSize(&word1, &word3));
 }
 
 // _________________________________________________________________________________________________
 TEST(PdfTextElementsUtils, computeEndsWithSentenceDelimiter) {
-
+  PdfWord word1;
+  word1.text = "foo.";
+  PdfWord word2;
+  word2.text = "foo?";
+  PdfWord word3;
+  word3.text = "foo!";
+  PdfWord word4;
+  word4.text = "foo";
+  ASSERT_TRUE(text_element_utils::computeEndsWithSentenceDelimiter(&word1));
+  ASSERT_TRUE(text_element_utils::computeEndsWithSentenceDelimiter(&word2));
+  ASSERT_TRUE(text_element_utils::computeEndsWithSentenceDelimiter(&word3));
+  ASSERT_FALSE(text_element_utils::computeEndsWithSentenceDelimiter(&word4));
 }
 
 // _________________________________________________________________________________________________
 TEST(PdfTextElementsUtils, computeStartsWithUpper) {
-
+  PdfWord word1;
+  word1.text = "foo";
+  PdfWord word2;
+  word2.text = "Foo";
+  ASSERT_FALSE(text_element_utils::computeStartsWithUpper(&word1));
+  ASSERT_TRUE(text_element_utils::computeStartsWithUpper(&word2));
 }
 
 // _________________________________________________________________________________________________
 TEST(PdfTextElementsUtils, computeIsEmphasized) {
+  PdfDocument* doc = new PdfDocument();
+  doc->mostFreqFontName = "Arial";
+  doc->mostFreqFontSize = 11.9;
 
+  PdfFontInfo* arial = new PdfFontInfo();
+  arial->fontName = "Arial";
+  arial->weight = 400;
+  doc->fontInfos[arial->fontName] = arial;
+
+  PdfFontInfo* times = new PdfFontInfo();
+  times->fontName = "Times";
+  times->weight = 400;
+  doc->fontInfos[times->fontName] = times;
+
+  PdfFontInfo* timesBold = new PdfFontInfo();
+  timesBold->fontName = "TimesBold";
+  timesBold->weight = 600;
+  doc->fontInfos[timesBold->fontName] = timesBold;
+
+  PdfFontInfo* arialIt = new PdfFontInfo();
+  arialIt->fontName = "ArialItalic";
+  arialIt->weight = 400;
+  arialIt->isItalic = true;
+  doc->fontInfos[arialIt->fontName] = arialIt;
+
+  PdfWord* word1 = new PdfWord();
+  word1->fontName = "Arial";
+  word1->fontSize = 9.9;
+  word1->doc = doc;
+  // Not emphasized because smaller font size.
+  ASSERT_FALSE(text_element_utils::computeIsEmphasized(word1));
+
+  PdfWord* word2 = new PdfWord();
+  word2->fontName = "Arial";
+  word2->fontSize = 11.9;
+  word2->doc = doc;
+  // Not emphasized because equal font size.
+  ASSERT_FALSE(text_element_utils::computeIsEmphasized(word2));
+
+  PdfWord* word3 = new PdfWord();
+  word3->fontName = "Arial";
+  word3->fontSize = 12.4;
+  word3->doc = doc;
+  // Not emphasized because the difference between the font sizes is smaller than the threshold.
+  ASSERT_FALSE(text_element_utils::computeIsEmphasized(word3));
+
+  PdfWord* word4 = new PdfWord();
+  word4->fontName = "Arial";
+  word4->fontSize = 13.0;
+  word4->doc = doc;
+  // Emphasized because larger font size.
+  ASSERT_TRUE(text_element_utils::computeIsEmphasized(word4));
+
+  PdfWord* word5 = new PdfWord();
+  word5->fontName = "Times";
+  word5->fontSize = 11.9;
+  word5->doc = doc;
+  // Not emphasized because same most frequent font weight.
+  ASSERT_FALSE(text_element_utils::computeIsEmphasized(word5));
+
+  PdfWord* word6 = new PdfWord();
+  word6->fontName = "TimesBold";
+  word6->fontSize = 11.9;
+  word6->doc = doc;
+  // Emphasized because font size is not smaller and font weight is larger.
+  ASSERT_TRUE(text_element_utils::computeIsEmphasized(word6));
+
+  PdfWord* word7 = new PdfWord();
+  word7->fontName = "TimesBold";
+  word7->fontSize = 9.9;
+  word7->doc = doc;
+  // Not emphasized because font size is smaller.
+  ASSERT_FALSE(text_element_utils::computeIsEmphasized(word7));
+
+  PdfWord* word8 = new PdfWord();
+  word8->fontName = "ArialItalic";
+  word8->fontSize = 11.9;
+  word8->doc = doc;
+  // Emphasized because font size is not smaller and printed in italics.
+  ASSERT_TRUE(text_element_utils::computeIsEmphasized(word8));
+
+  PdfWord* word9 = new PdfWord();
+  word9->fontName = "ArialItalic";
+  word9->fontSize = 10.0;
+  word9->doc = doc;
+  // Not emphasized because font size is smaller.
+  ASSERT_FALSE(text_element_utils::computeIsEmphasized(word9));
+
+  PdfWord* word0 = new PdfWord();
+  word0->fontName = "Arial";
+  word0->fontSize = 11.9;
+  word0->text = "INTRODUCTION";
+  word0->doc = doc;
+  // Emphasized because font size is not smaller and text is in uppercase.
+  ASSERT_FALSE(text_element_utils::computeIsEmphasized(word0));
 }
