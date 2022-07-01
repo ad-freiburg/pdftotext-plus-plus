@@ -1,0 +1,24 @@
+name: checkstyle
+
+on: push
+
+jobs:
+  checkstyle:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Docker
+        run: |
+          sudo apt install -y apt-transport-https ca-certificates curl software-properties-common
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+          sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable"
+          sudo apt update
+          sudo apt-cache policy docker-ce
+          sudo apt install docker-ce
+
+      - name: Docker build
+        run: sudo docker build -f ${{github.workspace}}/Dockerfile.test -t pdftotext-plus-plus-test .
+
+      - name: Docker run
+        run: sudo docker run -i --rm pdftotext-plus-plus-test

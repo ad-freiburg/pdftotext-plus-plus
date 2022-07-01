@@ -95,7 +95,22 @@ dataset: build-docker
 build-docker:
 	@echo "\033[34;1mBuilding the Docker image ...\033[0m"
 
-	$(DOCKER_CMD) build -f $(DOCKER_FILE) -t $(DOCKER_IMAGE) .
+#$(DOCKER_CMD) build -f $(DOCKER_FILE) -t $(DOCKER_IMAGE) .
+	$(DOCKER_CMD) build -f Dockerfile.test -t pdftotext-plus-plus-test .
+
+# ==================================================================================================
+
+compile: build-docker
+	@echo "\033[34;1mCompiling pdftotext++ ...\033[0m"
+	$(DOCKER_CMD) run --rm pdftotext-plus-plus-test
+
+test: build-docker
+	@echo "\033[34;1mTesting pdftotext++ ...\033[0m"
+	$(DOCKER_CMD) run --rm --entrypoint make $(DOCKER_IMAGE) test
+
+checkstyle: build-docker
+	@echo "\033[34;1mCheckstyling pdftotext++ ...\033[0m"
+	$(DOCKER_CMD) run --rm pdftotext-plus-plus-test
 
 # ==================================================================================================
 
@@ -107,9 +122,3 @@ install: build-docker
 	$(DOCKER_CMD) cp $(PROJECT_NAME)-install:/usr/local/bin $(INSTALL_DIR)/
 	$(DOCKER_CMD) rm $(PROJECT_NAME)-install
 
-# ==================================================================================================
-
-test: build-docker
-	@echo "\033[34;1mTesting pdftotext++ ...\033[0m"
-
-	$(DOCKER_CMD) run --rm --entrypoint make $(DOCKER_IMAGE) test

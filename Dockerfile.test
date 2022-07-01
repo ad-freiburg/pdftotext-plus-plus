@@ -1,0 +1,3 @@
+FROM ubuntu:20.04 as base
+
+CMD echo "Hello pdftotext"
