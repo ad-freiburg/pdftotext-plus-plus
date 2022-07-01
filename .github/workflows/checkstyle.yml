@@ -21,4 +21,4 @@ jobs:
         run: sudo docker build -f ${{github.workspace}}/Dockerfile.test -t pdftotext-plus-plus-test .
 
       - name: Docker run
-        run: sudo docker run -i --rm pdftotext-plus-plus-test
+        run: sudo docker run -i --rm --entrypoint make pdftotext-plus-plus-test checkstyle
