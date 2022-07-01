@@ -14,6 +14,7 @@
 
 #include "./utils/Log.h"
 #include "./utils/MathUtils.h"
+#include "./utils/PageSegmentsUtils.h"
 #include "./utils/PdfElementsUtils.h"
 #include "./utils/StringUtils.h"
 #include "./utils/Trool.h"
@@ -22,11 +23,7 @@
 #include "./PdfDocument.h"
 #include "./XYCut.h"
 
-using global_config::ID_LENGTH;
-
 using std::endl;
-using std::max;
-using std::min;
 using std::pair;
 using std::vector;
 
@@ -96,7 +93,8 @@ void PageSegmentator::processPage(PdfPage* page, vector<PdfPageSegment*>* segmen
 
   // Create a `PdfPageSegment` from each group and append it to the result vector.
   for (const auto& group : groups) {
-    createPageSegment(group, segments);
+    PdfPageSegment* segment = page_segment_utils::createPageSegment(group, _doc);
+    segments->push_back(segment);
   }
 }
 
@@ -461,37 +459,4 @@ void PageSegmentator::chooseYCuts(const vector<Cut*>& cuts, const vector<PdfElem
       }
     }
   }
-}
-
-// _________________________________________________________________________________________________
-void PageSegmentator::createPageSegment(const vector<PdfElement*>& elements,
-    vector<PdfPageSegment*>* segments) const {
-  assert(segments);
-
-  // Do nothing if no elements are given.
-  if (elements.empty()) {
-    return;
-  }
-
-  PdfPageSegment* segment = new PdfPageSegment();
-  segment->doc = _doc;
-
-  // Create a (unique) id.
-  segment->id = string_utils::createRandomString(ID_LENGTH, "segment-");
-
-  // Set the page number.
-  segment->pos->pageNum = elements[0]->pos->pageNum;
-
-  // Compute and set the coordinates of the bounding box.
-  for (const auto* element : elements) {
-    segment->pos->leftX = min(segment->pos->leftX, element->pos->leftX);
-    segment->pos->upperY = min(segment->pos->upperY, element->pos->upperY);
-    segment->pos->rightX = max(segment->pos->rightX, element->pos->rightX);
-    segment->pos->lowerY = max(segment->pos->lowerY, element->pos->lowerY);
-  }
-
-  // Set the elements.
-  segment->elements = elements;
-
-  segments->push_back(segment);
 }

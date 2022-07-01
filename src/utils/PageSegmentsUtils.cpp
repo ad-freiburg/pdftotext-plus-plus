@@ -13,11 +13,42 @@
 #include "./Counter.h"
 #include "./MathUtils.h"
 #include "./PageSegmentsUtils.h"
+#include "./StringUtils.h"
+
+using global_config::ID_LENGTH;
 
 using std::make_tuple;
+using std::max;
+using std::min;
 using std::pair;
 using std::tuple;
 using std::unordered_map;
+
+// _________________________________________________________________________________________________
+PdfPageSegment* page_segment_utils::createPageSegment(const vector<PdfElement*>& elements,
+    const PdfDocument* doc) {
+  PdfPageSegment* segment = new PdfPageSegment();
+  segment->doc = doc;
+
+  // Create a (unique) id.
+  segment->id = string_utils::createRandomString(ID_LENGTH, "segment-");
+
+  // Set the page number.
+  segment->pos->pageNum = !elements.empty() ? elements[0]->pos->pageNum : -1;
+
+  // Compute and set the coordinates of the bounding box.
+  for (const auto* element : elements) {
+    segment->pos->leftX = min(segment->pos->leftX, element->pos->leftX);
+    segment->pos->upperY = min(segment->pos->upperY, element->pos->upperY);
+    segment->pos->rightX = max(segment->pos->rightX, element->pos->rightX);
+    segment->pos->lowerY = max(segment->pos->lowerY, element->pos->lowerY);
+  }
+
+  // Set the elements.
+  segment->elements = elements;
+
+  return segment;
+}
 
 // _________________________________________________________________________________________________
 tuple<double, double, double, double> page_segment_utils::computeTrimBox(

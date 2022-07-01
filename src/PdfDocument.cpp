@@ -257,6 +257,18 @@ string PdfCharacter::toShortString() const {
 PdfWord::PdfWord() = default;
 
 // _________________________________________________________________________________________________
+PdfWord::PdfWord(int pageNum, double leftX, double upperY, double rightX,
+    double lowerY, int rotation, int wMode) {
+  pos->pageNum = pageNum;
+  pos->leftX = leftX;
+  pos->upperY = upperY;
+  pos->rightX = rightX;
+  pos->lowerY = lowerY;
+  pos->rotation = rotation;
+  pos->wMode = wMode;
+}
+
+// _________________________________________________________________________________________________
 PdfWord::~PdfWord() {
   // if (isFirstPartOfHyphenatedWord != nullptr) { delete isFirstPartOfHyphenatedWord; }
   // if (isSecondPartOfHyphenatedWord != nullptr) { delete isSecondPartOfHyphenatedWord; }
@@ -290,6 +302,18 @@ string PdfWord::toShortString() const {
 
 // _________________________________________________________________________________________________
 PdfTextLine::PdfTextLine() = default;
+
+// _________________________________________________________________________________________________
+PdfTextLine::PdfTextLine(int pageNum, double leftX, double upperY, double rightX,
+    double lowerY, int rotation, int wMode) {
+  pos->pageNum = pageNum;
+  pos->leftX = leftX;
+  pos->upperY = upperY;
+  pos->rightX = rightX;
+  pos->lowerY = lowerY;
+  pos->rotation = rotation;
+  pos->wMode = wMode;
+}
 
 // _________________________________________________________________________________________________
 PdfTextLine::~PdfTextLine() = default;
@@ -356,6 +380,15 @@ string PdfTextBlock::toShortString() const {
 
 // _________________________________________________________________________________________________
 PdfFigure::PdfFigure() = default;
+
+// _________________________________________________________________________________________________
+PdfFigure::PdfFigure(int pageNum, double leftX, double upperY, double rightX, double lowerY) {
+  pos->pageNum = pageNum;
+  pos->leftX = leftX;
+  pos->upperY = upperY;
+  pos->rightX = rightX;
+  pos->lowerY = lowerY;
+}
 
 // _________________________________________________________________________________________________
 PdfFigure::~PdfFigure() {

@@ -41,6 +41,18 @@ const double MIN_PERC_LINES_SAME_RIGHT_X = 0.5;
 namespace page_segment_utils {
 
 /**
+ * This method creates a new `PdfPageSegment` from the given elements, computes the respective
+ * properties of the segment returns the created segment.
+ *
+ * @param elements
+ *   The elements to create a segment from.
+ * @param doc
+ *   The PDF document of which this segment is a part.
+ */
+PdfPageSegment* createPageSegment(const vector<PdfElement*>& elements,
+    const PdfDocument* doc = nullptr);
+
+/**
  * This method computes the trim box of the given page segment, that is: the bounding box around
  * the lines of the segment that do not extend beyond the actual segment boundaries. Here is an
  * example for illustration purposes:

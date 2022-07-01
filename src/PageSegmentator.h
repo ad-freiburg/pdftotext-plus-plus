@@ -434,18 +434,6 @@ class PageSegmentator {
 
   // ===============================================================================================
 
-  /**
-   * This method creates a new `PdfPageSegment` from the given elements, computes the respective
-   * properties of the segment and appends the segment to th given vector.
-   *
-   * @param elements
-   *   The elements to create a segment from.
-   * @param segments
-   *   The vector to which the created segments should be appended.
-   */
-  void createPageSegment(const vector<PdfElement*>& elements,
-      vector<PdfPageSegment*>* segments) const;
-
   // The document to process.
   const PdfDocument* _doc;
 

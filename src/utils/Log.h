@@ -9,6 +9,8 @@
 #ifndef UTILS_LOG_H_
 #define UTILS_LOG_H_
 
+#include <gtest/gtest.h>
+
 #include <iostream>  // std::ostream
 #include <string>
 
@@ -78,7 +80,7 @@ class Logger {
    *    logger prints all messages to the console, no matter with which pages the messages are
    *    associated.
    */
-  Logger(const LogLevel& logLevel, int pageFilter);
+  Logger(const LogLevel& logLevel, int pageFilter = -1);
 
   /**
    * This method sets the log level of this logger.
@@ -210,6 +212,8 @@ class Logger {
 
   // The page filter.
   int _pageFilter = -1;
+
+  FRIEND_TEST(Log, constructor);
 };
 
 #endif  // UTILS_LOG_H_

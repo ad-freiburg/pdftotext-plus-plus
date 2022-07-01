@@ -10,6 +10,10 @@
 
 #include "../src/utils/MathUtils.h"
 
+#include "../src/Constants.h"
+
+using global_config::DOUBLE_EQUAL_TOLERANCE;
+
 // _________________________________________________________________________________________________
 TEST(MathUtils, equal) {
   ASSERT_TRUE(math_utils::equal(0.0, 0.0));
@@ -90,11 +94,11 @@ TEST(MathUtils, between) {
 
 // _________________________________________________________________________________________________
 TEST(MathUtils, round) {
-  ASSERT_NEAR(math_utils::round(1.46731, 0), 1.0, 0.00001);
-  ASSERT_NEAR(math_utils::round(1.56731, 0), 2.0, 0.00001);
-  ASSERT_NEAR(math_utils::round(1.56731, 1), 1.6, 0.00001);
-  ASSERT_NEAR(math_utils::round(1.56731, 2), 1.57, 0.00001);
-  ASSERT_NEAR(math_utils::round(1.56731, 3), 1.567, 0.00001);
-  ASSERT_NEAR(math_utils::round(1.56731, 4), 1.5673, 0.00001);
-  ASSERT_NEAR(math_utils::round(1.56731, 5), 1.56731, 0.00001);
+  ASSERT_NEAR(math_utils::round(1.46731, 0), 1.0, DOUBLE_EQUAL_TOLERANCE);
+  ASSERT_NEAR(math_utils::round(1.56731, 0), 2.0, DOUBLE_EQUAL_TOLERANCE);
+  ASSERT_NEAR(math_utils::round(1.56731, 1), 1.6, DOUBLE_EQUAL_TOLERANCE);
+  ASSERT_NEAR(math_utils::round(1.56731, 2), 1.57, DOUBLE_EQUAL_TOLERANCE);
+  ASSERT_NEAR(math_utils::round(1.56731, 3), 1.567, DOUBLE_EQUAL_TOLERANCE);
+  ASSERT_NEAR(math_utils::round(1.56731, 4), 1.5673, DOUBLE_EQUAL_TOLERANCE);
+  ASSERT_NEAR(math_utils::round(1.56731, 5), 1.56731, DOUBLE_EQUAL_TOLERANCE);
 }

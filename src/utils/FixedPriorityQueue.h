@@ -9,6 +9,8 @@
 #ifndef UTILS_FIXEDPRIORITYQUEUE_H_
 #define UTILS_FIXEDPRIORITYQUEUE_H_
 
+#include <gtest/gtest.h>
+
 #include <algorithm>  // std::sort
 #include <queue>
 #include <vector>
@@ -71,6 +73,9 @@ class FixedPriorityQueue : public priority_queue<T, vector<T>, Comparator> {
  private:
   // The capacity of this priority queue.
   size_t _capacity;
+
+
+  FRIEND_TEST(FixedPriorityQueue, pushpop);
 };
 
 #endif  // UTILS_FIXEDPRIORITYQUEUE_H_
