@@ -1,4 +1,7 @@
-FROM ubuntu:18.04 as base
+# The Dockerfile for building the base image of pdftotext++, with all required dependencies already
+# installed (tensorflow, poppler, utf8proc-builder).
+
+FROM ubuntu:20.04 as base
 
 LABEL maintainer="Claudius Korzen <korzen@cs.uni-freiburg.de>"
 
@@ -21,7 +24,7 @@ FROM base as tensorflow-builder
 # Install protocol buffers (needed by Tensorflow for (de-)serializing the models).
 ARG PB_VERSION=3.9.2
 WORKDIR /protocol_buffers
-RUN apt-get install -y autoconf automake libtool unzip
+RUN apt-get update && apt-get install -y autoconf automake libtool unzip
 RUN wget -qc https://github.com/protocolbuffers/protobuf/releases/download/v${PB_VERSION}/protobuf-all-${PB_VERSION}.tar.gz
 RUN tar xf protobuf-all-${PB_VERSION}.tar.gz --no-same-owner
 WORKDIR /protocol_buffers/protobuf-${PB_VERSION}
@@ -39,7 +42,7 @@ RUN ldconfig
 # Install bazel (a build system required to build Tensorflow from source), as described on the
 # official Bazel website, see https://docs.bazel.build/versions/main/install-ubuntu.html.
 ARG BAZEL_VERSION=3.1.0
-RUN apt-get install -y gnupg
+RUN apt-get update && apt-get install -y gnupg
 RUN curl -fsSL https://bazel.build/bazel-release.pub.gpg | gpg --dearmor > bazel.gpg
 RUN mv bazel.gpg /etc/apt/trusted.gpg.d/
 RUN echo "deb [arch=amd64] https://storage.googleapis.com/bazel-apt stable jdk1.8" | tee /etc/apt/sources.list.d/bazel.list
@@ -49,7 +52,7 @@ RUN ldconfig
 
 # Install Tensorflow.
 ARG TF_VERSION=2.3.0
-RUN apt-get install -y python3-dev python3-pip
+RUN apt-get update && apt-get install -y python3-dev python3-pip
 RUN ln -s /usr/bin/python3 /usr/bin/python
 RUN pip3 install numpy scikit-build
 WORKDIR /tensorflow
@@ -114,7 +117,7 @@ RUN ln -s libtensorflow_framework.so.${TF_VERSION} libtensorflow_framework.so.2
 FROM base as utf8proc-builder
 
 ARG U8P_VERSION=2.6.1
-RUN apt-get install -y cmake
+RUN apt-get update && apt-get install -y cmake
 WORKDIR /utf8proc
 RUN git config --global advice.detachedHead false
 RUN git clone --depth 1 --branch v${U8P_VERSION} https://github.com/JuliaStrings/utf8proc.git .
@@ -133,7 +136,7 @@ RUN cp -r /usr/local/lib/libutf8proc.a .
 FROM base as poppler-builder
 
 ARG POP_VERSION=22.01.0
-RUN apt-get install -y libboost-all-dev libfontconfig1-dev libfreetype6-dev libnss3-dev libopenjp2-7-dev libtiff5-dev
+RUN apt-get update && apt-get install -y libboost-all-dev libfontconfig1-dev libfreetype6-dev libnss3-dev libopenjp2-7-dev libtiff5-dev
 WORKDIR /poppler
 RUN git config --global advice.detachedHead false
 RUN git clone --depth 1 --branch poppler-${POP_VERSION} https://github.com/freedesktop/poppler.git .
@@ -160,7 +163,7 @@ RUN cp /usr/lib/x86_64-linux-gnu/libnss3.so .
 RUN cp /usr/lib/x86_64-linux-gnu/libsmime3.so .
 RUN cp /usr/lib/x86_64-linux-gnu/libplc4.so .
 RUN cp /usr/lib/x86_64-linux-gnu/libnspr4.so .
-#RUN cp /usr/lib/x86_64-linux-gnu/libwebp.so.6 .
+RUN cp /usr/lib/x86_64-linux-gnu/libwebp.so.6 .
 RUN cp /usr/lib/x86_64-linux-gnu/libjbig.so.0 .
 RUN cp /usr/lib/x86_64-linux-gnu/libnssutil3.so .
 RUN cp /usr/lib/x86_64-linux-gnu/libplds4.so .
@@ -171,7 +174,7 @@ RUN cp /usr/lib/x86_64-linux-gnu/libplds4.so .
 FROM base as gtest-builder
 
 ARG GT_VERSION=1.10.0
-RUN apt-get install unzip
+RUN apt-get update && apt-get install unzip
 WORKDIR /gtest
 RUN wget -q https://github.com/google/googletest/archive/release-${GT_VERSION}.zip
 RUN unzip -qq release-${GT_VERSION}.zip
@@ -185,13 +188,11 @@ RUN cp -a /gtest/googletest-release-${GT_VERSION}/googletest/bld/lib/*.a .
 RUN ldconfig
 
 # ==================================================================================================
-# Build pdftotext++.
 
 FROM base as runtime
 
-RUN apt-get install -y fontconfig python3-dev
+RUN apt-get update && apt-get install -y fontconfig python3-dev
 
-WORKDIR /pdftotext
 COPY --from=tensorflow-builder /opt/include/ /usr/local/include/
 COPY --from=tensorflow-builder /opt/lib/ /usr/local/lib/
 COPY --from=utf8proc-builder /opt/include/ /usr/local/include/
@@ -202,20 +203,15 @@ COPY --from=gtest-builder /opt/include/ /usr/local/include/
 COPY --from=gtest-builder /opt/lib/ /usr/local/lib/
 RUN ldconfig
 
-COPY src src
-COPY test test
-COPY Makefile.Docker Makefile
-RUN make install
-
-ENTRYPOINT ["pdftotext++"]
-# RUN apt-get update && apt-get install -y gdb
-# CMD ["/bin/bash"]
+WORKDIR /pdftotext
 
 # ==================================================================================================
 # USEFUL COMMANDS
 
 # BUILDING DOCKER IMAGE:
-# docker build -t pdftotext-plus-plus .
+# docker build -f Dockerfile.base.ubuntu-20.04 -t pdftotext-plus-plus.base:ubuntu-20.04 .
 
-# EXTRACTING TEXT FROM A SINGLE PDF:
-# docker run --rm -v <path-to-pdf>:/file.pdf pdftotext-plus-plus /file.pdf -
+# UPLOADING DOCKER IMAGE TO DOCKERHUB:
+# docker login
+# docker image tag pdftotext-plus-plus.base:ubuntu-20.04 pdftotextplusplus/base:ubuntu-20.04
+# docker image push pdftotextplusplus/base:ubuntu-20.04

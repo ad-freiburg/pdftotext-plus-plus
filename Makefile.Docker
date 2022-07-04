@@ -7,6 +7,8 @@ TEST_BINARY_FILES = $(basename $(wildcard $(TEST_DIR)/*Test.cpp $(TEST_DIR)/*/*T
 HEADER_FILES = $(wildcard $(SRC_DIR)/*.h $(SRC_DIR)/*/*.h)
 OBJECT_FILES = $(addsuffix .o, $(basename $(filter-out %Main.cpp %Test.cpp, $(wildcard $(SRC_DIR)/*.cpp $(SRC_DIR)/*/*.cpp))))
 
+CPPLINT_PATH = cpplint.py
+
 CXX = g++ -g -Wall -std=c++17
 #CXX = g++ -O3 -Wall -std=c++17
 LIBS = -lpoppler -lpoppler-cpp -ltensorflow_cc -ltensorflow_framework -lutf8proc
@@ -26,7 +28,8 @@ checkstyle:
 	@# Filter HEADER_FILES_guards and include check, doesn't work well for
 	@# projects roots that are not a svn or git root.
 	@# Allow non-const references.
-	python3 $(CPPLINT_PATH) --repository=. --filter='$(CPPLINT_FILTERS)' *.h *.cpp
+	python3 $(CPPLINT_PATH) --repository=src src/*.h src/*.cpp src/**/*.h src/**/*.cpp
+	python3 $(CPPLINT_PATH) --repository=test test/*.cpp test/**/*.cpp
 
 clean:
 	rm -f **/*.o
