@@ -18,3 +18,4 @@ jobs:
           sudo apt install docker-ce
 
       - name: make checkstyle
+        run: make -f ${{github.workspace}}/Makefile checkstyle
