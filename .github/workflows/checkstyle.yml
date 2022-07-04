@@ -17,8 +17,4 @@ jobs:
           sudo apt-cache policy docker-ce
           sudo apt install docker-ce
 
-      - name: Docker build
-        run: sudo docker build -f ${{github.workspace}}/Dockerfiles/Dockerfile.ubuntu:20.04 -t pdftotext-plus-plus-ubuntu:20.04 .
-
-      - name: Docker run
-        run: sudo docker run --rm --entrypoint make pdftotext-plus-plus-ubuntu:20.04 checkstyle
+      - name: make checkstyle
