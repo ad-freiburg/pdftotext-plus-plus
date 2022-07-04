@@ -19,6 +19,9 @@
     <a href="https://github.com/pdftotext-plus-plus/pdftotext-plus-plus/issues">Request Feature</a>
   </p>
   <br/>
+  [![Checkstyle](https://github.com/pdftotext-plus-plus/pdftotext-plus-plus/actions/workflows/checkstyle.yml/badge.svg)](https://github.com/pdftotext-plus-plus/pdftotext-plus-plus/actions/workflows/checkstyle.yml)
+  [![Unit Testing](https://github.com/pdftotext-plus-plus/pdftotext-plus-plus/actions/workflows/unit_test.yml/badge.svg)](https://github.com/pdftotext-plus-plus/pdftotext-plus-plus/actions/workflows/unit_test.yml)
+  <br/>
 </div>
 
 <!-- =========================================================================================== -->
