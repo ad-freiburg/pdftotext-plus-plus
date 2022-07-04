@@ -8,7 +8,10 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <limits>
+#include <tuple>
+#include <vector>
 
 #include "../src/utils/PageSegmentsUtils.h"
 #include "../src/utils/PdfElementsUtils.h"

@@ -6,9 +6,11 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
+#include <algorithm>  // std::max
 #include <tuple>
 #include <unordered_map>
 #include <utility>  // std::pair
+#include <vector>
 
 #include "./Counter.h"
 #include "./MathUtils.h"

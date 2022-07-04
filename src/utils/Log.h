@@ -80,7 +80,7 @@ class Logger {
    *    logger prints all messages to the console, no matter with which pages the messages are
    *    associated.
    */
-  Logger(const LogLevel& logLevel, int pageFilter = -1);
+  explicit Logger(const LogLevel& logLevel, int pageFilter = -1);
 
   /**
    * This method sets the log level of this logger.

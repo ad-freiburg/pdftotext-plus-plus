@@ -9,6 +9,8 @@
 #include <gtest/gtest.h>
 
 #include <functional>
+#include <string>
+#include <vector>
 
 #include "../src/utils/FixedPriorityQueue.h"
 
@@ -31,7 +33,7 @@ class IntDescComparator {
 // _________________________________________________________________________________________________
 class StringDescComparator {
  public:
-  bool operator() (std::string& s1, std::string& s2) const {
+  bool operator() (const std::string& s1, const std::string& s2) const {
     return s1 < s2;
   }
 };

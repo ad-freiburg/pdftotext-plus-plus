@@ -8,6 +8,9 @@
 
 #include <gtest/gtest.h>
 
+#include <string>
+#include <utility>  // pair
+
 #include "../src/utils/Counter.h"
 
 #include "../src/Constants.h"

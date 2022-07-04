@@ -8,6 +8,9 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>  // sort
+#include <vector>
+
 #include "../src/utils/Comparators.h"
 
 #include "../src/PdfDocument.h"

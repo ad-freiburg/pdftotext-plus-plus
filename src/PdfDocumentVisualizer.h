@@ -92,7 +92,7 @@ const AnnotColor gr1(0.7, 0.7, 0.7);
 const AnnotColor gr2(0.8, 0.8, 0.8);
 const AnnotColor gr3(0.9, 0.9, 0.9);
 
-}  // visualizer::colors
+}  // namespace visualizer::colors
 
 // =================================================================================================
 

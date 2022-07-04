@@ -10,6 +10,7 @@
 #define UTILS_PAGESEGMENTSUTILS_H_
 
 #include <tuple>
+#include <vector>
 
 #include "../PdfDocument.h"
 
