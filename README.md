@@ -19,12 +19,12 @@
     <a href="https://github.com/pdftotext-plus-plus/pdftotext-plus-plus/issues">Request Feature</a>
   </p>
   <br/>
-  [![Checkstyle](https://github.com/pdftotext-plus-plus/pdftotext-plus-plus/actions/workflows/checkstyle.yml/badge.svg)](https://github.com/pdftotext-plus-plus/pdftotext-plus-plus/actions/workflows/checkstyle.yml)
-  [![Unit Testing](https://github.com/pdftotext-plus-plus/pdftotext-plus-plus/actions/workflows/unit_test.yml/badge.svg)](https://github.com/pdftotext-plus-plus/pdftotext-plus-plus/actions/workflows/unit_test.yml)
-  <br/>
 </div>
 
 <!-- =========================================================================================== -->
+
+[![Checkstyle](https://github.com/pdftotext-plus-plus/pdftotext-plus-plus/actions/workflows/checkstyle.yml/badge.svg)]([https://github.com/ad-freiburg/QLever/actions/workflows/docker.yml](https://github.com/pdftotext-plus-plus/pdftotext-plus-plus/actions/workflows/checkstyle.yml))
+[![Unit Testing](https://github.com/pdftotext-plus-plus/pdftotext-plus-plus/actions/workflows/unit_test.yml/badge.svg)](https://github.com/pdftotext-plus-plus/pdftotext-plus-plus/actions/workflows/unit_test.yml)
 
 ## What's wrong with the classic *pdftotext* ?
 
