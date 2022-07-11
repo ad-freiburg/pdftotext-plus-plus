@@ -247,6 +247,15 @@ bool text_element_utils::computeStartsWithUpper(const PdfTextElement* element) {
 // _________________________________________________________________________________________________
 bool text_element_utils::computeIsEmphasized(const PdfTextElement* element) {
   assert(element);
+  assert(element->doc);
+
+  if (element->doc->fontInfos.count(element->doc->mostFreqFontName) == 0) {
+    return false;
+  }
+
+  if (element->doc->fontInfos.count(element->fontName) == 0) {
+    return false;
+  }
 
   const PdfFontInfo* docFontInfo = element->doc->fontInfos.at(element->doc->mostFreqFontName);
   const PdfFontInfo* elemFontInfo = element->doc->fontInfos.at(element->fontName);

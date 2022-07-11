@@ -6,6 +6,8 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
+#include <iostream>
+
 #include <algorithm>  // min
 #include <string>
 #include <unordered_map>

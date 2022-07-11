@@ -97,6 +97,7 @@ const double CENTERING_X_OVERLAP_RATIO_THRESHOLD = 0.99;
  *    The maximum allowed difference between the left x-offset and right x-offset of a text line.
  */
 constexpr double getCenteringXOffsetEqualTolerance(const PdfDocument* doc) {
+  assert(doc);
   return 2.0 * doc->avgCharWidth;
 }
 

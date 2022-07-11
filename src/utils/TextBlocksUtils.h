@@ -13,8 +13,10 @@
 #include <unordered_set>
 #include <vector>
 
+#include "../Constants.h"
 #include "../PdfDocument.h"
 
+using std::unordered_set;
 using std::vector;
 
 // =================================================================================================

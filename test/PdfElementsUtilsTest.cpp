@@ -404,5 +404,5 @@ TEST(PdfTextElementsUtils, computeIsEmphasized) {
   word0->text = "INTRODUCTION";
   word0->doc = doc;
   // Emphasized because font size is not smaller and text is in uppercase.
-  ASSERT_FALSE(text_element_utils::computeIsEmphasized(word0));
+  ASSERT_TRUE(text_element_utils::computeIsEmphasized(word0));
 }
