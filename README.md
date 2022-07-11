@@ -18,11 +18,14 @@
     ·
     <a href="https://github.com/pdftotext-plus-plus/pdftotext-plus-plus/issues">Request Feature</a>
   </p>
+  <a href="https://github.com/pdftotext-plus-plus/pdftotext-plus-plus/actions/workflows/checkstyle.yml"><img src="https://github.com/pdftotext-plus-plus/pdftotext-plus-plus/actions/workflows/checkstyle.yml/badge.svg"></a>
+  <a href="https://github.com/pdftotext-plus-plus/pdftotext-plus-plus/actions/workflows/unit_test.yml"><img src="https://github.com/pdftotext-plus-plus/pdftotext-plus-plus/actions/workflows/unit_test.yml/badge.svg"></a>
+  <br/>
   <br/>
 </div>
 
 <!-- =========================================================================================== -->
-
+  
 ## What's wrong with the classic *pdftotext* ?
 
 Absolutely nothing.
