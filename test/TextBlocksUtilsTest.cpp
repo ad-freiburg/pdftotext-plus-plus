@@ -8,7 +8,7 @@
 
 #include <gtest/gtest.h>
 
-#include <iostream>
+#include <vector>
 
 #include "../src/utils/MathUtils.h"
 #include "../src/utils/TextBlocksUtils.h"

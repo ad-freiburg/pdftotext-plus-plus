@@ -29,7 +29,7 @@ checkstyle:
 	@# projects roots that are not a svn or git root.
 	@# Allow non-const references.
 	python3 $(CPPLINT_PATH) --repository=src src/*.h src/*.cpp src/**/*.h src/**/*.cpp
-	python3 $(CPPLINT_PATH) --repository=test test/*.cpp test/**/*.cpp
+	python3 $(CPPLINT_PATH) --repository=test test/*.cpp
 
 clean:
 	rm -f **/*.o
