@@ -10,399 +10,457 @@
 
 #include <vector>
 
+#include "../src/PdfDocument.h"
+#include "../src/PdfToTextPlusPlus.h"
 #include "../src/utils/PdfElementsUtils.h"
 
-#include "../src/Constants.h"
-#include "../src/PdfDocument.h"
+using element_utils::computeHasEqualLeftX;
+using element_utils::computeHasEqualLowerY;
+using element_utils::computeHasEqualRightX;
+using element_utils::computeHasEqualUpperY;
+using element_utils::computeHorizontalGap;
+using element_utils::computeLeftXOffset;
+using element_utils::computeMaxXOverlapRatio;
+using element_utils::computeMaxYOverlapRatio;
+using element_utils::computeOverlapRatios;
+using element_utils::computeOverlapsFigure;
+using element_utils::computeRightXOffset;
+using element_utils::computeVerticalGap;
+using element_utils::computeXOverlapRatios;
+using element_utils::computeYOverlapRatios;
+using text_element_utils::computeEndsWithSentenceDelimiter;
+using text_element_utils::computeHasEqualFont;
+using text_element_utils::computeHasEqualFontSize;
+using text_element_utils::computeIsEmphasized;
+using text_element_utils::computeStartsWithUpper;
 
-using global_config::DOUBLE_EQUAL_TOLERANCE;
+// The allowed tolerance on comparing two float values.
+const double TOL = 0.01;
 
 // _________________________________________________________________________________________________
-TEST(PdfElementsUtils, computeHorizontalGap) {
-  PdfWord* word1 = new PdfWord(1, 23.1, 451.2, 31.8, 475.2, 0, 0);
-  PdfWord* word2 = new PdfWord(1, 31.8, 451.2, 47.1, 475.2, 0, 0);
-  ASSERT_NEAR(element_utils::computeHorizontalGap(word1, word2), 0.0, DOUBLE_EQUAL_TOLERANCE);
-  ASSERT_NEAR(element_utils::computeHorizontalGap(word2, word1), 0.0, DOUBLE_EQUAL_TOLERANCE);
+class PdfElementsUtilsTest : public ::testing::Test {
+ protected:
+  // This method is called before the first test of this test suite.
+  static void SetUpTestSuite() {
+    PdfToTextPlusPlus engine;
 
-  PdfWord* word3 = new PdfWord(1, 23.1, 451.2, 31.8, 475.2, 0, 0);
-  PdfWord* word4 = new PdfWord(1, 34.2, 451.2, 47.1, 475.2, 0, 0);
-  ASSERT_NEAR(element_utils::computeHorizontalGap(word3, word4), 2.4, DOUBLE_EQUAL_TOLERANCE);
-  ASSERT_NEAR(element_utils::computeHorizontalGap(word4, word3), 2.4, DOUBLE_EQUAL_TOLERANCE);
+    if (pdf1 == nullptr) {
+      pdf1 = new PdfDocument();
+      engine.process("./test/pdfs/1-article-two-columns.pdf", pdf1);
+    }
+
+    if (pdf2 == nullptr) {
+      pdf2 = new PdfDocument();
+      engine.process("./test/pdfs/2-article-one-column.pdf", pdf2);
+    }
+  }
+
+  // This method is called after the last test of this test suite.
+  static void TearDownTestSuite() {
+    delete pdf1;
+    pdf1 = nullptr;
+    delete pdf2;
+    pdf2 = nullptr;
+  }
+
+  static PdfDocument* pdf1;
+  static PdfDocument* pdf2;
+};
+
+PdfDocument* PdfElementsUtilsTest::pdf1 = nullptr;
+PdfDocument* PdfElementsUtilsTest::pdf2 = nullptr;
+
+// _________________________________________________________________________________________________
+TEST_F(PdfElementsUtilsTest, computeHorizontalGapPdf1) {
+  PdfPage* page0 = pdf1->pages[0];
+
+  // Test the gap between "1" and "Introduction" in the first line of the first page.
+  PdfWord* w1 = page0->words[0];
+  PdfWord* w2 = page0->words[1];
+  double gap = computeHorizontalGap(w1, w2);
+  ASSERT_NEAR(gap, 16.14, TOL) << "Word 1: " << w1->toString() << "\nWord 2: " << w2->toString();
+  gap = computeHorizontalGap(w2, w1);
+  ASSERT_NEAR(gap, 16.14, TOL) << "Word 1: " << w1->toString() << "\nWord 2: " << w2->toString();
+
+  // Test the gap between "Lorem" and "Ipsum" in the second line of the first page.
+  w1 = page0->words[2];
+  w2 = page0->words[3];
+  gap = computeHorizontalGap(w1, w2);
+  ASSERT_NEAR(gap, 3.99, TOL) << "Word 1: " << w1->toString() << "\nWord 2: " << w2->toString();
+  gap = computeHorizontalGap(w2, w1);
+  ASSERT_NEAR(gap, 3.99, TOL) << "Word 1: " << w1->toString() << "\nWord 2: " << w2->toString();
 }
 
 // _________________________________________________________________________________________________
-TEST(PdfElementsUtils, computeVerticalGap) {
-  PdfWord* word1 = new PdfWord(1, 23.1, 451.2, 31.8, 475.2, 0, 0);
-  PdfWord* word2 = new PdfWord(1, 34.2, 475.2, 47.1, 485.3, 0, 0);
-  ASSERT_NEAR(element_utils::computeVerticalGap(word1, word2), 0.0, DOUBLE_EQUAL_TOLERANCE);
-  ASSERT_NEAR(element_utils::computeVerticalGap(word2, word1), 0.0, DOUBLE_EQUAL_TOLERANCE);
+TEST_F(PdfElementsUtilsTest, computeVerticalGapPdf1) {
+  PdfPage* page0 = pdf1->pages[0];
 
-  PdfWord* word3 = new PdfWord(1, 23.1, 451.2, 31.8, 475.2, 0, 0);
-  PdfWord* word4 = new PdfWord(1, 34.2, 480.1, 47.1, 485.3, 0, 0);
-  ASSERT_NEAR(element_utils::computeVerticalGap(word3, word4), 4.9, DOUBLE_EQUAL_TOLERANCE);
-  ASSERT_NEAR(element_utils::computeVerticalGap(word4, word3), 4.9, DOUBLE_EQUAL_TOLERANCE);
+  // Test the gap between "Introduction" (in the first line) and "Lorem" (in the second line).
+  PdfWord* w1 = page0->words[1];
+  PdfWord* w2 = page0->words[2];
+  double gap = computeVerticalGap(w1, w2);
+  ASSERT_NEAR(gap, 7.33, TOL) << "Word 1: " << w1->toString() << "\nWord 2: " << w2->toString();
+  gap = computeVerticalGap(w2, w1);
+  ASSERT_NEAR(gap, 7.33, TOL) << "Word 1: " << w1->toString() << "\nWord 2: " << w2->toString();
+
+  // Test the gap between "ad" (in the second line) and "eos," (in the third line).
+  w1 = page0->words[9];
+  w2 = page0->words[10];
+  gap = computeVerticalGap(w1, w2);
+  ASSERT_NEAR(gap, -0.99, TOL) << "Word 1: " << w1->toString() << "\nWord 2: " << w2->toString();
+  gap = computeVerticalGap(w2, w1);
+  ASSERT_NEAR(gap, -0.99, TOL) << "Word 1: " << w1->toString() << "\nWord 2: " << w2->toString();
 }
 
 // _________________________________________________________________________________________________
-TEST(PdfElementsUtils, computeOverlapRatios) {
-  auto pair = element_utils::computeOverlapRatios(12.1, 34.5, 37.1, 40.8);
-  ASSERT_NEAR(pair.first, 0.0, DOUBLE_EQUAL_TOLERANCE);
-  ASSERT_NEAR(pair.second, 0.0, DOUBLE_EQUAL_TOLERANCE);
+TEST_F(PdfElementsUtilsTest, computeOverlapRatios) {
+  auto pair = computeOverlapRatios(12.1, 34.5, 37.1, 40.8);
+  ASSERT_NEAR(pair.first, 0.0, TOL);
+  ASSERT_NEAR(pair.second, 0.0, TOL);
 
-  pair = element_utils::computeOverlapRatios(5.0, 15.0, 10.0, 20.0);
-  ASSERT_NEAR(pair.first, 0.5, DOUBLE_EQUAL_TOLERANCE);
-  ASSERT_NEAR(pair.second, 0.5, DOUBLE_EQUAL_TOLERANCE);
+  pair = computeOverlapRatios(5.0, 15.0, 10.0, 20.0);
+  ASSERT_NEAR(pair.first, 0.5, TOL);
+  ASSERT_NEAR(pair.second, 0.5, TOL);
 
-  pair = element_utils::computeOverlapRatios(5.0, 10.0, 5.0, 10.0);
-  ASSERT_NEAR(pair.first, 1.0, DOUBLE_EQUAL_TOLERANCE);
-  ASSERT_NEAR(pair.second, 1.0, DOUBLE_EQUAL_TOLERANCE);
+  pair = computeOverlapRatios(5.0, 10.0, 5.0, 10.0);
+  ASSERT_NEAR(pair.first, 1.0, TOL);
+  ASSERT_NEAR(pair.second, 1.0, TOL);
 
-  pair = element_utils::computeOverlapRatios(10.0, 35.0, 0.0, 100.0);
-  ASSERT_NEAR(pair.first, 1.0, DOUBLE_EQUAL_TOLERANCE);
-  ASSERT_NEAR(pair.second, 0.25, DOUBLE_EQUAL_TOLERANCE);
+  pair = computeOverlapRatios(10.0, 35.0, 0.0, 100.0);
+  ASSERT_NEAR(pair.first, 1.0, TOL);
+  ASSERT_NEAR(pair.second, 0.25, TOL);
 
-  pair = element_utils::computeOverlapRatios(0.0, 100.0, 10.0, 85.0);
-  ASSERT_NEAR(pair.first, 0.75, DOUBLE_EQUAL_TOLERANCE);
-  ASSERT_NEAR(pair.second, 1.0, DOUBLE_EQUAL_TOLERANCE);
+  pair = computeOverlapRatios(0.0, 100.0, 10.0, 85.0);
+  ASSERT_NEAR(pair.first, 0.75, TOL);
+  ASSERT_NEAR(pair.second, 1.0, TOL);
 }
 
 // _________________________________________________________________________________________________
-TEST(PdfElementsUtils, computeXOverlapRatios) {
-  PdfWord* word1 = new PdfWord(1, 10.0, 0, 20.0, 0, 0, 0);
-  PdfWord* word2 = new PdfWord(1, 25.0, 0, 30.0, 0, 0, 0);
-  auto pair = element_utils::computeXOverlapRatios(word1, word2);
-  ASSERT_NEAR(pair.first, 0.0, DOUBLE_EQUAL_TOLERANCE);
-  ASSERT_NEAR(pair.second, 0.0, DOUBLE_EQUAL_TOLERANCE);
+TEST_F(PdfElementsUtilsTest, computeXOverlapRatiosPdf1) {
+  PdfPage* page0 = pdf1->pages[0];
 
-  PdfWord* word3 = new PdfWord(1, 10.0, 0, 20.0, 0, 0, 0);
-  PdfWord* word4 = new PdfWord(1, 10.0, 0, 20.0, 0, 0, 0);
-  pair = element_utils::computeXOverlapRatios(word3, word4);
-  ASSERT_NEAR(pair.first, 1.0, DOUBLE_EQUAL_TOLERANCE);
-  ASSERT_NEAR(pair.second, 1.0, DOUBLE_EQUAL_TOLERANCE);
+  // Test the ratio between "Introduction" (in the first line) and "ad" (in the second line).
+  PdfWord* w1 = page0->words[1];
+  PdfWord* w2 = page0->words[9];
+  auto pair = computeXOverlapRatios(w1, w2);
+  ASSERT_NEAR(pair.first, 0.0, TOL)  << "W1: " << w1->toString() << "\nW2: " << w2->toString();
+  ASSERT_NEAR(pair.second, 0.0, TOL) << "W1: " << w1->toString() << "\nW2: " << w2->toString();
 
-  PdfWord* word5 = new PdfWord(1, 10.0, 0, 20.0, 0, 0, 0);
-  PdfWord* word6 = new PdfWord(1, 15.0, 0, 25.0, 0, 0, 0);
-  pair = element_utils::computeXOverlapRatios(word5, word6);
-  ASSERT_NEAR(pair.first, 0.5, DOUBLE_EQUAL_TOLERANCE);
-  ASSERT_NEAR(pair.second, 0.5, DOUBLE_EQUAL_TOLERANCE);
+  // Test the ratio between "Introduction" (in the first line) and "ipsum" (in the second line).
+  w1 = page0->words[1];
+  w2 = page0->words[3];
+  pair = computeXOverlapRatios(w1, w2);
+  ASSERT_NEAR(pair.first, 0.29, TOL) << "W1: " << w1->toString() << "\nW2: " << w2->toString();
+  ASSERT_NEAR(pair.second, 1.0, TOL) << "W1: " << w1->toString() << "\nW2: " << w2->toString();
 
-  PdfWord* word7 = new PdfWord(1, 10.0, 0, 20.0, 0, 0, 0);
-  PdfWord* word8 = new PdfWord(1, 10.0, 0, 60.0, 0, 0, 0);
-  pair = element_utils::computeXOverlapRatios(word7, word8);
-  ASSERT_NEAR(pair.first, 1, DOUBLE_EQUAL_TOLERANCE);
-  ASSERT_NEAR(pair.second, 0.2, DOUBLE_EQUAL_TOLERANCE);
+  // Test the ratio between "Sed" (in the first line of the second block) and "tam," (in the second
+  // line of the second block).
+  w1 = page0->segments[0]->lines[9]->words[0];
+  w2 = page0->segments[0]->lines[10]->words[0];
+  pair = computeXOverlapRatios(w1, w2);
+  ASSERT_NEAR(pair.first, 0.64, TOL) << "W1: " << w1->toString() << "\nW2: " << w2->toString();
+  ASSERT_NEAR(pair.second, 0.49, TOL) << "W1: " << w1->toString() << "\nW2: " << w2->toString();
 }
 
 // _________________________________________________________________________________________________
-TEST(PdfElementsUtils, computeYOverlapRatios) {
-  PdfWord* word1 = new PdfWord(1, 0, 10.0, 0, 20.0, 0, 0);
-  PdfWord* word2 = new PdfWord(1, 0, 25.0, 0, 30.0, 0, 0);
-  auto pair = element_utils::computeYOverlapRatios(word1, word2);
-  ASSERT_NEAR(pair.first, 0.0, DOUBLE_EQUAL_TOLERANCE);
-  ASSERT_NEAR(pair.second, 0.0, DOUBLE_EQUAL_TOLERANCE);
+TEST_F(PdfElementsUtilsTest, computeYOverlapRatiosPdf1) {
+  PdfPage* page0 = pdf1->pages[0];
 
-  PdfWord* word3 = new PdfWord(1, 0, 10.0, 0, 20.0, 0, 0);
-  PdfWord* word4 = new PdfWord(1, 0, 10.0, 0, 20.0, 0, 0);
-  pair = element_utils::computeYOverlapRatios(word3, word4);
-  ASSERT_NEAR(pair.first, 1.0, DOUBLE_EQUAL_TOLERANCE);
-  ASSERT_NEAR(pair.second, 1.0, DOUBLE_EQUAL_TOLERANCE);
+  // Test the ratio between "Introduction" (in the first line) and "Lorem" (in the second line).
+  PdfWord* w1 = page0->words[1];
+  PdfWord* w2 = page0->words[2];
+  auto pair = computeYOverlapRatios(w1, w2);
+  ASSERT_NEAR(pair.first, 0.0, TOL) << "W1: " << w1->toString() << "\nW2: " << w2->toString();
+  ASSERT_NEAR(pair.second, 0.0, TOL) << "W1: " << w1->toString() << "\nW2: " << w2->toString();
 
-  PdfWord* word5 = new PdfWord(1, 0, 10.0, 0, 20.0, 0, 0);
-  PdfWord* word6 = new PdfWord(1, 0, 15.0, 0, 25.0, 0, 0);
-  pair = element_utils::computeYOverlapRatios(word5, word6);
-  ASSERT_NEAR(pair.first, 0.5, DOUBLE_EQUAL_TOLERANCE);
-  ASSERT_NEAR(pair.second, 0.5, DOUBLE_EQUAL_TOLERANCE);
+  // Test the ratio between "Lorem" and "ipsum" (in the second line).
+  w1 = page0->words[2];
+  w2 = page0->words[3];
+  pair = computeYOverlapRatios(w1, w2);
+  ASSERT_NEAR(pair.first, 1.0, TOL) << "W1: " << w1->toString() << "\nW2: " << w2->toString();
+  ASSERT_NEAR(pair.second, 1.0, TOL) << "W1: " << w1->toString() << "\nW2: " << w2->toString();
 
-  PdfWord* word7 = new PdfWord(1, 0, 10.0, 0, 20.0, 0, 0);
-  PdfWord* word8 = new PdfWord(1, 0, 10.0, 0, 60.0, 0, 0);
-  pair = element_utils::computeYOverlapRatios(word7, word8);
-  ASSERT_NEAR(pair.first, 1, DOUBLE_EQUAL_TOLERANCE);
-  ASSERT_NEAR(pair.second, 0.2, DOUBLE_EQUAL_TOLERANCE);
+  // Test the ratio between "ad" (in the second line) and "eos" (in the third line).
+  w1 = page0->words[9];
+  w2 = page0->words[10];
+  pair = computeYOverlapRatios(w1, w2);
+  ASSERT_NEAR(pair.first, 0.07, TOL) << "W1: " << w1->toString() << "\nW2: " << w2->toString();
+  ASSERT_NEAR(pair.second, 0.07, TOL) << "W1: " << w1->toString() << "\nW2: " << w2->toString();
 }
 
 // _________________________________________________________________________________________________
-TEST(PdfElementsUtils, computeMaxXOverlapRatio) {
-  PdfWord* word1 = new PdfWord(1, 10.0, 0, 20.0, 0, 0, 0);
-  PdfWord* word2 = new PdfWord(1, 25.0, 0, 30.0, 0, 0, 0);
-  ASSERT_NEAR(element_utils::computeMaxXOverlapRatio(word1, word2), 0.0, DOUBLE_EQUAL_TOLERANCE);
+TEST_F(PdfElementsUtilsTest, computeMaxXOverlapRatioPdf1) {
+  PdfPage* page0 = pdf1->pages[0];
 
-  PdfWord* word3 = new PdfWord(1, 10.0, 0, 20.0, 0, 0, 0);
-  PdfWord* word4 = new PdfWord(1, 10.0, 0, 20.0, 0, 0, 0);
-  ASSERT_NEAR(element_utils::computeMaxXOverlapRatio(word3, word4), 1.0, DOUBLE_EQUAL_TOLERANCE);
+  // Test the ratio between "Introduction" (in the first line) and "ad" (in the second line).
+  PdfWord* w1 = page0->words[1];
+  PdfWord* w2 = page0->words[9];
+  double ratio = computeMaxXOverlapRatio(w1, w2);
+  ASSERT_NEAR(ratio, 0.0, TOL) << "W1: " << w1->toString() << "\nW2: " << w2->toString();
 
-  PdfWord* word5 = new PdfWord(1, 10.0, 0, 20.0, 0, 0, 0);
-  PdfWord* word6 = new PdfWord(1, 15.0, 0, 25.0, 0, 0, 0);
-  ASSERT_NEAR(element_utils::computeMaxXOverlapRatio(word5, word6), 0.5, DOUBLE_EQUAL_TOLERANCE);
+  // Test the ratio between "Introduction" (in the first line) and "ipsum" (in the second line).
+  w1 = page0->words[1];
+  w2 = page0->words[3];
+  ratio = computeMaxXOverlapRatio(w1, w2);
+  ASSERT_NEAR(ratio, 1.0, TOL) << "W1: " << w1->toString() << "\nW2: " << w2->toString();
 
-  PdfWord* word7 = new PdfWord(1, 10.0, 0, 90.0, 0, 0, 0);
-  PdfWord* word8 = new PdfWord(1, 70.0, 0, 170.0, 0, 0, 0);
-  ASSERT_NEAR(element_utils::computeMaxXOverlapRatio(word7, word8), 0.25, DOUBLE_EQUAL_TOLERANCE);
+  // Test the ratio between "Sed" (in the first line of the second block) and the "tam," (in the
+  // second line of the second block).
+  w1 = page0->segments[0]->lines[9]->words[0];
+  w2 = page0->segments[0]->lines[10]->words[0];
+  ratio = computeMaxXOverlapRatio(w1, w2);
+  ASSERT_NEAR(ratio, 0.64, TOL) << "W1: " << w1->toString() << "\nW2: " << w2->toString();
 }
 
 // _________________________________________________________________________________________________
-TEST(PdfElementsUtils, computeMaxYOverlapRatio) {
-  PdfWord* word1 = new PdfWord(1, 0, 10.0, 0, 20.0, 0, 0);
-  PdfWord* word2 = new PdfWord(1, 0, 25.0, 0, 30.0, 0, 0);
-  ASSERT_NEAR(element_utils::computeMaxYOverlapRatio(word1, word2), 0.0, DOUBLE_EQUAL_TOLERANCE);
+TEST_F(PdfElementsUtilsTest, computeMaxYOverlapRatioPdf1) {
+  PdfPage* page0 = pdf1->pages[0];
 
-  PdfWord* word3 = new PdfWord(1, 0, 10.0, 0, 20.0, 0, 0);
-  PdfWord* word4 = new PdfWord(1, 0, 10.0, 0, 20.0, 0, 0);
-  ASSERT_NEAR(element_utils::computeMaxYOverlapRatio(word3, word4), 1.0, DOUBLE_EQUAL_TOLERANCE);
+  // Test the ratio between "Introduction" (in the first line) and "Lorem" (in the second line).
+  PdfWord* w1 = page0->words[1];
+  PdfWord* w2 = page0->words[2];
+  double ratio = computeMaxYOverlapRatio(w1, w2);
+  ASSERT_NEAR(ratio, 0.0, TOL) << "W1: " << w1->toString() << "\nW2: " << w2->toString();
 
-  PdfWord* word5 = new PdfWord(1, 0, 10.0, 0, 20.0, 0, 0);
-  PdfWord* word6 = new PdfWord(1, 0, 19.0, 0, 24.0, 0, 0);
-  ASSERT_NEAR(element_utils::computeMaxYOverlapRatio(word5, word6), 0.2, DOUBLE_EQUAL_TOLERANCE);
+  // Test the ratio between "Lorem" and "ipsum" (in the second line).
+  w1 = page0->words[2];
+  w2 = page0->words[3];
+  ratio = computeMaxYOverlapRatio(w1, w2);
+  ASSERT_NEAR(ratio, 1.0, TOL) << "W1: " << w1->toString() << "\nW2: " << w2->toString();
 
-  PdfWord* word7 = new PdfWord(1, 0, 10.0, 0, 90.0, 0, 0);
-  PdfWord* word8 = new PdfWord(1, 0, 65.0, 0, 170.0, 0, 0);
-  ASSERT_NEAR(element_utils::computeMaxYOverlapRatio(word7, word8), 0.3125, DOUBLE_EQUAL_TOLERANCE);
+  // Test the ratio between "ad" (in the second line) and "eos," (in the third line).
+  w1 = page0->segments[0]->lines[1]->words[7];
+  w2 = page0->segments[0]->lines[2]->words[0];
+  ratio = computeMaxYOverlapRatio(w1, w2);
+  ASSERT_NEAR(ratio, 0.07, TOL) << "W1: " << w1->toString() << "\nW2: " << w2->toString();
 }
 
 // _________________________________________________________________________________________________
-TEST(PdfElementsUtils, computeHasEqualLeftX) {
-  PdfWord* word1 = new PdfWord(1, 12.1, 10.0, 17.2, 20.0, 0, 0);
-  PdfWord* word2 = new PdfWord(1, 12.1, 25.0, 17.3, 30.0, 0, 0);
-  ASSERT_TRUE(element_utils::computeHasEqualLeftX(word1, word2));
+TEST_F(PdfElementsUtilsTest, computeHasEqualLeftXPdf1) {
+  PdfPage* page0 = pdf1->pages[0];
 
-  PdfWord* word3 = new PdfWord(1, 12.1, 10.0, 17.2, 20.0, 0, 0);
-  PdfWord* word4 = new PdfWord(1, 12.7, 25.0, 17.3, 30.0, 0, 0);
-  ASSERT_FALSE(element_utils::computeHasEqualLeftX(word3, word4));
-  ASSERT_FALSE(element_utils::computeHasEqualLeftX(word3, word4, 0.5));
-  ASSERT_TRUE(element_utils::computeHasEqualLeftX(word3, word4, 0.7));
+  // Test "1" (in the first line) and "Lorem" (in the second line).
+  PdfWord* w1 = page0->words[0];
+  PdfWord* w2 = page0->words[2];
+  ASSERT_TRUE(computeHasEqualLeftX(w1, w2))
+      << "W1: " << w1->toString() << "\nW2: " << w2->toString();
+
+  // Test "Lorem" and "ipsum" (in the second line).
+  w1 = page0->words[2];
+  w2 = page0->words[3];
+  ASSERT_FALSE(computeHasEqualLeftX(w1, w2))
+      << "W1: " << w1->toString() << "\nW2: " << w2->toString();
 }
 
 // _________________________________________________________________________________________________
-TEST(PdfElementsUtils, computeHasEqualUpperY) {
-  PdfWord* word1 = new PdfWord(1, 12.1, 10.0, 17.2, 20.0, 0, 0);
-  PdfWord* word2 = new PdfWord(1, 13.1, 10.0, 17.3, 30.0, 0, 0);
-  ASSERT_TRUE(element_utils::computeHasEqualUpperY(word1, word2));
+TEST_F(PdfElementsUtilsTest, computeHasEqualUpperYPdf1) {
+  PdfPage* page0 = pdf1->pages[0];
 
-  PdfWord* word3 = new PdfWord(1, 12.1, 10.0, 17.2, 20.0, 0, 0);
-  PdfWord* word4 = new PdfWord(1, 16.7, 12.5, 17.3, 30.0, 0, 0);
-  ASSERT_FALSE(element_utils::computeHasEqualUpperY(word3, word4));
-  ASSERT_FALSE(element_utils::computeHasEqualUpperY(word3, word4, 2.4));
-  ASSERT_TRUE(element_utils::computeHasEqualUpperY(word3, word4, 2.6));
+  // Test "1" (in the first line) and "Introduction" (in the second line).
+  PdfWord* w1 = page0->words[0];
+  PdfWord* w2 = page0->words[1];
+  ASSERT_TRUE(computeHasEqualUpperY(w1, w2))
+      << "W1: " << w1->toString() << "\nW2: " << w2->toString();
+
+  // Test "Introduction" (in the first line) and "Lorem" (in the second line).
+  w1 = page0->words[1];
+  w2 = page0->words[2];
+  ASSERT_FALSE(computeHasEqualUpperY(w1, w2))
+      << "W1: " << w1->toString() << "\nW2: " << w2->toString();
 }
 
 // _________________________________________________________________________________________________
-TEST(PdfElementsUtils, computeHasEqualRightX) {
-  PdfWord* word1 = new PdfWord(1, 12.1, 10.0, 17.2, 20.0, 0, 0);
-  PdfWord* word2 = new PdfWord(1, 15.2, 25.0, 17.2, 30.0, 0, 0);
-  ASSERT_TRUE(element_utils::computeHasEqualRightX(word1, word2));
+TEST_F(PdfElementsUtilsTest, computeHasEqualRightXPdf1) {
+  PdfPage* page0 = pdf1->pages[0];
 
-  PdfWord* word3 = new PdfWord(1, 12.1, 10.0, 17.2, 20.0, 0, 0);
-  PdfWord* word4 = new PdfWord(1, 12.7, 25.0, 17.9, 30.0, 0, 0);
-  ASSERT_FALSE(element_utils::computeHasEqualLeftX(word3, word4));
-  ASSERT_FALSE(element_utils::computeHasEqualLeftX(word3, word4, 0.5));
-  ASSERT_TRUE(element_utils::computeHasEqualLeftX(word3, word4, 0.7));
+  // Test "ad" (int the second line) and "phae-" (in the third line).
+  PdfWord* w1 = page0->words[9];
+  PdfWord* w2 = page0->words[18];
+  ASSERT_TRUE(computeHasEqualRightX(w1, w2))
+      << "W1: " << w1->toString() << "\nW2: " << w2->toString();
+
+  // Test "Introduction" (in the first line) and "Lorem" (in the second line).
+  w1 = page0->words[1];
+  w2 = page0->words[2];
+  ASSERT_FALSE(computeHasEqualRightX(w1, w2))
+      << "W1: " << w1->toString() << "\nW2: " << w2->toString();
 }
 
 // _________________________________________________________________________________________________
-TEST(PdfElementsUtils, computeHasEqualLowerY) {
-  PdfWord* word1 = new PdfWord(1, 12.1, 10.0, 17.2, 20.0, 0, 0);
-  PdfWord* word2 = new PdfWord(1, 13.1, 12.3, 17.4, 20.0, 0, 0);
-  ASSERT_TRUE(element_utils::computeHasEqualLowerY(word1, word2));
+TEST_F(PdfElementsUtilsTest, computeHasEqualLowerYPdf1) {
+  PdfPage* page0 = pdf1->pages[0];
 
-  PdfWord* word3 = new PdfWord(1, 12.1, 10.0, 17.2, 20.0, 0, 0);
-  PdfWord* word4 = new PdfWord(1, 13.1, 12.3, 17.4, 21.1, 0, 0);
-  ASSERT_FALSE(element_utils::computeHasEqualLowerY(word3, word4));
-  ASSERT_FALSE(element_utils::computeHasEqualLowerY(word3, word4, 1.0));
-  ASSERT_TRUE(element_utils::computeHasEqualLowerY(word3, word4, 1.2));
+  // Test "1" (in the first line) and "Introduction" (in the second line).
+  PdfWord* w1 = page0->words[0];
+  PdfWord* w2 = page0->words[1];
+  ASSERT_TRUE(computeHasEqualLowerY(w1, w2))
+      << "W1: " << w1->toString() << "\nW2: " << w2->toString();
+
+  // Test "Introduction" (in the first line) and "Lorem" (in the second line).
+  w1 = page0->words[1];
+  w2 = page0->words[2];
+  ASSERT_FALSE(computeHasEqualLowerY(w1, w2))
+      << "W1: " << w1->toString() << "\nW2: " << w2->toString();
 }
 
 // _________________________________________________________________________________________________
-TEST(PdfElementsUtils, computeLeftXOffset) {
-  PdfWord* word1 = new PdfWord(1, 12.1, 10.0, 17.2, 20.0, 0, 0);
-  PdfWord* word2 = new PdfWord(1, 12.1, 12.3, 17.4, 20.0, 0, 0);
-  ASSERT_NEAR(element_utils::computeLeftXOffset(word1, word2), 0.0, DOUBLE_EQUAL_TOLERANCE);
+TEST_F(PdfElementsUtilsTest, computeLeftXOffsetPdf1) {
+  PdfPage* page0 = pdf1->pages[0];
 
-  PdfWord* word3 = new PdfWord(1, 12.1, 10.0, 17.2, 20.0, 0, 0);
-  PdfWord* word4 = new PdfWord(1, 15.2, 12.3, 17.4, 20.0, 0, 0);
-  ASSERT_NEAR(element_utils::computeLeftXOffset(word3, word4), -3.1, DOUBLE_EQUAL_TOLERANCE);
-  ASSERT_NEAR(element_utils::computeLeftXOffset(word4, word2), 3.1, DOUBLE_EQUAL_TOLERANCE);
+  // Test "1" and "Introduction" (in the first line).
+  PdfWord* w1 = page0->words[0];
+  PdfWord* w2 = page0->words[1];
+  ASSERT_NEAR(computeLeftXOffset(w2, w1), 24.2, TOL)
+      << "W1: " << w1->toString() << "\nW2: " << w2->toString();
+
+  // Test "Lorem" (in the second line) and "eos," (in the third line).
+  w1 = page0->words[2];
+  w2 = page0->words[10];
+  ASSERT_NEAR(computeLeftXOffset(w2, w1), 0.0, TOL)
+      << "W1: " << w1->toString() << "\nW2: " << w2->toString();
 }
 
 // _________________________________________________________________________________________________
-TEST(PdfElementsUtils, computeRightXOffset) {
-  PdfWord* word1 = new PdfWord(1, 12.1, 10.0, 17.2, 20.0, 0, 0);
-  PdfWord* word2 = new PdfWord(1, 12.5, 12.3, 17.2, 20.0, 0, 0);
-  ASSERT_NEAR(element_utils::computeRightXOffset(word1, word2), 0.0, DOUBLE_EQUAL_TOLERANCE);
+TEST_F(PdfElementsUtilsTest, computeRightXOffsetPdf1) {
+  PdfPage* page0 = pdf1->pages[0];
 
-  PdfWord* word3 = new PdfWord(1, 12.1, 10.0, 17.2, 20.0, 0, 0);
-  PdfWord* word4 = new PdfWord(1, 15.2, 12.3, 19.7, 20.0, 0, 0);
-  ASSERT_NEAR(element_utils::computeRightXOffset(word3, word4), -2.5, DOUBLE_EQUAL_TOLERANCE);
-  ASSERT_NEAR(element_utils::computeRightXOffset(word4, word2), 2.5, DOUBLE_EQUAL_TOLERANCE);
+  // Test "1" (in the first line) and "Lorem" (in the second line).
+  PdfWord* w1 = page0->words[0];
+  PdfWord* w2 = page0->words[1];
+  ASSERT_NEAR(computeRightXOffset(w2, w1), 104.95, TOL)
+      << "W1: " << w1->toString() << "\nW2: " << w2->toString();
+
+  // Test "ad" (in the second line) and "phae-" (in the third line).
+  w1 = page0->segments[0]->lines[1]->words[7];
+  w2 = page0->segments[0]->lines[2]->words[8];
+  ASSERT_NEAR(computeRightXOffset(w2, w1), 0.0, TOL)
+      << "W1: " << w1->toString() << "\nW2: " << w2->toString();
 }
 
 // _________________________________________________________________________________________________
-TEST(PdfElementsUtils, computeOverlapsFigure) {
-  PdfFigure figure1(1, 100.0, 200.0, 200.0, 500.0);
-  PdfFigure figure2(1, 0.0, 0.0, 100.0, 100.0);
-  PdfFigure figure3(1, 300.0, 100.0, 400.0, 200.0);
+TEST_F(PdfElementsUtilsTest, computeOverlapsFigurePdf1) {
+  PdfPage* page1 = pdf1->pages[1];
+  std::vector<PdfFigure*>& figures = page1->figures;
 
-  std::vector<PdfFigure*> figures;
-  figures.push_back(&figure1);
-  figures.push_back(&figure2);
-  figures.push_back(&figure3);
+  // Test the first line of the second page ("Lorem ipsum...").
+  PdfTextLine* line = page1->segments[0]->lines[0];
+  ASSERT_EQ(computeOverlapsFigure(line, figures), nullptr) << "Line: " << line->toString();
 
-  PdfWord word1(1, 0.0, 200.0, 10.0, 210.0, 0, 0);
-  ASSERT_EQ(element_utils::computeOverlapsFigure(&word1, figures), nullptr);
+  // Test the second line of the second page ("vel ne dolore...").
+  line = page1->segments[0]->lines[1];
+  ASSERT_EQ(computeOverlapsFigure(line, figures), nullptr) << "Line: " << line->toString();
 
-  PdfWord word2(1, 310.0, 150.0, 320.0, 160.0, 0, 0);
-  ASSERT_EQ(element_utils::computeOverlapsFigure(&word2, figures), &figure3);
+  // Test the first character ("f") in Figure 1 on the second page.
+  PdfCharacter* ch = figures[0]->characters[0];
+  ASSERT_EQ(computeOverlapsFigure(ch, figures), figures[0]) << "Character: " << ch->toString();
 
-  PdfWord word3(1, 90.0, 10.0, 101.0, 20.0, 0, 0);
-  ASSERT_EQ(element_utils::computeOverlapsFigure(&word3, figures), &figure2);
+  // Test the second character ("o") in Figure 1 on the second page.
+  ch = figures[0]->characters[1];
+  ASSERT_EQ(computeOverlapsFigure(ch, figures), figures[0]) << "Character: " << ch->toString();
 
-  PdfWord word4(1, 90.0, 10.0, 140.0, 20.0, 0, 0);
-  ASSERT_EQ(element_utils::computeOverlapsFigure(&word4, figures), nullptr);
+  // Test the third character ("o") in Figure 1 on the second page.
+  ch = figures[0]->characters[2];
+  ASSERT_EQ(computeOverlapsFigure(ch, figures), figures[0]) << "Character: " << ch->toString();
 }
 
 // _________________________________________________________________________________________________
-TEST(PdfTextElementsUtils, computeHasEqualFont) {
-  PdfWord word1;
-  word1.fontName = "Arial";
-  PdfWord word2;
-  word2.fontName = "Arial";
-  PdfWord word3;
-  word3.fontName = "Times";
-  ASSERT_TRUE(text_element_utils::computeHasEqualFont(&word1, &word2));
-  ASSERT_FALSE(text_element_utils::computeHasEqualFont(&word1, &word3));
+TEST_F(PdfElementsUtilsTest, computeHasEqualFontPdf1) {
+  PdfPage* page0 = pdf1->pages[0];
+
+  // Test "Introduction" (in the first line) and "Lorem" (in the second line).
+  PdfWord* w1 = page0->words[1];
+  PdfWord* w2 = page0->words[2];
+  ASSERT_FALSE(computeHasEqualFont(w1, w2))
+      << "W1: " << w1->toString() << "\nW2: " << w2->toString();
+
+  // Test "Lorem" and "ipsum" (in the second line).
+  w1 = page0->words[2];
+  w2 = page0->words[3];
+  ASSERT_TRUE(computeHasEqualFont(w1, w2))
+      << "W1: " << w1->toString() << "\nW2: " << w2->toString();
 }
 
 // _________________________________________________________________________________________________
-TEST(PdfTextElementsUtils, computeHasEqualFontSize) {
-  PdfWord word1;
-  word1.fontSize = 11.0;
-  PdfWord word2;
-  word2.fontSize = 11.2;
-  PdfWord word3;
-  word3.fontSize = 13.4;
-  ASSERT_TRUE(text_element_utils::computeHasEqualFontSize(&word1, &word2));
-  ASSERT_FALSE(text_element_utils::computeHasEqualFontSize(&word1, &word3));
+TEST_F(PdfElementsUtilsTest, computeHasEqualFontSizePdf1) {
+  PdfPage* page0 = pdf1->pages[0];
+
+  // Test "Introduction" (in the first line) and "Lorem" (in the second line).
+  PdfWord* w1 = page0->words[1];
+  PdfWord* w2 = page0->words[2];
+  ASSERT_FALSE(computeHasEqualFontSize(w1, w2))
+      << "W1: " << w1->toString() << "\nW2: " << w2->toString();
+
+  // Test "Lorem" and "ipsum" (in the second line).
+  w1 = page0->words[2];
+  w2 = page0->words[3];
+  ASSERT_TRUE(computeHasEqualFontSize(w1, w2))
+      << "W1: " << w1->toString() << "\nW2: " << w2->toString();
 }
 
 // _________________________________________________________________________________________________
-TEST(PdfTextElementsUtils, computeEndsWithSentenceDelimiter) {
-  PdfWord word1;
-  word1.text = "foo.";
-  PdfWord word2;
-  word2.text = "foo?";
-  PdfWord word3;
-  word3.text = "foo!";
-  PdfWord word4;
-  word4.text = "foo";
-  ASSERT_TRUE(text_element_utils::computeEndsWithSentenceDelimiter(&word1));
-  ASSERT_TRUE(text_element_utils::computeEndsWithSentenceDelimiter(&word2));
-  ASSERT_TRUE(text_element_utils::computeEndsWithSentenceDelimiter(&word3));
-  ASSERT_FALSE(text_element_utils::computeEndsWithSentenceDelimiter(&word4));
+TEST_F(PdfElementsUtilsTest, computeEndsWithSentenceDelimiterPdf1) {
+  PdfPage* page0 = pdf1->pages[0];
+
+  // Test "Introduction" (in the first line).
+  PdfWord* w = page0->words[1];
+  ASSERT_FALSE(computeEndsWithSentenceDelimiter(w)) << "Word: " << w->toString();
+
+  // Test "Lorem" (in the second line).
+  w = page0->words[2];
+  ASSERT_FALSE(computeEndsWithSentenceDelimiter(w)) << "Word: " << w->toString();
+
+  // Test "laboramus." (in the third line).
+  w = page0->segments[0]->lines[2]->words[4];
+  ASSERT_TRUE(computeEndsWithSentenceDelimiter(w)) << "Word: " << w->toString();
+
+  // Test "eum." (in the fourth line).
+  w = page0->segments[0]->lines[3]->words[5];
+  ASSERT_TRUE(computeEndsWithSentenceDelimiter(w)) << "Word: " << w->toString();
+
+  // Test "laboramus?" (in the fifth line).
+  w = page0->segments[0]->lines[4]->words[5];
+  ASSERT_TRUE(computeEndsWithSentenceDelimiter(w)) << "Word: " << w->toString();
 }
 
 // _________________________________________________________________________________________________
-TEST(PdfTextElementsUtils, computeStartsWithUpper) {
-  PdfWord word1;
-  word1.text = "foo";
-  PdfWord word2;
-  word2.text = "Foo";
-  ASSERT_FALSE(text_element_utils::computeStartsWithUpper(&word1));
-  ASSERT_TRUE(text_element_utils::computeStartsWithUpper(&word2));
+TEST_F(PdfElementsUtilsTest, computeStartsWithUpperPdf1) {
+  PdfPage* page0 = pdf1->pages[0];
+
+  // Test "Introduction" (in the first line).
+  PdfWord* w = page0->words[1];
+  ASSERT_TRUE(computeStartsWithUpper(w)) << "Word: " << w->toString();
+
+  // Test "Lorem" (in the second line).
+  w = page0->words[2];
+  ASSERT_TRUE(computeStartsWithUpper(w)) << "Word: " << w->toString();
+
+  // Test "ipsum" (in the second line).
+  w = page0->words[3];
+  ASSERT_FALSE(computeStartsWithUpper(w)) << "Word: " << w->toString();
 }
 
 // _________________________________________________________________________________________________
-TEST(PdfTextElementsUtils, computeIsEmphasized) {
-  PdfDocument* doc = new PdfDocument();
-  doc->mostFreqFontName = "Arial";
-  doc->mostFreqFontSize = 11.9;
+TEST_F(PdfElementsUtilsTest, computeIsEmphasizedPdf1) {
+  PdfPage* page0 = pdf1->pages[0];
+  PdfPage* page1 = pdf1->pages[1];
 
-  PdfFontInfo* arial = new PdfFontInfo();
-  arial->fontName = "Arial";
-  arial->weight = 400;
-  doc->fontInfos[arial->fontName] = arial;
+  // Test "1 Introduction" (the first line).
+  PdfTextLine* line = page0->segments[0]->lines[0];
+  ASSERT_TRUE(computeIsEmphasized(line)) << "Line: " << line->toString();
 
-  PdfFontInfo* times = new PdfFontInfo();
-  times->fontName = "Times";
-  times->weight = 400;
-  doc->fontInfos[times->fontName] = times;
+  // Test "Lorem ipsum..." (the second line, not emphasized).
+  line = page0->segments[0]->lines[1];
+  ASSERT_FALSE(computeIsEmphasized(line)) << "Line: " << line->toString();
 
-  PdfFontInfo* timesBold = new PdfFontInfo();
-  timesBold->fontName = "TimesBold";
-  timesBold->weight = 600;
-  doc->fontInfos[timesBold->fontName] = timesBold;
+  // Test "vel ne dolore..." (the second line of the second page, printed in bold).
+  line = page1->segments[0]->lines[1];
+  ASSERT_TRUE(computeIsEmphasized(line)) << "Line: " << line->toString();
 
-  PdfFontInfo* arialIt = new PdfFontInfo();
-  arialIt->fontName = "ArialItalic";
-  arialIt->weight = 400;
-  arialIt->isItalic = true;
-  doc->fontInfos[arialIt->fontName] = arialIt;
+  // Test "EIRMOD" (the third word in the fourth line of the second page, printed in uppercase).
+  PdfWord* w = page1->segments[0]->lines[3]->words[2];
+  ASSERT_TRUE(computeIsEmphasized(w)) << "Word: " << w->toString();
 
-  PdfWord* word1 = new PdfWord();
-  word1->fontName = "Arial";
-  word1->fontSize = 9.9;
-  word1->doc = doc;
-  // Not emphasized because smaller font size.
-  ASSERT_FALSE(text_element_utils::computeIsEmphasized(word1));
-
-  PdfWord* word2 = new PdfWord();
-  word2->fontName = "Arial";
-  word2->fontSize = 11.9;
-  word2->doc = doc;
-  // Not emphasized because equal font size.
-  ASSERT_FALSE(text_element_utils::computeIsEmphasized(word2));
-
-  PdfWord* word3 = new PdfWord();
-  word3->fontName = "Arial";
-  word3->fontSize = 12.4;
-  word3->doc = doc;
-  // Not emphasized because the difference between the font sizes is smaller than the threshold.
-  ASSERT_FALSE(text_element_utils::computeIsEmphasized(word3));
-
-  PdfWord* word4 = new PdfWord();
-  word4->fontName = "Arial";
-  word4->fontSize = 13.0;
-  word4->doc = doc;
-  // Emphasized because larger font size.
-  ASSERT_TRUE(text_element_utils::computeIsEmphasized(word4));
-
-  PdfWord* word5 = new PdfWord();
-  word5->fontName = "Times";
-  word5->fontSize = 11.9;
-  word5->doc = doc;
-  // Not emphasized because same most frequent font weight.
-  ASSERT_FALSE(text_element_utils::computeIsEmphasized(word5));
-
-  PdfWord* word6 = new PdfWord();
-  word6->fontName = "TimesBold";
-  word6->fontSize = 11.9;
-  word6->doc = doc;
-  // Emphasized because font size is not smaller and font weight is larger.
-  ASSERT_TRUE(text_element_utils::computeIsEmphasized(word6));
-
-  PdfWord* word7 = new PdfWord();
-  word7->fontName = "TimesBold";
-  word7->fontSize = 9.9;
-  word7->doc = doc;
-  // Not emphasized because font size is smaller.
-  ASSERT_FALSE(text_element_utils::computeIsEmphasized(word7));
-
-  PdfWord* word8 = new PdfWord();
-  word8->fontName = "ArialItalic";
-  word8->fontSize = 11.9;
-  word8->doc = doc;
-  // Emphasized because font size is not smaller and printed in italics.
-  ASSERT_TRUE(text_element_utils::computeIsEmphasized(word8));
-
-  PdfWord* word9 = new PdfWord();
-  word9->fontName = "ArialItalic";
-  word9->fontSize = 10.0;
-  word9->doc = doc;
-  // Not emphasized because font size is smaller.
-  ASSERT_FALSE(text_element_utils::computeIsEmphasized(word9));
-
-  PdfWord* word0 = new PdfWord();
-  word0->fontName = "Arial";
-  word0->fontSize = 11.9;
-  word0->text = "INTRODUCTION";
-  word0->doc = doc;
-  // Emphasized because font size is not smaller and text is in uppercase.
-  ASSERT_TRUE(text_element_utils::computeIsEmphasized(word0));
+  // Test "uti deleniti..." (the fifth text line of the second page, printed in larger font size).
+  line = page1->segments[0]->lines[4];
+  ASSERT_TRUE(computeIsEmphasized(line)) << "Line: " << line->toString();
 }

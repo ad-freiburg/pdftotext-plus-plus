@@ -6,8 +6,6 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include <poppler/GlobalParams.h>
-
 #include <chrono>  // std::chrono::high_resolution_clock
 #include <iomanip>  // std::setw, std::setprecision
 #include <iostream>  // std::cout
@@ -334,9 +332,6 @@ int main(int argc, char* argv[]) {
     printUsageInfo();
     return 2;
   }
-
-  // Initialize the global parameters, needed by Poppler.
-  globalParams = std::make_unique<GlobalParams>();
 
   // Obtain the path to the input PDF file.
   string pdfFilePathStr(argv[1]);

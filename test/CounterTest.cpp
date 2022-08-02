@@ -13,27 +13,26 @@
 
 #include "../src/utils/Counter.h"
 
-#include "../src/Constants.h"
-
-using global_config::DOUBLE_EQUAL_TOLERANCE;
+// The allowed tolerance on comparing two float values.
+const double TOL = 0.001;
 
 // _________________________________________________________________________________________________
 TEST(DoubleCounter, mostFreq) {
   DoubleCounter counter;
 
   counter[1.2]++;
-  ASSERT_NEAR(1.2, counter.mostFreq(), DOUBLE_EQUAL_TOLERANCE);
+  ASSERT_NEAR(1.2, counter.mostFreq(), TOL);
 
   counter[1.1]++;
   counter[1.1]++;
-  ASSERT_NEAR(1.1, counter.mostFreq(), DOUBLE_EQUAL_TOLERANCE);
+  ASSERT_NEAR(1.1, counter.mostFreq(), TOL);
 
   counter[1.2]++;
   counter[1.2]++;
-  ASSERT_NEAR(1.2, counter.mostFreq(), DOUBLE_EQUAL_TOLERANCE);
+  ASSERT_NEAR(1.2, counter.mostFreq(), TOL);
 
   counter[1.2]++;
-  ASSERT_NEAR(1.2, counter.mostFreq(), DOUBLE_EQUAL_TOLERANCE);
+  ASSERT_NEAR(1.2, counter.mostFreq(), TOL);
 }
 
 // _________________________________________________________________________________________________
@@ -61,24 +60,24 @@ TEST(DoubleCounter, mostFreqCountAndCount) {
 
   counter[1.2]++;
   std::pair<double, int> p = counter.mostFreqAndCount();
-  ASSERT_NEAR(1.2, p.first, DOUBLE_EQUAL_TOLERANCE);
+  ASSERT_NEAR(1.2, p.first, TOL);
   ASSERT_EQ(1, p.second);
 
   counter[1.1]++;
   counter[1.1]++;
   p = counter.mostFreqAndCount();
-  ASSERT_NEAR(1.1, p.first, DOUBLE_EQUAL_TOLERANCE);
+  ASSERT_NEAR(1.1, p.first, TOL);
   ASSERT_EQ(2, p.second);
 
   counter[1.2]++;
   counter[1.2]++;
   p = counter.mostFreqAndCount();
-  ASSERT_NEAR(1.2, p.first, DOUBLE_EQUAL_TOLERANCE);
+  ASSERT_NEAR(1.2, p.first, TOL);
   ASSERT_EQ(3, p.second);
 
   counter[1.2]++;
   p = counter.mostFreqAndCount();
-  ASSERT_NEAR(1.2, p.first, DOUBLE_EQUAL_TOLERANCE);
+  ASSERT_NEAR(1.2, p.first, TOL);
   ASSERT_EQ(4, p.second);
 }
 
@@ -87,18 +86,18 @@ TEST(DoubleCounter, max) {
   DoubleCounter counter;
 
   counter[1.2]++;
-  ASSERT_NEAR(1.2, counter.max(), DOUBLE_EQUAL_TOLERANCE);
+  ASSERT_NEAR(1.2, counter.max(), TOL);
 
   counter[1.1]++;
   counter[1.1]++;
-  ASSERT_NEAR(1.2, counter.max(), DOUBLE_EQUAL_TOLERANCE);
+  ASSERT_NEAR(1.2, counter.max(), TOL);
 
   counter[1.2]++;
   counter[1.2]++;
-  ASSERT_NEAR(1.2, counter.max(), DOUBLE_EQUAL_TOLERANCE);
+  ASSERT_NEAR(1.2, counter.max(), TOL);
 
   counter[3.2]++;
-  ASSERT_NEAR(3.2, counter.max(), DOUBLE_EQUAL_TOLERANCE);
+  ASSERT_NEAR(3.2, counter.max(), TOL);
 }
 
 // _________________________________________________________________________________________________

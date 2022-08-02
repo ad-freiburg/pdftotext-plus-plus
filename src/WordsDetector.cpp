@@ -16,6 +16,7 @@
 #include "./utils/MathUtils.h"
 #include "./utils/PdfElementsUtils.h"
 #include "./utils/StringUtils.h"
+#include "./utils/WordsUtils.h"
 
 #include "./PdfDocument.h"
 #include "./WordsDetector.h"
@@ -110,7 +111,9 @@ void WordsDetector::detectWords(PdfPage* page) {
     // Check if the char starts a new word. If so, create a word from the characters of the
     // "active" word and start a new word.
     if (startsWord(currChar) && !_activeWord.characters.empty()) {
-      PdfWord* word = createWord(_activeWord.characters, &page->words);
+      PdfWord* word = words_utils::createWord(_activeWord.characters, _doc);
+      word->rank = page->words.size();
+      page->words.push_back(word);
 
       _log->debug(p) << "---------------------------------------" << endl;
       _log->debug(p) << BOLD << "created word: \"" << word->text << "\"" << OFF << endl;
@@ -143,7 +146,9 @@ void WordsDetector::detectWords(PdfPage* page) {
 
   // Don't forget to process the last word.
   if (!_activeWord.characters.empty()) {
-    PdfWord* word = createWord(_activeWord.characters, &page->words);
+    PdfWord* word = words_utils::createWord(_activeWord.characters, _doc);
+    word->rank = page->words.size();
+    page->words.push_back(word);
 
     _log->debug(p) << "---------------------------------------" << endl;
     _log->debug(p) << BOLD << "created word: \"" << word->text << "\"" << OFF << endl;
@@ -376,71 +381,4 @@ void WordsDetector::mergeStackedMathSymbols(const PdfPage* page) const {
   }
 
   _log->debug(p) << "=======================================" << endl;
-}
-
-// _________________________________________________________________________________________________
-PdfWord* WordsDetector::createWord(const vector<PdfCharacter*>& characters,
-      vector<PdfWord*>* words) const {
-  assert(words);
-
-  PdfWord* word = new PdfWord();
-  word->doc = _doc;
-
-  // Create a (unique) id.
-  word->id = string_utils::createRandomString(ID_LENGTH, "word-");
-
-  // Iterative through the characters and compute the text, the x,y-coordinates of the
-  // bounding box, and the font info.
-  StringCounter fontNameCounter;
-  DoubleCounter fontSizeCounter;
-  string text;
-  for (auto* ch : characters) {
-    // Update the x,y-coordinates of the bounding box.
-    word->pos->leftX = min(word->pos->leftX, ch->pos->leftX);
-    word->pos->upperY = min(word->pos->upperY, ch->pos->upperY);
-    word->pos->rightX = max(word->pos->rightX, ch->pos->rightX);
-    word->pos->lowerY = max(word->pos->lowerY, ch->pos->lowerY);
-
-    // Compose the text. If the char was merged with a diacritic mark, append the text with the
-    // diacritic mark. If the char is a diacritic mark which was merged with a base char, ignore
-    // its text. Otherwise, append the normal text.
-    if (ch->isBaseCharOfDiacriticMark) {
-      text += ch->textWithDiacriticMark;
-    } else if (!ch->isDiacriticMarkOfBaseChar) {
-      text += ch->text;
-    }
-
-    // Count the font names and font sizes, for computing the most frequent font name / font size.
-    fontNameCounter[ch->fontName]++;
-    fontSizeCounter[ch->fontSize]++;
-
-    // Set the reference to the created word.
-    ch->word = word;
-  }
-
-  // Set the text.
-  word->text = text;
-
-  // Set the most frequent font name and font size.
-  word->fontName = fontNameCounter.mostFreq();
-  word->fontSize = fontSizeCounter.mostFreq();
-
-  // Set the page number.
-  word->pos->pageNum = characters[0]->pos->pageNum;
-
-  // Set the writing mode.
-  word->pos->wMode = characters[0]->pos->wMode;
-
-  // Set the rotation value.
-  word->pos->rotation = characters[0]->pos->rotation;
-
-  // Set the rank.
-  word->rank = words->size();
-
-  // Set the chars.
-  word->characters = characters;
-
-  words->push_back(word);
-
-  return word;
 }

@@ -331,6 +331,7 @@ void text_blocks_utils::createTextBlock(const vector<PdfTextLine*>& lines,
     fontNameCounter[currLine->fontName]++;
     fontSizeCounter[currLine->fontSize]++;
 
+    // TODO(korzen): prevLine and nextLine should be computed document-wide, not block-wide.
     currLine->prevLine = prevLine;
     currLine->nextLine = nextLine;
 

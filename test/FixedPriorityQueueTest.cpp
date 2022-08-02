@@ -15,6 +15,8 @@
 #include "../src/utils/FixedPriorityQueue.h"
 
 // _________________________________________________________________________________________________
+// The comparators needed to test FixedPriorityQueue.
+
 class IntAscComparator {
  public:
   bool operator() (int i1, int i2) const {
@@ -22,7 +24,6 @@ class IntAscComparator {
   }
 };
 
-// _________________________________________________________________________________________________
 class IntDescComparator {
  public:
   bool operator() (int i1, int i2) const {
@@ -30,7 +31,6 @@ class IntDescComparator {
   }
 };
 
-// _________________________________________________________________________________________________
 class StringDescComparator {
  public:
   bool operator() (const std::string& s1, const std::string& s2) const {
@@ -40,6 +40,7 @@ class StringDescComparator {
 
 // _________________________________________________________________________________________________
 TEST(FixedPriorityQueue, pushpop) {
+  // Create a priority queue of capacity 3.
   FixedPriorityQueue<int, IntDescComparator> queue(3);
   ASSERT_EQ(queue._capacity, 3);
   ASSERT_EQ(queue.size(), 0);
@@ -57,6 +58,7 @@ TEST(FixedPriorityQueue, pushpop) {
   ASSERT_EQ(queue.top(), 8);
   queue.pop();
 
+  // Create a priority queue of capacity 4.
   std::string abc = "abc";
   std::string bcd = "bcd";
   std::string ghi = "ghi";
@@ -97,7 +99,6 @@ TEST(FixedPriorityQueue, sort) {
 
   queue.push(2);
   queue.push(8);
-
   std::vector<int> sorted2;
   queue.sort(IntDescComparator(), &sorted2);
   ASSERT_EQ(sorted2.size(), 2);
@@ -108,7 +109,6 @@ TEST(FixedPriorityQueue, sort) {
   queue.push(1);
   queue.push(4);
   queue.push(6);
-
   std::vector<int> sorted3;
   queue.sort(IntDescComparator(), &sorted3);
   ASSERT_EQ(sorted3.size(), 4);
@@ -118,7 +118,6 @@ TEST(FixedPriorityQueue, sort) {
   ASSERT_EQ(sorted3[3], 4);
 
   queue.pop();
-
   std::vector<int> sorted4;
   queue.sort(IntAscComparator(), &sorted4);
   ASSERT_EQ(sorted4.size(), 3);

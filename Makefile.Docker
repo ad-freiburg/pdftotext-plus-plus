@@ -33,6 +33,11 @@ checkstyle:
 
 clean:
 	rm -f **/*.o
+	rm -f test/**/*.aux
+	rm -f test/**/*.fdb_latexmk
+	rm -f test/**/*.fls
+	rm -f test/**/*.log
+	rm -f test/**/*.synctex.gz
 	rm -f $(MAIN_BINARY_FILE)
 	rm -f $(TEST_BINARY_FILES)
 	rm -f core

@@ -180,21 +180,6 @@ class WordsDetector {
    */
   void mergeStackedMathSymbols(const PdfPage* page) const;
 
-  /**
-   * This method (a) creates a new `PdfWord` instance from the given vector of characters,
-   * (b) computes the respective layout information of the word and (c) appends the word to the
-   * given result vector.
-   *
-   * @param characters
-   *   The characters from which to create the word.
-   * @param words
-   *   The vector to which the created word should be appended.
-   *
-   * @return
-   *    The created word.
-   */
-  PdfWord* createWord(const vector<PdfCharacter*>& characters, vector<PdfWord*>* words) const;
-
   // The document to process.
   const PdfDocument* _doc;
 

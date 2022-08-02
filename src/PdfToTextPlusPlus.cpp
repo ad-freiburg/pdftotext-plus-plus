@@ -7,6 +7,7 @@
  */
 
 #include <goo/GooString.h>
+#include <poppler/GlobalParams.h>
 #include <poppler/PDFDoc.h>
 #include <poppler/PDFDocFactory.h>
 
@@ -72,6 +73,9 @@ int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
   assert(doc);
 
   doc->pdfFilePath = pdfFilePath;
+
+  // Initialize the global parameters, needed by Poppler.
+  globalParams = std::make_unique<GlobalParams>();
 
   // (1) Load the PDF file. Abort if it couldn't be loaded successfully.
   auto start = high_resolution_clock::now();

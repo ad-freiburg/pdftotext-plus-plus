@@ -13,6 +13,7 @@
 #include <string>
 #include <unordered_set>
 
+#include "../Constants.h"
 #include "../PdfDocument.h"
 
 using std::max;

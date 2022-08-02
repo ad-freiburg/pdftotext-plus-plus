@@ -37,7 +37,9 @@ bool text_lines_utils::computeIsFirstLineOfItem(const PdfTextLine* line,
 
   // The line is not the first line of an item if it is not prefixed by an item label.
   bool isPrefixedByItemLabel = text_lines_utils::computeIsPrefixedByItemLabel(line);
-  if (!isPrefixedByItemLabel) {
+  bool isPrefixedByFootnoteLabel = text_lines_utils::computeIsPrefixedByFootnoteLabel(line,
+      potentialFootnoteLabels);
+  if (!isPrefixedByItemLabel && !isPrefixedByFootnoteLabel) {
     return false;
   }
 
@@ -99,7 +101,7 @@ bool text_lines_utils::computeIsFirstLineOfItem(const PdfTextLine* line,
   }
 
   // The line is the first line of an item if it starts with a footnote label.
-  if (text_lines_utils::computeIsPrefixedByFootnoteLabel(line, potentialFootnoteLabels)) {
+  if (isPrefixedByFootnoteLabel) {
     return true;
   }
 
