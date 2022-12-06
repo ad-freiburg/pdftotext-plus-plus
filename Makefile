@@ -1,8 +1,11 @@
 PROJECT_NAME = pdftotext-plus-plus
 
 DOCKER_CMD = docker
-DOCKER_FILE = ./Dockerfiles/Dockerfile.ubuntu:$(shell lsb_release -r -s)
-DOCKER_IMAGE = pdftotext-plus-plus-ubuntu:$(shell lsb_release -r -s)
+#DOCKER_FILE = ./Dockerfiles/Dockerfile.ubuntu:$(shell lsb_release -r -s)
+#DOCKER_IMAGE = pdftotext-plus-plus-ubuntu:$(shell lsb_release -r -s)
+DOCKER_FILE = ./Dockerfiles/Dockerfile.ubuntu:20.04
+DOCKER_IMAGE = pdftotext-plus-plus-ubuntu:20.04
+
 
 INPUT_DIR = /local/data/pdftotext-plus-plus/evaluation/benchmarks/arxiv-debug
 OUTPUT_DIR = /local/data/pdftotext-plus-plus/evaluation/extraction-results/arxiv-debug
