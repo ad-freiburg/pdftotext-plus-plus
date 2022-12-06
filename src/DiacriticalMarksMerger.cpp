@@ -26,9 +26,9 @@ using std::vector;
 namespace config = diacritics_merger::config;
 
 // _________________________________________________________________________________________________
-DiacriticalMarksMerger::DiacriticalMarksMerger(const PdfDocument* doc, bool debug,
-      int debugPageFilter) {
-  _log = new Logger(debug ? DEBUG : INFO, debugPageFilter);
+DiacriticalMarksMerger::DiacriticalMarksMerger(const PdfDocument* doc, LogLevel logLevel,
+      int logPageFilter) {
+  _log = new Logger(logLevel, logPageFilter);
   _doc = doc;
 }
 

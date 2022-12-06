@@ -39,8 +39,8 @@ using std::vector;
 namespace config = text_lines_detector::config;
 
 // _________________________________________________________________________________________________
-TextLinesDetector::TextLinesDetector(const PdfDocument* doc, bool debug, int debugPageFilter) {
-  _log = new Logger(debug ? DEBUG : INFO, debugPageFilter);
+TextLinesDetector::TextLinesDetector(const PdfDocument* doc, LogLevel logLevel, int logPageFilter) {
+  _log = new Logger(logLevel, logPageFilter);
   _doc = doc;
 }
 

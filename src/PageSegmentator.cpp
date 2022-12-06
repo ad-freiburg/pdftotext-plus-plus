@@ -30,8 +30,8 @@ using std::vector;
 namespace config = page_segmentator::config;
 
 // _________________________________________________________________________________________________
-PageSegmentator::PageSegmentator(const PdfDocument* doc, bool debug, int debugPageFilter) {
-  _log = new Logger(debug ? DEBUG : INFO, debugPageFilter);
+PageSegmentator::PageSegmentator(const PdfDocument* doc, LogLevel logLevel, int logPageFilter) {
+  _log = new Logger(logLevel, logPageFilter);
   _doc = doc;
 }
 

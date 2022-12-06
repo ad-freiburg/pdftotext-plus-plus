@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "./PdfDocument.h"
+#include "./utils/Log.h"
 
 using std::string;
 using std::vector;
@@ -72,50 +73,46 @@ class PdfToTextPlusPlus {
    *   NOTE: This mode was introduced for the benchmark generator that needs information about the
    *   the contained characters (e.g., the position, text and color) for assembling the true words,
    *   text blocks, etc. based on the color of the characters.
-   * @param debugPdfParsing
-   *  A boolean flag indicating whether or not to print the debug messages, produced while parsing
-   *  the content streams of the current PDF file, to the console.
-   * @param debugStatisticsComputation
-   *  A boolean flag indicating whether or not to print the debug messages, produced while
-   *  computing the statistics (about characters, words, lines, etc.) to the console.
-   * @param debugDiacriticMarksMerging
-   *  A boolean flag indicating whether or not to print the debug messages, produced while merging
-   *  diacritical marks with their base characters, to the console.
-   * @param debugWordsDetection
-   *  A boolean flag indicating whether or not to print the debug messages, produced while
-   *  detecting words, to the console.
-   * @param debugPageSegmentation
-   *  A boolean flag indicating whether or not to print the debug messages, produced while
-   *  segmenting the pages, to the console.
-   * @param debugTextLinesDetection
-   *  A boolean flag indicating whether or not to print the debug messages, produced while
-   *  detecting text lines, to the console.
-   * @param debugSubSuperScriptsDetection
-   *  A boolean flag indicating whether or not to print the debug messages, produced while
-   *  detecting sub-/superscripts, to the console.
-   * @param debugTextBlocksDetection
-   *  A boolean flag indicating whether or not to print the debug messages, produced while
-   *  detecting text blocks, to the console.
-   * @param debugPageFilter
-   *  If set to a value > 0, only the debug messages, produced while processing the
-   *  <debugPageFilter>-th page of the current PDF file, will be printed to the console. If set to
-   *  a value <= 0, all debug messages will be printed to the console, no matter when (= for which
-   *  page) they were produced. Note that the page numbers are 1-based; so to print only the
-   *  messages produced while processing the first page, set this parameter to 1.
+   * @param logLevelPdfParsing
+   *   The level for the logging messages, produced while parsing the content streams of the current
+   *   PDF file, to the console.
+   * @param logLevelStatisticsComputation
+   *   The level for the logging messages, produced while computing the statistics (about
+   *   characters, words, lines, etc.) to the console.
+   * @param logLevelDiacriticMarksMerging
+   *   The level for the logging messages, produced while merging diacritical marks with their base
+   *   characters, to the console.
+   * @param logLevelWordsDetection
+   *   The level for the logging messages, produced while detecting words, to the console.
+   * @param logLevelPageSegmentation
+   *   The level for the logging messages, produced while segmenting the pages, to the console.
+   * @param logLevelTextLinesDetection
+   *   The level for the logging messages, produced while detecting text lines, to the console.
+   * @param logLevelSubSuperScriptsDetection
+   *   The level for the logging messages, produced while detecting sub-/superscripts, to the
+   *   console.
+   * @param logLevelTextBlocksDetection
+   *   The level for the logging messages, produced while detecting text blocks, to the console.
+   * @param logPageFilter
+   *   If set to a value > 0, only the logging messages, produced while processing the
+   *   <logPageFilter>-th page of the current PDF file, will be printed to the console. If set to
+   *   a value <= 0, all logging messages will be printed to the console, no matter when (= for
+   *   which page) they were produced. Note that the page numbers are 1-based; so to print only the
+   *   messages produced while processing the first page, set this parameter to 1.
    */
   PdfToTextPlusPlus(
     bool noEmbeddedFontFilesParsing = false,
     bool noWordsDehyphenation = false,
     bool parseMode = false,
-    bool debugPdfParsing = false,
-    bool debugStatisticsComputation = false,
-    bool debugDiacriticMarksMerging = false,
-    bool debugWordsDetection = false,
-    bool debugPageSegmentation = false,
-    bool debugTextLinesDetection = false,
-    bool debugSubSuperScriptsDetection = false,
-    bool debugTextBlocksDetection = false,
-    int debugPageFilter = -1);
+    LogLevel logLevelPdfParsing = ERROR,
+    LogLevel logLevelStatisticsComputation = ERROR,
+    LogLevel logLevelDiacriticMarksMerging = ERROR,
+    LogLevel logLevelWordsDetection = ERROR,
+    LogLevel logLevelPageSegmentation = ERROR,
+    LogLevel logLevelTextLinesDetection = ERROR,
+    LogLevel logLevelSubSuperScriptsDetection = ERROR,
+    LogLevel logLevelTextBlocksDetection = ERROR,
+    int logPageFilter = -1);
 
   /** The deconstructor */
   ~PdfToTextPlusPlus();
@@ -144,24 +141,24 @@ class PdfToTextPlusPlus {
   bool _noWordsDehyphenation;
   // Whether or not to activate the parsing mode.
   bool _parseMode;
-  // Whether or not to print the debug messages produced while parsing the content streams.
-  bool _debugPdfParsing;
-  // Whether or not to print the debug messages produced while computing statistics.
-  bool _debugStatisticsComputation;
-  // Whether or not to print the debug messages produced while merging diacritical marks.
-  bool _debugDiacMarksMerging;
-  // Whether or not to print the debug messages produced while detecting words.
-  bool _debugWordsDetection;
-  // Whether or not to print the debug messages produced while segmenting pages.
-  bool _debugPageSegmentation;
-  // Whether or not to print the debug messages produced while detecting text lines.
-  bool _debugTextLinesDetection;
-  // Whether or not to print the debug messages produced while detecting sub-/superscripts.
-  bool _debugSubSuperScriptsDetection;
-  // Whether or not to print the debug messages produced while detecting text blocks.
-  bool _debugTextBlocksDetection;
-  // The page filter for the debug messages.
-  int _debugPageFilter;
+  // The level for the logging messages produced while parsing the content streams.
+  LogLevel _logLevelPdfParsing;
+  // The level for the logging messages produced while computing statistics.
+  LogLevel _logLevelStatisticsComputation;
+  // The level for the logging messages produced while merging diacritical marks.
+  LogLevel _logLevelDiacMarksMerging;
+  // The level for the logging messages produced while detecting words.
+  LogLevel _logLevelWordsDetection;
+  // The level for the logging messages produced while segmenting pages.
+  LogLevel _logLevelPageSegmentation;
+  // The level for the logging messages produced while detecting text lines.
+  LogLevel _logLevelTextLinesDetection;
+  // The level for the logging messages produced while detecting sub-/superscripts.
+  LogLevel _logLevelSubSuperScriptsDetection;
+  // The level for the logging messages produced while detecting text blocks.
+  LogLevel _logLevelTextBlocksDetection;
+  // The page filter for the logging messages.
+  int _logPageFilter;
 };
 
 #endif  // PDFTOTEXTPLUSPLUS_H_

@@ -21,9 +21,9 @@ using std::min;
 namespace config = sub_super_scripts_detector::config;
 
 // _________________________________________________________________________________________________
-SubSuperScriptsDetector::SubSuperScriptsDetector(const PdfDocument* doc, bool debug,
-      int debugPageFilter) {
-  _log = new Logger(debug ? DEBUG : INFO, debugPageFilter);
+SubSuperScriptsDetector::SubSuperScriptsDetector(const PdfDocument* doc, LogLevel logLevel,
+      int logPageFilter) {
+  _log = new Logger(logLevel, logPageFilter);
   _doc = doc;
 }
 

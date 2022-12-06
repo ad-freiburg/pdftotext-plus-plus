@@ -88,14 +88,14 @@ class DiacriticalMarksMerger {
    * @param doc
    *    The PDF document to process, with the characters extracted from the i-th page stored in
    *    doc->pages[i]->characters.
-   * @param debug
-   *   Whether or not this instance should print debug information to the console.
-   * @param debugPageFilter
-   *   If set to a value > 0, only the debug messages produced while processing the
-   *   <debugPageFilter>-th page of the current PDF file will be printed to the console.
+  * @param logLevel
+   *   The logging level.
+   * @param logPageFilter
+   *   If set to a value > 0, only the logging messages produced while processing the
+   *   <logPageFilter>-th page of the current PDF file will be printed to the console.
    */
-  explicit DiacriticalMarksMerger(const PdfDocument* doc, bool debug = false,
-      int debugPageFilter = -1);
+  explicit DiacriticalMarksMerger(const PdfDocument* doc, LogLevel logLevel = ERROR,
+      int loggPageFilter = -1);
 
   /** The deconstructor */
   ~DiacriticalMarksMerger();

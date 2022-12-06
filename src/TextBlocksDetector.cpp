@@ -32,8 +32,9 @@ using string_utils::shorten;
 namespace config = text_blocks_detector::config;
 
 // _________________________________________________________________________________________________
-TextBlocksDetector::TextBlocksDetector(const PdfDocument* doc, bool debug, int debugPageFilter) {
-  _log = new Logger(debug ? DEBUG : INFO, debugPageFilter);
+TextBlocksDetector::TextBlocksDetector(const PdfDocument* doc, LogLevel logLevel,
+      int logPageFilter) {
+  _log = new Logger(logLevel, logPageFilter);
   _doc = doc;
 }
 

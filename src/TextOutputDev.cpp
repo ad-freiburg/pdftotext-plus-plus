@@ -39,9 +39,9 @@ using std::stringstream;
 using std::wstring;
 
 // _________________________________________________________________________________________________
-TextOutputDev::TextOutputDev(bool parseEmbeddedFontFiles, PdfDocument* doc, bool debug,
-      int debugPageFilter) {
-  _log = new Logger(debug ? DEBUG : INFO, debugPageFilter);
+TextOutputDev::TextOutputDev(bool parseEmbeddedFontFiles, PdfDocument* doc, LogLevel logLevel,
+      int logPageFilter) {
+  _log = new Logger(logLevel, logPageFilter);
   _parseEmbeddedFontFiles = parseEmbeddedFontFiles;
   _doc = doc;
 

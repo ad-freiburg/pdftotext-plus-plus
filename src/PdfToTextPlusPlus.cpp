@@ -41,27 +41,27 @@ PdfToTextPlusPlus::PdfToTextPlusPlus(
       bool noEmbeddedFontFilesParsing,
       bool noWordsDehyphenation,
       bool parseMode,
-      bool debugPdfParsing,
-      bool debugStatisticsComputation,
-      bool debugDiacriticMarksMerging,
-      bool debugWordsDetection,
-      bool debugPageSegmentation,
-      bool debugTextLinesDetection,
-      bool debugSubSuperScriptsDetection,
-      bool debugTextBlocksDetection,
-      int debugPageFilter) {
+      LogLevel logLevelPdfParsing,
+      LogLevel logLevelStatisticsComputation,
+      LogLevel logLevelDiacriticMarksMerging,
+      LogLevel logLevelWordsDetection,
+      LogLevel logLevelPageSegmentation,
+      LogLevel logLevelTextLinesDetection,
+      LogLevel logLevelSubSuperScriptsDetection,
+      LogLevel logLevelTextBlocksDetection,
+      int logPageFilter) {
   _noEmbeddedFontFilesParsing = noEmbeddedFontFilesParsing;
   _noWordsDehyphenation = noWordsDehyphenation;
   _parseMode = parseMode;
-  _debugPdfParsing = debugPdfParsing;
-  _debugStatisticsComputation = debugStatisticsComputation;
-  _debugDiacMarksMerging = debugDiacriticMarksMerging;
-  _debugWordsDetection = debugWordsDetection;
-  _debugPageSegmentation = debugPageSegmentation;
-  _debugTextLinesDetection = debugTextLinesDetection;
-  _debugSubSuperScriptsDetection = debugSubSuperScriptsDetection;
-  _debugTextBlocksDetection = debugTextBlocksDetection;
-  _debugPageFilter = debugPageFilter;
+  _logLevelPdfParsing = logLevelPdfParsing;
+  _logLevelStatisticsComputation = logLevelStatisticsComputation;
+  _logLevelDiacMarksMerging = logLevelDiacriticMarksMerging;
+  _logLevelWordsDetection = logLevelWordsDetection;
+  _logLevelPageSegmentation = logLevelPageSegmentation;
+  _logLevelTextLinesDetection = logLevelTextLinesDetection;
+  _logLevelSubSuperScriptsDetection = logLevelSubSuperScriptsDetection;
+  _logLevelTextBlocksDetection = logLevelTextBlocksDetection;
+  _logPageFilter = logPageFilter;
 }
 
 // _________________________________________________________________________________________________
@@ -91,7 +91,7 @@ int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
   }
 
   // (2) Parse the content streams of the PDF file for characters, graphics and shapes.
-  TextOutputDev out(!_noEmbeddedFontFilesParsing, doc, _debugPdfParsing, _debugPageFilter);
+  TextOutputDev out(!_noEmbeddedFontFilesParsing, doc, _logLevelPdfParsing, _logPageFilter);
   start = high_resolution_clock::now();
   pdfDoc->displayPages(
     &out,
@@ -110,7 +110,7 @@ int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
   }
 
   // (3) Compute some statistics about the characters, for example: the most frequent font size.
-  PdfStatisticsCalculator psc(doc, _debugStatisticsComputation);
+  PdfStatisticsCalculator psc(doc, _logLevelStatisticsComputation);
   start = high_resolution_clock::now();
   psc.computeCharacterStatistics();
   end = high_resolution_clock::now();
@@ -121,7 +121,7 @@ int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
 
   // (4) Merge combining diacritical marks with their base characters.
   start = high_resolution_clock::now();
-  DiacriticalMarksMerger dmm(doc, _debugDiacMarksMerging, _debugPageFilter);
+  DiacriticalMarksMerger dmm(doc, _logLevelDiacMarksMerging, _logPageFilter);
   dmm.process();
   end = high_resolution_clock::now();
   if (timings) {
@@ -137,7 +137,7 @@ int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
 
   // (5) Detect the words.
   start = high_resolution_clock::now();
-  WordsDetector wd(doc, _debugWordsDetection, _debugPageFilter);
+  WordsDetector wd(doc, _logLevelWordsDetection, _logPageFilter);
   wd.process();
   end = high_resolution_clock::now();
   if (timings) {
@@ -156,7 +156,7 @@ int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
 
   // (7) Segment the pages of the document (for identifying columns).
   start = high_resolution_clock::now();
-  PageSegmentator ps(doc, _debugPageSegmentation, _debugPageFilter);
+  PageSegmentator ps(doc, _logLevelPageSegmentation, _logPageFilter);
   ps.process();
   end = high_resolution_clock::now();
   if (timings) {
@@ -166,7 +166,7 @@ int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
 
   // (8) Detect the text lines.
   start = high_resolution_clock::now();
-  TextLinesDetector tld(doc, _debugTextLinesDetection, _debugPageFilter);
+  TextLinesDetector tld(doc, _logLevelTextLinesDetection, _logPageFilter);
   tld.process();
   end = high_resolution_clock::now();
   if (timings) {
@@ -176,7 +176,7 @@ int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
 
   // (9) Detect subscripted and superscripted characters.
   start = high_resolution_clock::now();
-  SubSuperScriptsDetector ssd(doc, _debugSubSuperScriptsDetection, _debugPageFilter);
+  SubSuperScriptsDetector ssd(doc, _logLevelSubSuperScriptsDetection, _logPageFilter);
   ssd.process();
   end = high_resolution_clock::now();
   if (timings) {
@@ -195,7 +195,7 @@ int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
 
   // (11) Detect the text blocks.
   start = high_resolution_clock::now();
-  TextBlocksDetector tbd(doc, _debugTextBlocksDetection, _debugPageFilter);
+  TextBlocksDetector tbd(doc, _logLevelTextBlocksDetection, _logPageFilter);
   tbd.process();
   end = high_resolution_clock::now();
   if (timings) {

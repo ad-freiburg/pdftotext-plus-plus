@@ -66,10 +66,10 @@ class PdfStatisticsCalculator {
    *
    * @param doc
    *    The document for which to compute the statistics.
-   * @param debug
-   *    Whether or not this instance should print debug information to the console.
+   * @param logLevel
+   *   The logging level.
    */
-  explicit PdfStatisticsCalculator(PdfDocument* doc, bool debug);
+  explicit PdfStatisticsCalculator(PdfDocument* doc, LogLevel logLevel = ERROR);
 
   /** The deconstructor. */
   ~PdfStatisticsCalculator();

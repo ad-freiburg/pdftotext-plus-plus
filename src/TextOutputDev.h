@@ -48,14 +48,14 @@ class TextOutputDev : public OutputDev {
    *   accuracy of the extracted text.
    * @param doc
    *   The `PdfDocument` to which the extracted information should be stored.
-   * @param debug
-   *   Whether or not this instance should print debug information to the console.
-   * @param debugPageFilter
-   *   If set to a value > 0, only the debug messages produced while processing the
-   *   <debugPageFilter>-th page of the current PDF file will be printed to the console.
+   * @param logLevel
+   *   The logging level.
+   * @param logPageFilter
+   *   If set to a value > 0, only the logging messages produced while processing the
+   *   <logPageFilter>-th page of the current PDF file will be printed to the console.
    */
-  TextOutputDev(bool noEmbeddedFontFilesParsing, PdfDocument* doc, bool debug = false,
-      int debugPageFilter = -1);
+  TextOutputDev(bool noEmbeddedFontFilesParsing, PdfDocument* doc, LogLevel logLevel = ERROR,
+      int logPageFilter = -1);
 
   /** The deconstructor. */
   ~TextOutputDev() override;

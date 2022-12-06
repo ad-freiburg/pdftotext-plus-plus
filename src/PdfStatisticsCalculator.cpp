@@ -26,8 +26,8 @@ using std::unordered_map;
 namespace config = pdf_statistics_calculator::config;
 
 // _________________________________________________________________________________________________
-PdfStatisticsCalculator::PdfStatisticsCalculator(PdfDocument* doc, bool debug) {
-  _log = new Logger(debug ? DEBUG : INFO, -1);
+PdfStatisticsCalculator::PdfStatisticsCalculator(PdfDocument* doc, LogLevel logLevel) {
+  _log = new Logger(logLevel, -1);
   _doc = doc;
 }
 

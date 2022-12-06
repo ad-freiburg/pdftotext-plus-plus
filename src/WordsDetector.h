@@ -113,13 +113,13 @@ class WordsDetector {
    *
    * @param doc
    *   The PDF document to process.
-   * @param debug
-   *   Whether or not this instance should print debug information to the console.
-   * @param debugPageFilter
-   *   If set to a value > 0, only the debug messages produced while processing the
-   *   <debugPageFilter>-th page of the current PDF file will be printed to the console.
+   * @param logLevel
+   *   The logging level.
+   * @param logPageFilter
+   *   If set to a value > 0, only the logging messages produced while processing the
+   *   <logPageFilter>-th page of the current PDF file will be printed to the console.
    */
-  explicit WordsDetector(const PdfDocument* doc, bool debug = false, int debugPageFilter = -1);
+  explicit WordsDetector(const PdfDocument* doc, LogLevel level = ERROR, int logPageFilter = -1);
 
   /** The deconstructor. */
   ~WordsDetector();

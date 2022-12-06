@@ -141,6 +141,7 @@ static bool visualizeReadingOrder = false;
 static bool visualizeSegmentCuts = false;
 static bool visualizeReadingOrderCuts = false;
 static char visualizeFilePath[256] = "";
+static char loggingLevel[16] = "";
 static bool debugPdfParsing = false;
 static bool debugStatisticsComputation = false;
 static bool debugDiacriticMarksMerging = false;
@@ -229,6 +230,10 @@ static const ArgDesc options[] = {
   { "--visualization-path", argString, &visualizeFilePath, sizeof(visualizeFilePath),
       "The target path for the visualization. If not specified, no visualization file will "
       "be created, even if one or more of the --visualize-* options is used." },
+  { "--log", argString, &loggingLevel, sizeof(loggingLevel),
+      "Sets the general verbosity level of the logging messages. Valid levels are: trace, debug, "
+      "info, warn, error. Logging messages with a level lower than the specified level will be "
+      "not printed to the console. Default: info." },
   { "--debug-pdf-parsing", argFlag, &debugPdfParsing, 0,
       "Print the debug messages produced while parsing the content streams of the PDF file." },
   { "--debug-statistics", argFlag, &debugStatisticsComputation, 0,
@@ -342,18 +347,25 @@ int main(int argc, char* argv[]) {
   // ------------
   // Start the extraction process.
 
+  const string logLevelStr(loggingLevel);
+  LogLevel logLevel = ERROR;
+  if (logLevelStr == "trace" || logLevelStr == "TRACE") { logLevel = LogLevel::TRACE; }
+  if (logLevelStr == "debug" || logLevelStr == "DEBUG") { logLevel = LogLevel::DEBUG; }
+  if (logLevelStr == "info" || logLevelStr == "INFO") { logLevel = LogLevel::INFO; }
+  if (logLevelStr == "warn" || logLevelStr == "WARN") { logLevel = LogLevel::WARN; }
+
   PdfToTextPlusPlus engine(
     noEmbeddedFontFiles,
     noDehyphenation,
     parseMode,
-    debugPdfParsing,
-    debugStatisticsComputation,
-    debugDiacriticMarksMerging,
-    debugWordsDetection,
-    debugPageSegmentation,
-    debugTextLinesDetection,
-    debugSubSuperScriptsDetection,
-    debugTextBlocksDetection,
+    debugPdfParsing ? DEBUG : logLevel,
+    debugStatisticsComputation ? DEBUG : logLevel,
+    debugDiacriticMarksMerging ? DEBUG : logLevel,
+    debugWordsDetection ? DEBUG : logLevel,
+    debugPageSegmentation ? DEBUG : logLevel,
+    debugTextLinesDetection ? DEBUG : logLevel,
+    debugSubSuperScriptsDetection ? DEBUG : logLevel,
+    debugTextBlocksDetection ? DEBUG : logLevel,
     debugPageFilter);
 
   PdfDocument doc;
