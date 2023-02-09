@@ -3,7 +3,7 @@ name: checkstyle
 on: push
 
 jobs:
-  unit_test:
+  checkstyle:
     runs-on: ubuntu-latest
 
     steps:

@@ -12,19 +12,14 @@ jobs:
         run: |
           sudo apt install -y build-essential git cmake
 
-      - name: Build poppler
-        run: |
-          sudo apt install -y libfontconfig1-dev libfreetype6-dev libnss3-dev libopenjp2-7-dev libtiff5-dev
-          make -f ${{github.workspace}}/Makefile build-poppler
-
-      - name: Build utf8proc
-        run: |
-          make -f ${{github.workspace}}/Makefile build-utf8proc
-
       - name: Build gtest
         run: |
           make -f ${{github.workspace}}/Makefile build-gtest
 
-      - name: make test
+      -name: pwd
         run: |
-          make -f ${{github.workspace}}/Makefile test
+          pwd
+
+      -name: ls
+        run: |
+          ls -l
