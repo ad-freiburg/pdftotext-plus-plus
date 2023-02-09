@@ -1,11 +1,11 @@
 PROJECT_NAME = pdftotext-plus-plus
 
-SRC_DIR = ./src
-TEST_DIR = ./test
-LIBS_DIR = ./libs
-POPPLER_DIR = ./libs/poppler
-UTF8PROC_DIR = ./libs/utf8proc
-GTEST_DIR = ./libs/gtest
+SRC_DIR = src
+TEST_DIR = test
+LIBS_DIR = libs
+POPPLER_DIR = libs/poppler
+UTF8PROC_DIR = libs/utf8proc
+GTEST_DIR = libs/gtest
 
 MAIN_BINARY_FILE = $(SRC_DIR)/PdfToTextPlusPlusMain
 TEST_BINARY_FILES = $(basename $(wildcard $(TEST_DIR)/*Test.cpp $(TEST_DIR)/**/*Test.cpp))
