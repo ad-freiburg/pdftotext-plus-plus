@@ -14,7 +14,7 @@ OBJECT_FILES = $(addsuffix .o, $(basename $(filter-out %Main.cpp %Test.cpp, $(wi
 
 CXX = g++ -g -Wall -Wextra -pedantic -std=c++17
 #CXX = g++ -O3 -Wall -Wextra -pedantic -std=c++17
-LIBS = -I$(POPPLER_DIR) -I$(POPPLER_DIR)/build -I$(POPPLER_DIR)/build/poppler -I$(UTF8PROC_DIR) -L$(POPPLER_DIR)/build -L$(UTF8PROC_DIR)/build -lpoppler -lutf8proc
+LIBS = -I$(POPPLER_DIR) -I$(POPPLER_DIR)/build -I$(POPPLER_DIR)/build/poppler -I$(UTF8PROC_DIR) -L$(POPPLER_DIR)/build -Wl,-rpath,$(POPPLER_DIR)/build -L$(UTF8PROC_DIR)/build -lpoppler -lutf8proc
 LIBS_TEST = $(LIBS) -I$(GTEST_DIR)/googletest/include -L $(GTEST_DIR)/build/lib/ -lgtest -lgtest_main -lpthread
 
 CPPLINT_PATH = cpplint.py
