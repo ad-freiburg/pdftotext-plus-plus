@@ -19,3 +19,23 @@ jobs:
 
       - name: make checkstyle
         run: make -f ${{github.workspace}}/Makefile checkstyle
+
+
+
+name: checkstyle
+
+on: push
+
+jobs:
+  unit_test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install python3
+        run: |
+          sudo apt install -y python3
+
+      - name: make checkstyle
+        run: |
+          make -f ${{github.workspace}}/Makefile checkstyle

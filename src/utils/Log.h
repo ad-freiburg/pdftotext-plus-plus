@@ -9,8 +9,6 @@
 #ifndef UTILS_LOG_H_
 #define UTILS_LOG_H_
 
-#include <gtest/gtest.h>
-
 #include <iostream>  // std::ostream
 #include <string>
 
@@ -213,7 +211,7 @@ class Logger {
   // The page filter.
   int _pageFilter = -1;
 
-  FRIEND_TEST(Log, constructor);
+  friend class Log_constructor_Test;  // same as FRIEND_TEST(Log, constructor);
 };
 
 #endif  // UTILS_LOG_H_

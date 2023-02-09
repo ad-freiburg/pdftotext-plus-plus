@@ -223,7 +223,7 @@ void PdfDocumentVisualizer::visualizeReadingOrderCuts(const vector<Cut*>& cuts,
 // _________________________________________________________________________________________________
 void PdfDocumentVisualizer::save(const string& targetPath) const {
   GooString gooTargetPath(targetPath);
-  _pdfDoc->saveAs(&gooTargetPath);
+  _pdfDoc->saveAs(gooTargetPath);
 }
 
 // =================================================================================================
@@ -393,11 +393,11 @@ void PdfDocumentVisualizer::drawTextBlockSemanticRoles(const vector<PdfTextBlock
     const DefaultAppearance appearance(&config::SEMANTIC_ROLE_APPEARANCE);
 
     // Create the annotation.
-    AnnotFreeText* annot = new AnnotFreeText(_pdfDoc.get(), &rect, appearance);
+    AnnotFreeText* annot = new AnnotFreeText(_pdfDoc.get(), &rect);
+    annot->setDefaultAppearance(appearance);
 
     // Define the text of the annotation (= the semantic role).
-    GooString role(block->role);
-    annot->setContents(convertToUtf16(&role));
+    annot->setContents(make_unique<GooString>(convertToUtf16(block->role)));
 
     // Remove the default border around the annotation.
     std::unique_ptr<AnnotBorder> border(new AnnotBorderArray());
@@ -496,13 +496,13 @@ void PdfDocumentVisualizer::drawReadingOrderIndexCircle(Page* page, Gfx* gfx, do
   PDFRectangle indexRect(
     x - config::READING_ORDER_CIRCLE_RADIUS, y - config::READING_ORDER_CIRCLE_RADIUS,
     x + config::READING_ORDER_CIRCLE_RADIUS, y + config::READING_ORDER_CIRCLE_RADIUS * 0.6);
-  AnnotFreeText* indexAnnot = new AnnotFreeText(_pdfDoc.get(), &indexRect, indexAppearance);
+  AnnotFreeText* indexAnnot = new AnnotFreeText(_pdfDoc.get(), &indexRect);
+  indexAnnot->setDefaultAppearance(indexAppearance);
 
   // Define the text of the annot (= the reading order index).
-  GooString index(std::to_string(readingOrderIndex));
-  indexAnnot->setContents(convertToUtf16(&index));
+  indexAnnot->setContents(make_unique<GooString>(convertToUtf16(std::to_string(readingOrderIndex))));
   // Center the text horizontally.
-  indexAnnot->setQuadding(AnnotFreeText::AnnotFreeTextQuadding::quaddingCentered);
+  indexAnnot->setQuadding(VariableTextQuadding::centered);
 
   // Remove the default border around the reading order index.
   std::unique_ptr<AnnotBorder> indexBorder(new AnnotBorderArray());
@@ -545,7 +545,7 @@ void PdfDocumentVisualizer::drawCuts(const vector<Cut*>& cuts, const ColorScheme
     lineAnnot->setBorder(move(lineBorder));
 
     // Define the line color.
-    auto lineColor = make_unique<AnnotColor>(cos.tertiaryColor);
+    auto lineColor = make_unique<AnnotColor>(cos.primaryColor);
     lineAnnot->setColor(move(lineColor));
 
     // Draw the line.
@@ -585,13 +585,13 @@ void PdfDocumentVisualizer::drawCuts(const vector<Cut*>& cuts, const ColorScheme
       PDFRectangle indexRect(
         x1 - config::CUT_SQUARE_RADIUS, y1 - config::CUT_SQUARE_RADIUS,
         x1 + config::CUT_SQUARE_RADIUS, y1 + config::CUT_SQUARE_RADIUS * 0.6);
-      AnnotFreeText* indexAnnot = new AnnotFreeText(_pdfDoc.get(), &indexRect, indexAppearance);
+      AnnotFreeText* indexAnnot = new AnnotFreeText(_pdfDoc.get(), &indexRect);
+      indexAnnot->setDefaultAppearance(indexAppearance);
 
       // Define the text of the annot (= the how many-th chosen cut the index is).
-      GooString index(std::to_string(++chosenCutIndex));
-      indexAnnot->setContents(convertToUtf16(&index));
+      indexAnnot->setContents(make_unique<GooString>(convertToUtf16(std::to_string(++chosenCutIndex))));
       // Center the text horizontally.
-      indexAnnot->setQuadding(AnnotFreeText::AnnotFreeTextQuadding::quaddingCentered);
+      indexAnnot->setQuadding(VariableTextQuadding::centered);
 
       // Remove the default border around the cut index.
       std::unique_ptr<AnnotBorder> indexBorder(new AnnotBorderArray());
@@ -610,25 +610,25 @@ void PdfDocumentVisualizer::drawCuts(const vector<Cut*>& cuts, const ColorScheme
     const DefaultAppearance idAppearance(&config::CUT_ID_APPEARANCE);
 
     // Define the position of the id.
-    double rectWidth = 30;
-    double rectHeight = 15;
+    double rectWidth = 20;
+    double rectHeight = 10;
     double rectMinX = cut->dir == CutDir::X ? x2 - (rectWidth / 2.0) : x2 - rectWidth;
     double rectMinY = cut->dir == CutDir::X ? y2 - rectHeight : y2;
     double rectMaxX = rectMinX + rectWidth;
     double rectMaxY = rectMinY + rectHeight;
     PDFRectangle idRect(rectMinX, rectMinY, rectMaxX, rectMaxY);
-    AnnotFreeText* idAnnot = new AnnotFreeText(_pdfDoc.get(), &idRect, idAppearance);
+    AnnotFreeText* idAnnot = new AnnotFreeText(_pdfDoc.get(), &idRect);
+    idAnnot->setDefaultAppearance(idAppearance);
 
     // Define the text of the annot (= the id).
-    GooString id(cut->id);
-    idAnnot->setContents(convertToUtf16(&id));
+    idAnnot->setContents(make_unique<GooString>(convertToUtf16(cut->id)));
     // Center the text horizontally.
-    idAnnot->setQuadding(AnnotFreeText::AnnotFreeTextQuadding::quaddingCentered);
+    idAnnot->setQuadding(VariableTextQuadding::centered);
 
     // Remove the default border around the cut id.
-    // std::unique_ptr<AnnotBorder> idBorder(new AnnotBorderArray());
-    // idBorder->setWidth(0);
-    // idAnnot->setBorder(move(idBorder));
+    std::unique_ptr<AnnotBorder> idBorder(new AnnotBorderArray());
+    idBorder->setWidth(0);
+    idAnnot->setBorder(move(idBorder));
 
     // Draw the id.
     pdfPage->addAnnot(idAnnot);
@@ -637,21 +637,21 @@ void PdfDocumentVisualizer::drawCuts(const vector<Cut*>& cuts, const ColorScheme
 }
 
 // _________________________________________________________________________________________________
-GooString* PdfDocumentVisualizer::convertToUtf16(GooString* str) const {
-  int length = 2 + 2 * str->getLength();
+string PdfDocumentVisualizer::convertToUtf16(const string& str) const {
+  int length = 2 + 2 * str.length();
   char* result = new char[length];
   // Add unicode markers.
   result[0] = static_cast<char>(0xfe);
   result[1] = static_cast<char>(0xff);
   // Convert to UTF-16.
   for (int i = 2, j = 0; i < length; i += 2, j++) {
-    unsigned char character = static_cast<unsigned char>(str->getChar(j));
+    unsigned char character = static_cast<unsigned char>(str.at(j));
     Unicode u = pdfDocEncoding[static_cast<unsigned int>(character)] & 0xffff;
     result[i] = (u >> 8) & 0xff;
     result[i + 1] = u & 0xff;
   }
   // delete str;
-  str = new GooString(result, length);
+  string s(result, length);
   // delete[] result;
-  return str;
+  return s;
 }

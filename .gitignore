@@ -1,3 +1,4 @@
+pdfs/
 **/*.o
 core
 PdfToTextPlusPlusMain

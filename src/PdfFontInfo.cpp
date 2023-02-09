@@ -44,7 +44,7 @@ PdfFontInfo* PdfFontInfo::create(const GfxState* state, XRef* xref, bool parseEm
   assert(state);
   assert(xref);
 
-  GfxFont* gfxFont = state->getFont();
+  const std::shared_ptr<GfxFont> gfxFont = state->getFont();
   // Do nothing if the given graphics state does not provide a font.
   if (!gfxFont) {
     return nullptr;
@@ -53,13 +53,13 @@ PdfFontInfo* PdfFontInfo::create(const GfxState* state, XRef* xref, bool parseEm
   // Get the font name. In some cases (e.g., if the type of the font is "type-3"), the gfxFont
   // may not provide a font name. So use the pointer address of the font as default font name.
   stringstream gfxFontAddress;
-  gfxFontAddress << (void const *) gfxFont;
+  gfxFontAddress << gfxFont;
   string fontName = gfxFontAddress.str();
 
   // If the font provide a font name, take this.
-  const GooString* gooFontName = gfxFont->getName();
+  const std::optional<std::string> gooFontName = gfxFont->getName();
   if (gooFontName) {
-    fontName = gooFontName->toStr();
+    fontName = move(*gooFontName);
   }
 
   PdfFontInfo* fontInfo = new PdfFontInfo();
@@ -141,9 +141,9 @@ PdfFontInfo* PdfFontInfo::create(const GfxState* state, XRef* xref, bool parseEm
     // Check if the font is embedded. If so, read the embedded font file. It can contains further
     // information about the font that are not read by pdftotext by default, for example: the font
     // weight, the italicness, or the exact bounding boxes of the characters.
-    GfxFontLoc* fontLoc = state->getFont()->locateFont(xref, nullptr);
+    std::optional<GfxFontLoc> fontLoc = state->getFont()->locateFont(xref, nullptr);
 
-    if (fontLoc != nullptr) {
+    if (fontLoc) {
       switch (fontLoc->locType) {
         case gfxFontLocEmbedded:
           switch (fontLoc->fontType) {
@@ -171,8 +171,6 @@ PdfFontInfo* PdfFontInfo::create(const GfxState* state, XRef* xref, bool parseEm
           break;
       }
     }
-
-    delete fontLoc;
   }
 
   return fontInfo;

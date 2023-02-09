@@ -1,125 +1,89 @@
 PROJECT_NAME = pdftotext-plus-plus
 
-DOCKER_CMD = docker
-#DOCKER_FILE = ./Dockerfiles/Dockerfile.ubuntu:$(shell lsb_release -r -s)
-#DOCKER_IMAGE = pdftotext-plus-plus-ubuntu:$(shell lsb_release -r -s)
-DOCKER_FILE = ./Dockerfiles/Dockerfile.ubuntu:20.04
-DOCKER_IMAGE = pdftotext-plus-plus-ubuntu:20.04
+SRC_DIR = ./src
+TEST_DIR = ./test
+LIBS_DIR = ./libs
+POPPLER_DIR = ./libs/poppler
+UTF8PROC_DIR = ./libs/utf8proc
+GTEST_DIR = ./libs/gtest
 
+MAIN_BINARY_FILE = $(SRC_DIR)/PdfToTextPlusPlusMain
+TEST_BINARY_FILES = $(basename $(wildcard $(TEST_DIR)/*Test.cpp $(TEST_DIR)/**/*Test.cpp))
+HEADER_FILES = $(wildcard $(SRC_DIR)/*.h $(SRC_DIR)/**/*.h)
+OBJECT_FILES = $(addsuffix .o, $(basename $(filter-out %Main.cpp %Test.cpp, $(wildcard $(SRC_DIR)/*.cpp $(SRC_DIR)/**/*.cpp))))
 
-INPUT_DIR = /local/data/pdftotext-plus-plus/evaluation/benchmarks/arxiv-debug
-OUTPUT_DIR = /local/data/pdftotext-plus-plus/evaluation/extraction-results/arxiv-debug
+CXX = g++ -g -Wall -Wextra -pedantic -std=c++17
+#CXX = g++ -O3 -Wall -Wextra -pedantic -std=c++17
+LIBS = -I$(POPPLER_DIR) -I$(POPPLER_DIR)/build -I$(POPPLER_DIR)/build/poppler -I$(UTF8PROC_DIR) -L$(POPPLER_DIR)/build -L$(UTF8PROC_DIR)/build -lpoppler -lutf8proc
+LIBS_TEST = $(LIBS) -I$(GTEST_DIR)/googletest/include -L $(GTEST_DIR)/build/lib/ -lgtest -lgtest_main -lpthread
 
-INSTALL_DIR = /usr/local
+CPPLINT_PATH = cpplint.py
 
-# ==================================================================================================
+.PRECIOUS: %.o
+.PHONY: all compile test checkstyle clean install
 
-help:
-	@echo "\033[34;1mDESCRIPTION\033[0m"
-	@echo "    This is the Makefile of pdftotext++."
-	@echo
-	@echo "\033[34;1mTARGETS\033[0m"
-	@echo "    \033[1mdataset\033[0m"
-	@echo "        Creates a dataset containing semantic and layout information about the words and"
-	@echo "        text blocks extracted from given PDF files."
-	@echo
-	@echo "    For more information about a target, type \"make help-<target>\"."
-	@echo
+all: compile checkstyle test
 
-# ==================================================================================================
-# make dataset
+compile: $(MAIN_BINARY_FILE)
 
-help-dataset:
-	@echo "\033[34;1mNAME\033[0m"
-	@echo "    dataset"
-	@echo
-	@echo "\033[34;1mDESCRIPTION\033[0m"
-	@echo "    Creates a dataset containing semantic and layout information about the words *and*"
-	@echo "    text blocks extracted from given PDF files (= files ending with "*.pdf"). The"
-	@echo "    information about the words extracted from (INPUT_DIR)/path/to/file.pdf will be"
-	@echo "    written to (INPUT_DIR)/path/to/file.words.jsonl; the information about the text"
-	@echo "    blocks will be written to (INPUT_DIR)/path/to/file.blocks.jsonl. The files will"
-	@echo "    contain one word (resp. text block) per line. A line of file.words.jsonl is of the"
-	@echo "    following form:"
-	@echo
-	@echo "    {\"id\": \"w-ynXLvp8F\", \"rank\": 0, \"page\": 1, \"leftX\": 177.797, \"upperY\": 70.6,"
-	@echo "     \"rightX\": 236.4, \"lowerY\": 86.1, \"font\": \"MOFJOH+NimRomNo9L-Medi\", \"fontSize\":"
-	@echo "     11.9, \"text\": \"Topological\", \"block\": \"tb-IztYpXWG\", \"origin\": \"pdf\"}"
-	@echo
-	@echo "    A line of file.blocks.jsonl is of the following form:"
-	@echo
-	@echo "    {\"id\": \"tb-IztYpXWG\", \"rank\": 0, \"page\": 1, \"leftX\": 177.7, \"upperY\": 70.6,"
-	@echo "     \"rightX\": 432.4, \"lowerY\": 86.1, \"font\": \"MOFJOH+NimRomNo9L-Medi\", \"fontSize\":"
-	@echo "     11.9, \"text\": \"Topological ...\", \"role\": \"title\", \"origin\": \"pdf\"}"
-	@echo
-	@echo "\033[34;1mUSAGE\033[0m"
-	@echo "    make dataset [INPUT_DIR=\033[4mstring\033[0m] [OUTPUT_DIR=\033[4mstring\033[0m]"
-	@echo
-	@echo "\033[34;1mOPTIONS\033[0m"
-	@echo "    \033[1mINPUT_DIR\033[0m (default: \"$(INPUT_DIR)\")"
-	@echo "        The path to a directory containing PDF files (= files ending with *.pdf), stored"
-	@echo "        in arbitrary depth."
-	@echo "    \033[1mOUTPUT_DIR\033[0m (default: \"$(OUTPUT_DIR)\")"
-	@echo "        The path to the directory to which the *.words.jsonl and *.blocks.jsonl files"
-	@echo "        should be written. The produced directory structure is equal to the input"
-	@echo "        directory structure. For example, when the input directory structure is"
-	@echo
-	@echo "        INPUT_DIR/"
-	@echo "          0001/"
-	@echo "            math-ph0001044/"
-	@echo "              math-ph0001044.pdf"
-	@echo "          0002/"
-	@echo "            physics0002056/"
-	@echo "              physics0002056.pdf"
-	@echo
-	@echo "        the following directory structure is produced:"
-	@echo
-	@echo "        OUTPUT_DIR/"
-	@echo "          0001/"
-	@echo "            math-ph0001044/"
-	@echo "              math-ph0001044.words.jsonl"
-	@echo "              math-ph0001044.blocks.jsonl"
-	@echo "          0002/"
-	@echo "            physics0002056/"
-	@echo "              physics0002056.words.jsonl"
-	@echo "              physics0002056.blocks.jsonl"
-	@echo
+test: $(TEST_BINARY_FILES)
+	for T in $(TEST_BINARY_FILES); do ./$$T || exit; done
 
-dataset: build-docker
-	@echo "\033[34;1mCreating output directory ...\033[0m"
-	mkdir -p -m 777 $(OUTPUT_DIR)
+valgrind: $(TEST_BINARY_FILES)
+	for T in $(TEST_BINARY_FILES); do valgrind --leak-check=full ./$$T; done
 
-	echo "\033[34;1mRunning the Docker container ...\033[0m"
-	cd ${INPUT_DIR} && find . -name "*.pdf" | sed "s/.wc.pdf$$//" | xargs -I {} docker run --rm -v ${INPUT_DIR}:/input -v ${OUTPUT_DIR}:/output $(DOCKER_IMAGE) /input/{}.wc.pdf --output-pages --output-text-blocks --output-words "/output/{}.jsonl"
-	echo "{ \"benchmarkName\": \"$(shell basename $(INPUT_DIR))\" }" > ${OUTPUT_DIR}/info.json
+checkstyle:
+	python3 $(CPPLINT_PATH) --repository=$(SRC_DIR) $(SRC_DIR)/*.h $(SRC_DIR)/**/*.h $(SRC_DIR)/*.cpp $(SRC_DIR)/**/*.cpp
+	python3 $(CPPLINT_PATH) --repository=$(TEST_DIR) $(TEST_DIR)/*.cpp $(TEST_DIR)/**/*.cpp
 
-# ==================================================================================================
+install pdftotext: $(MAIN_BINARY_FILE)
+	cp $(MAIN_BINARY_FILE) /usr/local/bin/pdftotext++
 
-build-docker:
-	@echo "\033[34;1mBuilding the Docker image ...\033[0m"
-	$(DOCKER_CMD) build -f $(DOCKER_FILE) -t $(DOCKER_IMAGE) .
+clean:
+	rm -f *.o **/*.o
+	rm -f $(MAIN_BINARY_FILE)
+	rm -f $(TEST_BINARY_FILES)
+	rm -f core
+	rm -f $(TEST_DIR)/*.aux $(TEST_DIR)/**/*.aux
+	rm -f $(TEST_DIR)/*.fdb_latexmk $(TEST_DIR)/**/*.fdb_latexmk
+	rm -f $(TEST_DIR)/*.fls $(TEST_DIR)/**/*.fls
+	rm -f $(TEST_DIR)/*.log $(TEST_DIR)/**/*.log
+	rm -f $(TEST_DIR)/*.synctex.gz $(TEST_DIR)/**/*.synctex.gz
 
-# ==================================================================================================
+build-libs: build-poppler build-utf8proc
 
-compile: build-docker
-	@echo "\033[34;1mCompiling pdftotext++ ...\033[0m"
-	$(DOCKER_CMD) run --rm $(DOCKER_IMAGE)
+build-poppler:
+	@echo "\033[34;1mBuilding poppler ...\033[0m"
 
-test: build-docker
-	@echo "\033[34;1mTesting pdftotext++ ...\033[0m"
-	$(DOCKER_CMD) run --rm --entrypoint make $(DOCKER_IMAGE) test
+	mkdir -p $(LIBS_DIR)
+	cd $(LIBS_DIR); git clone https://github.com/freedesktop/poppler.git poppler
+	cd $(LIBS_DIR)/poppler; git checkout 065dca3; mkdir -p build
+	cd $(LIBS_DIR)/poppler/build; cmake -DBUILD_GTK_TESTS=OFF -DBUILD_QT5_TESTS=OFF -DBUILD_QT6_TESTS=OFF -DBUILD_CPP_TESTS=OFF -DBUILD_MANUAL_TESTS=OFF -DENABLE_BOOST=OFF -DENABLE_CPP=OFF -DENABLE_GLIB=OFF -DENABLE_GOBJECT_INTROSPECTION=OFF -DENABLE_QT5=OFF -DENABLE_QT6=OFF -DENABLE_LIBCURL=OFF -DRUN_GPERF_IF_PRESENT=OFF -DENABLE_LIBPNG=OFF ..; make poppler
 
-checkstyle: build-docker
-	@echo "\033[34;1mCheckstyling pdftotext++ ...\033[0m"
-	$(DOCKER_CMD) run --rm --entrypoint make $(DOCKER_IMAGE) checkstyle
+build-utf8proc:
+	@echo "\033[34;1mBuilding utf8proc ...\033[0m"
 
-# ==================================================================================================
+	mkdir -p $(LIBS_DIR)
+	cd $(LIBS_DIR); git clone https://github.com/JuliaStrings/utf8proc.git utf8proc
+	cd $(LIBS_DIR)/utf8proc; git checkout 1cb28a6; mkdir -p build
+	cd $(LIBS_DIR)/utf8proc/build; cmake ..; make
 
-install: build-docker
-	@echo "\033[34;1mInstalling pdftotext++ ...\033[0m"
+build-gtest:
+	@echo "\033[34;1mBuilding gtest ...\033[0m"
 
-	$(DOCKER_CMD) create -it --name $(PROJECT_NAME)-install $(DOCKER_IMAGE) bash
-	$(DOCKER_CMD) cp $(PROJECT_NAME)-install:/usr/local/lib $(INSTALL_DIR)/
-	$(DOCKER_CMD) cp $(PROJECT_NAME)-install:/usr/local/bin $(INSTALL_DIR)/
-	$(DOCKER_CMD) rm $(PROJECT_NAME)-install
+	mkdir -p $(LIBS_DIR)
+	cd $(LIBS_DIR); git clone https://github.com/google/googletest.git gtest
+	cd $(LIBS_DIR)/gtest; git checkout b796f7d; mkdir -p build
+	cd $(LIBS_DIR)/gtest/build; cmake ..; make
 
+%Main: %Main.o $(OBJECT_FILES)
+	$(CXX) -o $@ $^ $(LIBS)
+
+%Test: %Test.o $(OBJECT_FILES)
+	$(CXX) -o $@ $^ $(LIBS_TEST)
+
+%.o: %.cpp $(HEADER_FILES)
+	$(CXX) -c $< -o $@ $(LIBS)
+
+%Test.o: %Test.cpp $(HEADER_FILES)
+	$(CXX) -c $< -o $@ $(LIBS_TEST)

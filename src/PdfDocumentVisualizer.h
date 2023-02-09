@@ -70,7 +70,7 @@ const GooString CUT_INDEX_APPEARANCE("/Helv 7 Tf 1 1 1 rg");
 const double CUT_SQUARE_RADIUS = 5;
 
 // The font appearance of a cut id.
-const GooString CUT_ID_APPEARANCE("/Helv 3 Tf .9 .9 .9 rg");
+const GooString CUT_ID_APPEARANCE("/Helv 6 Tf .7 .7 .7 rg");
 
 }  // namespace visualizer::config
 
@@ -370,7 +370,7 @@ class PdfDocumentVisualizer {
    * @return
    *    The string converted to UTF-16.
    */
-  GooString* convertToUtf16(GooString* str) const;
+  string convertToUtf16(const string& str) const;
 
   // The PDF document to process.
   unique_ptr<PDFDoc> _pdfDoc;

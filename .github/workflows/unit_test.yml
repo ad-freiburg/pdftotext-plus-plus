@@ -7,15 +7,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
-      - name: Install Docker
+      - uses: actions/checkout@v3
+      - name: Install requirements
         run: |
-          sudo apt install -y apt-transport-https ca-certificates curl software-properties-common
-          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-          sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable"
-          sudo apt update
-          sudo apt-cache policy docker-ce
-          sudo apt install docker-ce
+          sudo apt install -y build-essential git cmake
+
+      - name: Build poppler
+        run: |
+          sudo apt install -y libfontconfig1-dev libfreetype6-dev libnss3-dev libopenjp2-7-dev libtiff5-dev
+          make -f ${{github.workspace}}/Makefile build-poppler
+
+      - name: Build utf8proc
+        run: |
+          make -f ${{github.workspace}}/Makefile build-utf8proc
+
+      - name: Build gtest
+        run: |
+          make -f ${{github.workspace}}/Makefile build-gtest
 
       - name: make test
-        run: make -f ${{github.workspace}}/Makefile test
+        run: |
+          make -f ${{github.workspace}}/Makefile test

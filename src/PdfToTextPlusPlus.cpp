@@ -203,15 +203,15 @@ int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
     timings->push_back(timing);
   }
 
-  // (12) Detect the reading order of the text blocks.
-  start = high_resolution_clock::now();
-  ReadingOrderDetector rod(doc);
-  rod.detect();
-  end = high_resolution_clock::now();
-  if (timings) {
-    Timing timing("Detecting reading order", duration_cast<milliseconds>(end - start).count());
-    timings->push_back(timing);
-  }
+  // // (12) Detect the reading order of the text blocks.
+  // start = high_resolution_clock::now();
+  // ReadingOrderDetector rod(doc);
+  // rod.detect();
+  // end = high_resolution_clock::now();
+  // if (timings) {
+  //   Timing timing("Detecting reading order", duration_cast<milliseconds>(end - start).count());
+  //   timings->push_back(timing);
+  // }
 
   // (13) Dehyphenate words, if not deactivated by the user.
   if (!_noWordsDehyphenation) {

@@ -94,7 +94,7 @@ void TextOutputDev::updateFont(GfxState* state) {
   _fontInfo = nullptr;
 
   // Skip the event if the state does not contain any font.
-  GfxFont* gfxFont = state->getFont();
+  const std::shared_ptr<GfxFont> gfxFont = state->getFont();
   if (!gfxFont) {
     _log->debug(_p) << " └─ gfxFont: -" << endl;
     return;
@@ -103,11 +103,11 @@ void TextOutputDev::updateFont(GfxState* state) {
   // Get the font name. In some cases (e.g., if the type of the font is "type-3"), the gfxFont
   // may not provide a font name. In this case, use the pointer address of the font instead.
   stringstream gfxFontAddress;
-  gfxFontAddress << (void const*) gfxFont;
+  gfxFontAddress << gfxFont;
   string fontName = gfxFontAddress.str();
-  const GooString* gooFontName = gfxFont->getName();
+  const std::optional<string> gooFontName = gfxFont->getName();
   if (gooFontName) {
-    fontName = gooFontName->toStr();
+    fontName = move(*gooFontName);
   }
 
   // Check if the info about the current font was already computed. If not, compute it.
@@ -155,7 +155,7 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   // ----------------------------------
   // Set the character name, as it is provided by the PDF (e.g., "summationdisplay" for "Σ").
 
-  const Gfx8BitFont* gfx8BitFont = dynamic_cast<Gfx8BitFont*>(state->getFont());
+  auto gfx8BitFont = std::dynamic_pointer_cast<Gfx8BitFont>(state->getFont());
   if (gfx8BitFont) {
     const char* charNameArray = gfx8BitFont->getCharName(c);
     if ((charNameArray != nullptr) && (charNameArray[0] != '\0')) {
@@ -222,7 +222,7 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   const double* fontm;
   double m[4], m2[4];
   state->getFontTransMat(&m[0], &m[1], &m[2], &m[3]);
-  GfxFont* gfxFont = state->getFont();
+  const std::shared_ptr<GfxFont> gfxFont = state->getFont();
   if (gfxFont && gfxFont->getType() == fontType3) {
     fontm = state->getFont()->getFontMatrix();
     m2[0] = fontm[0] * m[0] + fontm[1] * m[2];
@@ -290,7 +290,7 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   concat(paramsXtm, ctm, trm);
 
   // Compute the text rendering matrix of the next char.
-  const GfxCIDFont* gfxCidFont = dynamic_cast<GfxCIDFont*>(state->getFont());
+  auto gfxCidFont = std::dynamic_pointer_cast<GfxCIDFont>(state->getFont());
   double width = 0;
   if (gfx8BitFont) {
     width = gfx8BitFont->getWidth(c);

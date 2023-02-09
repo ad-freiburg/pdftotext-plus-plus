@@ -9,7 +9,6 @@
 #ifndef BYTEPAIRENCODER_H_
 #define BYTEPAIRENCODER_H_
 
-#include <gtest/gtest.h>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -94,9 +93,14 @@ class BytePairEncoder {
   // The symbol to use as word delimiter.
   wstring WORD_DELIM_SYMBOL = L"✂";
 
-  FRIEND_TEST(BytePairEncoderTest, testConstructor);
-  FRIEND_TEST(BytePairEncoderTest, testEncodeWord);
-  FRIEND_TEST(BytePairEncoderTest, computeTokenPairPositions);
+  // same as FRIEND_TEST(BytePairEncoderTest, testConstructor);
+  friend class BytePairEncoderTest_testConstructor_Test;
+
+  // same as FRIEND_TEST(BytePairEncoderTest, testEncodeWord);
+  friend class BytePairEncoderTest_testEncodeWord_Test;
+
+  // same as FRIEND_TEST(BytePairEncoderTest, computeTokenPairPositions);
+  friend class BytePairEncoderTest_computeTokenPairPositions_Test;
 };
 
 #endif  // BYTEPAIRENCODER_H_
