@@ -24,6 +24,7 @@ jobs:
       - name: Build gtest
         run: |
           make build-gtest
+          ls -l libs/poppler/build
 
       - name: make test
         run: |
