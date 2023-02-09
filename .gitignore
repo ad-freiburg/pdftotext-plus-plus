@@ -1,8 +1,9 @@
-pdfs/
-**/*.o
+/pdfs
+/libs
 core
-PdfToTextPlusPlusMain
-*.pdf
+*Main
+*Test
+*.o
 *.tex
 *.aux
 *.log
