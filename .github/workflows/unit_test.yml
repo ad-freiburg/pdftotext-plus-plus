@@ -23,3 +23,4 @@ jobs:
       - name: ls
         run: |
           ls -l
+          ls -l libs
