@@ -7,19 +7,6 @@ S=$(basename "$0")
 
 # ==================================================================================================
 
-# TODO: Documentation.
-function install_pre() {
-  apt-get update && apt-get install -y build-essential cmake git tar wget
-
-  # Install yq if not installed yet (needed to read config.yml).
-  if ! command -v yq &> /dev/null; then
-    wget https://github.com/mikefarah/yq/releases/download/v4.32.2/yq_linux_amd64 -O /usr/bin/yq
-    chmod +x /usr/bin/yq
-  fi
-}
-
-# ==================================================================================================
-
 # TODO: Documentation
 function install_tensorflow() {
   local TARGET_DIR="${1:-.}"

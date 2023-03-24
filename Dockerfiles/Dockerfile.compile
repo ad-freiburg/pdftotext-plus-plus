@@ -7,31 +7,33 @@ ENV LC_ALL "C.UTF-8"
 ENV LC_CTYPE "C.UTF-8"
 ENV DEBIAN_FRONTEND "noninteractive"
 
-ENV PROJECT_NAME "n/a"
-ENV PROJECT_DESCRIPTION "n/a"
-ENV PROJECT_VERSION "n/a"
-ENV PACKAGE_MAINTAINER_NAME "n/a"
-ENV PACKAGE_MAINTAINER_MAIL "n/a"
-ENV PACKAGE_TARGET_DIR "/out"
-
-ENV USR_DIR "/usr/local/pdftotext-plus-plus"
-ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:$USR_DIR/lib
+ENV USR_DIR "/usr/local/"
 ENV TF_CPP_MIN_LOG_LEVEL "3"
+
+# ==================================================================================================
+
+RUN apt-get update && apt-get install -y build-essential cmake git tar wget
+
+# Install yq, needed for reading config.yml.
+RUN wget https://github.com/mikefarah/yq/releases/download/v4.32.2/yq_linux_amd64 \
+    -O /usr/bin/yq && chmod +x /usr/bin/yq
 
 # ==================================================================================================
 
 WORKDIR /project
 
-# Install the compile requirements.
 COPY log.sh .
 COPY install_requirements.sh .
-RUN ./install_requirements.sh install_compile_requirements "$USR_DIR"
-RUN ldconfig "$USR_DIR"
+COPY Makefile .
+COPY config.yml .
 
-# Compile the project.
+RUN make requirements/pre USR_DIR="$USR_DIR"
+RUN make requirements/run USR_DIR="$USR_DIR"
+RUN ldconfig
+
+# Compile the project and build the package.
 COPY src src
 COPY resources resources
-COPY Makefile .
 COPY version.txt .
 RUN make clean compile USR_DIR="$USR_DIR"
 
