@@ -10,21 +10,11 @@ jobs:
       - uses: actions/checkout@v3
       - name: Install requirements
         run: |
-          sudo apt install -y build-essential git cmake
-
-      - name: Build poppler
-        run: |
-          sudo apt install -y libfontconfig1-dev libfreetype6-dev libnss3-dev libopenjp2-7-dev libtiff5-dev
-          make build-poppler
-
-      - name: Build utf8proc
-        run: |
-          make build-utf8proc
-
-      - name: Build gtest
-        run: |
-          make build-gtest
-          ls -l libs/poppler/build
+          sudo apt install -y build-essential cmake git tar wget
+          wget https://github.com/mikefarah/yq/releases/download/v4.32.2/yq_linux_amd64 -O /usr/bin/yq && chmod +x /usr/bin/yq
+          RUN make requirements/pre
+          RUN make requirements/run
+          RUN make requirements/test
 
       - name: make test
         run: |

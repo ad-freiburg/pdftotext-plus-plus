@@ -16,4 +16,4 @@ jobs:
 
       - name: make checkstyle
         run: |
-          make -f ${{github.workspace}}/Makefile checkstyle
+          make checkstyle
