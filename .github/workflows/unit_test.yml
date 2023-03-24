@@ -11,10 +11,10 @@ jobs:
       - name: Install requirements
         run: |
           sudo apt install -y build-essential cmake git tar wget
-          wget https://github.com/mikefarah/yq/releases/download/v4.32.2/yq_linux_amd64 -O /usr/bin/yq && chmod +x /usr/bin/yq
-          RUN make requirements/pre
-          RUN make requirements/run
-          RUN make requirements/test
+          sudo wget https://github.com/mikefarah/yq/releases/download/v4.32.2/yq_linux_amd64 -O /usr/bin/yq && sudo chmod +x /usr/bin/yq
+          sudo make requirements/pre
+          sudo make requirements/run
+          sudo make requirements/test
 
       - name: make test
         run: |
