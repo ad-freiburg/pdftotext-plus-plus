@@ -12,9 +12,9 @@ jobs:
         run: |
           sudo apt install -y build-essential cmake git tar wget
           sudo wget https://github.com/mikefarah/yq/releases/download/v4.32.2/yq_linux_amd64 -O /usr/bin/yq && sudo chmod +x /usr/bin/yq
-          sudo make requirements/pre
-          sudo make requirements/run
-          sudo make requirements/test
+          sudo make requirements/pre /usr/local
+          sudo make requirements/run /usr/local
+          sudo make requirements/test /usr/local
           sudo ldconfig
 
       - name: make test
