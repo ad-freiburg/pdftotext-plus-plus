@@ -15,9 +15,10 @@ jobs:
           sudo make requirements/pre /usr/local
           sudo make requirements/run /usr/local
           sudo make requirements/test /usr/local
+          ls -l /usr/local/lib
           sudo ldconfig
 
       - name: make test
         run: |
-          make test
+          make test USR_DIR="/usr/local"
 
