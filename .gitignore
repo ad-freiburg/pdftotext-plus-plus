@@ -1,8 +1,11 @@
-/pdfs
+/.github
+/.vscode
+/build
 /libs
+/pdfs
+/resources
+/usr
 core
-*Main
-*Test
 *.o
 *.tex
 *.aux
@@ -10,4 +13,3 @@ core
 *.synctex.gz
 *.fls
 *.fdb_latexmk
-settings.json

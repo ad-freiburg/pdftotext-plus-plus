@@ -14,8 +14,10 @@
 #include <algorithm>  // min, max
 #include <cmath>  // fabs
 #include <limits>  // numeric_limits
+#include <memory>
 #include <sstream>  // std::stringstream
 #include <string>
+#include <utility>
 
 #include "./utils/CharMap.h"
 #include "./utils/Log.h"

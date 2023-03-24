@@ -1,0 +1,31 @@
+project:
+  name: pdftotext++
+  description: A super duper description.
+
+  maintainer:
+    name: Claudius Korzen
+    mail: korzen@cs.uni-freiburg.de
+
+  requirements:
+    pre:
+      apt: libboost-all-dev
+      other:
+    run:
+      apt: libfontconfig1-dev libfreetype6-dev libnss3-dev libopenjp2-7-dev libtiff5-dev
+      other:
+        tensorflow: ./install_requirements.sh install_tensorflow
+        cppflow: ./install_requirements.sh install_cppflow
+        poppler: ./install_requirements.sh install_poppler
+        utf8proc: ./install_requirements.sh install_utf8proc
+    test:
+      apt:
+      other:
+        gtest: ./install_requirements.sh install_gtest
+
+  package:
+    dists:
+      - name: ubuntu2004-amd64
+        Dockerfile: Dockerfiles/Dockerfile.package.ubuntu2004-amd64
+
+      - name: ubuntu2204-amd64
+        Dockerfile: Dockerfiles/Dockerfile.package.ubuntu2204-amd64

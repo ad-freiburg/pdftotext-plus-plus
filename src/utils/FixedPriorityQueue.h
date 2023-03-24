@@ -72,7 +72,7 @@ class FixedPriorityQueue : public priority_queue<T, vector<T>, Comparator> {
   // The capacity of this priority queue.
   size_t _capacity;
 
-  friend class FixedPriorityQueue_pushpop_Test;  // same as FRIEND_TEST(FixedPriorityQueue, pushpop);
+  friend class FixedPriorityQueue_pushpop_Test;  // same: FRIEND_TEST(FixedPriorityQueue, pushpop);
 };
 
 #endif  // UTILS_FIXEDPRIORITYQUEUE_H_

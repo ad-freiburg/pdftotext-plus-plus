@@ -6035,10 +6035,10 @@ def ProcessConfigOverrides(filename):
                 if _cpplint_state.quiet:
                   # Suppress "Ignoring file" warning when using --quiet.
                   return False
-                sys.stderr.write('Ignoring "%s": file excluded by "%s". '
-                                 'File path component "%s" matches '
-                                 'pattern "%s"\n' %
-                                 (filename, cfg_file, base_name, val))
+                # sys.stderr.write('Ignoring "%s": file excluded by "%s". '
+                #                  'File path component "%s" matches '
+                #                  'pattern "%s"\n' %
+                #                  (filename, cfg_file, base_name, val))
                 return False
           elif name == 'linelength':
             global _line_length

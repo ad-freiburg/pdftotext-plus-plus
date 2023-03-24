@@ -27,6 +27,7 @@
 using std::make_unique;
 using std::move;
 using std::string;
+using std::to_string;
 using std::unique_ptr;
 using std::vector;
 
@@ -500,7 +501,7 @@ void PdfDocumentVisualizer::drawReadingOrderIndexCircle(Page* page, Gfx* gfx, do
   indexAnnot->setDefaultAppearance(indexAppearance);
 
   // Define the text of the annot (= the reading order index).
-  indexAnnot->setContents(make_unique<GooString>(convertToUtf16(std::to_string(readingOrderIndex))));
+  indexAnnot->setContents(make_unique<GooString>(convertToUtf16(to_string(readingOrderIndex))));
   // Center the text horizontally.
   indexAnnot->setQuadding(VariableTextQuadding::centered);
 
@@ -589,7 +590,7 @@ void PdfDocumentVisualizer::drawCuts(const vector<Cut*>& cuts, const ColorScheme
       indexAnnot->setDefaultAppearance(indexAppearance);
 
       // Define the text of the annot (= the how many-th chosen cut the index is).
-      indexAnnot->setContents(make_unique<GooString>(convertToUtf16(std::to_string(++chosenCutIndex))));
+      indexAnnot->setContents(make_unique<GooString>(convertToUtf16(to_string(++chosenCutIndex))));
       // Center the text horizontally.
       indexAnnot->setQuadding(VariableTextQuadding::centered);
 

@@ -1,0 +1,46 @@
+FROM ubuntu:22.04
+
+LABEL MAINTAINER "Claudius Korzen <korzen@cs.uni-freiburg.de>"
+
+ENV LANG "C.UTF-8"
+ENV LC_ALL "C.UTF-8"
+ENV LC_CTYPE "C.UTF-8"
+ENV DEBIAN_FRONTEND "noninteractive"
+
+ENV PROJECT_NAME "n/a"
+ENV PROJECT_DESCRIPTION "n/a"
+ENV PROJECT_VERSION "n/a"
+ENV PACKAGE_MAINTAINER_NAME "n/a"
+ENV PACKAGE_MAINTAINER_MAIL "n/a"
+ENV PACKAGE_TARGET_DIR "/out"
+
+ENV USR_DIR "/usr/local/pdftotext-plus-plus"
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:$USR_DIR/lib
+ENV TF_CPP_MIN_LOG_LEVEL "3"
+
+# ==================================================================================================
+
+WORKDIR /project
+
+# Install the compile requirements.
+COPY log.sh .
+COPY install_requirements.sh .
+RUN ./install_requirements.sh install_compile_requirements "$USR_DIR"
+RUN ldconfig "$USR_DIR"
+
+# Compile the project.
+COPY src src
+COPY resources resources
+COPY Makefile .
+COPY version.txt .
+RUN make clean compile USR_DIR="$USR_DIR"
+
+ENTRYPOINT [ "./build/pdftotext++" ]
+
+# ==================================================================================================
+
+# Build Docker image:
+# docker build -f Dockerfiles/Dockerfile.compile -t pdftotext-plus-plus:`cat version.txt` .
+#
+# Run Docker container:
+# docker run --rm -it --name pdftotext-plus-plus.`cat version.txt` pdftotext-plus-plus:`cat version.txt` --version

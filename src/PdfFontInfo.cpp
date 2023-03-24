@@ -15,10 +15,12 @@
 
 #include <algorithm>  // std::min, std::max
 #include <limits>
+#include <memory>
 #include <regex>
 #include <sstream>  // stringstream
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 using std::istringstream;

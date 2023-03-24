@@ -1,0 +1,56 @@
+FROM ubuntu:20.04
+
+LABEL MAINTAINER "Claudius Korzen <korzen@cs.uni-freiburg.de>"
+
+ENV LANG "C.UTF-8"
+ENV LC_ALL "C.UTF-8"
+ENV LC_CTYPE "C.UTF-8"
+ENV DEBIAN_FRONTEND "noninteractive"
+
+ENV PROJECT_NAME "n.a."
+ENV PROJECT_DESCRIPTION "n.a."
+ENV PROJECT_VERSION "n.a."
+ENV PACKAGE_MAINTAINER_NAME "n.a."
+ENV PACKAGE_MAINTAINER_MAIL "n.a."
+ENV PACKAGE_APT_RUN_REQUIREMENTS ""
+ENV PACKAGE_TARGET_DIR "/out"
+
+ENV USR_DIR "/usr/local/pdftotext-plus-plus"
+ENV TF_CPP_MIN_LOG_LEVEL "3"
+
+# ==================================================================================================
+
+RUN apt-get update && apt-get install -y build-essential cmake git tar lsb-release wget
+
+# Install yq, needed for reading config.yml.
+RUN wget https://github.com/mikefarah/yq/releases/download/v4.32.2/yq_linux_amd64 \
+    -O /usr/bin/yq && chmod +x /usr/bin/yq
+
+# ==================================================================================================
+
+WORKDIR /project
+
+COPY log.sh .
+COPY install_requirements.sh .
+COPY Makefile .
+COPY config.yml .
+
+RUN make requirements/pre USR_DIR="$USR_DIR"
+RUN make requirements/run USR_DIR="$USR_DIR"
+RUN ldconfig "$USR_DIR"
+
+# Compile the project and build the package.
+COPY src src
+COPY resources resources
+COPY package.sh .
+CMD ./package.sh build_deb_package "$PROJECT_NAME" "$PROJECT_DESCRIPTION" "$PROJECT_VERSION" \
+    "$PACKAGE_MAINTAINER_NAME" "$PACKAGE_MAINTAINER_MAIL" "$PACKAGE_APT_RUN_REQUIREMENTS" \
+    "$USR_DIR" "$PACKAGE_TARGET_DIR"
+
+# ==================================================================================================
+
+# Build Docker image:
+# docker build -f Dockerfiles/Dockerfile.package.ubuntu2004-amd64 -t pdftotext-plus-plus.package:ubuntu2004-amd64 .
+#
+# Run Docker container:
+# docker run --rm --name pdftotext-plus-plus.package.ubuntu2004-amd64 -e PROJECT_NAME="<name>" -e PROJECT_DESCRIPTION="<description>" -e PROJECT_VERSION="<version>" -e PACKAGE_MAINTAINER_NAME="<name>" -e PACKAGE_MAINTAINER_MAIL="<mail>" -v "<output-dir>":/out pdftotext-plus-plus.package:ubuntu2004-amd64
