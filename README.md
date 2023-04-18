@@ -17,8 +17,8 @@
   &nbsp·&nbsp
   <a href="https://github.com/pdftotext-plus-plus/pdftotext-plus-plus/issues">Request Feature</a>
 </p>
+<br>
 
-<br><br>
 A fast and accurate command line tool for extracting text from PDF files. The main features are:
 * accurate detection of words, text lines and text blocks
 * splitting ligatures into separate characters, for example: *ﬃ* into *f*, *f*, and *i*.
