@@ -42,7 +42,7 @@ ENTRYPOINT [ "./build/pdftotext++" ]
 # ==================================================================================================
 
 # Build Docker image:
-# docker build -f Dockerfiles/Dockerfile.compile -t pdftotext-plus-plus:`cat version.txt` .
+# docker build -f Dockerfiles/Dockerfile -t pdftotext-plus-plus:`cat version.txt` .
 #
 # Run Docker container:
 # docker run --rm -it --name pdftotext-plus-plus.`cat version.txt` pdftotext-plus-plus:`cat version.txt` --version
