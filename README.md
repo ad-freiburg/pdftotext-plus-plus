@@ -27,7 +27,7 @@ A fast and accurate command line tool for extracting text from PDF files. The ma
 * detecting the natural reading order of text blocks
 * merging hyphenated words
 * detecting sub- and superscripts
-* customizable output of the extracted text, for example: in plain text format, or in a structured format (XML or JSON) in which the text is annotated with different semantic and layout information (for example: the font, font size, or position of the text in the PDF).
+* customizable output of the extracted text, for example: in plain text format, or in a structured format (JSONL) in which the text is annotated with different layout information (for example: the font, font size, or position of the text in the PDF).
 
 *pdftotext++* is written in C++ and is based on Poppler's <a href="https://github.com/pdftotext-plus-plus/pdftotext-plus-plus">pdftotext</a>.
 There are several installation options (e.g., via APT, Docker, or building from source), see the [description below](#installation).
@@ -35,6 +35,31 @@ There are several installation options (e.g., via APT, Docker, or building from 
 <!-- =========================================================================================== -->
 
 ## Quick Usage Guide
+
+Extract the text from *file.pdf* and output it to the console:
+```
+pdftotext++ file.pdf -
+```
+
+Extract the text from *file.pdf* and write it to *output.txt*:
+```
+pdftotext++ file.pdf output.txt
+```
+
+Extract the words from *file.pdf* and output them together with layout information in JSONL format:
+```
+pdftotext++ --output-words file.pdf -
+```
+
+Extract text from *file.pdf*, output it to the console and create a PDF file *words.pdf* in which a bounding box is drawn around each detected word (this is particularly useful for debugging):
+```
+pdftotext++ --visualize-words --visualization-path words.pdf file.pdf -
+```
+
+Print the full usage information:
+```
+pdftotext++ --help
+```
 
 ## Installation
 
