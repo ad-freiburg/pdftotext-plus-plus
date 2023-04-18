@@ -39,14 +39,12 @@ There are several installation options (e.g., via APT, Docker, or building from 
 ## Installation
 
 ### Apt (Recommended)
-  ```bash
+  ```
   sudo apt-get update
   sudo apt-get install ca-certificates curl gnupg lsb-release
   sudo mkdir -m 0755 -p /etc/apt/keyrings
-  # Add pdftotext++'s official GPG key.
   curl -fsSL https://pdftotext.cs.uni-freiburg.de/download/apt/gpg | \
     sudo gpg --dearmor -o /etc/apt/keyrings/pdftotext++.gpg
-  # Add the repository.
   echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/pdftotext++.gpg] \
     https://pdftotext.cs.uni-freiburg.de/download/apt $(lsb_release -cs) stable" | \
     sudo tee /etc/apt/sources.list.d/pdftotext++.list > /dev/null
@@ -56,7 +54,7 @@ There are several installation options (e.g., via APT, Docker, or building from 
   ```
 
 ### Docker
-  ```bash
+  ```
   git clone https://github.com/pdftotext-plus-plus/pdftotext-plus-plus.git
   cd pdftotext-plus-plus
   docker build -f Dockerfiles/Dockerfile -t pdftotext-plus-plus .
