@@ -13,9 +13,9 @@
 <p align="center">
   <a href="https://pdftotext.cs.uni-freiburg.de">Explore the docs</a>
   &nbsp·&nbsp
-  <a href="https://github.com/pdftotext-plus-plus/pdftotext-plus-plus/issues">Report Bug</a>
+  <a href="https://github.com/pdftotext-plus-plus/pdftotext-plus-plus/issues">Report a Bug</a>
   &nbsp·&nbsp
-  <a href="https://github.com/pdftotext-plus-plus/pdftotext-plus-plus/issues">Request Feature</a>
+  <a href="https://github.com/pdftotext-plus-plus/pdftotext-plus-plus/issues">Request a Feature</a>
 </p>
 <br>
 
@@ -51,7 +51,7 @@ Extract the words from *file.pdf* and output them together with layout informati
 pdftotext++ --output-words file.pdf -
 ```
 
-Extract text from *file.pdf*, output it to the console and create a PDF file *words.pdf* in which a bounding box is drawn around each detected word (this is particularly useful for debugging):
+Extract the text from *file.pdf*, output it to the console and create a PDF file *words.pdf* in which a bounding box is drawn around each detected word (this is particularly useful for debugging):
 ```
 pdftotext++ --visualize-words --visualization-path words.pdf file.pdf -
 ```
@@ -93,7 +93,7 @@ pdftotext++ --help
   cd pdftotext-plus-plus
   sudo apt-get update
   sudo apt-get install -y build-essential cmake git tar wget
-  wget https://github.com/mikefarah/yq/releases/download/v4.32.2/yq_linux_amd64 -O /usr/bin/yq
+  wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
   chmod +x /usr/bin/yq
   make requirements/pre
   make requirements/run
