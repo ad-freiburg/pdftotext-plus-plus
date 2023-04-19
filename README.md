@@ -73,12 +73,12 @@ sudo apt-get install ca-certificates curl gnupg lsb-release
 Add *pdftotext++*'s official GPG key:
 ```
 sudo mkdir -m 0755 -p /etc/apt/keyrings
-curl -fsSL https://pdftotext.cs.uni-freiburg.de/download/apt/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/pdftotext++.gpg
+curl -fsSL https://pdftotext.cs.uni-freiburg.de/download/apt/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/pdftotext-plus-plus.gpg
 ```
 
 Add the repository and install *pdftotext++*:
 ```
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/pdftotext++.gpg] https://pdftotext.cs.uni-freiburg.de/download/apt $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/pdftotext++.list > /dev/null
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/pdftotext-plus-plus.gpg] https://pdftotext.cs.uni-freiburg.de/download/apt $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/pdftotext-plus-plus.list > /dev/null
 sudo apt-get update
 sudo apt-get install pdftotext++
 ```
