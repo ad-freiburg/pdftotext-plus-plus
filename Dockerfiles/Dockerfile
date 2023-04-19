@@ -8,7 +8,6 @@ ENV LC_CTYPE "C.UTF-8"
 ENV DEBIAN_FRONTEND "noninteractive"
 
 ENV USR_DIR "/usr/local/"
-ENV TF_CPP_MIN_LOG_LEVEL "3"
 
 # ==================================================================================================
 

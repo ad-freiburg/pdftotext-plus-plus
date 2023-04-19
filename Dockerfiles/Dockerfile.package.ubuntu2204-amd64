@@ -16,7 +16,6 @@ ENV PACKAGE_APT_RUN_REQUIREMENTS ""
 ENV PACKAGE_TARGET_DIR "/out"
 
 ENV USR_DIR "/usr/local/pdftotext-plus-plus"
-ENV TF_CPP_MIN_LOG_LEVEL "3"
 
 # ==================================================================================================
 

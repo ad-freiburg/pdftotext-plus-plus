@@ -7,6 +7,7 @@
  */
 
 #include <chrono>  // std::chrono::high_resolution_clock
+#include <cstdlib>  // putenv
 #include <iomanip>  // std::setw, std::setprecision
 #include <iostream>  // std::cout
 #include <locale>  // imbue
@@ -310,6 +311,10 @@ void printVersionInfo() {
 int main(int argc, char* argv[]) {
   // Seed the random generator (needed to, for example, create the random ids of the text elements).
   srand((unsigned) time(NULL) * getpid());
+
+  // Disable the log output of Tensorflow.
+  char env[] = "TF_CPP_MIN_LOG_LEVEL=3";
+  putenv(env);
 
   // Parse the command line arguments.
   bool ok = parseArgs(options, &argc, argv);

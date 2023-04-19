@@ -1,7 +1,7 @@
 <br/>
 <p align="center">
   <a href="https://github.com/pdftotext-plus-plus/pdftotext-plus-plus">
-    <img src="logo-2.png" alt="logo" width="200">
+    <img src="logo.png" alt="logo" width="200">
   </a>
 </p>
 
@@ -88,25 +88,29 @@ pdftotext++ [options] <pdf-file> <output-file>
 ```
 
 ### Docker
-  ```
-  git clone https://github.com/pdftotext-plus-plus/pdftotext-plus-plus.git
-  cd pdftotext-plus-plus
-  docker build -f Dockerfiles/Dockerfile -t pdftotext-plus-plus .
-  docker run --rm -it -v <pdf-file>:/file.pdf --name pdftotext-plus-plus pdftotext-plus-plus [options] /file.pdf <output-file>
-  ```
+
+Clone the project:
+```
+git clone https://github.com/pdftotext-plus-plus/pdftotext-plus-plus.git
+cd pdftotext-plus-plus
+```
+Build a docker image:
+```
+docker build -f Dockerfiles/Dockerfile -t pdftotext-plus-plus .
+```
+Create and run a Docker container:
+```
+docker run --rm -it -v <pdf-file>:/file.pdf --name pdftotext-plus-plus pdftotext-plus-plus [options] /file.pdf <output-file>
+```
 
 ### Build from source (on a Debian system)
-
-  ```bash
-  git clone https://github.com/pdftotext-plus-plus/pdftotext-plus-plus.git
-  cd pdftotext-plus-plus
-  sudo apt-get update
-  sudo apt-get install -y build-essential cmake git tar wget
-  wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
-  chmod +x /usr/bin/yq
-  make requirements/pre
-  make requirements/run
-  ldconfig
-  make clean compile
-  ./build/pdftotext++ [options] <pdf-file> <output-file>
-  ```
+Clone the project and run the install script:
+```
+git clone https://github.com/pdftotext-plus-plus/pdftotext-plus-plus.git
+cd pdftotext-plus-plus
+sudo ./install.sh
+```
+Run *pdftotext++* (type `pdftotext++ --help` to see the full usage information):
+```
+pdftotext++ [options] <pdf-file> <output-file>
+```
