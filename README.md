@@ -64,19 +64,28 @@ pdftotext++ --help
 ## Installation
 
 ### Apt (Recommended)
-  ```
-  sudo apt-get update
-  sudo apt-get install ca-certificates curl gnupg lsb-release
-  sudo mkdir -m 0755 -p /etc/apt/keyrings
-  curl -fsSL https://pdftotext.cs.uni-freiburg.de/download/apt/gpg | \
-    sudo gpg --dearmor -o /etc/apt/keyrings/pdftotext++.gpg
-  echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/pdftotext++.gpg] \
-    https://pdftotext.cs.uni-freiburg.de/download/apt $(lsb_release -cs) stable" | \
-    sudo tee /etc/apt/sources.list.d/pdftotext++.list > /dev/null
-  sudo apt-get update
-  sudo apt-get install pdftotext++
-  pdftotext++ [options] <pdf-file> <output-file>
-  ```
+Install packages to allow *apt* to use a repository over HTTPS:
+```
+sudo apt-get update
+sudo apt-get install ca-certificates curl gnupg lsb-release
+```
+
+Add *pdftotext++*'s official GPG key:
+```
+sudo mkdir -m 0755 -p /etc/apt/keyrings
+curl -fsSL https://pdftotext.cs.uni-freiburg.de/download/apt/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/pdftotext++.gpg
+```
+
+Add the repository and install *pdftotext++*:
+```
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/pdftotext++.gpg] https://pdftotext.cs.uni-freiburg.de/download/apt $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/pdftotext++.list > /dev/null
+sudo apt-get update
+sudo apt-get install pdftotext++
+```
+Run *pdftotext++* (type `pdftotext++ --help` to see the full usage information):
+```
+pdftotext++ [options] <pdf-file> <output-file>
+```
 
 ### Docker
   ```
