@@ -91,7 +91,7 @@ pdftotext++ [options] <pdf-file> <output-file>
 
 Clone the project:
 ```
-git clone https://github.com/pdftotext-plus-plus/pdftotext-plus-plus.git
+git clone git@github.com:pdftotext-plus-plus/pdftotext-plus-plus.git
 cd pdftotext-plus-plus
 ```
 Build a docker image:
@@ -106,7 +106,7 @@ docker run --rm -it -v <pdf-file>:/file.pdf --name pdftotext-plus-plus pdftotext
 ### Build from source (on a Debian system)
 Clone the project and run the install script:
 ```
-git clone https://github.com/pdftotext-plus-plus/pdftotext-plus-plus.git
+git clone git@github.com:pdftotext-plus-plus/pdftotext-plus-plus.git
 cd pdftotext-plus-plus
 sudo ./install.sh
 ```
