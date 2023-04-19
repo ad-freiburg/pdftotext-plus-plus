@@ -80,7 +80,7 @@ Add the repository and install *pdftotext++*:
 ```
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/pdftotext-plus-plus.gpg] https://pdftotext.cs.uni-freiburg.de/download/apt $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/pdftotext-plus-plus.list > /dev/null
 sudo apt-get update
-sudo apt-get install pdftotext++
+sudo apt-get install -y pdftotext++
 ```
 Run *pdftotext++* (type `pdftotext++ --help` to see the full usage information):
 ```
@@ -91,7 +91,7 @@ pdftotext++ [options] <pdf-file> <output-file>
 
 Clone the project:
 ```
-git clone git@github.com:pdftotext-plus-plus/pdftotext-plus-plus.git
+git clone git@github.com:ad-freiburg/pdftotext-plus-plus.git
 cd pdftotext-plus-plus
 ```
 Build a Docker image:
@@ -106,7 +106,7 @@ docker run --rm -it -v <pdf-file>:/file.pdf --name pdftotext-plus-plus pdftotext
 ### Build from source
 Clone the project and run the install script:
 ```
-git clone git@github.com:pdftotext-plus-plus/pdftotext-plus-plus.git
+git clone git@github.com:ad-freiburg/pdftotext-plus-plus.git
 cd pdftotext-plus-plus
 sudo ./install.sh
 ```
