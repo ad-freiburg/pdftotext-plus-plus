@@ -91,7 +91,7 @@ pdftotext++ [options] <pdf-file> <output-file>
 
 Clone the project:
 ```
-git clone https://github.com/pdftotext-plus-plus/pdftotext-plus-plus.git
+git clone git@github.com:pdftotext-plus-plus/pdftotext-plus-plus.git
 cd pdftotext-plus-plus
 ```
 Build a docker image:
