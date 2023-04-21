@@ -1,21 +1,21 @@
 <br/>
 <p align="center">
-  <a href="https://github.com/pdftotext-plus-plus/pdftotext-plus-plus">
+  <a href="https://github.com/ad-freiburg/pdftotext-plus-plus">
     <img src="logo.png" alt="logo" width="200">
   </a>
 </p>
 
 <p align="center">
-  <a href="actions/workflows/checkstyle.yml"><img src="https://github.com/pdftotext-plus-plus/pdftotext-plus-plus/actions/workflows/checkstyle.yml/badge.svg"></a>
-  <a href="actions/workflows/unit_test.yml"><img src="https://github.com/pdftotext-plus-plus/pdftotext-plus-plus/actions/workflows/unit_test.yml/badge.svg"></a>
+  <a href="actions/workflows/checkstyle.yml"><img src="actions/workflows/checkstyle.yml/badge.svg"></a>
+  <a href="actions/workflows/unit_test.yml"><img src="actions/workflows/unit_test.yml/badge.svg"></a>
 </p>
 
 <p align="center">
   <a href="https://pdftotext.cs.uni-freiburg.de">Explore the docs</a>
   &nbsp·&nbsp
-  <a href="https://github.com/pdftotext-plus-plus/pdftotext-plus-plus/issues">Report a Bug</a>
+  <a href="issues">Report a Bug</a>
   &nbsp·&nbsp
-  <a href="https://github.com/pdftotext-plus-plus/pdftotext-plus-plus/issues">Request a Feature</a>
+  <a href="issues">Request a Feature</a>
 </p>
 <br>
 
@@ -29,7 +29,7 @@ A fast and accurate command line tool for extracting text from PDF files. The ma
 * detecting sub- and superscripts
 * customizable output of the extracted text, for example: in plain text format, or in a structured format (JSONL) in which the text is annotated with layout information (for example: the font, the font size, or the position).
 
-*pdftotext++* is written in C++ and is based on Poppler's <a href="https://github.com/pdftotext-plus-plus/pdftotext-plus-plus">pdftotext</a>.
+*pdftotext++* is written in C++ and is based on Poppler's <a href="https://github.com/freedesktop/poppler">pdftotext</a>.
 There are several installation options (e.g., via APT, Docker, or building from source), see the [description below](#installation).
 
 <!-- =========================================================================================== -->
