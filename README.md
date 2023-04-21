@@ -6,16 +6,16 @@
 </p>
 
 <p align="center">
-  <a href="actions/workflows/checkstyle.yml"><img src="actions/workflows/checkstyle.yml/badge.svg"></a>
-  <a href="actions/workflows/unit_test.yml"><img src="actions/workflows/unit_test.yml/badge.svg"></a>
+  <a href="/actions/workflows/checkstyle.yml"><img src="/actions/workflows/checkstyle.yml/badge.svg"></a>
+  <a href="/actions/workflows/unit_test.yml"><img src="/actions/workflows/unit_test.yml/badge.svg"></a>
 </p>
 
 <p align="center">
   <a href="https://pdftotext.cs.uni-freiburg.de">Explore the docs</a>
   &nbsp·&nbsp
-  <a href="issues">Report a Bug</a>
+  <a href="/issues">Report a Bug</a>
   &nbsp·&nbsp
-  <a href="issues">Request a Feature</a>
+  <a href="/issues">Request a Feature</a>
 </p>
 <br>
 
