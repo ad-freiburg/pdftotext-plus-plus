@@ -6,8 +6,12 @@
 </p>
 
 <p align="center">
-  <a href="/actions/workflows/checkstyle.yml"><img src="/actions/workflows/checkstyle.yml/badge.svg"></a>
-  <a href="/actions/workflows/unit_test.yml"><img src="/actions/workflows/unit_test.yml/badge.svg"></a>
+  <a href="https://github.com/ad-freiburg/pdftotext-plus-plus/actions/workflows/checkstyle.yml">
+    <img src="https://github.com/ad-freiburg/pdftotext-plus-plus/actions/workflows/checkstyle.yml/badge.svg">
+  </a>
+  <a href="https://github.com/ad-freiburg/pdftotext-plus-plus/actions/workflows/unit_test.yml">
+    <img src="https://github.com/ad-freiburg/pdftotext-plus-plus/actions/workflows/unit_test.yml/badge.svg">
+  </a>
 </p>
 
 <p align="center">
