@@ -19,14 +19,6 @@ ENV USR_DIR "/usr/local/pdftotext-plus-plus"
 
 # ==================================================================================================
 
-RUN apt-get update && apt-get install -y build-essential cmake git tar lsb-release wget
-
-# Install yq, needed for reading config.yml.
-RUN wget https://github.com/mikefarah/yq/releases/download/v4.32.2/yq_linux_amd64 \
-    -O /usr/bin/yq && chmod +x /usr/bin/yq
-
-# ==================================================================================================
-
 WORKDIR /project
 
 COPY log.sh .
@@ -34,9 +26,9 @@ COPY install_requirements.sh .
 COPY Makefile .
 COPY config.yml .
 
+RUN apt-get update && apt-get install -y make
 RUN make requirements/pre USR_DIR="$USR_DIR"
-RUN make requirements/run USR_DIR="$USR_DIR"
-RUN ldconfig "$USR_DIR"
+RUN make requirements/packages USR_DIR="$USR_DIR"
 
 # Compile the project and build the package.
 COPY src src

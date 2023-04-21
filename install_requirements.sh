@@ -8,6 +8,17 @@ S=$(basename "$0")
 # ==================================================================================================
 
 # TODO: Documentation
+function install_yq() {
+  local TARGET_DIR="${1:-/usr/bin}"
+  local VERSION="${2:-4.32.2}"
+  apt-get update && apt-get install -y wget
+  wget https://github.com/mikefarah/yq/releases/download/v${VERSION}/yq_linux_amd64 \
+    -O "${TARGET_DIR}/yq" && chmod +x "${TARGET_DIR}/yq"
+}
+
+# ==================================================================================================
+
+# TODO: Documentation
 function install_tensorflow() {
   local TARGET_DIR="${1:-.}"
   local VERSION="${2:-2.11.0}"
@@ -52,6 +63,7 @@ function install_tensorflow() {
 
   info "[$S] Copying library files to '$LIB_DIR' ..."
   cp -Pr "$WORK_DIR/lib/." "$LIB_DIR"
+  ldconfig "$LIB_DIR"
 
   cd "$ORIG_PWD"
   rm -rf "$WORK_DIR"
@@ -187,6 +199,7 @@ function install_poppler() {
 
   info "[$S] Copying library files to '$LIB_DIR' ..."
   find "$WORK_DIR/build" -name "libpoppler.*" -exec cp -P "{}" "$LIB_DIR" \;
+  ldconfig "$LIB_DIR"
 
   cd "$ORIG_PWD"
   rm -rf "$WORK_DIR"
@@ -245,6 +258,7 @@ function install_utf8proc() {
 
   info "[$S] Copying library files to '$LIB_DIR' ..."
   find "$WORK_DIR/build" -maxdepth 1 -name "*.a" -exec cp -Pr "{}" "$LIB_DIR" \;
+  ldconfig "$LIB_DIR"
 
   cd "$ORIG_PWD"
   rm -rf "$WORK_DIR"
@@ -303,6 +317,7 @@ function install_gtest() {
 
   info "[$S] Copying library files to '$LIB_DIR' ..."
   cp -Pr "$WORK_DIR/build/lib/." "$LIB_DIR"
+  ldconfig "$LIB_DIR"
 
   cd "$ORIG_PWD"
   rm -rf "$WORK_DIR"

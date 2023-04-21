@@ -45,9 +45,8 @@ N = \033[0m
 
 .PHONY: help checkstyle compile test release set-version packages clean apt-repo \
 	apt-repo/build-docker-image apt-repo/update apt-repo/server/start apt-repo/server/start/force \
-	apt-repo/server/stop requirements/pre requirements/run requirements/test requirements/pre/apt \
-	requirements/run/apt requirements/test/apt requirements/pre/other requirements/run/other \
-	requirements/test/other
+	apt-repo/server/stop requirements/pre requirements/checkstyle requirements/compile \
+	requirements/test requirements/install requirements/packages
 
 # ==================================================================================================
 
@@ -105,16 +104,9 @@ $(BUILD_DIR)/%Test.o: %Test.cpp $(SRC_HEADER_FILES)
 # ==================================================================================================
 # Installing.
 
-install:
-	@echo "$(INFO_STYLE)[$@] Installing requirements ...$(N)"
-	apt-get update && apt-get install -y build-essential cmake git tar wget
-	wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq && \
-		chmod +x /usr/bin/yq
-	make requirements/pre USR_DIR="$(USR_DIR)"
-	make requirements/run USR_DIR="$(USR_DIR)"
-	ldconfig "$(USR_DIR)"
-	@echo "$(INFO_STYLE)[$@] Building pdftotext++ ...$(N)"
-	make clean compile USR_DIR="$(USR_DIR)" RESOURCES_DIR="$(RESOURCES_DIR)"
+install-with-deps: requirements/pre requirements/install install
+
+install: clean compile
 	@echo "$(INFO_STYLE)[$@] Installing pdftotext++ ...$(N)"
 	mkdir -p "/usr/lib/pdftotext-plus-plus"
 	cp -Pa "$(USR_DIR)/lib/." "/usr/lib/pdftotext-plus-plus"
@@ -198,48 +190,62 @@ apt-repo/server/stop:
 # ==================================================================================================
 # Installing requirements.
 
-requirements/pre: requirements/pre/apt requirements/pre/other
-requirements/run: requirements/run/apt requirements/run/other
-requirements/test: requirements/test/apt requirements/test/other
+requirements/pre:
+	apt-get update
+	./install_requirements.sh install_yq
 
-requirements/pre/apt:
-	@echo "$(INFO_STYLE)[requirements] Installing APT packages needed as a prerequisite ...$(N)"
-	apt-get install -y $(shell yq ".project.requirements.pre.apt" "$(CONFIG_FILE)")
+requirements/checkstyle:
+	@echo "$(INFO_STYLE)[$@] Installing APT packages ...$(N)"
+	apt-get install -y $(shell yq ".project.requirements.checkstyle.apt" "$(CONFIG_FILE)")
+	@echo "$(INFO_STYLE)[$@] Installing other packages ...$(N)"
+	@yq ".project.requirements.checkstyle.other | to_entries | .[] | [.value] | @tsv" "$(CONFIG_FILE)" | \
+	while read -r CMD ; do \
+		if [ -n "$$CMD" ]; then \
+			$$CMD "$(USR_DIR)"; \
+		fi \
+	done
 
-requirements/run/apt:
-	@echo "$(INFO_STYLE)[requirements] Installing APT packages needed for running ...$(N)"
-	apt-get install -y $(shell yq ".project.requirements.run.apt" "$(CONFIG_FILE)")
+requirements/compile:
+	@echo "$(INFO_STYLE)[$@] Installing APT packages ...$(N)"
+	apt-get install -y $(shell yq ".project.requirements.compile.apt" "$(CONFIG_FILE)")
+	@echo "$(INFO_STYLE)[$@] Installing other packages ...$(N)"
+	@yq ".project.requirements.compile.other | to_entries | .[] | [.value] | @tsv" "$(CONFIG_FILE)" | \
+	while read -r CMD ; do \
+		if [ -n "$$CMD" ]; then \
+			$$CMD "$(USR_DIR)"; \
+		fi \
+	done
 
-requirements/test/apt:
-	@echo "$(INFO_STYLE)[requirements] Installing APT packages needed for testing ...$(N)"
+requirements/test: requirements/compile
+	@echo "$(INFO_STYLE)[$@] Installing APT packages ...$(N)"
 	apt-get install -y $(shell yq ".project.requirements.test.apt" "$(CONFIG_FILE)")
-
-requirements/pre/other:
-	@echo "$(INFO_STYLE)[requirements] Installing other packages needed as a prerequisite ...$(N)"
-
-	@yq ".project.requirements.pre.other | to_entries | .[] | [.value] | @tsv" "$(CONFIG_FILE)" | \
-	while read -r CMD ; do \
-		if [ -n "$$CMD" ]; then \
-			$$CMD "$(USR_DIR)"; \
-		fi \
-	done
-
-requirements/run/other:
-	@echo "$(INFO_STYLE)[requirements] Installing other packages needed for running ...$(N)"
-
-	@yq ".project.requirements.run.other | to_entries | .[] | [.value] | @tsv" "$(CONFIG_FILE)" | \
-	while read -r CMD ; do \
-		if [ -n "$$CMD" ]; then \
-			$$CMD "$(USR_DIR)"; \
-		fi \
-	done
-
-requirements/test/other:
-	@echo "$(INFO_STYLE)[requirements] Installing other packages needed for testing ...$(N)"
-
+	@echo "$(INFO_STYLE)[$@] Installing other packages ...$(N)"
 	@yq ".project.requirements.test.other | to_entries | .[] | [.value] | @tsv" "$(CONFIG_FILE)" | \
 	while read -r CMD ; do \
 		if [ -n "$$CMD" ]; then \
 			$$CMD "$(USR_DIR)"; \
 		fi \
 	done
+
+requirements/install: requirements/compile
+	@echo "$(INFO_STYLE)[$@] Installing APT packages ...$(N)"
+	apt-get install -y $(shell yq ".project.requirements.install.apt" "$(CONFIG_FILE)")
+	@echo "$(INFO_STYLE)[$@] Installing other packages ...$(N)"
+	@yq ".project.requirements.install.other | to_entries | .[] | [.value] | @tsv" "$(CONFIG_FILE)" | \
+	while read -r CMD ; do \
+		if [ -n "$$CMD" ]; then \
+			$$CMD "$(USR_DIR)"; \
+		fi \
+	done
+
+requirements/packages: requirements/compile
+	@echo "$(INFO_STYLE)[$@] Installing APT packages ...$(N)"
+	apt-get install -y $(shell yq ".project.requirements.packages.apt" "$(CONFIG_FILE)")
+	@echo "$(INFO_STYLE)[$@] Installing other packages ...$(N)"
+	@yq ".project.requirements.packages.other | to_entries | .[] | [.value] | @tsv" "$(CONFIG_FILE)" | \
+	while read -r CMD ; do \
+		if [ -n "$$CMD" ]; then \
+			$$CMD "$(USR_DIR)"; \
+		fi \
+	done
+
