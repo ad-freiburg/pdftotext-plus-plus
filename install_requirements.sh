@@ -134,7 +134,8 @@ function install_cppflow() {
 function install_poppler() {
   local TARGET_DIR="${1:-.}"
   local GIT_BRANCH="${2:-065dca3}"
-  local GIT_REPO="https://github.com/freedesktop/poppler.git"
+  # local GIT_REPO="https://github.com/freedesktop/poppler.git"
+  local GIT_REPO="https://gitlab.freedesktop.org/poppler/poppler.git"
   local INCLUDE_DIR="$TARGET_DIR/include"
   local LIB_DIR="$TARGET_DIR/lib"
   local WORK_DIR="$DEFAULT_TMP_DIR/poppler-$(date +%s)"
