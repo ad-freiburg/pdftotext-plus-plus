@@ -7,9 +7,11 @@ project:
     mail: korzen@cs.uni-freiburg.de
 
   requirements:
+    # The packages required to execute the Makefile target 'checkstyle'.
     checkstyle:
       apt: python3
       other:
+    # The packages required to execute the Makefile target 'compile'.
     compile:
       apt: build-essential git cmake libboost-all-dev libfontconfig1-dev libfreetype6-dev libnss3-dev libopenjp2-7-dev libtiff5-dev
       other:
@@ -17,19 +19,22 @@ project:
         cppflow: ./install_requirements.sh install_cppflow
         poppler: ./install_requirements.sh install_poppler
         utf8proc: ./install_requirements.sh install_utf8proc
-    run:  # The packages required for running the program on any machine (without compiling).
+    # The packages required to run the project on any machine (without compiling the project).
+    run:
       apt: libboost-all-dev libfontconfig1-dev libfreetype6-dev libnss3-dev libopenjp2-7-dev libtiff5-dev
-    test:  # extends from compile
+    # The packages required to execute the Makefile target 'test' (extends from compile).
+    test:
       apt:
       other:
         gtest: ./install_requirements.sh install_gtest
-    install:  # extends from compile
+    # The packages required to execute the Makefile target 'install' (extends from compile).
+    install:
       apt:
       other:
-    packages:  # extends from compile
+    # The packages required to execute the Makefile target 'packages' (extends from compile).
+    packages:
       apt: tar lsb-release wget
       other:
-
 
   package:
     dists:
