@@ -22,7 +22,8 @@ TEST_CPP_FILES = $(wildcard $(TEST_DIR)/*Test.cpp $(TEST_DIR)/**/*Test.cpp)
 TEST_BINARIES = $(basename $(TEST_CPP_FILES:%.cpp=$(BUILD_DIR)/%.o))
 
 # Compiling.
-CXX = g++ -O3 -Wall -std=c++17 -DCXX_PROJECT_VERSION=\"$(VERSION)\" -DCXX_PROJECT_RESOURCES_DIR=\"$(RESOURCES_DIR)\"
+CXX_EXTRA = -O3 -Wall
+CXX = g++ -std=c++17 $(CXX_EXTRA) -DCXX_PROJECT_VERSION=\"$(VERSION)\" -DCXX_PROJECT_RESOURCES_DIR=\"$(RESOURCES_DIR)\"
 LIBS = -I$(USR_DIR)/include -L$(USR_DIR)/lib -ltensorflow_framework -ltensorflow -lpoppler -lutf8proc
 LIBS_TEST = $(LIBS) -lgtest -lgtest_main -lpthread
 
@@ -70,6 +71,9 @@ checkstyle:
 # ==================================================================================================
 # Compiling.
 
+compile-debug: CXX_EXTRA = -g
+compile-debug: compile
+
 compile: $(MAIN_BINARY)
 
 $(MAIN_BINARY): $(MAIN_OBJECT_FILE) $(SRC_OBJECT_FILES)
@@ -105,9 +109,9 @@ $(BUILD_DIR)/%Test.o: %Test.cpp $(SRC_HEADER_FILES)
 # ==================================================================================================
 # Installing.
 
-install-with-deps: requirements/pre requirements/install install
+install: requirements/pre requirements/install install-without-deps
 
-install: clean compile
+install-without-deps: clean compile
 	@echo "$(INFO_STYLE)[$@] Installing pdftotext++ ...$(N)"
 	mkdir -p "/usr/lib/pdftotext-plus-plus"
 	cp -Pa "$(USR_DIR)/lib/." "/usr/lib/pdftotext-plus-plus"
