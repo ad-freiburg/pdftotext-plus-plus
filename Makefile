@@ -6,7 +6,7 @@ USR_DIR = usr
 BUILD_DIR = build
 PACKAGES_DIR = /local/data/pdftotext-plus-plus/packages
 
-CONF_FILE = config.yml
+CONFIG_FILE = config.yml
 VERSION_FILE = version.txt
 VERSION = $(shell cat $(VERSION_FILE))
 
@@ -36,6 +36,7 @@ APT_REPO_DISTS_DIR = /local/data/pdftotext-plus-plus/apt-repo/dists
 APT_REPO_GPG_DIR = /local/data/pdftotext-plus-plus/keyrings/apt-repo
 APT_REPO_SERVER_PORT = 7192
 
+# Message styles.
 INFO_STYLE = \033[34;1m
 ERROR_STYLE = \033[31;1m
 N = \033[0m
@@ -47,7 +48,6 @@ N = \033[0m
 	apt-repo/server/stop requirements/pre requirements/run requirements/test requirements/pre/apt \
 	requirements/run/apt requirements/test/apt requirements/pre/other requirements/run/other \
 	requirements/test/other
-
 
 # ==================================================================================================
 
@@ -88,8 +88,8 @@ $(BUILD_DIR)/%.o: %.cpp $(SRC_HEADER_FILES)
 test: $(TEST_BINARIES)
 	@for T in $(TEST_BINARIES); do \
 		echo "$(INFO_STYLE)[$@] Running test '$$T' ...$(N)" ; \
-		export TF_CPP_MIN_LOG_LEVEL=3 ; \
-    ./$$T || exit; \
+    export TF_CPP_MIN_LOG_LEVEL=3 ; \
+		./$$T || exit; \
 	done
 
 %Test: %Test.o $(SRC_OBJECT_FILES)
@@ -101,6 +101,26 @@ $(BUILD_DIR)/%Test.o: %Test.cpp $(SRC_HEADER_FILES)
 	@echo "$(INFO_STYLE)[test] Compiling '$<' ...$(N)"
 	@mkdir -p "$(dir $@)"
 	$(CXX) -c $< -o "$@" $(LIBS_TEST)
+
+# ==================================================================================================
+# Installing.
+
+install:
+	@echo "$(INFO_STYLE)[$@] Installing pdftotext++ ...$(N)"
+	apt-get update && apt-get install -y build-essential cmake git tar wget
+	wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq && \
+		chmod +x /usr/bin/yq
+	make requirements/pre USR_DIR="$(USR_DIR)"
+	make requirements/run USR_DIR="$(USR_DIR)"
+	ldconfig "$(USR_DIR)"
+	make clean compile USR_DIR="$(USR_DIR)" RESOURCES_DIR="$(RESOURCES_DIR)"
+	mkdir -p "/usr/lib/pdftotext-plus-plus"
+	cp -Pa "$(USR_DIR)/lib/." "/usr/lib/pdftotext-plus-plus"
+	ldconfig "/usr/lib/pdftotext-plus-plus"
+	mkdir -p "/usr/share/pdftotext-plus-plus/resources"
+	cp -Pa "$(RESOURCES_DIR)/." "/usr/share/pdftotext-plus-plus/resources"
+	cp "$(BUILD_DIR)/$(MAIN_BINARY)" "/usr/bin/$(MAIN_BINARY)"
+	chmod +x "/usr/bin/$(MAIN_BINARY)"
 
 # ==================================================================================================
 # Releasing.
@@ -116,7 +136,7 @@ set-version:
 
 packages:
 	@echo "$(INFO_STYLE)[release] Building packages ...$(N)"
-	./package.sh build_packages "$(CONF_FILE)" "$(VERSION)" "$(PACKAGES_DIR)"
+	./package.sh build_packages "$(CONFIG_FILE)" "$(VERSION)" "$(PACKAGES_DIR)"
 
 # ==================================================================================================
 # Cleaning.
@@ -182,20 +202,20 @@ requirements/test: requirements/test/apt requirements/test/other
 
 requirements/pre/apt:
 	@echo "$(INFO_STYLE)[requirements] Installing APT packages needed as a prerequisite ...$(N)"
-	apt-get install -y $(shell yq ".project.requirements.pre.apt" "$(CONF_FILE)")
+	apt-get install -y $(shell yq ".project.requirements.pre.apt" "$(CONFIG_FILE)")
 
 requirements/run/apt:
 	@echo "$(INFO_STYLE)[requirements] Installing APT packages needed for running ...$(N)"
-	apt-get install -y $(shell yq ".project.requirements.run.apt" "$(CONF_FILE)")
+	apt-get install -y $(shell yq ".project.requirements.run.apt" "$(CONFIG_FILE)")
 
 requirements/test/apt:
 	@echo "$(INFO_STYLE)[requirements] Installing APT packages needed for testing ...$(N)"
-	apt-get install -y $(shell yq ".project.requirements.test.apt" "$(CONF_FILE)")
+	apt-get install -y $(shell yq ".project.requirements.test.apt" "$(CONFIG_FILE)")
 
 requirements/pre/other:
 	@echo "$(INFO_STYLE)[requirements] Installing other packages needed as a prerequisite ...$(N)"
 
-	@yq ".project.requirements.pre.other | to_entries | .[] | [.value] | @tsv" "$(CONF_FILE)" | \
+	@yq ".project.requirements.pre.other | to_entries | .[] | [.value] | @tsv" "$(CONFIG_FILE)" | \
 	while read -r CMD ; do \
 		if [ -n "$$CMD" ]; then \
 			$$CMD "$(USR_DIR)"; \
@@ -205,7 +225,7 @@ requirements/pre/other:
 requirements/run/other:
 	@echo "$(INFO_STYLE)[requirements] Installing other packages needed for running ...$(N)"
 
-	@yq ".project.requirements.run.other | to_entries | .[] | [.value] | @tsv" "$(CONF_FILE)" | \
+	@yq ".project.requirements.run.other | to_entries | .[] | [.value] | @tsv" "$(CONFIG_FILE)" | \
 	while read -r CMD ; do \
 		if [ -n "$$CMD" ]; then \
 			$$CMD "$(USR_DIR)"; \
@@ -215,7 +235,7 @@ requirements/run/other:
 requirements/test/other:
 	@echo "$(INFO_STYLE)[requirements] Installing other packages needed for testing ...$(N)"
 
-	@yq ".project.requirements.test.other | to_entries | .[] | [.value] | @tsv" "$(CONF_FILE)" | \
+	@yq ".project.requirements.test.other | to_entries | .[] | [.value] | @tsv" "$(CONFIG_FILE)" | \
 	while read -r CMD ; do \
 		if [ -n "$$CMD" ]; then \
 			$$CMD "$(USR_DIR)"; \
