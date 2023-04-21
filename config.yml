@@ -17,6 +17,8 @@ project:
         cppflow: ./install_requirements.sh install_cppflow
         poppler: ./install_requirements.sh install_poppler
         utf8proc: ./install_requirements.sh install_utf8proc
+    run:  # The packages required for running the program on any machine (without compiling).
+      apt: libboost-all-dev libfontconfig1-dev libfreetype6-dev libnss3-dev libopenjp2-7-dev libtiff5-dev
     test:  # extends from compile
       apt:
       other:

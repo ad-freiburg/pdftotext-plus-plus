@@ -112,7 +112,7 @@ Clone the project and run the install script:
 ```
 git clone git@github.com:ad-freiburg/pdftotext-plus-plus.git
 cd pdftotext-plus-plus
-sudo ./install.sh
+sudo make install-with-deps
 ```
 Run *pdftotext++* (type `pdftotext++ --help` to see the full usage information):
 ```

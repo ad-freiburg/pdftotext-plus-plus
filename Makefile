@@ -6,7 +6,7 @@ USR_DIR = usr
 BUILD_DIR = build
 PACKAGES_DIR = /local/data/pdftotext-plus-plus/packages
 
-CONFIG_FILE = config.yml
+CONF_FILE = config.yml
 VERSION_FILE = version.txt
 VERSION = $(shell cat $(VERSION_FILE))
 
@@ -22,7 +22,7 @@ TEST_CPP_FILES = $(wildcard $(TEST_DIR)/*Test.cpp $(TEST_DIR)/**/*Test.cpp)
 TEST_BINARIES = $(basename $(TEST_CPP_FILES:%.cpp=$(BUILD_DIR)/%.o))
 
 # Compiling.
-CXX = g++ -g -Wall -std=c++17 -DCXX_PROJECT_VERSION=\"$(VERSION)\" -DCXX_PROJECT_RESOURCES_DIR=\"$(RESOURCES_DIR)\"
+CXX = g++ -O3 -Wall -std=c++17 -DCXX_PROJECT_VERSION=\"$(VERSION)\" -DCXX_PROJECT_RESOURCES_DIR=\"$(RESOURCES_DIR)\"
 LIBS = -I$(USR_DIR)/include -L$(USR_DIR)/lib -ltensorflow_framework -ltensorflow -lpoppler -lutf8proc
 LIBS_TEST = $(LIBS) -lgtest -lgtest_main -lpthread
 
@@ -49,6 +49,7 @@ N = \033[0m
 	requirements/test requirements/install requirements/packages
 
 # ==================================================================================================
+# Help.
 
 help:
 	@echo TODO
@@ -123,14 +124,15 @@ release: set-version packages apt-repo
 
 set-version:
 	@if [ "$(VERSION)" = "$(shell cat "$(VERSION_FILE)")" ]; then \
-		echo "$(ERROR_STYLE)Usage: make release VERSION=\"<version>\"$(N)" ; \
+		echo "$(ERROR_STYLE)The specified version is equal to the current version ($(VERSION))." ; \
+		echo "$(ERROR_STYLE)Specify another version with: make release VERSION=\"<version>\"$(N)" ; \
 		exit 1 ; \
 	fi
 	@echo "$(VERSION)" > "$(VERSION_FILE)"
 
 packages:
 	@echo "$(INFO_STYLE)[release] Building packages ...$(N)"
-	./package.sh build_packages "$(CONFIG_FILE)" "$(VERSION)" "$(PACKAGES_DIR)"
+	./package.sh build_packages "$(CONF_FILE)" "$(VERSION)" "$(PACKAGES_DIR)"
 
 # ==================================================================================================
 # Cleaning.
@@ -196,9 +198,10 @@ requirements/pre:
 
 requirements/checkstyle:
 	@echo "$(INFO_STYLE)[$@] Installing APT packages ...$(N)"
-	apt-get install -y $(shell yq ".project.requirements.checkstyle.apt" "$(CONFIG_FILE)")
+	apt-get install -y $(shell yq ".project.requirements.checkstyle.apt" "$(CONF_FILE)")
+
 	@echo "$(INFO_STYLE)[$@] Installing other packages ...$(N)"
-	@yq ".project.requirements.checkstyle.other | to_entries | .[] | [.value] | @tsv" "$(CONFIG_FILE)" | \
+	@yq ".project.requirements.checkstyle.other | to_entries | .[] | [.value] | @tsv" "$(CONF_FILE)" | \
 	while read -r CMD ; do \
 		if [ -n "$$CMD" ]; then \
 			$$CMD "$(USR_DIR)"; \
@@ -207,9 +210,10 @@ requirements/checkstyle:
 
 requirements/compile:
 	@echo "$(INFO_STYLE)[$@] Installing APT packages ...$(N)"
-	apt-get install -y $(shell yq ".project.requirements.compile.apt" "$(CONFIG_FILE)")
+	apt-get install -y $(shell yq ".project.requirements.compile.apt" "$(CONF_FILE)")
+
 	@echo "$(INFO_STYLE)[$@] Installing other packages ...$(N)"
-	@yq ".project.requirements.compile.other | to_entries | .[] | [.value] | @tsv" "$(CONFIG_FILE)" | \
+	@yq ".project.requirements.compile.other | to_entries | .[] | [.value] | @tsv" "$(CONF_FILE)" | \
 	while read -r CMD ; do \
 		if [ -n "$$CMD" ]; then \
 			$$CMD "$(USR_DIR)"; \
@@ -218,9 +222,10 @@ requirements/compile:
 
 requirements/test: requirements/compile
 	@echo "$(INFO_STYLE)[$@] Installing APT packages ...$(N)"
-	apt-get install -y $(shell yq ".project.requirements.test.apt" "$(CONFIG_FILE)")
+	apt-get install -y $(shell yq ".project.requirements.test.apt" "$(CONF_FILE)")
+
 	@echo "$(INFO_STYLE)[$@] Installing other packages ...$(N)"
-	@yq ".project.requirements.test.other | to_entries | .[] | [.value] | @tsv" "$(CONFIG_FILE)" | \
+	@yq ".project.requirements.test.other | to_entries | .[] | [.value] | @tsv" "$(CONF_FILE)" | \
 	while read -r CMD ; do \
 		if [ -n "$$CMD" ]; then \
 			$$CMD "$(USR_DIR)"; \
@@ -229,9 +234,10 @@ requirements/test: requirements/compile
 
 requirements/install: requirements/compile
 	@echo "$(INFO_STYLE)[$@] Installing APT packages ...$(N)"
-	apt-get install -y $(shell yq ".project.requirements.install.apt" "$(CONFIG_FILE)")
+	apt-get install -y $(shell yq ".project.requirements.install.apt" "$(CONF_FILE)")
+
 	@echo "$(INFO_STYLE)[$@] Installing other packages ...$(N)"
-	@yq ".project.requirements.install.other | to_entries | .[] | [.value] | @tsv" "$(CONFIG_FILE)" | \
+	@yq ".project.requirements.install.other | to_entries | .[] | [.value] | @tsv" "$(CONF_FILE)" | \
 	while read -r CMD ; do \
 		if [ -n "$$CMD" ]; then \
 			$$CMD "$(USR_DIR)"; \
@@ -240,12 +246,12 @@ requirements/install: requirements/compile
 
 requirements/packages: requirements/compile
 	@echo "$(INFO_STYLE)[$@] Installing APT packages ...$(N)"
-	apt-get install -y $(shell yq ".project.requirements.packages.apt" "$(CONFIG_FILE)")
+	apt-get install -y $(shell yq ".project.requirements.packages.apt" "$(CONF_FILE)")
+
 	@echo "$(INFO_STYLE)[$@] Installing other packages ...$(N)"
-	@yq ".project.requirements.packages.other | to_entries | .[] | [.value] | @tsv" "$(CONFIG_FILE)" | \
+	@yq ".project.requirements.packages.other | to_entries | .[] | [.value] | @tsv" "$(CONF_FILE)" | \
 	while read -r CMD ; do \
 		if [ -n "$$CMD" ]; then \
 			$$CMD "$(USR_DIR)"; \
 		fi \
 	done
-
