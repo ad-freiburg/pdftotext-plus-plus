@@ -13,7 +13,7 @@ ENV USR_DIR "/usr/local/"
 
 WORKDIR /project
 
-COPY scripts .
+COPY scripts scripts
 COPY Makefile .
 COPY config.yml .
 
