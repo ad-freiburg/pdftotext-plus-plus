@@ -68,7 +68,7 @@ pdftotext++ --help
 ## Installation
 
 ### Apt (Recommended)
-Install required packages (for example, to allow *apt* to use a repository over HTTPS):
+Install required packages (for example, to allow *Apt* to use a repository over HTTPS):
 ```
 sudo apt-get update
 sudo apt-get install -y ca-certificates curl gnupg lsb-release
