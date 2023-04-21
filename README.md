@@ -27,7 +27,7 @@ A fast and accurate command line tool for extracting text from PDF files. The ma
 * detecting the natural reading order of text blocks
 * merging hyphenated words
 * detecting sub- and superscripts
-* customizable output of the extracted text, for example: in plain text format, or in a structured format (JSONL) in which the text is annotated with layout information (for example: the font, the font size, or the position in the PDF).
+* customizable output of the extracted text, for example: in plain text format, or in a structured format (JSONL) in which the text is annotated with layout information (for example: the font, the font size, or the position).
 
 *pdftotext++* is written in C++ and is based on Poppler's <a href="https://github.com/pdftotext-plus-plus/pdftotext-plus-plus">pdftotext</a>.
 There are several installation options (e.g., via APT, Docker, or building from source), see the [description below](#installation).
