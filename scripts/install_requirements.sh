@@ -339,6 +339,6 @@ set -e
 
 source log.sh
 
-"$@"
-
 cd $ORIG_PWD
+
+"$@"

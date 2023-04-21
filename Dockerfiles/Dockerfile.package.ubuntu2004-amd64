@@ -21,8 +21,7 @@ ENV USR_DIR "/usr/local/pdftotext-plus-plus"
 
 WORKDIR /project
 
-COPY log.sh .
-COPY install_requirements.sh .
+COPY scripts .
 COPY Makefile .
 COPY config.yml .
 
@@ -33,7 +32,7 @@ RUN make requirements/packages USR_DIR="$USR_DIR"
 # Compile the project and build the package.
 COPY src src
 COPY resources resources
-COPY package.sh .
+COPY scripts/package.sh .
 CMD ./package.sh build_deb_package "$PROJECT_NAME" "$PROJECT_DESCRIPTION" "$PROJECT_VERSION" \
     "$PACKAGE_MAINTAINER_NAME" "$PACKAGE_MAINTAINER_MAIL" "$PACKAGE_APT_RUN_REQUIREMENTS" \
     "$USR_DIR" "$PACKAGE_TARGET_DIR"

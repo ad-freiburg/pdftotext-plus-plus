@@ -136,7 +136,7 @@ set-version:
 
 packages:
 	@echo "$(INFO_STYLE)[release] Building packages ...$(N)"
-	./package.sh build_packages "$(CONF_FILE)" "$(VERSION)" "$(PACKAGES_DIR)"
+	./scripts/package.sh build_packages "$(CONF_FILE)" "$(VERSION)" "$(PACKAGES_DIR)"
 
 # ==================================================================================================
 # Cleaning.
@@ -198,7 +198,7 @@ apt-repo/server/stop:
 
 requirements/pre:
 	apt-get update
-	./install_requirements.sh install_yq
+	./scripts/install_requirements.sh install_yq
 
 requirements/checkstyle:
 	@echo "$(INFO_STYLE)[$@] Installing APT packages ...$(N)"
@@ -208,7 +208,7 @@ requirements/checkstyle:
 	@yq ".project.requirements.checkstyle.other | to_entries | .[] | [.value] | @tsv" "$(CONF_FILE)" | \
 	while read -r CMD ; do \
 		if [ -n "$$CMD" ]; then \
-			$$CMD "$(USR_DIR)"; \
+			echo $$CMD "$(USR_DIR)"; \
 		fi \
 	done
 

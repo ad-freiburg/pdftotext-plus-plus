@@ -15,10 +15,10 @@ project:
     compile:
       apt: build-essential git cmake libboost-all-dev libfontconfig1-dev libfreetype6-dev libnss3-dev libopenjp2-7-dev libtiff5-dev
       other:
-        tensorflow: ./install_requirements.sh install_tensorflow
-        cppflow: ./install_requirements.sh install_cppflow
-        poppler: ./install_requirements.sh install_poppler
-        utf8proc: ./install_requirements.sh install_utf8proc
+        tensorflow: ./scripts/install_requirements.sh install_tensorflow
+        cppflow: ./scripts/install_requirements.sh install_cppflow
+        poppler: ./scripts/install_requirements.sh install_poppler
+        utf8proc: ./scripts/install_requirements.sh install_utf8proc
     # The packages required to run the project on any machine (without compiling the project).
     run:
       apt: libboost-all-dev libfontconfig1-dev libfreetype6-dev libnss3-dev libopenjp2-7-dev libtiff5-dev
@@ -26,7 +26,7 @@ project:
     test:
       apt:
       other:
-        gtest: ./install_requirements.sh install_gtest
+        gtest: ./scripts/install_requirements.sh install_gtest
     # The packages required to execute the Makefile target 'install' (extends from compile).
     install:
       apt:

@@ -13,8 +13,7 @@ ENV USR_DIR "/usr/local/"
 
 WORKDIR /project
 
-COPY log.sh .
-COPY install_requirements.sh .
+COPY scripts .
 COPY Makefile .
 COPY config.yml .
 
