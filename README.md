@@ -33,7 +33,7 @@ A fast and accurate command line tool for extracting text from PDF files. The ma
 * detecting sub- and superscripts
 * customizable output of the extracted text, for example: in plain text format, or in a structured format (JSONL) in which the text is annotated with layout information (for example: the font, the font size, or the position).
 
-*pdftotext++* is written in C++ and is based on <a href="https://github.com/freedesktop/poppler">Poppler</a>'s <a href="https://github.com/freedesktop/poppler/blob/master/utils/pdftotext.cc">pdftotext</a>.
+*pdftotext++* is written in C++ and is based on <a href="https://github.com/freedesktop/poppler">Poppler's</a> <a href="https://github.com/freedesktop/poppler/blob/master/utils/pdftotext.cc">pdftotext</a>.
 There are several installation options (e.g., via APT, Docker, or building from source), see the [description below](#installation).
 
 <!-- =========================================================================================== -->
