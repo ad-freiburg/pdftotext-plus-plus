@@ -6,16 +6,20 @@
 </p>
 
 <p align="center">
-  <a href="/actions/workflows/checkstyle.yml"><img src="/actions/workflows/checkstyle.yml/badge.svg"></a>
-  <a href="/actions/workflows/unit_test.yml"><img src="/actions/workflows/unit_test.yml/badge.svg"></a>
+  <a href="https://github.com/ad-freiburg/pdftotext-plus-plus/actions/workflows/checkstyle.yml">
+    <img src="https://github.com/ad-freiburg/pdftotext-plus-plus/actions/workflows/checkstyle.yml/badge.svg">
+  </a>
+  <a href="https://github.com/ad-freiburg/pdftotext-plus-plus/actions/workflows/unit_test.yml">
+    <img src="https://github.com/ad-freiburg/pdftotext-plus-plus/actions/workflows/unit_test.yml/badge.svg">
+  </a>
 </p>
 
 <p align="center">
   <a href="https://pdftotext.cs.uni-freiburg.de">Explore the docs</a>
   &nbsp·&nbsp
-  <a href="/issues">Report a Bug</a>
+  <a href="https://github.com/ad-freiburg/pdftotext-plus-plus/issues">Report a Bug</a>
   &nbsp·&nbsp
-  <a href="/issues">Request a Feature</a>
+  <a href="https://github.com/ad-freiburg/pdftotext-plus-plus/issues">Request a Feature</a>
 </p>
 <br>
 
