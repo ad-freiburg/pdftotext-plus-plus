@@ -124,7 +124,7 @@ install-without-deps: clean compile
 # ==================================================================================================
 # Releasing.
 
-release: set-version packages apt-repo
+release: set-version packages apt-repo github-release
 
 set-version:
 	@if [ "$(VERSION)" = "$(shell cat "$(VERSION_FILE)")" ]; then \
@@ -192,6 +192,10 @@ apt-repo/server/stop:
 	@echo "$(INFO_STYLE)[apt-repo] Stopping the APT repository server ...$(N)"
 
 	docker stop "$(APT_REPO_SERVER_CONTAINER_NAME)"
+
+github-release:
+	@echo "$(INFO_STYLE)[github-release] Creating Github release ...$(N)"
+	./services/github-release/github-release.sh create_release "$(VERSION)" "$(PACKAGES_DIR)"
 
 # ==================================================================================================
 # Installing requirements.
