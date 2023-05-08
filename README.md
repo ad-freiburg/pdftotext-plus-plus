@@ -68,53 +68,76 @@ pdftotext++ --help
 ## Installation
 
 ### Apt (Recommended)
-Install required packages (for example, to allow *Apt* to use a repository over HTTPS):
+(1) Install required packages (for example, to allow *Apt* to use a repository over HTTPS):
 ```
 sudo apt-get update
 sudo apt-get install -y ca-certificates curl gnupg lsb-release
 ```
 
-Add *pdftotext++*'s official GPG key:
+(2) Add *pdftotext++*'s official GPG key:
 ```
 sudo mkdir -m 0755 -p /etc/apt/keyrings
 curl -fsSL https://pdftotext.cs.uni-freiburg.de/download/apt/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/pdftotext-plus-plus.gpg
 ```
 
-Add the repository and install *pdftotext++*:
+(3) Add the repository and install *pdftotext++*:
 ```
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/pdftotext-plus-plus.gpg] https://pdftotext.cs.uni-freiburg.de/download/apt $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/pdftotext-plus-plus.list > /dev/null
 sudo apt-get update
 sudo apt-get install -y pdftotext++
 ```
-Run *pdftotext++* (type `pdftotext++ --help` to see the full usage information):
+
+(4) Run *pdftotext++* (type `pdftotext++ --help` to see the full usage information):
 ```
 pdftotext++ [options] <pdf-file> <output-file>
 ```
 
 ### Docker
 
-Clone the project:
+(1) Clone the project:
 ```
 git clone git@github.com:ad-freiburg/pdftotext-plus-plus.git
 cd pdftotext-plus-plus
 ```
-Build a Docker image:
+
+(2) Build a Docker image:
 ```
 docker build -f Dockerfiles/Dockerfile -t pdftotext-plus-plus .
 ```
-Create and run a Docker container:
+
+(3) Create and run a Docker container:
 ```
 docker run --rm -it -v <pdf-file>:/file.pdf --name pdftotext-plus-plus pdftotext-plus-plus [options] /file.pdf <output-file>
 ```
 
+### Binary package
+
+(1) Download the [latest binary](https://github.com/ad-freiburg/pdftotext-plus-plus/releases/latest) (for other versions, see the [release page](https://github.com/ad-freiburg/pdftotext-plus-plus/releases)).
+```
+wget https://github.com/ad-freiburg/pdftotext-plus-plus/releases/latest
+```
+
+(2) Install the binary and its dependencies (in the first of the following two commands, change the path to that of the binary you have just downloaded).
+```
+dpkg -i ./pdftotext-plus-plus_1.0.0-0focal_amd64.deb
+sudo apt-get -f install
+```
+
+(3) Run *pdftotext++* (type `pdftotext++ --help` to see the full usage information):
+```
+pdftotext++ [options] <pdf-file> <output-file>
+```
+
 ### Build from source
-Clone the project and run the install script:
+
+(1) Clone the project and run the install script:
 ```
 git clone git@github.com:ad-freiburg/pdftotext-plus-plus.git
 cd pdftotext-plus-plus
 sudo make install
 ```
-Run *pdftotext++* (type `pdftotext++ --help` to see the full usage information):
+
+(2) Run *pdftotext++* (type `pdftotext++ --help` to see the full usage information):
 ```
 pdftotext++ [options] <pdf-file> <output-file>
 ```
