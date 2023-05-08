@@ -17,9 +17,9 @@
 <p align="center">
   <a href="https://pdftotext.cs.uni-freiburg.de">Explore the docs</a>
   &nbsp·&nbsp
-  <a href="https://github.com/ad-freiburg/pdftotext-plus-plus/issues">Report a bug</a>
+  <a href="https://github.com/ad-freiburg/pdftotext-plus-plus/issues/new?labels=bug">Report a bug</a>
   &nbsp·&nbsp
-  <a href="https://github.com/ad-freiburg/pdftotext-plus-plus/issues">Request a feature</a>
+  <a href="https://github.com/ad-freiburg/pdftotext-plus-plus/issues/new?labels=enhancement">Request a feature</a>
 </p>
 <br>
 
@@ -33,19 +33,19 @@ A fast and accurate command line tool for extracting text from PDF files. The ma
 * detecting sub- and superscripts
 * customizable output of the extracted text, for example: in plain text format, or in a structured format (JSONL) in which the text is annotated with layout information (for example: the font, the font size, or the position).
 
-*pdftotext++* is written in C++ and is based on <a href="https://github.com/freedesktop/poppler">Poppler's</a> <a href="https://github.com/freedesktop/poppler/blob/master/utils/pdftotext.cc">pdftotext</a>.
+*pdftotext++* is based on [Poppler's](https://gitlab.freedesktop.org/poppler/poppler) [pdftotext](https://gitlab.freedesktop.org/poppler/poppler/-/blob/master/utils/pdftotext.cc) and written in C++.
 There are several installation options (for example, via Apt, Docker, or building from source), see the [description below](#installation).
 
 <!-- =========================================================================================== -->
 
 ## Quick Usage Guide
 
-Extract the text from *file.pdf* and output it to the console:
+Extract the plain text from *file.pdf* and output it to the console:
 ```
 pdftotext++ file.pdf -
 ```
 
-Extract the text from *file.pdf* and write it to *output.txt*:
+Extract the plain text from *file.pdf* and write it to *output.txt*:
 ```
 pdftotext++ file.pdf output.txt
 ```
@@ -67,54 +67,85 @@ pdftotext++ --help
 
 ## Installation
 
-### Apt (Recommended)
-Install required packages (for example, to allow *Apt* to use a repository over HTTPS):
+### Apt (recommended)
+(1) Install required packages (for example, to allow *Apt* to use a repository over HTTPS):
 ```
 sudo apt-get update
 sudo apt-get install -y ca-certificates curl gnupg lsb-release
 ```
 
-Add *pdftotext++*'s official GPG key:
+(2) Add *pdftotext++*'s official GPG key:
 ```
 sudo mkdir -m 0755 -p /etc/apt/keyrings
 curl -fsSL https://pdftotext.cs.uni-freiburg.de/download/apt/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/pdftotext-plus-plus.gpg
 ```
 
-Add the repository and install *pdftotext++*:
+(3) Add the repository and install *pdftotext++*:
 ```
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/pdftotext-plus-plus.gpg] https://pdftotext.cs.uni-freiburg.de/download/apt $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/pdftotext-plus-plus.list > /dev/null
 sudo apt-get update
 sudo apt-get install -y pdftotext++
 ```
-Run *pdftotext++* (type `pdftotext++ --help` to see the full usage information):
+
+(4) Run *pdftotext++* (type `pdftotext++ --help` to see the full usage information):
 ```
 pdftotext++ [options] <pdf-file> <output-file>
 ```
 
 ### Docker
 
-Clone the project:
+(1) Clone the project:
 ```
 git clone git@github.com:ad-freiburg/pdftotext-plus-plus.git
 cd pdftotext-plus-plus
 ```
-Build a Docker image:
+
+(2) Build a Docker image:
 ```
 docker build -f Dockerfiles/Dockerfile -t pdftotext-plus-plus .
 ```
-Create and run a Docker container:
+
+(3) Run *pdftotext++*
 ```
 docker run --rm -it -v <pdf-file>:/file.pdf --name pdftotext-plus-plus pdftotext-plus-plus [options] /file.pdf <output-file>
 ```
 
+### DEB package
+
+(1) Download the DEB package associated with your distribution from the [latest release](https://github.com/ad-freiburg/pdftotext-plus-plus/releases/latest) (or from an older release listed on the [release page](https://github.com/ad-freiburg/pdftotext-plus-plus/releases)).
+
+(2) Install the package and its dependencies.<br>
+```
+dpkg -i ./pdftotext-plus-plus_1.0.0-0focal_amd64.deb
+sudo apt-get -fy install
+```
+> **Note**
+> In the first of the two commands above, change the path to that of the package you have downloaded.
+
+> **Note**
+> If the first command produces one or more "*Package &lt;name&gt; is not installed*" errors, you can safely ignore them.
+The second command fixes these errors.
+
+(3) Run *pdftotext++* (type `pdftotext++ --help` to see the full usage information):
+```
+pdftotext++ [options] <pdf-file> <output-file>
+```
+
 ### Build from source
-Clone the project and run the install script:
+
+(1) Clone the project and run the install script:
 ```
 git clone git@github.com:ad-freiburg/pdftotext-plus-plus.git
 cd pdftotext-plus-plus
 sudo make install
 ```
-Run *pdftotext++* (type `pdftotext++ --help` to see the full usage information):
+
+(2) Run *pdftotext++* (type `pdftotext++ --help` to see the full usage information):
 ```
 pdftotext++ [options] <pdf-file> <output-file>
 ```
+
+## Resources
+
+* See the [documentation](https://pdftotext.cs.uni-freiburg.de) for a technical reference of *pdftotext++*. It contains descriptions of all available classes, modules, methods and arguments.
+* TODO: changelog
