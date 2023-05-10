@@ -108,10 +108,10 @@ static const char* description =
 "  otherwise, no visualization will be created.";
 
 // The usage.
-static const char* usage = "pdftotext++ [options] <pdf-file> <output-file>\n"
+static const char* usage = "pdftotext++ [options] <pdf-file> [<output-file>]\n"
 "\n"
 "This processes the PDF file <pdf-file>. The extracted text is written to the file <output-file>.\n"
-"If <output-file> is specified as '-', the extracted text is printed to stdout.";
+"If <output-file> is not specified, or specified as '-', the extracted text is printed to stdout.";
 
 // =================================================================================================
 // Options.
@@ -338,7 +338,7 @@ int main(int argc, char* argv[]) {
   }
 
   // Print the usage info if not all required arguments were specified by the user.
-  if (argc < 3) {
+  if (argc < 2) {
     printUsageInfo();
     return 2;
   }
@@ -346,8 +346,9 @@ int main(int argc, char* argv[]) {
   // Obtain the path to the input PDF file.
   string pdfFilePathStr(argv[1]);
 
-  // Obtain the path to the output file (could be "-", if the output should be printed to stdout).
-  string outputFilePathStr(argv[2]);
+  // Obtain the path to the output file. Note: This path could be not specified by the user, when
+  // she wants to print the text stdout. If so, set the path to "-".
+  string outputFilePathStr(argc > 2 ? argv[2] : "-");
 
   // ------------
   // Start the extraction process.
