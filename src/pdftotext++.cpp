@@ -347,7 +347,7 @@ int main(int argc, char* argv[]) {
   string pdfFilePathStr(argv[1]);
 
   // Obtain the path to the output file. Note: This path could be not specified by the user, when
-  // she wants to print the text to stdout. If so, set the path to "-".
+  // she wants to print the text stdout. If so, set the path to "-".
   string outputFilePathStr(argc > 2 ? argv[2] : "-");
 
   // ------------
