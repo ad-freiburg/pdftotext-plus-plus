@@ -42,7 +42,7 @@ There are several installation options (for example, via Apt, Docker, or buildin
 
 Extract the plain text from *file.pdf* and output it to the console:
 ```
-pdftotext++ file.pdf -
+pdftotext++ file.pdf
 ```
 
 Extract the plain text from *file.pdf* and write it to *output.txt*:
@@ -52,12 +52,12 @@ pdftotext++ file.pdf output.txt
 
 Extract the words from *file.pdf* and output them together with layout information in JSONL format:
 ```
-pdftotext++ --output-words file.pdf -
+pdftotext++ --output-words file.pdf
 ```
 
 Extract the text from *file.pdf*, output it to the console, and create a PDF file *words.pdf* in which a bounding box is drawn around each detected word (this is particularly useful for debugging purposes):
 ```
-pdftotext++ --visualize-words --visualization-path words.pdf file.pdf -
+pdftotext++ --visualize-words --visualization-path words.pdf file.pdf
 ```
 
 Print the full usage information:
