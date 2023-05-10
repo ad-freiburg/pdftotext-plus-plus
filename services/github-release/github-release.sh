@@ -52,9 +52,14 @@ function create_release() {
 
   # Upload each package in the packages directory that contains the specified version.
   info "[$S] Uploading packages ..."
-  for PKG in ${PACKAGES_DIR}/*${VERSION}*.deb; do
-      local FILENAME=$(basename $PKG)
-      info "[$S] Uploading package '$PKG' ..."
+  for DEB in ${PACKAGES_DIR}/*${VERSION}*.deb; do
+      local FILENAME=$(basename $DEB)
+      local DISTRIBUTION="$(dpkg -f "$DEB" Distribution)"
+      local ARCH="$(dpkg -f "$DEB" Architecture)"
+      info "[$S] Uploading package '$DEB' ..."
+      debug " • FILENAME: '$FILENAME'"
+      debug " • DISTRIBUTION: '$DISTRIBUTION'"
+      debug " • ARCHITECTURE: '$ARCH'"
 
       local UPLOAD_PACKAGE_RESPONSE=$(curl -sL \
         -X POST \
@@ -62,13 +67,13 @@ function create_release() {
         -H "Authorization: Bearer ${ACCESS_TOKEN}"\
         -H "X-GitHub-Api-Version: 2022-11-28" \
         -H "Content-Type: application/octet-stream" \
-        https://uploads.github.com/repos/${OWNER}/${REPO}/releases/${RELEASE_ID}/assets?name=$FILENAME \
-        --data-binary "@${PKG}")
+        "https://uploads.github.com/repos/${OWNER}/${REPO}/releases/${RELEASE_ID}/assets?name=${FILENAME}&label=DEB%20package%20(${DISTRIBUTION// /%20}%3B%20${ARCH})" \
+        --data-binary "@${DEB}")
 
       # Check if the GitHub response contains an error.
       local UPLOAD_PACKAGE_IS_ERROR=$(echo "$UPLOAD_PACKAGE_RESPONSE" | jq 'has("errors")')
       if [ "$UPLOAD_PACKAGE_IS_ERROR" = "true" ]; then
-        error "Could not upload package \"${PKG}\":\n$UPLOAD_PACKAGE_RESPONSE"
+        error "Could not upload package \"${DEB}\":\n$UPLOAD_PACKAGE_RESPONSE"
         exit 1
       fi
   done

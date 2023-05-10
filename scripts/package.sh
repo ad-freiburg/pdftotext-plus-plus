@@ -207,6 +207,7 @@ function build_deb_package() {
   local TARGET_DIR="$8"
   local MAINTAINER="$MAINTAINER_NAME <$MAINTAINER_MAIL>"
   local CODENAME="$(lsb_release -cs)"
+  local DISTRIBUTION="$(lsb_release -is) $(lsb_release -rs)"  # for example: "Ubuntu 22.04"
   local ARCH="$(dpkg --print-architecture)"
   local PKG_NAME="$(define_deb_package_name "$PROJECT_NAME" "$PROJECT_VERSION" "$CODENAME" "$ARCH")"
   local TMP_BUILD_DIR="$DEFAULT_TMP_DIR/build-$(date +%s)"
@@ -229,6 +230,7 @@ function build_deb_package() {
   debug " • USR_DIR:               '$USR_DIR'"
   debug " • TARGET_DIR:            '$TARGET_DIR'"
   debug " • CODENAME:              '$CODENAME'"
+  debug " • DISTRIBUTION:          '$DISTRIBUTION'"
   debug " • ARCH:                  '$ARCH'"
   debug " • PKG_NAME:              '$PKG_NAME'"
   debug " • TMP_BUILD_DIR:         '$TMP_BUILD_DIR'"
@@ -250,6 +252,7 @@ function build_deb_package() {
   [[ -z "$USR_DIR" ]] && { error "[$S/$M] No path to usr directory given."; }
   [[ -z "$TARGET_DIR" ]] && { error "[$S/$M] No path to target directory given."; }
   [[ -z "$CODENAME" ]] && { error "[$S/$M] No codename given."; }
+  [[ -z "$DISTRIBUTION" ]] && { error "[$S/$M] No distribution given."; }
   [[ -z "$ARCH" ]] && { error "[$S/$M] No architecture given."; }
   [[ -z "$PKG_NAME" ]] && { error "[$S/$M] No package name given."; }
   [[ -z "$TMP_BUILD_DIR" ]] && { error "[$S/$M] No path to temporary build directory given."; }
@@ -280,6 +283,7 @@ function build_deb_package() {
 	echo "Description: $PROJECT_DESCRIPTION" >> "$PKG_CONTROL_FILE"
   echo "Version: $PROJECT_VERSION" >> "$PKG_CONTROL_FILE"
 	echo "Codename: $CODENAME" >> "$PKG_CONTROL_FILE"
+  echo "Distribution: $DISTRIBUTION" >> "$PKG_CONTROL_FILE"
 	echo "Architecture: $ARCH" >> "$PKG_CONTROL_FILE"
 
   # Create a *.conf file in $PKG_SO_CONF_FILE_REL, telling ldconfig (which is triggered by the entry
