@@ -122,6 +122,19 @@ install-without-deps: clean compile
 	chmod +x "/usr/bin/$(MAIN_BINARY)"
 
 # ==================================================================================================
+# Cleaning.
+
+clean:
+	@echo "$(INFO_STYLE)[$@] Cleaning the project ...$(N)"
+	rm -f core
+	rm -rf $(BUILD_DIR)
+	rm -f $(TEST_DIR)/*.aux
+	rm -f $(TEST_DIR)/*.fdb_latexmk
+	rm -f $(TEST_DIR)/*.fls
+	rm -f $(TEST_DIR)/*.log
+	rm -f $(TEST_DIR)/*.synctex.gz
+
+# ==================================================================================================
 # Releasing.
 
 release: set-version packages apt-repo github-release
@@ -137,19 +150,6 @@ set-version:
 packages:
 	@echo "$(INFO_STYLE)[release] Building packages ...$(N)"
 	./scripts/package.sh build_packages "$(CONF_FILE)" "$(VERSION)" "$(PACKAGES_DIR)"
-
-# ==================================================================================================
-# Cleaning.
-
-clean:
-	@echo "$(INFO_STYLE)[$@] Cleaning the project ...$(N)"
-	rm -f core
-	rm -rf $(BUILD_DIR)
-	rm -f $(TEST_DIR)/*.aux
-	rm -f $(TEST_DIR)/*.fdb_latexmk
-	rm -f $(TEST_DIR)/*.fls
-	rm -f $(TEST_DIR)/*.log
-	rm -f $(TEST_DIR)/*.synctex.gz
 
 # ==================================================================================================
 # Services.
