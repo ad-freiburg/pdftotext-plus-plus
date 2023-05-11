@@ -12,4 +12,4 @@ core
 *.synctex.gz
 *.fls
 *.fdb_latexmk
-github.token
+github-token.local

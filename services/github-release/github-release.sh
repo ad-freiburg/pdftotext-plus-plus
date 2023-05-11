@@ -8,7 +8,7 @@ function create_release() {
   local PACKAGES_DIR="$2"  # The path to the local directory where the packages are stored.
   local OWNER="ad-freiburg"  # The account owner of the GitHub repository.
   local REPO="pdftotext-plus-plus"  # The name of the GitHub repository.
-  local ACCESS_TOKEN=$(cat ${PARENT_DIR_PATH}/github.token)  # The GitHub access token.
+  local ACCESS_TOKEN=$(cat ${PARENT_DIR_PATH}/github-token.local)  # The GitHub access token.
   local TAG_NAME="v${VERSION}"  # The name of the tag.
   local BODY="Release v${VERSION}."  # The release description.
 
@@ -39,14 +39,13 @@ function create_release() {
     -d "{\"tag_name\": \"v${VERSION}\", \"target_commitish\": \"master\", \"body\": \"${BODY}\"}")
 
   # Check if the GitHub response contains an error.
-  local CREATE_RELEASE_IS_ERROR=$(echo "$CREATE_RELEASE_RESPONSE" | jq 'has("errors")')
-  if [ "$CREATE_RELEASE_IS_ERROR" = "true" ]; then
+  local RELEASE_ID=$(echo "$CREATE_RELEASE_RESPONSE" | jq -r '.id')
+  if [ "$RELEASE_ID" = "null" ]; then
     error "Could not create the GitHub release:\n$CREATE_RELEASE_RESPONSE"
     exit 1
   fi
 
   # Extract the release id from the GitHub response.
-  local RELEASE_ID=$(echo "$CREATE_RELEASE_RESPONSE" | jq -r '.id')
   info "Successfully created GitHub release."
   debug " • RELEASE_ID: '$RELEASE_ID'"
 

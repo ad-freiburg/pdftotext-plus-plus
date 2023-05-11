@@ -1,26 +1,23 @@
 /**
- * Copyright 2022, University of Freiburg,
+ * Copyright 2023, University of Freiburg,
  * Chair of Algorithms and Data Structures.
  * Author: Claudius Korzen <korzen@cs.uni-freiburg.de>.
  *
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include <chrono>  // std::chrono::high_resolution_clock
-#include <cstdlib>  // putenv
-#include <iomanip>  // std::setw, std::setprecision
+#include <chrono>    // std::chrono::high_resolution_clock
+#include <cstdlib>   // putenv
+#include <iomanip>   // std::setw, std::setprecision
 #include <iostream>  // std::cout
-#include <locale>  // imbue
-#include <memory>  // std::make_unique
+#include <locale>    // imbue
 #include <string>
 #include <vector>
 
 #include "./serializers/JsonlSerializer.h"
 #include "./serializers/TextSerializer.h"
-
 #include "./utils/MathUtils.h"
 #include "./utils/parseargs.h"
-
 #include "./PdfDocumentVisualizer.h"
 #include "./PdfToTextPlusPlus.h"
 
@@ -39,7 +36,8 @@ using std::vector;
 // The program name.
 static const char* programName = "pdftotext++";
 
-// The version number.
+// The version number (need to be specified at compile time, in form of a preprocessor variable).
+// For example, to define this variable, type: "g++ -DCXX_PROJECT_VERSION='1.2.3' ..."
 static const char* version = CXX_PROJECT_VERSION;
 
 // The description of this program to be displayed in the help message.
@@ -47,65 +45,66 @@ static const char* description =
 "pdftotext++ extracts text from PDF files. It is an extension of Poppler's pdftotext\n"
 "(https://poppler.freedesktop.org/) and provides the following features useful for\n"
 "applications like search, information retrieval or document analysis:\n\n"
-"• \033[34mWords Detection\033[0m\n"
-"  PDF is a format that does not provide the included text word-wise, but character-wise.\n"
-"  Pdftotext++ has techniques that assembles the words from the characters accurately.\n"
-"  \n"
-"• \033[34mWords Dehyphenation\033[0m\n"
-"  PDF can contain hyphenated words, that is: words that appear broken in two parts, with a\n"
-"  hyphen in between. Pdftotext++ merges the parts of hyphenated words to single words, under\n"
-"  consideration whether the hyphen needs to be retained because it is part of a compound word\n"
-"  (like in \"well-known\") or removed because it is not part of a compound word.\n"
-"  \n"
-"• \033[34mSplitting of ligatures\033[0m\n"
-"  PDF can contain ligatures, that is: symbols that are one character in the PDF, but actually\n"
-"  represent multiple characters (like \"ﬁ\" or \"ﬃ\"). Pdftotext++ splits ligatures into the\n"
-"  characters they actually represent (e.g., it splits \"ﬁ\" into \"fi\" and \"ﬃ\" into \"ffi\").\n"
-"  \n"
-"• \033[34mMerging of diacritical marks\033[0m\n"
-"  PDF can contain characters with diacritical marks (like ü or à), which are often represented\n"
-"  by two characters in the PDF (the base character and the diacritical mark). Pdftotext++ merges\n"
-"  them to single characters (e.g., it merges \"a\" and \"`\" to \"à\"). \n"
-"  \n"
-"• \033[34mText Blocks Detection\033[0m\n"
-"  A PDF typically consists of one or more text blocks. By a text block we mean a group of text\n"
-"  that logically belong together and that is recognizably set off from other text blocks. Text\n"
-"  blocks play different semantic roles in the PDF (e.g., \"title\", \"heading\", \"paragraph\",\n"
-"  \"footnote\"). Pdftotext++ detects the beginning and end of text blocks and is able to\n"
-"  identify the semantic roles of the text blocks.\n"
-"  \n"
-"• \033[34mReading Order Detection\033[0m\n"
-"  A PDF does not necessarily store the characters in natural reading order. For example, PDFs\n"
-"  with a multi-column layout can store the characters in an order interleaving between the\n"
-"  columns. Pdftotext++ has techniques to detect multi-column layouts and to correctly detect\n"
-"  the natural reading order in such layouts.\n"
-"  \n"
-"• \033[34mOutput Formats\033[0m\n"
-"  Pdftotext++ allows to output the extracted text in the following formats:\n"
-"  - \033[36mContinuous Text:\033[0m Contains the extracted text in plain text format, with the\n"
-"      words of a text block separated by whitespaces and the text blocks separated by blank lines."
-"      \n"
-"  - \033[36mJSONL:\033[0m Contains the extracted text in a structured form, broken down by a\n"
-"      given text unit (e.g., \"characters\", \"words\", or \"blocks\"). It contains one line per\n"
-"      instance of the respective unit (e.g., one line per word if the unit is \"words\"), each\n"
-"      providing all available layout information about the instance. Here is an example line,\n"
-"      showing the general structure of a line and which information are provided for a word:\n"
-"      {\"type\": \"word\", \"page\": 9, \"minX\": 448.8, \"minY\": 635.9, \"maxX\": 459.4, ⮨\n"
-"        \"maxY\": 647.6, \"font\": \"RSEUZH+CMBX9\", \"fontSize\": 8.9, \"text\": \"panel\"}\n"
-"  Continuous text is the default format. To output the text in JSONL instead, you can use the\n"
-"  different --output-* options. Note that the --output-* options can be combined; for example,\n"
-"  if you use --output-characters in conjunction with --output-words, the outputted JSONL\n"
-"  contains one line for each character and each word. If one or more --output-* option is used,\n"
-"  the output format is JSONL, otherwise the output format is continuous text.\n"
-"  \n"
+"\033[34m• Words Detection\033[0m\n"
+"PDF is a format that does not provide the included text word-wise, but character-wise.\n"
+"Pdftotext++ has techniques that reassembles the words from the characters accurately.\n"
+"\n"
+"\033[34m• Words Dehyphenation\033[0m\n"
+"PDF can contain hyphenated words, that is: words that appear broken in two parts, with a\n"
+"hyphen in between. Pdftotext++ merges the parts of hyphenated words to single words, under\n"
+"consideration whether the hyphen needs to be retained because it is part of a compound word\n"
+"(like in \"well-known\") or removed because it is not part of a compound word.\n"
+"\n"
+"\033[34m• Splitting of ligatures\033[0m\n"
+"PDF can contain ligatures, that is: symbols that are one character in the PDF, but actually\n"
+"represent multiple characters (like \"ﬁ\" or \"ﬃ\"). Pdftotext++ splits ligatures into the\n"
+"characters they actually represent (e.g., it splits \"ﬁ\" into \"fi\" and \"ﬃ\" into \"ffi\").\n"
+"\n"
+"\033[34m• Merging of diacritical marks\033[0m\n"
+"PDF can contain characters with diacritical marks (like ü or à), which are often represented\n"
+"by two characters in the PDF (the base character and the diacritical mark). Pdftotext++ merges\n"
+"them to single characters (e.g., it merges \"a\" and \"`\" to \"à\"). \n"
+"\n"
+"\033[34m• Text Blocks Detection\033[0m\n"
+"A PDF typically consists of one or more text blocks. By a text block we mean a group of text\n"
+"that logically belong together and that is recognizably set off from other text blocks. Text\n"
+"blocks play different semantic roles in the PDF (e.g., \"title\", \"heading\", \"paragraph\",\n"
+"\"footnote\"). Pdftotext++ detects the beginning and end of text blocks and is able to\n"
+"identify the semantic roles of the text blocks.\n"
+"\n"
+"\033[34m• Reading Order Detection\033[0m\n"
+"A PDF does not necessarily store the characters in natural reading order. For example, PDFs\n"
+"with a multi-column layout can store the characters in an order interleaving between the\n"
+"columns. Pdftotext++ has techniques to detect multi-column layouts and to correctly detect\n"
+"the natural reading order in such layouts.\n"
+"\n"
+"\033[34m• Output Formats\033[0m\n"
+"Pdftotext++ allows to output the extracted text in the following formats:\n\n"
+"  \033[36m• Continuous Text:\033[0m\n"
+"    Contains the extracted text in plain text format, with the words of a text block separated\n"
+"    by whitespaces and the text blocks separated by blank lines.\n\n"
+"  \033[36m• JSONL:\033[0m\n"
+"    Contains the extracted text in a structured form, broken down by a given text unit (e.g.,\n"
+"    \"characters\", \"words\", or \"blocks\"). It contains one line per instance of the\n"
+"    respective unit (e.g., one line per word if the unit is \"words\"), each providing all\n"
+"    a vailable layout information about the instance. Here is an example line, showing the\n"
+"    general structure of a line and which information are provided for a word:\n"
+"    {\"type\": \"word\", \"page\": 9, \"minX\": 448.8, \"minY\": 635.9, \"maxX\": 459.4, ⮨\n"
+"      \"maxY\": 647.6, \"font\": \"RSEUZH+CMBX9\", \"fontSize\": 8.9, \"text\": \"panel\"}\n\n"
+"Continuous text is the default format. To output the text in JSONL instead, you can use the\n"
+"different --output-* options. Note that the --output-* options can be combined; for example,\n"
+"if you use --output-characters in conjunction with --output-words, the outputted JSONL\n"
+"contains one line for each character and each word. If one or more --output-* option is used,\n"
+"the output format is JSONL, otherwise the output format is continuous text.\n"
+"\n"
 "• \033[34mVisualization\033[0m\n"
-"  Pdftotext++ allows to create a visualization of the extracted text, that is: a copy of the PDF\n"
-"  file, with different annotations added to it, for example: the bounding boxes or the semantic\n"
-"  roles of the extracted text blocks. This is particularly useful for debugging the extracted\n"
-"  text with respect to different aspects. Which annotations are added to the visualization can\n"
-"  be controlled via the --visualize-* flags. Multiple --visualize-* options can be combined.\n"
-"  Note that the --visualize-* options must be used in conjunction with --visualization-path;\n"
-"  otherwise, no visualization will be created.";
+"Pdftotext++ allows to create a visualization of the extracted text, that is: a copy of the PDF\n"
+"file, with different annotations added to it, for example: the bounding boxes or the semantic\n"
+"roles of the extracted text blocks. This is particularly useful for debugging the extracted\n"
+"text with respect to different aspects. Which annotations are added to the visualization can\n"
+"be controlled via the --visualize-* flags. Multiple --visualize-* options can be combined.\n"
+"Note that the --visualize-* options must be used in conjunction with --visualization-path;\n"
+"otherwise, no visualization will be created.";
 
 // The usage.
 static const char* usage = "pdftotext++ [options] <pdf-file> [<output-file>]\n"
@@ -156,7 +155,7 @@ static bool printRunningTimes = false;
 
 static const ArgDesc options[] = {
   { "--control-characters", argFlag, &addControlCharacters, 0,
-      "Add the following control characters to the continuous text: "
+      "Add the following control characters to the continuous text:\n"
       "\"^A\" (start of heading) in front of each emphasized text block; "
       "\"^L\" (form feed) between two text blocks when there is a page break in between. "
       "Has no effect when used together with one or more --output-* options." },
@@ -280,15 +279,15 @@ static const ArgDesc options[] = {
 // Print methods.
 
 /**
- * This method prints the usage info (that is: the help info without the description) to stdout.
+ * This method prints the usage info (that is: the help message without the description) to stdout.
  */
 void printUsageInfo() {
   printHelpInfo(programName, version, nullptr, usage, options);
 }
 
 /**
- * This method prints the help info (that is: a detailed description of the program, the usage
- * info, and a description of the options) to stdout.
+ * This method prints the help message (that is: a detailed description of the program, the usage
+ * info, and a description of the command line options) to stdout.
  */
 void printHelpInfo() {
   printHelpInfo(programName, version, description, usage, options);
@@ -298,23 +297,23 @@ void printHelpInfo() {
  * This method prints the version info to stdout.
  */
 void printVersionInfo() {
-  cout << "Version: " << version << endl;
+  cout << programName << " version " << version << endl;
 }
 
 // =================================================================================================
 
 /**
- * This method is the main method of pdftotext++. It is responsible for parsing the command line
- * arguments, running pdftotext++ to extract the text from PDF, and serializing and visualizing the
- * extracted text.
+ * The main method of pdftotext++. It is responsible for parsing the command line arguments,
+ * running pdftotext++ to extract the text from PDF, and serializing and visualizing the extracted
+ * text.
  */
 int main(int argc, char* argv[]) {
-  // Seed the random generator (needed to, for example, create the random ids of the text elements).
-  srand((unsigned) time(NULL) * getpid());
-
   // Disable the log output of Tensorflow.
   char env[] = "TF_CPP_MIN_LOG_LEVEL=3";
   putenv(env);
+
+  // Seed the random generator (needed for creating the random ids of the text elements).
+  srand((unsigned) time(NULL) * getpid());
 
   // Parse the command line arguments.
   bool ok = parseArgs(options, &argc, argv);
@@ -337,7 +336,7 @@ int main(int argc, char* argv[]) {
     return 0;
   }
 
-  // Print the usage info if not all required arguments were specified by the user.
+  // Print the usage info if not all required positional arguments were specified by the user.
   if (argc < 2) {
     printUsageInfo();
     return 2;
@@ -346,8 +345,8 @@ int main(int argc, char* argv[]) {
   // Obtain the path to the input PDF file.
   string pdfFilePathStr(argv[1]);
 
-  // Obtain the path to the output file. Note: This path could be not specified by the user, when
-  // she wants to print the text to stdout. If so, set the path to "-".
+  // Obtain the path to the output file. Note: This path may not specified by the user when
+  // she wants to print the text to stdout. If not specified, set the path to "-".
   string outputFilePathStr(argc > 2 ? argv[2] : "-");
 
   // ------------
@@ -372,7 +371,8 @@ int main(int argc, char* argv[]) {
     debugTextLinesDetection ? DEBUG : logLevel,
     debugSubSuperScriptsDetection ? DEBUG : logLevel,
     debugTextBlocksDetection ? DEBUG : logLevel,
-    debugPageFilter);
+    debugPageFilter
+  );
 
   PdfDocument doc;
   vector<Timing> timings;
