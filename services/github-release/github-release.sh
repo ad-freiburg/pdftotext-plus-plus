@@ -8,7 +8,7 @@ function create_release() {
   local PACKAGES_DIR="$2"  # The path to the local directory where the packages are stored.
   local OWNER="ad-freiburg"  # The account owner of the GitHub repository.
   local REPO="pdftotext-plus-plus"  # The name of the GitHub repository.
-  local ACCESS_TOKEN=$(cat ${PARENT_DIR_PATH}/github.token)  # The GitHub access token.
+  local ACCESS_TOKEN=$(cat ${PARENT_DIR_PATH}/github-token.local)  # The GitHub access token.
   local TAG_NAME="v${VERSION}"  # The name of the tag.
   local BODY="Release v${VERSION}."  # The release description.
 
