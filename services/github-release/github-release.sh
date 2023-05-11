@@ -39,14 +39,13 @@ function create_release() {
     -d "{\"tag_name\": \"v${VERSION}\", \"target_commitish\": \"master\", \"body\": \"${BODY}\"}")
 
   # Check if the GitHub response contains an error.
-  local CREATE_RELEASE_IS_ERROR=$(echo "$CREATE_RELEASE_RESPONSE" | jq 'has("errors")')
-  if [ "$CREATE_RELEASE_IS_ERROR" = "true" ]; then
+  local RELEASE_ID=$(echo "$CREATE_RELEASE_RESPONSE" | jq -r '.id')
+  if [ "$RELEASE_ID" = "null" ]; then
     error "Could not create the GitHub release:\n$CREATE_RELEASE_RESPONSE"
     exit 1
   fi
 
   # Extract the release id from the GitHub response.
-  local RELEASE_ID=$(echo "$CREATE_RELEASE_RESPONSE" | jq -r '.id')
   info "Successfully created GitHub release."
   debug " • RELEASE_ID: '$RELEASE_ID'"
 
