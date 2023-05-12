@@ -8,6 +8,9 @@ PACKAGES_DIR = /local/data/pdftotext-plus-plus/packages
 
 CONF_FILE = config.yml
 VERSION_FILE = version.txt
+PROJECT_NAME = $(shell yq ".project.name" "$(CONF_FILE)")
+PROJECT_DESCRIPTION = $(shell yq ".project.description" "$(CONF_FILE)" | sed ':a;N;$$!ba;s/\n/\\n/g')  # the sed command replaces all newlines by "\n".
+PROJECT_USAGE = $(shell yq ".project.usage" "$(CONF_FILE)" | sed ':a;N;$$!ba;s/\n/\\n/g')
 VERSION = $(shell cat $(VERSION_FILE))
 
 MAIN_CPP_FILE = src/pdftotext++.cpp
@@ -23,8 +26,8 @@ TEST_BINARIES = $(basename $(TEST_CPP_FILES:%.cpp=$(BUILD_DIR)/%.o))
 
 # Compiling.
 CXX_EXTRA = -O3 -Wall
-CXX = g++ -std=c++17 $(CXX_EXTRA) -DCXX_PROJECT_VERSION=\"$(VERSION)\" -DCXX_PROJECT_RESOURCES_DIR=\"$(RESOURCES_DIR)\"
-LIBS = -I$(USR_DIR)/include -L$(USR_DIR)/lib -ltensorflow_framework -ltensorflow -lpoppler -lutf8proc
+CXX = g++ -std=c++17 $(CXX_EXTRA) -DCXX_PROJECT_NAME="\"$(PROJECT_NAME)\"" -DCXX_PROJECT_DESCRIPTION="\"$(PROJECT_DESCRIPTION)\"" -DCXX_PROJECT_USAGE="\"$(PROJECT_USAGE)\"" -DCXX_PROJECT_VERSION="\"$(VERSION)\"" -DCXX_PROJECT_RESOURCES_DIR="\"$(RESOURCES_DIR)\""
+LIBS = -I$(USR_DIR)/include -L$(USR_DIR)/lib -ltensorflow_framework -ltensorflow -lpoppler -lutf8proc -lboost_program_options
 LIBS_TEST = $(LIBS) -lgtest -lgtest_main -lpthread
 
 # APT repository.

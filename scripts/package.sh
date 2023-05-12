@@ -357,7 +357,7 @@ function read_config() {
   [[ -z "$CONFIG" ]] && { error "[$S/$M] No path to a config file given."; }
   [[ ! -f "$CONFIG" ]] && { error "[$S/$M] The config file '$CONFIG' does not exist."; }
 
-  PROJECT_NAME="$(yq '.project.name' $CONFIG)"
+  PROJECT_NAME="$(yq '.project.escaped_name' $CONFIG)"
   PROJECT_DESCRIPTION="$(yq '.project.description' $CONFIG)"
   MAINTAINER_NAME="$(yq '.project.maintainer.name' $CONFIG)"
   MAINTAINER_MAIL="$(yq '.project.maintainer.mail' $CONFIG)"

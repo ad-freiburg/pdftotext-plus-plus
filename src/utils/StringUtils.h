@@ -106,6 +106,17 @@ string escapeJson(const string& str);
  */
 string shorten(const string& str, size_t len = 40);  // TODO(korzen): Parameterize.
 
+/**
+ * This method removes all leading and trailing whitespaces from the given string.
+ *
+ * @param str
+ *   The string to process.
+ *
+ * @return
+ *   The string without leading and trailing whitespaces.
+ */
+string strip(const string& str);
+
 }  // namespace string_utils
 
 #endif  // UTILS_STRINGUTILS_H_
