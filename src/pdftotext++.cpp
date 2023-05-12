@@ -18,6 +18,7 @@
 
 #include "./serializers/JsonlSerializer.h"
 #include "./serializers/TextSerializer.h"
+#include "./utils/Log.h"  // BBLUE, OFF
 #include "./utils/MathUtils.h"
 #include "./utils/StringUtils.h"
 #include "./PdfDocumentVisualizer.h"
@@ -35,21 +36,21 @@ namespace po = boost::program_options;
 
 // =================================================================================================
 // Parameters
-// NOTE: all variables below need to be specified at compile time, in form of a preprocessor
-// variable. For example, to define the CXX_PROJECT_NAME variable at compile time, type:
-// "g++ -DCXX_PROJECT_NAME='pdftotext++' ..."
+// NOTE: All variables below need to be specified at compile time, in form of a preprocessor
+// variable. For example, to define the CXX_PROGRAM_NAME variable, type the following:
+// "g++ -DCXX_PROGRAM_NAME='pdftotext++' ..."
 
 // The program name.
-static std::string programName = CXX_PROJECT_NAME;
+static std::string programName = CXX_PROGRAM_NAME;
 
 // The version number.
-static std::string version = CXX_PROJECT_VERSION;
+static std::string version = CXX_PROGRAM_VERSION;
 
-// The description of this program.
-static std::string description = CXX_PROJECT_DESCRIPTION;
+// The program description.
+static std::string description = CXX_PROGRAM_DESCRIPTION;
 
 // The usage of this program.
-static std::string usage = CXX_PROJECT_USAGE;
+static std::string usage = CXX_PROGRAM_USAGE;
 
 // static const ArgDesc options[] {
 //   { "--control-characters", argFlag, &addControlCharacters, 0,
@@ -177,25 +178,35 @@ static std::string usage = CXX_PROJECT_USAGE;
 // =================================================================================================
 // Print methods.
 
+/**
+ * This method prints the help message, containing the program name, the program version, a
+ * general program description and a description of the command-line options.
+ *
+ * @param options
+ *    The command-line options.
+ */
 void printHelpMessage(po::options_description& options) {
-  cout << "\033[1;34m" << "NAME" << "\033[0m" << endl;
+  cout << BBLUE << "NAME" << OFF << endl;
   cout << string_utils::strip(programName) << endl;
   cout << endl;
 
-  cout << "\033[1;34m" << "VERSION" << "\033[0m" << endl;
+  cout << BBLUE << "VERSION" << OFF << endl;
   cout << string_utils::strip(version) << endl;
   cout << endl;
 
-  cout << "\033[1;34m" << "DESCRIPTION" << "\033[0m" << endl;
+  cout << BBLUE << "DESCRIPTION" << OFF << endl;
   cout << string_utils::strip(description) << endl;
   cout << endl;
 
-  cout << "\033[1;34m" << "USAGE" << "\033[0m" << endl;
+  cout << BBLUE << "USAGE" << OFF << endl;
   cout << string_utils::strip(usage) << endl;
   cout << endl;
 
-  cout << "\033[1;34m" << "OPTIONS" << "\033[0m" << endl;
-  cout << options << endl;
+  cout << BBLUE << "OPTIONS" << OFF << endl;
+  for (auto& x : options.options()) {
+    cout << x->format_name() << endl;
+    cout << string_utils::wrap(x->description()) << endl;
+  }
   cout << endl;
 }
 
@@ -210,6 +221,10 @@ int main(int argc, char* argv[]) {
   // Specify the command-line options.
   bool printVersion = false;
   bool printHelp = false;
+  string verbosity = "error";
+
+  string pdfFilePath;
+  string outputFilePath = "-";
 // static bool addControlCharacters = false;
 // static bool addSemanticRoles = false;
 // static bool noScripts = false;
@@ -246,33 +261,69 @@ int main(int argc, char* argv[]) {
 // static int debugPageFilter = -1;
 // static bool printRunningTimes = false;
 
-  po::options_description options("");
-  options.add_options()
+  // Specify public options (= options that will be shown to the user when printing the help).
+  po::options_description publicOptions(100);
+  publicOptions.add_options()
+    (
+      "verbosity",
+      po::value<string>(&verbosity),
+      "Specify the verbosity. Valid values are: trace, debug, info, warn, error. "
+      "Logging messages with a level lower than the specified value will be not printed to the "
+      "console. Default: error." // TODO: Specify the default value.
+    )
     (
       "version,v",
       po::bool_switch(&printVersion),
-      "Print the version info."
+      "Print version info."
     )
     (
       "help,h",
       po::bool_switch(&printHelp),
-      "Print the help message."
+      "Print the help."
     );
 
+  // Specify private options (= options that will not be shown to the user when printing the help).
+  // NOTE: these options *must* include an entry for each positional options (defined below), this
+  // is a restriction of the boost library.
+  po::options_description privateOptions("");
+  privateOptions.add_options()
+    (
+      "pdf-file",
+      po::value<string>(&pdfFilePath)->required(),
+      "The path to the PDF file to process."
+    )
+    (
+      "output-file",
+      po::value<string>(&outputFilePath),
+      "The path to the file into which the extracted text should be written."
+    );
+
+  // Specify positional options.
+  po::positional_options_description positional;
+  positional.add("pdf-file", 1);
+  positional.add("output-file", 1);
+
   // Parse the command-line options.
+  po::options_description opts;
+  opts.add(publicOptions).add(privateOptions);
   po::variables_map vm;
   try {
-    po::store(po::parse_command_line(argc, argv, options), vm);
+    po::store(po::command_line_parser(argc, argv).options(opts).positional(positional).run(), vm);
     po::notify(vm);
   } catch (const std::exception& e) {
-    cerr << "An error occurred on parsing the command-line options: " << e.what() << endl;
-    cerr << "Type \"" << programName << " --help\" for printing the help message." << endl;
-    return EXIT_FAILURE;
+    if (vm.count("help")) {
+      printHelpMessage(publicOptions);
+      return EXIT_SUCCESS;
+    } else {
+      cerr << "An error occurred on parsing the command-line options: " << e.what() << endl;
+      cerr << "Type \"" << programName << " --help\" for printing the help." << endl;
+      return EXIT_FAILURE;
+    }
   }
 
   // Print the help info if explicitly requested by the user.
   if (printHelp) {
-    printHelpMessage(options);
+    printHelpMessage(publicOptions);
     return EXIT_SUCCESS;
   }
 
@@ -282,38 +333,21 @@ int main(int argc, char* argv[]) {
     return EXIT_SUCCESS;
   }
 
-  // std::cout << "Print help: " << printHelp << std::endl;
-  // std::cout << "Print version: " << printVersion << std::endl;
+  // Disable the log output of Tensorflow.
+  char env[] = "TF_CPP_MIN_LOG_LEVEL=3";
+  putenv(env);
 
-  // // Disable the log output of Tensorflow.
-  // char env[] = "TF_CPP_MIN_LOG_LEVEL=3";
-  // putenv(env);
+  // Seed the random generator (needed for creating the random ids of the text elements).
+  srand((unsigned) time(NULL) * getpid());
 
-  // // Seed the random generator (needed for creating the random ids of the text elements).
-  // srand((unsigned) time(NULL) * getpid());
+  // ------------
+  // Start the extraction process.
 
-//   // Print the usage info if not all required positional arguments were specified by the user.
-//   if (argc < 2) {
-//     printUsageInfo();
-//     return 2;
-//   }
-
-//   // Obtain the path to the input PDF file.
-//   string pdfFilePathStr(argv[1]);
-
-//   // Obtain the path to the output file. Note: This path may not specified by the user when
-//   // she wants to print the text to stdout. If not specified, set the path to "-".
-//   string outputFilePathStr(argc > 2 ? argv[2] : "-");
-
-//   // ------------
-//   // Start the extraction process.
-
-//   const string logLevelStr(loggingLevel);
-//   LogLevel logLevel = ERROR;
-//   if (logLevelStr == "trace" || logLevelStr == "TRACE") { logLevel = LogLevel::TRACE; }
-//   if (logLevelStr == "debug" || logLevelStr == "DEBUG") { logLevel = LogLevel::DEBUG; }
-//   if (logLevelStr == "info" || logLevelStr == "INFO") { logLevel = LogLevel::INFO; }
-//   if (logLevelStr == "warn" || logLevelStr == "WARN") { logLevel = LogLevel::WARN; }
+  LogLevel logLevel = ERROR;
+  if (verbosity == "trace" || verbosity == "TRACE") { logLevel = LogLevel::TRACE; }
+  if (verbosity == "debug" || verbosity == "DEBUG") { logLevel = LogLevel::DEBUG; }
+  if (verbosity == "info" || verbosity == "INFO") { logLevel = LogLevel::INFO; }
+  if (verbosity == "warn" || verbosity == "WARN") { logLevel = LogLevel::WARN; }
 
 //   PdfToTextPlusPlus engine(
 //     noEmbeddedFontFiles,

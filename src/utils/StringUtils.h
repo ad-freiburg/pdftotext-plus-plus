@@ -117,6 +117,9 @@ string shorten(const string& str, size_t len = 40);  // TODO(korzen): Parameteri
  */
 string strip(const string& str);
 
+// TODO
+string wrap(string str, int width = 100);
+
 }  // namespace string_utils
 
 #endif  // UTILS_STRINGUTILS_H_

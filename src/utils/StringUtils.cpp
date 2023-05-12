@@ -131,3 +131,18 @@ string string_utils::strip(const string& str) {
 
   return std::string(start_it, end_it.base());
 }
+
+// _________________________________________________________________________________________________
+string string_utils::wrap(string str, int width) {
+  int pos = 0;
+  int prevPos = 0;
+  while (true) {
+    pos = str.rfind(' ', pos + width + 1);
+    if (pos < prevPos || str.size() - prevPos < width || pos > str.size()) {
+      break;
+    }
+    str.at(pos) = '\n';
+    prevPos = pos;
+  }
+  return str;
+}
