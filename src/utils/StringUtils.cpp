@@ -168,7 +168,6 @@ string string_utils::wrap(string str, int width, int indent) {
   // Append the indent and the rest of the string to the result.
   for (int i = 0; i < indent; i++) { result += " "; }
   result += str.substr(lineStart, str.size() - lineStart);
-  result += "\n";
 
   return result;
 }
