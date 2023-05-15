@@ -53,7 +53,7 @@ static std::string description = CXX_PROGRAM_DESCRIPTION;
 static std::string usage = CXX_PROGRAM_USAGE;
 
 // The maximum length of lines in the help message.
-static int HELP_MAX_LINE_LENGTH = 100;
+static int HELP_MAX_LINE_LENGTH = 80;
 
 // The amount by which to indent the description of command line options
 static int HELP_OPTION_DESC_LINE_INDENT = 4;
