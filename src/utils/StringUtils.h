@@ -117,8 +117,22 @@ string shorten(const string& str, size_t len = 40);  // TODO(korzen): Parameteri
  */
 string strip(const string& str);
 
-// TODO
-string wrap(string str, int width = 100);
+/**
+ * This method wraps the specified string so that every line is indented by <indent>-many
+ * whitespaces and the length of each line (+ the length of the indent) is not larger than <width>.
+ *
+ * @param str
+ *    The string to wrap.
+ * @param width
+ *    The maximal length of each line (and its indent).
+ * @param indent
+ *    The amount by which each line is to be indented.
+ *
+ * @return
+ *    A string containing <str> wrapped into lines, with each lines separated by a single newline
+ *    character.
+ */
+string wrap(string str, int width = 100, int indent = 0);
 
 }  // namespace string_utils
 

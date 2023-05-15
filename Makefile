@@ -9,7 +9,7 @@ PACKAGES_DIR = /local/data/pdftotext-plus-plus/packages
 CONF_FILE = config.yml
 VERSION_FILE = version.txt
 PROJECT_NAME = $(shell yq ".project.name" "$(CONF_FILE)")
-PROJECT_DESCRIPTION = $(shell yq ".project.description" "$(CONF_FILE)" | sed ':a;N;$$!ba;s/\n/\\n/g')  # the sed command replaces all newlines by "\n".
+PROJECT_DESCRIPTION = $(shell yq ".project.description" "$(CONF_FILE)" | sed ':a;N;$$!ba;s/\n/\\n/g')  # the sed command replaces each newline by "\n".
 PROJECT_USAGE = $(shell yq ".project.usage" "$(CONF_FILE)" | sed ':a;N;$$!ba;s/\n/\\n/g')
 VERSION = $(shell cat $(VERSION_FILE))
 

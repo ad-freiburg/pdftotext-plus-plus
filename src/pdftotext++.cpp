@@ -36,9 +36,9 @@ namespace po = boost::program_options;
 
 // =================================================================================================
 // Parameters
-// NOTE: All variables below need to be specified at compile time, in form of a preprocessor
-// variable. For example, to define the CXX_PROGRAM_NAME variable, type the following:
-// "g++ -DCXX_PROGRAM_NAME='pdftotext++' ..."
+// NOTE: All variables starting with "CXX_" below need to be specified at compile time, in form of
+// a preprocessor variable. For example, to define the CXX_PROGRAM_NAME variable, type the
+// following: "g++ -DCXX_PROGRAM_NAME='pdftotext++' ..."
 
 // The program name.
 static std::string programName = CXX_PROGRAM_NAME;
@@ -51,6 +51,12 @@ static std::string description = CXX_PROGRAM_DESCRIPTION;
 
 // The usage of this program.
 static std::string usage = CXX_PROGRAM_USAGE;
+
+// The maximum length of lines in the help message.
+static int HELP_MAX_LINE_LENGTH = 100;
+
+// The amount by which to indent the description of command line options
+static int HELP_OPTION_DESC_LINE_INDENT = 4;
 
 // static const ArgDesc options[] {
 //   { "--control-characters", argFlag, &addControlCharacters, 0,
@@ -184,8 +190,12 @@ static std::string usage = CXX_PROGRAM_USAGE;
  *
  * @param options
  *    The command-line options.
+ * @param maxLineLength
+ *    The maximum width of the help message.
+ * @param optionDescIndent
+ *    The amount by which to indent the description of the command-line options.
  */
-void printHelpMessage(po::options_description& options) {
+void printHelpMessage(po::options_description& options, int maxLineLength, int optionDescIndent) {
   cout << BBLUE << "NAME" << OFF << endl;
   cout << string_utils::strip(programName) << endl;
   cout << endl;
@@ -195,17 +205,17 @@ void printHelpMessage(po::options_description& options) {
   cout << endl;
 
   cout << BBLUE << "DESCRIPTION" << OFF << endl;
-  cout << string_utils::strip(description) << endl;
+  cout << string_utils::wrap(string_utils::strip(description), maxLineLength) << endl;
   cout << endl;
 
   cout << BBLUE << "USAGE" << OFF << endl;
-  cout << string_utils::strip(usage) << endl;
+  cout << string_utils::wrap(string_utils::strip(usage), maxLineLength) << endl;
   cout << endl;
 
   cout << BBLUE << "OPTIONS" << OFF << endl;
   for (auto& x : options.options()) {
     cout << x->format_name() << endl;
-    cout << string_utils::wrap(x->description()) << endl;
+    cout << string_utils::wrap(x->description(), maxLineLength, optionDescIndent) << endl;
   }
   cout << endl;
 }
@@ -262,7 +272,7 @@ int main(int argc, char* argv[]) {
 // static bool printRunningTimes = false;
 
   // Specify public options (= options that will be shown to the user when printing the help).
-  po::options_description publicOptions(100);
+  po::options_description publicOptions;
   publicOptions.add_options()
     (
       "verbosity",
@@ -312,7 +322,7 @@ int main(int argc, char* argv[]) {
     po::notify(vm);
   } catch (const std::exception& e) {
     if (vm.count("help")) {
-      printHelpMessage(publicOptions);
+      printHelpMessage(publicOptions, HELP_MAX_LINE_LENGTH, HELP_OPTION_DESC_LINE_INDENT);
       return EXIT_SUCCESS;
     } else {
       cerr << "An error occurred on parsing the command-line options: " << e.what() << endl;
@@ -323,7 +333,7 @@ int main(int argc, char* argv[]) {
 
   // Print the help info if explicitly requested by the user.
   if (printHelp) {
-    printHelpMessage(publicOptions);
+    printHelpMessage(publicOptions, HELP_MAX_LINE_LENGTH, HELP_OPTION_DESC_LINE_INDENT);
     return EXIT_SUCCESS;
   }
 

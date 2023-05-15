@@ -133,16 +133,42 @@ string string_utils::strip(const string& str) {
 }
 
 // _________________________________________________________________________________________________
-string string_utils::wrap(string str, int width) {
-  int pos = 0;
-  int prevPos = 0;
+string string_utils::wrap(string str, int width, int indent) {
+  std::string result = "";
+
+  // Split the string into lines.
+  int lineStart = 0;
+  int lineEnd = 0;
   while (true) {
-    pos = str.rfind(' ', pos + width + 1);
-    if (pos < prevPos || str.size() - prevPos < width || pos > str.size()) {
+    // Check if the string needs to be wrapped because it contains an explicit newline character.
+    lineEnd = str.rfind("\n", lineStart + width - indent);
+    if (lineEnd >= lineStart && lineEnd <= str.size()) {
+      for (int i = 0; i < indent; i++) { result += " "; }
+      result += str.substr(lineStart, lineEnd - lineStart);
+      result += "\n";
+      lineStart = lineEnd + 1;
+      continue;
+    }
+
+    // Check if the string needs to be wrapped because it is too long.
+    lineEnd = str.rfind(" ", lineStart + width - indent);
+    if (lineEnd < lineStart || lineEnd > str.size()) {
       break;
     }
-    str.at(pos) = '\n';
-    prevPos = pos;
+    // Don't wrap if the string would be split in two parts whose accumulated width is <= width.
+    if ((lineEnd - lineStart) + (str.size() - lineEnd) <= width) {
+      break;
+    }
+    // Append the indent and the line to the result.
+    for (int i = 0; i < indent; i++) { result += " "; }
+    result += str.substr(lineStart, lineEnd - lineStart);
+    result += "\n";
+    lineStart = lineEnd + 1;
   }
-  return str;
+  // Append the indent and the rest of the string to the result.
+  for (int i = 0; i < indent; i++) { result += " "; }
+  result += str.substr(lineStart, str.size() - lineStart);
+  result += "\n";
+
+  return result;
 }

@@ -3,79 +3,42 @@ project:
   escaped_name: pdftotext-plus-plus
 
   description: |
-    pdftotext++ extracts text from PDF files. It is an extension of Poppler's pdftotext
-    (https://poppler.freedesktop.org/) and provides the following features useful for
-    applications like search, information retrieval or document analysis:
+    pdftotext++ extracts text from PDF files. It is an extension of Poppler's pdftotext (https://poppler.freedesktop.org/) and provides the following features useful for applications like search, information retrieval or document analysis:
 
     • Words Detection
-    PDF is a format that does not provide the included text word-wise, but character-wise.
-    Pdftotext++ has techniques that reassembles the words from the characters accurately.
+    PDF is a format that does not provide the included text word-wise, but character-wise. Pdftotext++ has techniques that reassembles the words from the characters accurately.
 
     • Words Dehyphenation
-    PDF can contain hyphenated words, that is: words that appear broken in two parts, with a
-    hyphen in between. Pdftotext++ merges the parts of hyphenated words to single words, under
-    consideration whether the hyphen needs to be retained because it is part of a compound word
-    (like in 'well-known') or removed because it is not part of a compound word.
+    PDF can contain hyphenated words, that is: words that appear broken in two parts, with a hyphen in between. Pdftotext++ merges the parts of hyphenated words to single words, under consideration whether the hyphen needs to be retained because it is part of a compound word (like in 'well-known') or removed because it is not part of a compound word.
 
     • Splitting of ligatures
-    PDF can contain ligatures, that is: symbols that are one character in the PDF, but actually
-    represent multiple characters (like 'ﬁ' or 'ﬃ'). Pdftotext++ splits ligatures into the
-    characters they actually represent (e.g., it splits 'ﬁ\' into 'fi' and 'ﬃ' into 'ffi').
+    PDF can contain ligatures, that is: symbols that are one character in the PDF, but actually represent multiple characters (like 'ﬁ' or 'ﬃ'). Pdftotext++ splits ligatures into the characters they actually represent (e.g., it splits 'ﬁ\' into 'fi' and 'ﬃ' into 'ffi').
 
     • Merging of diacritical marks
-    PDF can contain characters with diacritical marks (like ü or à), which are often represented
-    by two characters in the PDF (the base character and the diacritical mark). Pdftotext++ merges
-    them to single characters (e.g., it merges 'a' and '\`' to 'à').
+    PDF can contain characters with diacritical marks (like ü or à), which are often represented by two characters in the PDF (the base character and the diacritical mark). Pdftotext++ merges them to single characters (e.g., it merges 'a' and '\`' to 'à').
 
     • Text Blocks Detection
-    A PDF typically consists of one or more text blocks. By a text block we mean a group of text
-    that logically belong together and that is recognizably set off from other text blocks. Text
-    blocks play different semantic roles in the PDF (e.g., 'title', 'heading', 'paragraph',
-    'footnote'). Pdftotext++ detects the beginning and end of text blocks and is able to
-    identify the semantic roles of the text blocks.
+    A PDF typically consists of one or more text blocks. By a text block we mean a group of text that logically belong together and that is recognizably set off from other text blocks. Text blocks play different semantic roles in the PDF (e.g., 'title', 'heading', 'paragraph', 'footnote'). Pdftotext++ detects the beginning and end of text blocks and is able to identify the semantic roles of the text blocks.
 
     • Reading Order Detection
-    A PDF does not necessarily store the characters in natural reading order. For example, PDFs
-    with a multi-column layout can store the characters in an order interleaving between the
-    columns. Pdftotext++ has techniques to detect multi-column layouts and to correctly detect
-    the natural reading order in such layouts.
+    A PDF does not necessarily store the characters in natural reading order. For example, PDFs with a multi-column layout can store the characters in an order interleaving between the columns. Pdftotext++ has techniques to detect multi-column layouts and to correctly detect the natural reading order in such layouts.
 
     • Output Formats
     Pdftotext++ allows to output the extracted text in the following formats:
 
-      • Continuous Text:
-      Contains the extracted text in plain text format, with the words of a text block separated
-      by whitespaces and the text blocks separated by blank lines.
+    - Continuous Text: Contains the extracted text in plain text format, with the words of a text block separated by whitespaces and the text blocks separated by blank lines.
 
-      • JSONL:
-      Contains the extracted text in a structured form, broken down by a given text unit (e.g.,
-      'characters', 'words', or 'blocks'). It contains one line per instance of the
-      respective unit (e.g., one line per word if the unit is 'words'), each providing all
-      a vailable layout information about the instance. Here is an example line, showing the
-      general structure of a line and which information are provided for a word:
-      {'type': 'word', 'page': 9, 'minX': 448.8, 'minY': 635.9, 'maxX': 459.4, ⮨
-        'maxY': 647.6, 'font': 'RSEUZH+CMBX9', 'fontSize': 8.9, 'text': 'panel'}
+    - JSONL: Contains the extracted text in a structured form, broken down by a given text unit (e.g., 'characters', 'words', or 'blocks'). It contains one line per instance of the respective unit (e.g., one line per word if the unit is 'words'), each providing all a vailable layout information about the instance. Here is an example line, showing the general structure of a line and which information are provided for a word: {'type': 'word', 'page': 9, 'minX': 448.8, 'minY': 635.9, 'maxX': 459.4, 'maxY': 647.6, 'font': 'RSEUZH+CMBX9', 'fontSize': 8.9, 'text': 'panel'}
 
-      Continuous text is the default format. To output the text in JSONL instead, you can use the
-      different --output-* options. Note that the --output-* options can be combined; for example,
-      if you use --output-characters in conjunction with --output-words, the outputted JSONL
-      contains one line for each character and each word. If one or more --output-* option is
-      used, the output format is JSONL, otherwise the output format is continuous text.
+    Continuous text is the default format. To output the text in JSONL instead, you can use the different --output-* options. Note that the --output-* options can be combined; for example, if you use --output-characters in conjunction with --output-words, the outputted JSONL contains one line for each character and each word. If one or more --output-* option is used, the output format is JSONL, otherwise the output format is continuous text.
 
     • Visualization
-    Pdftotext++ allows to create a visualization of the extracted text, that is: a copy of the PDF
-    file, with different annotations added to it, for example: the bounding boxes or the semantic
-    roles of the extracted text blocks. This is particularly useful for debugging the extracted
-    text with respect to different aspects. Which annotations are added to the visualization can
-    be controlled via the --visualize-* flags. Multiple --visualize-* options can be combined.
-    Note that the --visualize-* options must be used in conjunction with --visualization-path;
-    otherwise, no visualization will be created.
+    Pdftotext++ allows to create a visualization of the extracted text, that is: a copy of the PDF file, with different annotations added to it, for example: the bounding boxes or the semantic roles of the extracted text blocks. This is particularly useful for debugging the extracted text with respect to different aspects. Which annotations are added to the visualization can be controlled via the --visualize-* flags. Multiple --visualize-* options can be combined. Note that the --visualize-* options must be used in conjunction with --visualization-path; otherwise, no visualization will be created.
 
   usage: |
     pdftotext++ [option] <pdf-file> [<output-file>]
 
-    This processes the PDF file <pdf-file> and writes the extracted text to the file <output-file>.
-    If <output-file> is not specified, or specified as '-', the extracted text is printed to stdout.
+    This processes the PDF file <pdf-file> and writes the extracted text to the file <output-file>. If <output-file> is not specified, or specified as '-', the extracted text is printed to stdout.
 
   maintainer:
     name: Claudius Korzen
