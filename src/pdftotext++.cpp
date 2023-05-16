@@ -32,12 +32,13 @@ using std::cout;
 using std::endl;
 using std::string;
 using std::vector;
+
 namespace po = boost::program_options;
 
 // =================================================================================================
-// Parameters
-// NOTE: All variables starting with "CXX_" need to be specified at compile time, in form of a
-// preprocessor variable. For example, to define the CXX_PROGRAM_NAME variable, type the
+// Parameters.
+// NOTE: The variables starting with "CXX_" need to be specified at compile time, in form of a
+// preprocessor variable. For example, to define the variable 'CXX_PROGRAM_NAME', type the
 // following: "g++ -DCXX_PROGRAM_NAME='pdftotext++' ..."
 
 // The program name.
@@ -53,28 +54,30 @@ static string description = CXX_PROGRAM_DESCRIPTION;
 static string usage = CXX_PROGRAM_USAGE;
 
 // The maximum length of the lines in the help message.
-static int HELP_MAX_LINE_LENGTH = 100;
+static int HELP_MAX_WIDTH = 100;
 
-// The amount by which to indent the descriptions of the command line options.
-static int HELP_OPTION_DESC_LINE_INDENT = 4;
-
-
+// The amount by which to indent the description of a command line option in the help message.
+static int HELP_OPTION_DESC_INDENT = 4;
 
 // =================================================================================================
 // Print methods.
 
 /**
- * This method prints the help message, containing the program name, the program version, a
+ * This method prints the help message - containing the program name, the program version, a
  * general program description and a description of the command-line options.
  *
- * @param options
- *    The definition of the command-line options.
+ * @param publicOpts
+ *    The definition of the public command-line options.
  * @param maxLineLength
  *    The maximum length of the lines in the help message.
  * @param optionDescIndent
- *    The amount by which to indent the descriptions of the command-line options.
+ *    The amount by which to indent the description of a command line option in the help message.
+ * @param privateOpts
+ *    The definition of the non-public command-line options. This can be omitted when the private
+ *    options should not appear in the help message.
  */
-void printHelpMessage(po::options_description& options, int maxLineLength, int optionDescIndent) {
+void printHelpMessage(po::options_description* publicOpts, int maxLineLength, int optionDescIndent,
+      po::options_description* privateOpts = 0) {
   cout << BBLUE << "NAME" << OFF << endl;
   cout << string_utils::wrap(string_utils::strip(programName), maxLineLength) << endl;
   cout << endl;
@@ -92,24 +95,35 @@ void printHelpMessage(po::options_description& options, int maxLineLength, int o
   cout << endl;
 
   cout << BBLUE << "OPTIONS" << OFF << endl;
-  for (auto& x : options.options()) {
-    cout << x->format_name() << endl;
+  for (auto& opt : publicOpts->options()) {
+    cout << opt->format_name() << endl;
     cout << string_utils::wrap(
-      string_utils::strip(x->description()),
+      string_utils::strip(opt->description()),
       maxLineLength,
       optionDescIndent) << endl;
   }
   cout << endl;
+
+  if (privateOpts) {
+    cout << BBLUE << "NON-PUBLIC OPTIONS" << OFF << endl;
+    for (auto& opt : privateOpts->options()) {
+      cout << opt->format_name() << endl;
+      cout << string_utils::wrap(
+        string_utils::strip(opt->description()),
+        maxLineLength,
+        optionDescIndent) << endl;
+    }
+    cout << endl;
+  }
 }
 
 // =================================================================================================
 
 /**
- * The main method of pdftotext++. It is responsible for parsing the command line arguments,
- * running pdftotext++ on a specified PDF, and serializing and visualizing the extracted text.
+ * The main method of pdftotext++. It is responsible for parsing the command line options,
+ * running the extraction pipeline on a specified PDF, and outputting the extracted text.
  */
 int main(int argc, char* argv[]) {
-  // Specify the command-line options.
   bool addControlCharacters = false;
   bool addSemanticRoles = false;
   bool noScripts = false;
@@ -147,12 +161,13 @@ int main(int argc, char* argv[]) {
   bool printRunningTimes = false;
   bool printVersion = false;
   bool printHelp = false;
+  bool printFullHelp = false;
   string pdfFilePath;
   string outputFilePath = "-";
 
-  // Specify public options (= options that will be shown to the user when printing the help).
-  po::options_description publicOptions;
-  publicOptions.add_options()
+  // Specify the public options (= options that will be shown to the user when printing the help).
+  po::options_description publicOpts;
+  publicOpts.add_options()
     (
       "control-characters",
       po::bool_switch(&addControlCharacters),
@@ -171,74 +186,72 @@ int main(int argc, char* argv[]) {
     (
       "no-scripts",
       po::bool_switch(&noScripts),
-      "Output the extracted text without subscript and superscript characters."
+      "Output the extracted text without characters that appears as a subscript or superscript in "
+      "the PDF."
     )
     (
       "no-dehyphenation",
       po::bool_switch(&noDehyphenation),
       "Do not merge hyphenated words. "
-      "NOTE: The consequence is that each part into which a hyphenated word is divided appears as "
-      "a separate word in the extracted text."
+      "NOTE: Using this option has the consequence that each part into which a hyphenated word is "
+      "divided appears as a separate word in the extracted text."
     )
     (
       "no-embedded-font-files",
       po::bool_switch(&noEmbeddedFontFiles),
       "Do not parse the font files embedded into the PDF file. "
-      "NOTE: The consequence is a faster extraction process, but a less accurate extraction result."
-    )
-    (
-      "parse-mode",
-      po::bool_switch(&parseMode),
-      "Only parse the content streams of the PDF file for characters, figures, and shapes. "
-      "Do not detect words, text lines, and text blocks. To output the extracted elements, use "
-      "the '--output-characters', '--output-figures' and/or '--output-shapes' options."
+      "NOTE: Using this option results in a faster extraction process, but a less accurate "
+      "extraction result."
     )
     // TODO: This option should be removed when more structured formats are available.
     (
       "output-pages",
       po::bool_switch(&outputPages),
-      "Instead of continuous text, output the text in JSONL format, together with all available "
-      "information about the pages of the PDF file (e.g., the widths and heights)."
+      "Output information about the pages (e.g., the widths and heights) in JSONL format."
     )
     // TODO: This option should be removed when more structured formats are available.
     (
       "output-characters",
       po::bool_switch(&outputChars),
-      "Instead of continuous text, output the text in JSONL format, together with all available "
-      "information about the characters contained in the PDF file (e.g., the positions and fonts)."
+      "Output information about the characters (e.g., the positions and fonts) in JSONL format."
     )
     // TODO: This option should be removed when more structured formats are available.
     (
       "output-figures",
       po::bool_switch(&outputFigures),
-      "Instead of continuous text, output the text in JSONL format, together with all available "
-      "information about the figures contained in the PDF file (e.g., the positions)."
+      "Output information about the figures (e.g., the positions) in JSONL format."
     )
     // TODO: This option should be removed when more structured formats are available.
     (
       "output-shapes",
       po::bool_switch(&outputShapes),
-      "Instead of continuous text, output the text in JSONL format, together with all available "
-      "information about the shapes contained in the PDF file (e.g., the positions)."
+      "Output information about the shapes (e.g., the positions) in JSONL format."
     )
     // TODO: This option should be removed when more structured formats are available.
     (
       "output-words",
       po::bool_switch(&outputWords),
-      "Instead of continuous text, output the text in JSONL format, together with all available "
-      "information about the words contained in the PDF file (e.g., the positions and fonts)."
+      "Output information about the detected words (e.g., the positions and fonts) in JSONL format."
     )
     // TODO: This option should be removed when more structured formats are available.
     (
       "output-text-blocks",
       po::bool_switch(&outputBlocks),
-      "Instead of continuous text, output the text in JSONL format, together with all available "
-      "information about the text blocks contained in the PDF file (e.g., the positions and fonts)."
+      "Output information about the detected text blocks (e.g., the positions and fonts) in JSONL "
+      "format."
+    )
+    (
+      "visualization-path",
+      po::value<string>(&visualizeFilePath),
+      "Create a copy of the PDF file, with the annotations added by the different '--visualize-*' "
+      "options below, and write it to the specified file. "
+      "NOTE: If not specified, no such visualization will be created, even if one or more of the "
+      "'--visualize-*' options is used."
     )
     (
       "visualize-characters",
       po::bool_switch(&visualizeChars),
-      "Draw bounding boxes around each character detected in the PDF file. "
+      "Draw bounding boxes around the detected characters into the visualization. "
       "NOTE: This option only has an effect when used together with the "
       "'--visualization-path <string>' option."
     )
@@ -246,80 +259,114 @@ int main(int argc, char* argv[]) {
     (
       "visualize-graphics",
       po::bool_switch(&visualizeGraphics),
-      "Draw bounding boxes around each graphic detected in the PDF file. "
+      "Draw bounding boxes around the detected graphics into the visualization. "
       "NOTE: This option only has an effect when used together with the "
       "'--visualization-path <string>' option."
     )
     (
       "visualize-figures",
       po::bool_switch(&visualizeFigures),
-      "Draw bounding boxes around each figure detected in the PDF file. "
+      "Draw bounding boxes around the detected figures into the visualization. "
       "NOTE: This option only has an effect when used together with the "
       "'--visualization-path <string>' option."
     )
     (
       "visualize-shapes",
       po::bool_switch(&visualizeShapes),
-      "Draw bounding boxes around each shape detected in the PDF file. "
+      "Draw bounding boxes around the detected shapes into the visualization. "
       "NOTE: This option only has an effect when used together with the "
       "'--visualization-path <string>' option."
     )
     (
       "visualize-words",
       po::bool_switch(&visualizeWords),
-      "Draw bounding boxes around each word detected in the PDF file. "
+      "Draw bounding boxes around the detected words into the visualization. "
       "NOTE: This option only has an effect when used together with the "
       "'--visualization-path <string>' option."
     )
     (
       "visualize-text-lines",
       po::bool_switch(&visualizeTextLines),
-      "Draw bounding boxes around each text line detected in the PDF file. "
+      "Draw bounding boxes around the detected text lines into the visualization. "
       "NOTE: This option only has an effect when used together with the "
       "'--visualization-path <string>' option."
     )
     (
       "visualize-text-blocks",
       po::bool_switch(&visualizeTextBlocks),
-      "Draw bounding boxes around each text block detected in the PDF file. "
+      "Draw bounding boxes around the detected text blocks into the visualization. "
       "NOTE: This option only has an effect when used together with the "
       "'--visualization-path <string>' option."
     )
     (
       "visualize-segments",
       po::bool_switch(&visualizePageSegments),
-      "Draw bounding boxes around each page segment detected in the PDF file. "
+      "Draw bounding boxes around the detected page segments into the visualization. "
       "NOTE: This option only has an effect when used together with the "
       "'--visualization-path <string>' option."
     )
     (
       "visualize-segment-cuts",
       po::bool_switch(&visualizeSegmentCuts),
-      "Draw the XY-cuts made to segment the pages. "
+      "Draw the XY-cuts made to segment the pages into the visualization. "
       "NOTE: This option only has an effect when used together with the "
       "'--visualization-path <string>' option."
     )
     (
       "visualize-reading-order",
       po::bool_switch(&visualizeReadingOrder),
-      "Draw directed edges between the text blocks to visualize the detected reading order. "
+      "Draw (directed) edges between the detected text blocks into the visualization, for "
+      "visualizing the detected reading order. "
       "NOTE: This option only has an effect when used together with the "
       "'--visualization-path <string>' option."
     )
     (
       "visualize-reading-order-cuts",
       po::bool_switch(&visualizeReadingOrderCuts),
-      "Draw the XY-cuts made to detect the reading order. "
+      "Draw the XY-cuts made to detect the reading order into the visualization. "
       "NOTE: This option only has an effect when used together with the "
       "'--visualization-path <string>' option."
     )
     (
-      "visualization-path",
-      po::value<string>(&visualizeFilePath),
-      "Write a copy of the PDF file, with the annotation added by the different '--visualize-*' "
-      "options to the specified file. "
-      "NOTE: If not specified, no such file will be created, even if one or more of the "
-      "'--visualize-*' options is used."
+      "verbosity",
+      po::value<string>(&verbosity),
+      "Specify the verbosity. Valid values are: trace, debug, info, warn, error. "
+      "Logging messages with a level lower than the specified value will be not printed to the "
+      "console. Default: error." // TODO: Specify the default value.
+    )
+    (
+      "version,v",
+      po::bool_switch(&printVersion),
+      "Print the version info."
+    )
+    (
+      "help,h",
+      po::bool_switch(&printHelp),
+      "Print the help."
+    );
+
+  // Specify the private options (= options that will not be shown in the help message).
+  // NOTE: these options *must* include an entry for each positional option (defined below), this
+  // is a restriction of the boost library.
+  po::options_description privateOpts("");
+  privateOpts.add_options()
+    (
+      "pdf-file",
+      po::value<string>(&pdfFilePath)->required(),
+      "The path to the PDF file to process."
+    )
+    (
+      "output-file",
+      po::value<string>(&outputFilePath),
+      "The path to the file into which the extracted text should be written."
+    )
+    (
+      "parse-mode",
+      po::bool_switch(&parseMode),
+      "Only parse the content streams of the PDF file for characters, figures, and shapes. "
+      "Do not detect words, text lines, and text blocks. "
+      "NOTE: To output the extracted elements, use the '--output-characters', '--output-figures' "
+      "and/or '--output-shapes' options."
     )
     // TODO: Think about how to handle logging (one log per module?).
     (
@@ -377,65 +424,48 @@ int main(int argc, char* argv[]) {
       "Print the running times needed by the different steps in the extraction pipeline."
     )
     (
-      "verbosity",
-      po::value<string>(&verbosity),
-      "Specify the verbosity. Valid values are: trace, debug, info, warn, error. "
-      "Logging messages with a level lower than the specified value will be not printed to the "
-      "console. Default: error." // TODO: Specify the default value.
-    )
-    (
-      "version,v",
-      po::bool_switch(&printVersion),
-      "Print the version info."
-    )
-    (
-      "help,h",
-      po::bool_switch(&printHelp),
-      "Print the help."
+      "full-help",
+      po::bool_switch(&printFullHelp),
+      "Print the full help (the help containing also the descriptions of all non-public commands)."
     );
 
-  // Specify private options (= options that will not be shown to the user when printing the help).
-  // NOTE: these options *must* include an entry for each positional option (defined below), this
-  // is a restriction of the boost library.
-  po::options_description privateOptions("");
-  privateOptions.add_options()
-    (
-      "pdf-file",
-      po::value<string>(&pdfFilePath)->required(),
-      "The path to the PDF file to process."
-    )
-    (
-      "output-file",
-      po::value<string>(&outputFilePath),
-      "The path to the file into which the extracted text should be written."
-    );
-
-  // Specify positional options.
+  // Specify the positional options.
   po::positional_options_description positional;
   positional.add("pdf-file", 1);
   positional.add("output-file", 1);
 
   // Parse the command-line options.
   po::options_description opts;
-  opts.add(publicOptions).add(privateOptions);
+  opts.add(publicOpts).add(privateOpts);
   po::variables_map vm;
   try {
     po::store(po::command_line_parser(argc, argv).options(opts).positional(positional).run(), vm);
     po::notify(vm);
   } catch (const std::exception& e) {
-    if (vm.count("help")) {
-      printHelpMessage(publicOptions, HELP_MAX_LINE_LENGTH, HELP_OPTION_DESC_LINE_INDENT);
+    bool showFullHelp = vm.count("full-help") ? vm["full-help"].as<bool>() : false;
+    if (showFullHelp) {
+      printHelpMessage(&publicOpts, HELP_MAX_WIDTH, HELP_OPTION_DESC_INDENT, &privateOpts);
       return EXIT_SUCCESS;
-    } else {
-      cerr << "An error occurred on parsing the command-line options: " << e.what() << endl;
-      cerr << "Type \"" << programName << " --help\" for printing the help." << endl;
-      return EXIT_FAILURE;
     }
+    bool showHelp = vm.count("help") ? vm["help"].as<bool>() : false;
+    if (showHelp) {
+      printHelpMessage(&publicOpts, HELP_MAX_WIDTH, HELP_OPTION_DESC_INDENT);
+      return EXIT_SUCCESS;
+    }
+    cerr << "An error occurred on parsing the command-line options: " << e.what() << endl;
+    cerr << "Type \"" << programName << " --help\" for printing the help." << endl;
+    return EXIT_FAILURE;
+  }
+
+  // Print the full help info if explicitly requested by the user.
+  if (printFullHelp) {
+    printHelpMessage(&publicOpts, HELP_MAX_WIDTH, HELP_OPTION_DESC_INDENT, &privateOpts);
+    return EXIT_SUCCESS;
   }
 
   // Print the help info if explicitly requested by the user.
   if (printHelp) {
-    printHelpMessage(publicOptions, HELP_MAX_LINE_LENGTH, HELP_OPTION_DESC_LINE_INDENT);
+    printHelpMessage(&publicOpts, HELP_MAX_WIDTH, HELP_OPTION_DESC_INDENT);
     return EXIT_SUCCESS;
   }
 
@@ -583,5 +613,5 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  return 0;
+  return EXIT_SUCCESS;
 }
