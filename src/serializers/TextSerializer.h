@@ -1,5 +1,5 @@
 /**
- * Copyright 2022, University of Freiburg,
+ * Copyright 2023, University of Freiburg,
  * Chair of Algorithms and Data Structures.
  * Author: Claudius Korzen <korzen@cs.uni-freiburg.de>.
  *
@@ -11,6 +11,7 @@
 
 #include <string>
 
+#include "./Serializer.h"
 #include "../PdfDocument.h"
 
 using std::ostream;
@@ -22,7 +23,7 @@ using std::string;
  * This class writes the text extracted from a PDF to a given file or stdout. The format is one
  * text block per line, with the text block separated by blank lines.
  */
-class TextSerializer {
+class TextSerializer : public Serializer {
  public:
   /**
    * This constructor creates and initializes a new instance of this class.

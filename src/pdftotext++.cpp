@@ -23,15 +23,20 @@
 #include "./utils/StringUtils.h"
 #include "./PdfDocumentVisualizer.h"
 #include "./PdfToTextPlusPlus.h"
+#include "./Serialization.h"
 
+using Serialization::SerializationFormat;
 using std::chrono::duration_cast;
 using std::chrono::high_resolution_clock;
 using std::chrono::milliseconds;
 using std::cerr;
 using std::cout;
 using std::endl;
+using std::exception;
 using std::string;
 using std::vector;
+using string_utils::wrap;
+using string_utils::strip;
 
 namespace po = boost::program_options;
 
@@ -60,7 +65,7 @@ static int HELP_MAX_WIDTH = 100;
 static int HELP_OPTION_DESC_INDENT = 4;
 
 // =================================================================================================
-// Print methods.
+// Print help methods.
 
 /**
  * This method prints the help message - containing the program name, the program version, a
@@ -73,34 +78,31 @@ static int HELP_OPTION_DESC_INDENT = 4;
  * @param optionDescIndent
  *    The amount by which to indent the description of a command line option in the help message.
  * @param privateOpts
- *    The definition of the non-public command-line options. This can be omitted when the private
- *    options should not appear in the help message.
+ *    The definition of the non-public command-line options. NOTE: This can be omitted when the
+ *    private options should not appear in the help message.
  */
 void printHelpMessage(po::options_description* publicOpts, int maxLineLength, int optionDescIndent,
       po::options_description* privateOpts = 0) {
   cout << BBLUE << "NAME" << OFF << endl;
-  cout << string_utils::wrap(string_utils::strip(programName), maxLineLength) << endl;
+  cout << wrap(strip(programName), maxLineLength) << endl;
   cout << endl;
 
   cout << BBLUE << "VERSION" << OFF << endl;
-  cout << string_utils::wrap(string_utils::strip(version), maxLineLength) << endl;
+  cout << wrap(strip(version), maxLineLength) << endl;
   cout << endl;
 
   cout << BBLUE << "DESCRIPTION" << OFF << endl;
-  cout << string_utils::wrap(string_utils::strip(description), maxLineLength) << endl;
+  cout << wrap(strip(description), maxLineLength) << endl;
   cout << endl;
 
   cout << BBLUE << "USAGE" << OFF << endl;
-  cout << string_utils::wrap(string_utils::strip(usage), maxLineLength) << endl;
+  cout << wrap(strip(usage), maxLineLength) << endl;
   cout << endl;
 
   cout << BBLUE << "OPTIONS" << OFF << endl;
   for (auto& opt : publicOpts->options()) {
     cout << opt->format_name() << endl;
-    cout << string_utils::wrap(
-      string_utils::strip(opt->description()),
-      maxLineLength,
-      optionDescIndent) << endl;
+    cout << wrap(strip(opt->description()), maxLineLength, optionDescIndent) << endl;
   }
   cout << endl;
 
@@ -108,10 +110,7 @@ void printHelpMessage(po::options_description* publicOpts, int maxLineLength, in
     cout << BBLUE << "NON-PUBLIC OPTIONS" << OFF << endl;
     for (auto& opt : privateOpts->options()) {
       cout << opt->format_name() << endl;
-      cout << string_utils::wrap(
-        string_utils::strip(opt->description()),
-        maxLineLength,
-        optionDescIndent) << endl;
+      cout << wrap(strip(opt->description()), maxLineLength, optionDescIndent) << endl;
     }
     cout << endl;
   }
@@ -124,6 +123,7 @@ void printHelpMessage(po::options_description* publicOpts, int maxLineLength, in
  * running the extraction pipeline on a specified PDF, and outputting the extracted text.
  */
 int main(int argc, char* argv[]) {
+  SerializationFormat format = SerializationFormat::TXT;
   bool addControlCharacters = false;
   bool addSemanticRoles = false;
   bool noScripts = false;
@@ -169,6 +169,13 @@ int main(int argc, char* argv[]) {
   po::options_description publicOpts;
   publicOpts.add_options()
     (
+      "format",
+      po::value<SerializationFormat>(&format),
+      (string("Output the extracted text in the specified format. Valid values are: ")
+       + Serialization::getSerializationFormatChoicesStr()
+       + string(".\n")).c_str()
+    )
+    (
       "control-characters",
       po::bool_switch(&addControlCharacters),
       "Output the extracted text together with the following control characters:\n"
@@ -186,7 +193,7 @@ int main(int argc, char* argv[]) {
     (
       "no-scripts",
       po::bool_switch(&noScripts),
-      "Output the extracted text without characters that appears as a subscript or superscript in "
+      "Output the extracted text without characters that appear as a subscript or superscript in "
       "the PDF."
     )
     (
@@ -243,15 +250,15 @@ int main(int argc, char* argv[]) {
     (
       "visualization-path",
       po::value<string>(&visualizeFilePath),
-      "Create a copy of the PDF file, with the annotations added by the different '--visualize-*' "
-      "options below, and write it to the specified file. "
+      "Create a visualization PDF file, that is: a copy of the PDF file, with annotations added "
+      "by the different '--visualize-*' options below, and write it to the specified file. "
       "NOTE: If not specified, no such visualization will be created, even if one or more of the "
       "'--visualize-*' options is used."
     )
     (
       "visualize-characters",
       po::bool_switch(&visualizeChars),
-      "Draw bounding boxes around the detected characters into the visualization. "
+      "Draw bounding boxes around the detected characters into the visualization PDF file. "
       "NOTE: This option only has an effect when used together with the "
       "'--visualization-path <string>' option."
     )
@@ -259,63 +266,63 @@ int main(int argc, char* argv[]) {
     (
       "visualize-graphics",
       po::bool_switch(&visualizeGraphics),
-      "Draw bounding boxes around the detected graphics into the visualization. "
+      "Draw bounding boxes around the detected graphics into the visualization PDF file. "
       "NOTE: This option only has an effect when used together with the "
       "'--visualization-path <string>' option."
     )
     (
       "visualize-figures",
       po::bool_switch(&visualizeFigures),
-      "Draw bounding boxes around the detected figures into the visualization. "
+      "Draw bounding boxes around the detected figures into the visualization PDF file. "
       "NOTE: This option only has an effect when used together with the "
       "'--visualization-path <string>' option."
     )
     (
       "visualize-shapes",
       po::bool_switch(&visualizeShapes),
-      "Draw bounding boxes around the detected shapes into the visualization. "
+      "Draw bounding boxes around the detected shapes into the visualization PDF file. "
       "NOTE: This option only has an effect when used together with the "
       "'--visualization-path <string>' option."
     )
     (
       "visualize-words",
       po::bool_switch(&visualizeWords),
-      "Draw bounding boxes around the detected words into the visualization. "
+      "Draw bounding boxes around the detected words into the visualization PDF file. "
       "NOTE: This option only has an effect when used together with the "
       "'--visualization-path <string>' option."
     )
     (
       "visualize-text-lines",
       po::bool_switch(&visualizeTextLines),
-      "Draw bounding boxes around the detected text lines into the visualization. "
+      "Draw bounding boxes around the detected text lines into the visualization PDF file. "
       "NOTE: This option only has an effect when used together with the "
       "'--visualization-path <string>' option."
     )
     (
       "visualize-text-blocks",
       po::bool_switch(&visualizeTextBlocks),
-      "Draw bounding boxes around the detected text blocks into the visualization. "
+      "Draw bounding boxes around the detected text blocks into the visualization PDF file. "
       "NOTE: This option only has an effect when used together with the "
       "'--visualization-path <string>' option."
     )
     (
       "visualize-segments",
       po::bool_switch(&visualizePageSegments),
-      "Draw bounding boxes around the detected page segments into the visualization. "
+      "Draw bounding boxes around the detected page segments into the visualization PDF file. "
       "NOTE: This option only has an effect when used together with the "
       "'--visualization-path <string>' option."
     )
     (
       "visualize-segment-cuts",
       po::bool_switch(&visualizeSegmentCuts),
-      "Draw the XY-cuts made to segment the pages into the visualization. "
+      "Draw the XY-cuts made to segment the pages into the visualization PDF file. "
       "NOTE: This option only has an effect when used together with the "
       "'--visualization-path <string>' option."
     )
     (
       "visualize-reading-order",
       po::bool_switch(&visualizeReadingOrder),
-      "Draw (directed) edges between the detected text blocks into the visualization, for "
+      "Draw (directed) edges between the detected text blocks into the visualization PDF file, for "
       "visualizing the detected reading order. "
       "NOTE: This option only has an effect when used together with the "
       "'--visualization-path <string>' option."
@@ -323,7 +330,7 @@ int main(int argc, char* argv[]) {
     (
       "visualize-reading-order-cuts",
       po::bool_switch(&visualizeReadingOrderCuts),
-      "Draw the XY-cuts made to detect the reading order into the visualization. "
+      "Draw the XY-cuts made to detect the reading order into the visualization PDF file. "
       "NOTE: This option only has an effect when used together with the "
       "'--visualization-path <string>' option."
     )
@@ -441,7 +448,7 @@ int main(int argc, char* argv[]) {
   try {
     po::store(po::command_line_parser(argc, argv).options(opts).positional(positional).run(), vm);
     po::notify(vm);
-  } catch (const std::exception& e) {
+  } catch (const exception& e) {
     bool showFullHelp = vm.count("full-help") ? vm["full-help"].as<bool>() : false;
     if (showFullHelp) {
       printHelpMessage(&publicOpts, HELP_MAX_WIDTH, HELP_OPTION_DESC_INDENT, &privateOpts);
@@ -456,6 +463,23 @@ int main(int argc, char* argv[]) {
     cerr << "Type \"" << programName << " --help\" for printing the help." << endl;
     return EXIT_FAILURE;
   }
+
+  cout << "The format is: ";
+  switch (format) {
+    case SerializationFormat::TXT:
+      cout << "txt";
+      break;
+    case SerializationFormat::XML:
+      cout << "xml";
+      break;
+    case SerializationFormat::JSON:
+      cout << "json";
+      break;
+    default:
+      cout << "?";
+      break;
+  }
+  cout << endl;
 
   // Print the full help info if explicitly requested by the user.
   if (printFullHelp) {
@@ -523,6 +547,7 @@ int main(int argc, char* argv[]) {
   if (status > 0) {
     return status;
   }
+
 
   // Serialize the extraction result. If one of the --output-* options is used, output the text in
   // JSONL format. Otherwise, output the text as continuous text.
