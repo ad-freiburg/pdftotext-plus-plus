@@ -132,7 +132,21 @@ string strip(const string& str);
  *    A string containing <str> wrapped into lines, with each lines separated by a single newline
  *    character.
  */
-string wrap(string str, int width = 100, int indent = 0);
+string wrap(const string& str, size_t width = 100, size_t indent = 0);
+
+/**
+ * This method concatenates all strings in the specified vector, using the specified character(s)
+ * as separator.
+ *
+ * @param strings
+ *    The strings to concatenate.
+ * @param separator
+ *    The separator.
+ *
+ * @return
+ *    The string containing all strings in the specified vector concatenated.
+ */
+string join(const vector<string>& strings, const string& separator = ", ");
 
 }  // namespace string_utils
 

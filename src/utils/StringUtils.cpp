@@ -133,17 +133,17 @@ string string_utils::strip(const string& str) {
 }
 
 // _________________________________________________________________________________________________
-string string_utils::wrap(string str, int width, int indent) {
+string string_utils::wrap(const string& str, size_t width, size_t indent) {
   std::string result = "";
 
   // Split the string into lines.
-  int lineStart = 0;
-  int lineEnd = 0;
+  size_t lineStart = 0;
+  size_t lineEnd = 0;
   while (true) {
     // Check if the string needs to be wrapped because it contains an explicit newline character.
     lineEnd = str.rfind("\n", lineStart + width - indent);
     if (lineEnd >= lineStart && lineEnd <= str.size()) {
-      for (int i = 0; i < indent; i++) { result += " "; }
+      for (size_t i = 0; i < indent; i++) { result += " "; }
       result += str.substr(lineStart, lineEnd - lineStart);
       result += "\n";
       lineStart = lineEnd + 1;
@@ -160,14 +160,26 @@ string string_utils::wrap(string str, int width, int indent) {
       break;
     }
     // Append the indent and the line to the result.
-    for (int i = 0; i < indent; i++) { result += " "; }
+    for (size_t i = 0; i < indent; i++) { result += " "; }
     result += str.substr(lineStart, lineEnd - lineStart);
     result += "\n";
     lineStart = lineEnd + 1;
   }
   // Append the indent and the rest of the string to the result.
-  for (int i = 0; i < indent; i++) { result += " "; }
+  for (size_t i = 0; i < indent; i++) { result += " "; }
   result += str.substr(lineStart, str.size() - lineStart);
 
   return result;
+}
+
+// _________________________________________________________________________________________________
+std::string string_utils::join(const vector<string>& strings, const string& sep) {
+  std::string resultStr = "";
+  for (const auto& s : strings) {
+      if (resultStr.size() > 0) {
+        resultStr += sep;
+      }
+      resultStr += s;
+  }
+  return resultStr;
 }

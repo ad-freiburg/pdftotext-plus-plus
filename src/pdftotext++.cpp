@@ -23,9 +23,9 @@
 #include "./utils/StringUtils.h"
 #include "./PdfDocumentVisualizer.h"
 #include "./PdfToTextPlusPlus.h"
-#include "./Serialization.h"
+#include "./Types.h"
 
-using Serialization::SerializationFormat;
+using ppp::types::SerializationFormat;
 using std::chrono::duration_cast;
 using std::chrono::high_resolution_clock;
 using std::chrono::milliseconds;
@@ -124,6 +124,7 @@ void printHelpMessage(po::options_description* publicOpts, int maxLineLength, in
  */
 int main(int argc, char* argv[]) {
   SerializationFormat format = SerializationFormat::TXT;
+
   bool addControlCharacters = false;
   bool addSemanticRoles = false;
   bool noScripts = false;
@@ -170,9 +171,9 @@ int main(int argc, char* argv[]) {
   publicOpts.add_options()
     (
       "format",
-      po::value<SerializationFormat>(&format),
+      po::value<ppp::types::SerializationFormat>(&format),
       (string("Output the extracted text in the specified format. Valid values are: ")
-       + Serialization::getSerializationFormatChoicesStr()
+       + string_utils::join(ppp::types::SERIALIZATION_FORMAT_NAMES)
        + string(".\n")).c_str()
     )
     (
