@@ -6,8 +6,8 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#ifndef SERIALIZERS_SERIALIZER_H_
-#define SERIALIZERS_SERIALIZER_H_
+#ifndef SERIALIZATION_SERIALIZER_H_
+#define SERIALIZATION_SERIALIZER_H_
 
 #include <string>
 
@@ -32,4 +32,4 @@ class Serializer {
   virtual void serialize(const string& targetPath) = 0;
 };
 
-#endif  // SERIALIZERS_SERIALIZER_H_
+#endif  // SERIALIZATION_SERIALIZER_H_

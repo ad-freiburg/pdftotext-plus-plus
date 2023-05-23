@@ -6,8 +6,8 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#ifndef SERIALIZERS_TEXTSERIALIZER_H_
-#define SERIALIZERS_TEXTSERIALIZER_H_
+#ifndef SERIALIZATION_TEXTSERIALIZER_H_
+#define SERIALIZATION_TEXTSERIALIZER_H_
 
 #include <string>
 
@@ -77,4 +77,4 @@ class TextSerializer : public Serializer {
   bool _excludeSubSuperscripts;
 };
 
-#endif  // SERIALIZERS_TEXTSERIALIZER_H_
+#endif  // SERIALIZATION_TEXTSERIALIZER_H_

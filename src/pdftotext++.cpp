@@ -6,6 +6,8 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
+#include <boost/program_options.hpp>
+
 #include <chrono>    // std::chrono::high_resolution_clock
 #include <cstdlib>   // putenv
 #include <iomanip>   // std::setw, std::setprecision
@@ -14,10 +16,8 @@
 #include <string>
 #include <vector>
 
-#include <boost/program_options.hpp>
-
-#include "./serializers/JsonlSerializer.h"
-#include "./serializers/TextSerializer.h"
+#include "./serialization/JsonlSerializer.h"
+#include "./serialization/TextSerializer.h"
 #include "./utils/Log.h"  // BBLUE, OFF
 #include "./utils/MathUtils.h"
 #include "./utils/StringUtils.h"
@@ -47,16 +47,16 @@ namespace po = boost::program_options;
 // following: "g++ -DCXX_PROGRAM_NAME='pdftotext++' ..."
 
 // The program name.
-static string programName = CXX_PROGRAM_NAME;
+static const char* programName = CXX_PROGRAM_NAME;
 
 // The version number.
-static string version = CXX_PROGRAM_VERSION;
+static const char* version = CXX_PROGRAM_VERSION;
 
 // The program description.
-static string description = CXX_PROGRAM_DESCRIPTION;
+static const char* description = CXX_PROGRAM_DESCRIPTION;
 
 // The usage of this program.
-static string usage = CXX_PROGRAM_USAGE;
+static const char* usage = CXX_PROGRAM_USAGE;
 
 // The maximum length of the lines in the help message.
 static int HELP_MAX_WIDTH = 100;
@@ -184,7 +184,7 @@ int main(int argc, char* argv[]) {
       "• \"^L\" (form feed) between two text blocks when there is a page break in between.\n"
       "NOTE: This option only has an effect when used together with the '--format txt' option."
     )
-    // TODO: This option should be removed, when there are more structured formats.
+    // TODO(korzen): This option should be removed, when there are more structured formats.
     (
       "semantic-roles",
       po::bool_switch(&addSemanticRoles),
@@ -211,37 +211,37 @@ int main(int argc, char* argv[]) {
       "NOTE: Using this option results in a faster extraction process, but a less accurate "
       "extraction result."
     )
-    // TODO: This option should be removed when more structured formats are available.
+    // TODO(korzen): This option should be removed when more structured formats are available.
     (
       "output-pages",
       po::bool_switch(&outputPages),
       "Output information about the pages (e.g., the widths and heights) in JSONL format."
     )
-    // TODO: This option should be removed when more structured formats are available.
+    // TODO(korzen): This option should be removed when more structured formats are available.
     (
       "output-characters",
       po::bool_switch(&outputChars),
       "Output information about the characters (e.g., the positions and fonts) in JSONL format."
     )
-    // TODO: This option should be removed when more structured formats are available.
+    // TODO(korzen): This option should be removed when more structured formats are available.
     (
       "output-figures",
       po::bool_switch(&outputFigures),
       "Output information about the figures (e.g., the positions) in JSONL format."
     )
-    // TODO: This option should be removed when more structured formats are available.
+    // TODO(korzen): This option should be removed when more structured formats are available.
     (
       "output-shapes",
       po::bool_switch(&outputShapes),
       "Output information about the shapes (e.g., the positions) in JSONL format."
     )
-    // TODO: This option should be removed when more structured formats are available.
+    // TODO(korzen): This option should be removed when more structured formats are available.
     (
       "output-words",
       po::bool_switch(&outputWords),
       "Output information about the detected words (e.g., the positions and fonts) in JSONL format."
     )
-    // TODO: This option should be removed when more structured formats are available.
+    // TODO(korzen): This option should be removed when more structured formats are available.
     (
       "output-text-blocks",
       po::bool_switch(&outputBlocks),
@@ -263,7 +263,7 @@ int main(int argc, char* argv[]) {
       "NOTE: This option only has an effect when used together with the "
       "'--visualization-path <string>' option."
     )
-    // TODO: explain the difference between graphics and figure.
+    // TODO(korzen): explain the difference between graphics and figure.
     (
       "visualize-graphics",
       po::bool_switch(&visualizeGraphics),
@@ -340,7 +340,7 @@ int main(int argc, char* argv[]) {
       po::value<string>(&verbosity),
       "Specify the verbosity. Valid values are: trace, debug, info, warn, error. "
       "Logging messages with a level lower than the specified value will be not printed to the "
-      "console. Default: error." // TODO: Specify the default value.
+      "console. Default: error."  // TODO(korzen): Specify the default value.
     )
     (
       "version,v",
@@ -350,8 +350,7 @@ int main(int argc, char* argv[]) {
     (
       "help,h",
       po::bool_switch(&printHelp),
-      "Print the help."
-    );
+      "Print the help.");
 
   // Specify the private options (= options that will not be shown in the help message).
   // NOTE: these options *must* include an entry for each positional option (defined below), this
@@ -376,7 +375,7 @@ int main(int argc, char* argv[]) {
       "NOTE: To output the extracted elements, use the '--output-characters', '--output-figures' "
       "and/or '--output-shapes' options."
     )
-    // TODO: Think about how to handle logging (one log per module?).
+    // TODO(korzen): Think about how to handle logging (one log per module?).
     (
       "debug-pdf-parsing",
       po::bool_switch(&debugPdfParsing),
@@ -434,8 +433,7 @@ int main(int argc, char* argv[]) {
     (
       "full-help",
       po::bool_switch(&printFullHelp),
-      "Print the full help (the help containing also the descriptions of all non-public commands)."
-    );
+      "Print the full help (containing also the descriptions of all non-public commands).");
 
   // Specify the positional options.
   po::positional_options_description positional;
@@ -528,8 +526,7 @@ int main(int argc, char* argv[]) {
     debugTextLinesDetection ? DEBUG : logLevel,
     debugSubSuperScriptsDetection ? DEBUG : logLevel,
     debugTextBlocksDetection ? DEBUG : logLevel,
-    debugPageFilter
-  );
+    debugPageFilter);
 
   PdfDocument doc;
   vector<Timing> timings;

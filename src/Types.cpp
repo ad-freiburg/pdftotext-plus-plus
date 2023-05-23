@@ -6,10 +6,10 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
+#include <boost/program_options.hpp>
+
 #include <string>
 #include <vector>
-
-#include <boost/program_options.hpp>
 
 #include "./Types.h"
 

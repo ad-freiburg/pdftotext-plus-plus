@@ -6,8 +6,8 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#ifndef SERIALIZERS_JSONLSERIALIZER_H_
-#define SERIALIZERS_JSONLSERIALIZER_H_
+#ifndef SERIALIZATION_JSONLSERIALIZER_H_
+#define SERIALIZATION_JSONLSERIALIZER_H_
 
 #include <iostream>  // std::ostream
 #include <string>
@@ -196,4 +196,4 @@ class JsonlSerializer {
   bool _serializeTextBlocks;
 };
 
-#endif  // SERIALIZERS_JSONLSERIALIZER_H_
+#endif  // SERIALIZATION_JSONLSERIALIZER_H_

@@ -9,10 +9,10 @@
 #ifndef TYPES_H_
 #define TYPES_H_
 
+#include <boost/program_options.hpp>
+
 #include <string>
 #include <vector>
-
-#include <boost/program_options.hpp>
 
 namespace ppp::types {
 
@@ -32,7 +32,7 @@ const std::vector<std::string> SERIALIZATION_FORMAT_NAMES { "txt", "xml", "json"
  * po::value<SerializationFormat>(&format)" when defining the command-line options, see
  * pdftotext++.cpp for an example.
  */
-void validate(boost::any& v, const std::vector<std::string>& values,
+void validate(boost::any& v, const std::vector<std::string>& values,  // NOLINT
     ppp::types::SerializationFormat* format, int);
 
 }  // namespace ppp::types
