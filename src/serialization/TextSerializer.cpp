@@ -21,21 +21,15 @@ using std::ofstream;
 using std::string;
 
 // _________________________________________________________________________________________________
-TextSerializer::TextSerializer(PdfDocument* doc, bool addControlCharacters,
-    bool addSemanticRoles, bool excludeSubSuperscripts) {
-  _doc = doc;
-  _addControlCharacters = addControlCharacters;
-  _addSemanticRoles = addSemanticRoles;
-  _excludeSubSuperscripts = excludeSubSuperscripts;
-}
+TextSerializer::TextSerializer() : Serializer() {}
 
 // _________________________________________________________________________________________________
 TextSerializer::~TextSerializer() = default;
 
 // _________________________________________________________________________________________________
-void TextSerializer::serialize(const string& targetFilePath) {
+void TextSerializer::serialize(PdfDocument* doc, const string& targetFilePath) {
   if (targetFilePath.size() == 1 && targetFilePath[0] == '-') {
-    serializeToStream(std::cout);
+    serializeToStream(doc, std::cout);
   } else {
     // Compute the path to the parent directory of the target file.
     string parentDirPath = ".";
@@ -56,17 +50,17 @@ void TextSerializer::serialize(const string& targetFilePath) {
       return;
     }
 
-    serializeToStream(outFile);
+    serializeToStream(doc, outFile);
     outFile.close();
   }
 }
 
 // _________________________________________________________________________________________________
-void TextSerializer::serializeToStream(std::ostream& outStream) {
-  assert(_doc);
+void TextSerializer::serializeToStream(PdfDocument* doc, std::ostream& outStream) {
+  assert(doc);
 
   PdfTextBlock* prevBlock = nullptr;
-  for (auto* page : _doc->pages) {
+  for (auto* page : doc->pages) {
     for (auto* block : page->blocks) {
       PdfWord* prevWord = nullptr;
 

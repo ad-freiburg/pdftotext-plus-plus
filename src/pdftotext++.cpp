@@ -16,16 +16,14 @@
 #include <string>
 #include <vector>
 
-#include "./serialization/JsonlSerializer.h"
-#include "./serialization/TextSerializer.h"
+#include "./serialization/Serialization.h"
 #include "./utils/Log.h"  // BBLUE, OFF
 #include "./utils/MathUtils.h"
 #include "./utils/StringUtils.h"
 #include "./PdfDocumentVisualizer.h"
 #include "./PdfToTextPlusPlus.h"
-#include "./Types.h"
 
-using ppp::types::SerializationFormat;
+using ppp::serialization::SerializationFormat;
 using std::chrono::duration_cast;
 using std::chrono::high_resolution_clock;
 using std::chrono::milliseconds;
@@ -65,7 +63,7 @@ static int HELP_MAX_WIDTH = 100;
 static int HELP_OPTION_DESC_INDENT = 4;
 
 // =================================================================================================
-// Print help methods.
+// Helper methods.
 
 /**
  * This method prints the help message - containing the program name, the program version, a
@@ -171,10 +169,9 @@ int main(int argc, char* argv[]) {
   publicOpts.add_options()
     (
       "format",
-      po::value<ppp::types::SerializationFormat>(&format),
+      po::value<SerializationFormat>(&format),
       (string("Output the extracted text in the specified format. Valid values are: ")
-       + string_utils::join(ppp::types::SERIALIZATION_FORMAT_NAMES)
-       + string(".\n")).c_str()
+        + ppp::serialization::getSerializationFormatChoicesStr() + string(".\n")).c_str()
     )
     (
       "control-characters",
@@ -463,23 +460,6 @@ int main(int argc, char* argv[]) {
     return EXIT_FAILURE;
   }
 
-  cout << "The format is: ";
-  switch (format) {
-    case SerializationFormat::TXT:
-      cout << "txt";
-      break;
-    case SerializationFormat::XML:
-      cout << "xml";
-      break;
-    case SerializationFormat::JSON:
-      cout << "json";
-      break;
-    default:
-      cout << "?";
-      break;
-  }
-  cout << endl;
-
   // Print the full help info if explicitly requested by the user.
   if (printFullHelp) {
     printHelpMessage(&publicOpts, HELP_MAX_WIDTH, HELP_OPTION_DESC_INDENT, &privateOpts);
@@ -546,26 +526,27 @@ int main(int argc, char* argv[]) {
     return status;
   }
 
-
   // Serialize the extraction result. If one of the --output-* options is used, output the text in
   // JSONL format. Otherwise, output the text as continuous text.
   auto start = high_resolution_clock::now();
-  if (outputPages || outputChars || outputFigures || outputShapes || outputWords|| outputBlocks) {
-    JsonlSerializer serializer(&doc,
-      outputPages,
-      outputChars,
-      outputFigures,
-      outputShapes,
-      outputWords,
-      outputBlocks);
-    serializer.serialize(outputFilePath);
-  } else {
-    TextSerializer serializer(&doc,
-      addControlCharacters,
-      addSemanticRoles,
-      noScripts);
-    serializer.serialize(outputFilePath);
-  }
+  // if (outputPages || outputChars || outputFigures || outputShapes || outputWords|| outputBlock) {
+  //   JsonlSerializer serializer(&doc,
+  //     outputPages,
+  //     outputChars,
+  //     outputFigures,
+  //     outputShapes,
+  //     outputWords,
+  //     outputBlocks);
+  //   serializer.serialize(outputFilePath);
+  // } else {
+  //   TextSerializer serializer(&doc,
+  //     addControlCharacters,
+  //     addSemanticRoles,
+  //     noScripts);
+  //   serializer.serialize(outputFilePath);
+  // }
+  Serializer* serializer = ppp::serialization::getSerializer(format);
+  serializer->serialize(&doc, outputFilePath);
   auto end = high_resolution_clock::now();
   Timing timingSerializeChars("Serialize", duration_cast<milliseconds>(end - start).count());
   timings.push_back(timingSerializeChars);

@@ -25,22 +25,8 @@ using std::string;
  */
 class TextSerializer : public Serializer {
  public:
-  /**
-   * This constructor creates and initializes a new instance of this class.
-   *
-   * @param doc
-   *   The document to process.
-   * @param addControlCharacters
-   *   Whether or not to add the following control characters to the text:
-   *     "^A" (start of heading) in front of each emphasized text block
-   *     "^L" (form feed) at each page break.
-   * @param addSemanticRoles
-   *   Whether or not to prepend each text block with its semantic role.
-   * @param excludeSubSuperscripts
-   *   Whether or not sub- and subperscripts should be written to the output.
-   */
-  TextSerializer(PdfDocument* doc, bool addControlCharacters, bool addSemanticRoles,
-    bool excludeSubSuperscripts);
+  /** The default deconstructor. */
+  TextSerializer();
 
   /** The deconstructor. */
   ~TextSerializer();
@@ -49,22 +35,24 @@ class TextSerializer : public Serializer {
    * This method writes the text extracted from the given PDF document to the file given by
    * `targetPath`. If `targetPath` is specified as "-", the text is written to stdout instead.
    *
+   * @param doc
+   *   The PDF document to process.
    * @param targetPath
    *   The path to the file to which the text should be written. If specified as "-", the text is
    *   written to stdout instead.
    */
-  void serialize(const string& targetPath);
+  void serialize(PdfDocument* doc, const string& targetPath);
 
  private:
   /**
-   * This method writes the text extracted from a PDF file to the given stream.
+   * This method writes the text extracted from the given PDF file to the given stream.
    *
-   * @param out The stream to which the text should be written.
+   * @param doc
+   *   The PDF document to process.
+   * @param out
+   *   The stream to which the text should be written.
    */
-  void serializeToStream(ostream& out);
-
-  // The document to process.
-  PdfDocument* _doc;
+  void serializeToStream(PdfDocument* doc, ostream& out);
 
   // Whether or not to prepend each emphasized text block with "^A" (start of heading) and mark
   // each page break with "^L" (form feed).

@@ -25,11 +25,13 @@ class Serializer {
    * This method writes the text extracted from the given PDF document to the file given by
    * `targetPath`. If `targetPath` is specified as "-", the text is written to stdout instead.
    *
+   * @param doc
+   *   The PDF document to process.
    * @param targetPath
    *   The path to the file to which the text should be written. If specified as "-", the text is
    *   written to stdout.
    */
-  virtual void serialize(const string& targetPath) = 0;
+  virtual void serialize(PdfDocument* doc, const string& targetPath) = 0;
 };
 
 #endif  // SERIALIZATION_SERIALIZER_H_

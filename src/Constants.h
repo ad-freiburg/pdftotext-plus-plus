@@ -82,6 +82,4 @@ const double V_DPI = 72.0;
  */
 const char* const SPECIAL_FOOTNOTE_LABELS_ALPHABET = "*∗†‡§‖¶?";
 
-
-
 #endif  // CONSTANTS_H_
