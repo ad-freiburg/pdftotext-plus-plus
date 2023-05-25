@@ -7,50 +7,26 @@
  */
 
 #include <string>
-#include <vector>
 
+#include "../Types.h"
 #include "./Serialization.h"
 
-namespace po = boost::program_options;
+using ppp::types::SerializationFormat;
+using std::string;
 
 // _________________________________________________________________________________________________
-std::string ppp::serialization::getSerializationFormatChoicesStr() {
-  std::string resultStr = "";
+string ppp::serialization::getSerializationFormatChoicesStr() {
+  string resultStr = "";
   for (const auto& entry : SERIALIZERS) {
     if (resultStr.size() > 0) {
       resultStr += ", ";
     }
-    resultStr += ppp::serialization::getName(entry.first);
+    resultStr += ppp::types::getName(entry.first);
   }
   return resultStr;
 }
 
 // _________________________________________________________________________________________________
-std::string ppp::serialization::getName(SerializationFormat format) {
-  return SERIALIZATION_FORMAT_NAMES[static_cast<int>(format)];
-}
-
-// _________________________________________________________________________________________________
 Serializer* ppp::serialization::getSerializer(SerializationFormat format) {
   return SERIALIZERS.find(format) != SERIALIZERS.end() ? SERIALIZERS.at(format) : nullptr;
-}
-
-// _________________________________________________________________________________________________
-void ppp::serialization::validate(boost::any& v, const std::vector<std::string>& values,
-    SerializationFormat* format, int) {
-  // Make sure no previous assignment to 'format' was made.
-  po::validators::check_first_occurrence(v);
-
-  // Extract the first value from 'values'. If there is more than one token, it's an error, and an
-  // exception will be thrown.
-  const std::string& token = po::validators::get_single_string(values);
-
-  for (size_t i = 0; i < ppp::serialization::SERIALIZATION_FORMAT_NAMES.size(); i++) {
-    if (token == ppp::serialization::SERIALIZATION_FORMAT_NAMES[i]) {
-      v = ppp::serialization::SerializationFormat(i);
-      return;
-    }
-  }
-
-  throw po::validation_error(po::validation_error::kind_t::invalid_option_value);
 }

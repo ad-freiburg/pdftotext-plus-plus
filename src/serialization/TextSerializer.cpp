@@ -10,15 +10,19 @@
 #include <fstream>  // ofstream
 #include <iostream>
 #include <string>
+#include <unordered_set>
 
 #include "../PdfDocument.h"
-
+#include "../Types.h"
 #include "./TextSerializer.h"
 
+using ppp::types::SemanticRole;
 using std::cerr;
+using std::cout;
 using std::endl;
 using std::ofstream;
 using std::string;
+using std::unordered_set;
 
 // _________________________________________________________________________________________________
 TextSerializer::TextSerializer() : Serializer() {}
@@ -27,9 +31,10 @@ TextSerializer::TextSerializer() : Serializer() {}
 TextSerializer::~TextSerializer() = default;
 
 // _________________________________________________________________________________________________
-void TextSerializer::serialize(PdfDocument* doc, const string& targetFilePath) {
+void TextSerializer::serialize(PdfDocument* doc, const unordered_set<string>& roles,
+      const string& targetFilePath) {
   if (targetFilePath.size() == 1 && targetFilePath[0] == '-') {
-    serializeToStream(doc, std::cout);
+    serializeToStream(doc, roles, cout);
   } else {
     // Compute the path to the parent directory of the target file.
     string parentDirPath = ".";
@@ -50,19 +55,24 @@ void TextSerializer::serialize(PdfDocument* doc, const string& targetFilePath) {
       return;
     }
 
-    serializeToStream(doc, outFile);
+    serializeToStream(doc, roles, outFile);
     outFile.close();
   }
 }
 
 // _________________________________________________________________________________________________
-void TextSerializer::serializeToStream(PdfDocument* doc, std::ostream& outStream) {
+void TextSerializer::serializeToStream(PdfDocument* doc, const unordered_set<string>& roles,
+    std::ostream& outStream) {
   assert(doc);
 
   PdfTextBlock* prevBlock = nullptr;
   for (auto* page : doc->pages) {
     for (auto* block : page->blocks) {
       PdfWord* prevWord = nullptr;
+
+      if (roles.size() > 0 && !std::count(roles.begin(), roles.end(), block->role)) {
+        continue;
+      }
 
       if (prevBlock) {
         outStream << endl;

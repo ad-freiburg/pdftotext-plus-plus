@@ -14,6 +14,7 @@
 #include <iostream>  // std::cout
 #include <locale>    // imbue
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include "./serialization/Serialization.h"
@@ -22,8 +23,10 @@
 #include "./utils/StringUtils.h"
 #include "./PdfDocumentVisualizer.h"
 #include "./PdfToTextPlusPlus.h"
+#include "./Validators.h"
 
-using ppp::serialization::SerializationFormat;
+using ppp::types::SemanticRole;
+using ppp::types::SerializationFormat;
 using std::chrono::duration_cast;
 using std::chrono::high_resolution_clock;
 using std::chrono::milliseconds;
@@ -32,6 +35,7 @@ using std::cout;
 using std::endl;
 using std::exception;
 using std::string;
+using std::unordered_set;
 using std::vector;
 using string_utils::wrap;
 using string_utils::strip;
@@ -122,6 +126,7 @@ void printHelpMessage(po::options_description* publicOpts, int maxLineLength, in
  */
 int main(int argc, char* argv[]) {
   SerializationFormat format = SerializationFormat::TXT;
+  vector<string> roles = {};
 
   bool addControlCharacters = false;
   bool addSemanticRoles = false;
@@ -170,8 +175,15 @@ int main(int argc, char* argv[]) {
     (
       "format",
       po::value<SerializationFormat>(&format),
-      (string("Output the extracted text in the specified format. Valid values are: ")
+      (string("Output the extracted text in the specified format.\nValid formats: ")
         + ppp::serialization::getSerializationFormatChoicesStr() + string(".\n")).c_str()
+    )
+    (
+      "role",
+      po::value<vector<string>>(&roles),
+      (string("Only output text from text blocks with the specified roles. Use the syntax\n")
+        + string("'--role <value1> --role <value2> ...' to specify multiple roles.\nValid roles: ")
+        + ppp::types::getSemanticRolesStr() + string(".\n")).c_str()
     )
     (
       "control-characters",
@@ -546,7 +558,10 @@ int main(int argc, char* argv[]) {
   //   serializer.serialize(outputFilePath);
   // }
   Serializer* serializer = ppp::serialization::getSerializer(format);
-  serializer->serialize(&doc, outputFilePath);
+  if (serializer) {
+    unordered_set<string> rolesSet(roles.begin(), roles.end());
+    serializer->serialize(&doc, rolesSet, outputFilePath);
+  }
   auto end = high_resolution_clock::now();
   Timing timingSerializeChars("Serialize", duration_cast<milliseconds>(end - start).count());
   timings.push_back(timingSerializeChars);

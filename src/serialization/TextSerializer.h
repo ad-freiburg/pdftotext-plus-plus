@@ -10,12 +10,16 @@
 #define SERIALIZATION_TEXTSERIALIZER_H_
 
 #include <string>
+#include <unordered_set>
 
-#include "./Serializer.h"
 #include "../PdfDocument.h"
+#include "../Types.h"
+#include "./Serializer.h"
 
+using ppp::types::SemanticRole;
 using std::ostream;
 using std::string;
+using std::unordered_set;
 
 // =================================================================================================
 
@@ -37,11 +41,14 @@ class TextSerializer : public Serializer {
    *
    * @param doc
    *   The PDF document to process.
+   * @param roles
+   *   If not empty, only the text of text blocks with the specified roles is written to the file.
+   *   If empty, all text is written to the file.
    * @param targetPath
    *   The path to the file to which the text should be written. If specified as "-", the text is
    *   written to stdout instead.
    */
-  void serialize(PdfDocument* doc, const string& targetPath);
+  void serialize(PdfDocument* doc, const unordered_set<string>& roles, const string& targetPath);
 
  private:
   /**
@@ -49,10 +56,13 @@ class TextSerializer : public Serializer {
    *
    * @param doc
    *   The PDF document to process.
+   * @param roles
+   *   If not empty, only the text of text blocks with the specified roles is written to the stream.
+   *   If empty, all text is written to the stream.
    * @param out
    *   The stream to which the text should be written.
    */
-  void serializeToStream(PdfDocument* doc, ostream& out);
+  void serializeToStream(PdfDocument* doc, const unordered_set<string>& roles, ostream& out);
 
   // Whether or not to prepend each emphasized text block with "^A" (start of heading) and mark
   // each page break with "^L" (form feed).
