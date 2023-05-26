@@ -80,7 +80,7 @@ TEST_F(TextBlocksUtilsTest, computeIsTextLinesCenteredPdf1) {
 
   // Test the sixth block of the right column of the first page (the block with the centered lines).
   // The method should return true.
-  block = page0->blocks[18];
+  block = page0->blocks[17];
   ASSERT_TRUE(computeIsTextLinesCentered(block)) << "Block: " << block->toString();
 
   // Test the first text block on the second page. The lines are not centered compared to each
@@ -106,8 +106,8 @@ TEST_F(TextBlocksUtilsTest, computeIsTextLinesCenteredPdf1) {
   // page, and the respective three following lines. The method should return true.
   block = new PdfTextBlock();
   block->doc = pdf1;
-  block->lines = page0->blocks[18]->lines;  // "This is a centered ..."
-  for (size_t i = 0; i < 3; i++) { block->lines.push_back(page0->blocks[19]->lines[i]); }
+  block->lines = page0->blocks[17]->lines;  // "This is a centered ..."
+  for (size_t i = 0; i < 3; i++) { block->lines.push_back(page0->blocks[18]->lines[i]); }
   ASSERT_TRUE(computeIsTextLinesCentered(block)) << "Block: " << block->toString();
 
   // Test a block composed of the lines of the centered block in the right column of the first
@@ -115,8 +115,8 @@ TEST_F(TextBlocksUtilsTest, computeIsTextLinesCenteredPdf1) {
   // number of justified lines exceeds the threshold.
   block = new PdfTextBlock();
   block->doc = pdf1;
-  block->lines = page0->blocks[18]->lines;  // "This is a centered ..."
-  for (size_t i = 0; i < 7; i++) { block->lines.push_back(page0->blocks[19]->lines[i]); }
+  block->lines = page0->blocks[17]->lines;  // "This is a centered ..."
+  for (size_t i = 0; i < 7; i++) { block->lines.push_back(page0->blocks[18]->lines[i]); }
   ASSERT_FALSE(computeIsTextLinesCentered(block)) << "Block: " << block->toString();
 }
 
@@ -135,7 +135,7 @@ TEST_F(TextBlocksUtilsTest, computeHangingIndentPdf1) {
   ASSERT_NEAR(computeHangingIndent(block), 0.0, TOL) << "Block: " << block->toString();
 
   // Test the centered text block in the right column of the first page.
-  block = page0->blocks[18];
+  block = page0->blocks[17];
   ASSERT_NEAR(computeHangingIndent(block), 0.0, TOL) << "Block: " << block->toString();
 
   // Test a block composed of the text lines of the second section ("Movie Listing").
@@ -191,7 +191,7 @@ TEST_F(TextBlocksUtilsTest, computeTextLineMarginsPdf1) {
   ASSERT_NEAR(block->lines[6]->rightMargin, 139.0, TOL) << "Line: " << block->lines[6]->toString();
 
   // Test the centered block in the right column of the first page.
-  block = page0->blocks[18];
+  block = page0->blocks[17];
   ASSERT_NEAR(block->lines[0]->leftMargin, 0.0, TOL) << "Line: " << block->lines[0]->toString();
   ASSERT_NEAR(block->lines[0]->rightMargin, 0.0, TOL) << "Line: " << block->lines[0]->toString();
   ASSERT_NEAR(block->lines[1]->leftMargin, 24.0, TOL) << "Line: " << block->lines[1]->toString();
@@ -201,7 +201,7 @@ TEST_F(TextBlocksUtilsTest, computeTextLineMarginsPdf1) {
 
   // Test the last but one block of the first page (the one with the line extending the column
   // boundary.
-  block = page0->blocks[20];
+  block = page0->blocks[19];
   ASSERT_NEAR(block->lines[0]->leftMargin, 10.0, TOL) << "Line: " << block->lines[0]->toString();
   ASSERT_NEAR(block->lines[0]->rightMargin, -25.0, TOL) << "Line: " << block->lines[0]->toString();
   for (size_t i = 1; i < 7; i++) {
