@@ -14,6 +14,8 @@
 #include "./PdfDocument.h"
 #include "./SubSuperScriptsDetector.h"
 
+using ppp::math_utils::larger;
+using ppp::math_utils::smaller;
 using std::endl;
 using std::max;
 using std::min;
@@ -63,15 +65,15 @@ void SubSuperScriptsDetector::process() const {
             _log->debug(p) << " └─ line.base: " << line->base << endl;
             _log->debug(p) << " └─ tolerance base-line: " << config::BASE_EQUAL_TOLERANCE << endl;
 
-            if (ppp::math_utils::smaller(character->fontSize, _doc->mostFreqFontSize,
+            if (smaller(character->fontSize, _doc->mostFreqFontSize,
                   config::FSIZE_EQUAL_TOLERANCE)) {
-              if (ppp::math_utils::smaller(character->base, line->base, config::BASE_EQUAL_TOLERANCE)) {
+              if (smaller(character->base, line->base, config::BASE_EQUAL_TOLERANCE)) {
                 _log->debug(p) << BOLD << " superscript (char.base < line.base)" << OFF << endl;
                 character->isSuperscript = true;
                 continue;
               }
 
-              if (ppp::math_utils::larger(character->base, line->base, config::BASE_EQUAL_TOLERANCE)) {
+              if (larger(character->base, line->base, config::BASE_EQUAL_TOLERANCE)) {
                 _log->debug(p) << BOLD << " subscript (char.base > line.base)" << OFF << endl;
                 character->isSubscript = true;
                 continue;

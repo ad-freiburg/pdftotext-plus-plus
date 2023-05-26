@@ -21,6 +21,12 @@
 #include "./TextBlocksUtils.h"
 #include "./TextLinesUtils.h"
 
+using ppp::math_utils::equal;
+using ppp::math_utils::equalOrLarger;
+using ppp::math_utils::equalOrSmaller;
+using ppp::math_utils::larger;
+using ppp::math_utils::round;
+using ppp::math_utils::smaller;
 using std::max;
 using std::min;
 using std::pair;
@@ -77,8 +83,8 @@ bool text_blocks_utils::computeIsTextLinesCentered(const PdfTextBlock* block) {
     double absLeftXOffset = abs(element_utils::computeLeftXOffset(prevLine, currLine));
     double absRightXOffset = abs(element_utils::computeRightXOffset(prevLine, currLine));
     double xOffsetThreshold = config::getCenteringXOffsetThreshold(currLine->doc);
-    bool isLargeLeftXOffset = ppp::math_utils::larger(absLeftXOffset, xOffsetThreshold);
-    bool isLargeRightXOffset = ppp::math_utils::larger(absRightXOffset, xOffsetThreshold);
+    bool isLargeLeftXOffset = larger(absLeftXOffset, xOffsetThreshold);
+    bool isLargeRightXOffset = larger(absRightXOffset, xOffsetThreshold);
     bool isLargeXOffset = isLargeLeftXOffset || isLargeRightXOffset;
 
     // Check if the line is not a formula and has a leftX offset (or rightX offset) larger than
@@ -133,8 +139,8 @@ double text_blocks_utils::computeHangingIndent(const PdfTextBlock* block) {
     }
 
     // Count the number of lines with a left margin >= the given threshold.
-    double leftMargin = ppp::math_utils::round(line->leftMargin);
-    if (ppp::math_utils::equalOrLarger(leftMargin, marginThreshold)) {
+    double leftMargin = round(line->leftMargin);
+    if (equalOrLarger(leftMargin, marginThreshold)) {
       largeLeftMarginCounter[leftMargin]++;
       numLargeLeftMarginLines++;
     }
@@ -147,7 +153,7 @@ double text_blocks_utils::computeHangingIndent(const PdfTextBlock* block) {
 
   // The block is *not* in hanging indent format if the percentage of lines exhibiting the
   // most frequent left margin is smaller than a threshold.
-  if (ppp::math_utils::equalOrSmaller(mostFreqLargeLeftMarginCount,
+  if (equalOrSmaller(mostFreqLargeLeftMarginCount,
         config::HANG_INDENT_MIN_PERC_LINES_SAME_LEFT_MARGIN * numLargeLeftMarginLines)) {
     return 0.0;
   }
@@ -162,21 +168,21 @@ double text_blocks_utils::computeHangingIndent(const PdfTextBlock* block) {
     }
 
     // Ignore lines that are centered.
-    bool isEqualMargin = ppp::math_utils::equal(line->leftMargin, line->rightMargin, marginThreshold);
-    bool isLargeMargin = ppp::math_utils::larger(line->leftMargin, marginThreshold);
+    bool isEqualMargin = equal(line->leftMargin, line->rightMargin, marginThreshold);
+    bool isLargeMargin = larger(line->leftMargin, marginThreshold);
     bool isCentered = isEqualMargin && isLargeMargin;
     if (isCentered) {
       continue;
     }
 
     // Count the number of non-indented lines.
-    bool isNonIndented = ppp::math_utils::equal(line->leftMargin, 0, marginThreshold);
+    bool isNonIndented = equal(line->leftMargin, 0, marginThreshold);
     if (isNonIndented) {
       numNonIndentedLines++;
     }
 
     // Count the number of indented lines.
-    bool isIndented = ppp::math_utils::equal(line->leftMargin, mostFreqLargeLeftMargin, marginThreshold);
+    bool isIndented = equal(line->leftMargin, mostFreqLargeLeftMargin, marginThreshold);
     if (isIndented) {
       numIndentedLines++;
     }

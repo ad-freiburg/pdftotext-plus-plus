@@ -6,7 +6,9 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
+#include <algorithm>
 #include <ostream>
+#include <string>
 #include <unordered_set>
 
 #include "../PdfDocument.h"

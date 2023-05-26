@@ -142,9 +142,9 @@ int main(int argc, char* argv[]) {
   // The units of the text to output.
   vector<DocumentUnit> units = ppp::types::getDocumentUnits();
 
-  bool addControlCharacters = false; // TODO: Introduce an extra format.
-  bool addSemanticRoles = false;  // TODO: Introduce an extra format.
-  bool noScripts = false;  // TODO: Allow to disable all optional components of the pipeline.
+  bool addControlCharacters = false;  // TODO(korzen): Introduce an extra format.
+  bool addSemanticRoles = false;  // TODO(korzen): Introduce an extra format.
+  bool noScripts = false;  // TODO(korzen): Allow to disable all optional components of pipeline.
   bool noEmbeddedFontFiles = false;
   bool noDehyphenation = false;
   bool parseMode = false;
@@ -161,7 +161,7 @@ int main(int argc, char* argv[]) {
   bool visualizeReadingOrderCuts = false;
   string visualizeFilePath = "";
   string verbosity = "error";
-  bool debugPdfParsing = false;  // TODO: Introduce advanced logging.
+  bool debugPdfParsing = false;  // TODO(korzen): Introduce advanced logging.
   bool debugStatisticsComputation = false;
   bool debugDiacriticMarksMerging = false;
   bool debugWordsDetection = false;

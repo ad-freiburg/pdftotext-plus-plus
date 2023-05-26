@@ -103,4 +103,4 @@ string getSemanticRolesStr(const string& separator) {
   return resultStr;
 }
 
-} // namespace ppp::types
+}  // namespace ppp::types

@@ -148,6 +148,6 @@ string wrap(const string& str, size_t width = 100, size_t indent = 0);
  */
 string join(const vector<string>& strings, const string& separator = ", ");
 
-}  // namespace string_utils
+}  // namespace ppp::string_utils
 
 #endif  // UTILS_STRINGUTILS_H_

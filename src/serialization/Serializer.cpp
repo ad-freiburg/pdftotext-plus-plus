@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <string>
 #include <unordered_set>
 
 #include "./Serializer.h"
@@ -57,4 +58,4 @@ void Serializer::serialize(const PdfDocument* doc,
   outFile.close();
 }
 
-} // namespace ppp::serialization
+}  // namespace ppp::serialization

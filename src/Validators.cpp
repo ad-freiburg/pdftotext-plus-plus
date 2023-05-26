@@ -22,7 +22,7 @@ namespace po = boost::program_options;
 namespace ppp::types {
 
 // _________________________________________________________________________________________________
-void validate(boost::any& v, const vector<string>& vals, SerializationFormat* f, int) {
+void validate(boost::any& v, const vector<string>& vals, SerializationFormat* f, int) {  // NOLINT
   // Make sure no previous assignment to the option was made.
   po::validators::check_first_occurrence(v);
 
@@ -41,7 +41,7 @@ void validate(boost::any& v, const vector<string>& vals, SerializationFormat* f,
 }
 
 // _________________________________________________________________________________________________
-void validate(boost::any& v, const vector<string>& vals, SemanticRole* r, int) {
+void validate(boost::any& v, const vector<string>& vals, SemanticRole* r, int) {  // NOLINT
   // Make sure no previous assignment to the option was made.
   po::validators::check_first_occurrence(v);
 
@@ -60,7 +60,7 @@ void validate(boost::any& v, const vector<string>& vals, SemanticRole* r, int) {
 }
 
 // _________________________________________________________________________________________________
-void validate(boost::any& v, const vector<string>& vals, DocumentUnit* u, int) {
+void validate(boost::any& v, const vector<string>& vals, DocumentUnit* u, int) {  // NOLINT
   // Make sure no previous assignment to the option was made.
   po::validators::check_first_occurrence(v);
 
