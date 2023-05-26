@@ -23,7 +23,9 @@
 #include "./PdfDocument.h"
 #include "./PdfDocumentVisualizer.h"
 #include "./TextOutputDev.h"
+#include "./Types.h"
 
+using ppp::types::SemanticRole;
 using std::make_unique;
 using std::move;
 using std::string;
@@ -301,8 +303,8 @@ void PdfDocumentVisualizer::drawPageSegmentBoundingBoxes(
     double lowerY = pdfPage->getMediaHeight() - segment->trimUpperY;
     // Vertical/horizontal lines can have a width/height of zero, in which case they are not
     // visible in the visualization. So ensure a minimal width/height of 1.
-    if (math_utils::smaller(fabs(leftX - rightX), 1)) { rightX += 1; }
-    if (math_utils::smaller(fabs(upperY - lowerY), 1)) { lowerY += 1; }
+    if (ppp::math_utils::smaller(fabs(leftX - rightX), 1)) { rightX += 1; }
+    if (ppp::math_utils::smaller(fabs(upperY - lowerY), 1)) { lowerY += 1; }
     PDFRectangle rect(leftX, upperY, rightX, lowerY);
 
     // Create the bounding box.
@@ -327,8 +329,8 @@ void PdfDocumentVisualizer::drawPageSegmentBoundingBoxes(
       double lowerY = pdfPage->getMediaHeight() - block->pos->upperY;
       // Vertical/horizontal lines can have a width/height of zero, in which case they are not
       // visible in the visualization. So ensure a minimal width/height of 1.
-      if (math_utils::smaller(fabs(leftX - rightX), 1)) { rightX += 1; }
-      if (math_utils::smaller(fabs(upperY - lowerY), 1)) { lowerY += 1; }
+      if (ppp::math_utils::smaller(fabs(leftX - rightX), 1)) { rightX += 1; }
+      if (ppp::math_utils::smaller(fabs(upperY - lowerY), 1)) { lowerY += 1; }
       PDFRectangle rect(leftX, upperY, rightX, lowerY);
 
       // Create the bounding box.
@@ -360,8 +362,8 @@ void PdfDocumentVisualizer::drawBoundingBox(const PdfElement* element, const Col
 
   // Vertical/horizontal lines can have a width/height of zero, in which case they are not
   // visible in the visualization. So ensure a minimal width/height of 1.
-  if (math_utils::smaller(fabs(leftX - rightX), 1)) { rightX += 1; }
-  if (math_utils::smaller(fabs(upperY - lowerY), 1)) { lowerY += 1; }
+  if (ppp::math_utils::smaller(fabs(leftX - rightX), 1)) { rightX += 1; }
+  if (ppp::math_utils::smaller(fabs(upperY - lowerY), 1)) { lowerY += 1; }
   PDFRectangle rect(leftX, upperY, rightX, lowerY);
 
   // Create the bounding box.
@@ -398,7 +400,7 @@ void PdfDocumentVisualizer::drawTextBlockSemanticRoles(const vector<PdfTextBlock
     annot->setDefaultAppearance(appearance);
 
     // Define the text of the annotation (= the semantic role).
-    annot->setContents(make_unique<GooString>(convertToUtf16(block->role)));
+    annot->setContents(make_unique<GooString>(convertToUtf16(ppp::types::getName(block->role))));
 
     // Remove the default border around the annotation.
     std::unique_ptr<AnnotBorder> border(new AnnotBorderArray());

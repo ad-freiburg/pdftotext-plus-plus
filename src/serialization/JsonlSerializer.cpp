@@ -1,16 +1,14 @@
 /**
- * Copyright 2022, University of Freiburg,
+ * Copyright 2023, University of Freiburg,
  * Chair of Algorithms and Data Structures.
  * Author: Claudius Korzen <korzen@cs.uni-freiburg.de>.
  *
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include <cstdlib>  // system()
-#include <fstream>  // std::ofstream
 #include <iostream>
 #include <string>
-#include <vector>
+#include <unordered_set>
 
 #include "./JsonlSerializer.h"
 
@@ -19,145 +17,72 @@
 
 #include "../Constants.h"
 #include "../PdfDocument.h"
+#include "../Types.h"
 
 using global_config::COORDS_PREC;
 
+using ppp::types::SemanticRole;
+using ppp::math_utils::round;
+using ppp::string_utils::escapeJson;
 using std::cout;
 using std::cerr;
 using std::endl;
-using std::ofstream;
 using std::ostream;
 using std::string;
-using std::vector;
+using std::unordered_set;
+
+// =================================================================================================
+
+namespace ppp::serialization {
 
 // _________________________________________________________________________________________________
-JsonlSerializer::JsonlSerializer(const PdfDocument* doc, bool serializePages, bool serializeChars,
-      bool serializeFigures, bool serializeShapes, bool serializeWords, bool serializeTextBlocks) {
-  _doc = doc;
-  _serializePages = serializePages;
-  _serializeChars = serializeChars;
-  _serializeFigures = serializeFigures;
-  _serializeShapes = serializeShapes;
-  _serializeWords = serializeWords;
-  _serializeTextBlocks = serializeTextBlocks;
-}
+JsonlSerializer::JsonlSerializer() : Serializer() {}
 
 // _________________________________________________________________________________________________
 JsonlSerializer::~JsonlSerializer() = default;
 
 // _________________________________________________________________________________________________
-void JsonlSerializer::serialize(const string& targetFilePath) const {
-  // If the target file path is specified as "-", write the elements to the console. Otherwise,
-  // write the elements to the referenced file.
-  if (targetFilePath.size() == 1 && targetFilePath[0] == '-') {
-    serializeToStream(cout);
-  } else {
-    string parentDirPath = ".";
-    size_t posLastSlash = targetFilePath.find_last_of("/");
-    if (posLastSlash != string::npos) {
-      parentDirPath = targetFilePath.substr(0, posLastSlash);
-    }
+void JsonlSerializer::serializeToStream(const PdfDocument* doc,
+    const unordered_set<SemanticRole>& roles, const unordered_set<DocumentUnit>& units,
+    ostream& out) const {
 
-    // Try to create all intermediate directories if the parent directory does not exist.
-    if (system(("mkdir -p " + parentDirPath).c_str())) {
-      cerr << "Could not create directory '" << parentDirPath << "'." << endl;
-      return;
-    }
-
-    ofstream outFile(targetFilePath);
-    if (!outFile.is_open()) {
-      cerr << "Could not open file '" << targetFilePath << "'." << endl;
-      return;
-    }
-
-    serializeToStream(outFile);
-    outFile.close();
-  }
-}
-
-// _________________________________________________________________________________________________
-void JsonlSerializer::serializeToStream(ostream& stream) const {
-  assert(_doc);
-
-  for (const auto* page : _doc->pages) {
-    if (_serializePages) {
-      serializePage(page, stream);
-    }
-    if (_serializeChars) {
-      serializeChars(page->characters, stream);
-    }
-    if (_serializeFigures) {
-      serializeFigures(page->figures, stream);
-    }
-    if (_serializeShapes) {
-      serializeShapes(page->shapes, stream);
-    }
-    if (_serializeWords) {
-      serializeWords(page->words, stream);
-    }
-    if (_serializeTextBlocks) {
-      serializeTextBlocks(page->blocks, stream);
+  for (DocumentUnit unit : units) {
+    switch (unit) {
+      case DocumentUnit::PAGES:
+        serializePages(doc, roles, out);
+        break;
+      case DocumentUnit::CHARACTERS:
+        serializeCharacters(doc, roles, out);
+        break;
+      case DocumentUnit::WORDS:
+        serializeWords(doc, roles, out);
+        break;
+      case DocumentUnit::TEXT_BLOCKS:
+        serializeTextBlocks(doc, roles, out);
+        break;
+      case DocumentUnit::FIGURES:
+        serializeFigures(doc, roles, out);
+        break;
+      case DocumentUnit::SHAPES:
+        serializeShapes(doc, roles, out);
+        break;
+      default:
+        break;
     }
   }
 }
 
 // _________________________________________________________________________________________________
-void JsonlSerializer::serializePage(const PdfPage* page, ostream& stream) const {
-  assert(page);
+void JsonlSerializer::serializePages(const PdfDocument* doc,
+    const unordered_set<SemanticRole>& roles, ostream& out) const {
+  assert(doc);
 
-  stream << "{"
-    << "\"type\": \"page\", "
-    << "\"num\": " << page->pageNum << ", "
-    << "\"width\": " << math_utils::round(page->getWidth(), COORDS_PREC) << ", "
-    << "\"height\": " << math_utils::round(page->getHeight(), COORDS_PREC) << ", "
-    << "\"origin\": \"pdftotext++\""
-    << "}"
-    << endl;
-}
-
-// _________________________________________________________________________________________________
-void JsonlSerializer::serializeChars(const vector<PdfCharacter*>& chars, ostream& stream) const {
-  for (const auto* ch : chars) {
-    // Ignore diacritics marks (since they were merged with their base characters).
-    if (ch->isDiacriticMarkOfBaseChar) {
-      continue;
-    }
-
-    // Get the font info about the character.
-    const PdfFontInfo* fontInfo = _doc->fontInfos.at(ch->fontName);
-
-    // Get the text.
-    string text = ch->isBaseCharOfDiacriticMark ? ch->textWithDiacriticMark : ch->text;
-
-    // Get the id of the parent word.
-    string wordId = ch->word ? ch->word->id : "";
-
-    // Get the id of the parent text block.
-    string blockId = ch->word && ch->word->line && ch->word->line->block
-        ? ch->word->line->block->id : "";
-
-    // Serialize the character.
-    stream << "{"
-      << "\"type\": \"char\", "
-      << "\"id\": \"" << ch->id << "\", "
-      << "\"rank\": " << ch->rank << ", "
-      << "\"page\": " << ch->pos->pageNum << ", "
-      << "\"minX\": " << math_utils::round(ch->pos->leftX, COORDS_PREC) << ", "
-      << "\"minY\": " << math_utils::round(ch->pos->upperY, COORDS_PREC) << ", "
-      << "\"maxX\": " << math_utils::round(ch->pos->rightX, COORDS_PREC) << ", "
-      << "\"maxY\": " << math_utils::round(ch->pos->lowerY, COORDS_PREC) << ", "
-      << "\"wMode\": " << ch->pos->wMode << ", "
-      << "\"rotation\": " << ch->pos->rotation << ", "
-      << "\"font\": \"" << ch->fontName << "\", "
-      << "\"fontSize\": " << ch->fontSize << ", "
-      << "\"weight\": " << fontInfo->weight << ", "
-      << "\"italic\": " << (fontInfo->isItalic ? "true" : "false") << ", "
-      << "\"type-3\": " << (fontInfo->isType3 ? "true" : "false") << ", "
-      << "\"color\": [" << ch->color[0] << "," << ch->color[1] << "," << ch->color[2] << "],"
-      << "\"opacity\": " << ch->opacity << ", "
-      << "\"text\": \"" << string_utils::escapeJson(text) << "\", "
-      << "\"word\": \"" << wordId << "\", "
-      << "\"block\": \"" << blockId << "\", "
+  for (const PdfPage* page : doc->pages) {
+    out << "{"
+      << "\"type\": \"page\", "
+      << "\"num\": " << page->pageNum << ", "
+      << "\"width\": " << round(page->getWidth(), COORDS_PREC) << ", "
+      << "\"height\": " << round(page->getHeight(), COORDS_PREC) << ", "
       << "\"origin\": \"pdftotext++\""
       << "}"
       << endl;
@@ -165,84 +90,175 @@ void JsonlSerializer::serializeChars(const vector<PdfCharacter*>& chars, ostream
 }
 
 // _________________________________________________________________________________________________
-void JsonlSerializer::serializeFigures(const vector<PdfFigure*>& figs, ostream& stream) const {
-  for (const auto* f : figs) {
-    stream << "{"
-      << "\"type\": \"figure\", "
-      << "\"rank\": " << f->rank << ", "
-      << "\"id\": \"" << f->id << "\", "
-      << "\"page\": " << f->pos->pageNum << ", "
-      << "\"minX\": " << math_utils::round(f->pos->leftX, COORDS_PREC) << ", "
-      << "\"minY\": " << math_utils::round(f->pos->upperY, COORDS_PREC) << ", "
-      << "\"maxX\": " << math_utils::round(f->pos->rightX, COORDS_PREC) << ", "
-      << "\"maxY\": " << math_utils::round(f->pos->lowerY, COORDS_PREC) << ", "
-      << "\"origin\": \"pdftotext++\""
-      << "}"
-      << endl;
+void JsonlSerializer::serializeCharacters(const PdfDocument* doc,
+    const unordered_set<SemanticRole>& roles, ostream& out) const {
+  assert(doc);
+
+  for (const PdfPage* page : doc->pages) {
+    for (const PdfTextBlock* block : page->blocks) {
+      // Skip the block if its role is not included in 'roles'.
+      if (std::find(roles.begin(), roles.end(), block->role) == roles.end()) {
+        continue;
+      }
+
+      for (const PdfTextLine* line : block->lines) {
+        for (const PdfWord* word : line->words) {
+          for (const PdfCharacter* c : word->characters) {
+            // Ignore diacritics marks (since they were merged with their base characters).
+            if (c->isDiacriticMarkOfBaseChar) {
+              continue;
+            }
+
+            // Get the font info about the character.
+            const PdfFontInfo* fontInfo = doc->fontInfos.at(c->fontName);
+
+            // Get the text.
+            string text = c->isBaseCharOfDiacriticMark ? c->textWithDiacriticMark : c->text;
+
+            // Serialize the character.
+            out << "{"
+              << "\"type\": \"char\", "
+              << "\"id\": \"" << c->id << "\", "
+              << "\"rank\": " << c->rank << ", "
+              << "\"page\": " << c->pos->pageNum << ", "
+              << "\"minX\": " << round(c->pos->leftX, COORDS_PREC) << ", "
+              << "\"minY\": " << round(c->pos->upperY, COORDS_PREC) << ", "
+              << "\"maxX\": " << round(c->pos->rightX, COORDS_PREC) << ", "
+              << "\"maxY\": " << round(c->pos->lowerY, COORDS_PREC) << ", "
+              << "\"wMode\": " << c->pos->wMode << ", "
+              << "\"rotation\": " << c->pos->rotation << ", "
+              << "\"font\": \"" << c->fontName << "\", "
+              << "\"fontSize\": " << c->fontSize << ", "
+              << "\"weight\": " << fontInfo->weight << ", "
+              << "\"italic\": " << (fontInfo->isItalic ? "true" : "false") << ", "
+              << "\"type-3\": " << (fontInfo->isType3 ? "true" : "false") << ", "
+              << "\"color\": [" << c->color[0] << "," << c->color[1] << "," << c->color[2] << "],"
+              << "\"opacity\": " << c->opacity << ", "
+              << "\"text\": \"" << escapeJson(text) << "\", "
+              << "\"word\": \"" << word->id << "\", "
+              << "\"block\": \"" << block->id << "\", "
+              << "\"origin\": \"pdftotext++\""
+              << "}"
+              << endl;
+          }
+        }
+      }
+    }
   }
 }
 
 // _________________________________________________________________________________________________
-void JsonlSerializer::serializeShapes(const vector<PdfShape*>& shapes, ostream& stream) const {
-  for (const auto* s : shapes) {
-    stream << "{"
-      << "\"type\": \"shape\", "
-      << "\"rank\": " << s->rank << ", "
-      << "\"id\": \"" << s->id << "\", "
-      << "\"page\": " << s->pos->pageNum << ", "
-      << "\"minX\": " << math_utils::round(s->pos->leftX, COORDS_PREC) << ", "
-      << "\"minY\": " << math_utils::round(s->pos->upperY, COORDS_PREC) << ", "
-      << "\"maxX\": " << math_utils::round(s->pos->rightX, COORDS_PREC) << ", "
-      << "\"maxY\": " << math_utils::round(s->pos->lowerY, COORDS_PREC) << ", "
-      << "\"origin\": \"pdftotext++\""
-      << "}"
-      << endl;
+void JsonlSerializer::serializeFigures(const PdfDocument* doc,
+    const unordered_set<SemanticRole>& roles, ostream& out) const {
+  assert(doc);
+
+  for (const PdfPage* page : doc->pages) {
+    for (const PdfFigure* f : page->figures) {
+      out << "{"
+        << "\"type\": \"figure\", "
+        << "\"rank\": " << f->rank << ", "
+        << "\"id\": \"" << f->id << "\", "
+        << "\"page\": " << f->pos->pageNum << ", "
+        << "\"minX\": " << round(f->pos->leftX, COORDS_PREC) << ", "
+        << "\"minY\": " << round(f->pos->upperY, COORDS_PREC) << ", "
+        << "\"maxX\": " << round(f->pos->rightX, COORDS_PREC) << ", "
+        << "\"maxY\": " << round(f->pos->lowerY, COORDS_PREC) << ", "
+        << "\"origin\": \"pdftotext++\""
+        << "}"
+        << endl;
+    }
   }
 }
 
 // _________________________________________________________________________________________________
-void JsonlSerializer::serializeWords(const vector<PdfWord*>& words, ostream& stream) const {
-  for (const auto* word : words) {
-    string blockId = word->line && word->line->block ? word->line->block->id : "";
+void JsonlSerializer::serializeShapes(const PdfDocument* doc,
+    const unordered_set<SemanticRole>& roles, ostream& out) const {
+  assert(doc);
 
-    stream << "{"
-      << "\"type\": \"word\", "
-      << "\"id\": \"" << word->id << "\", "
-      << "\"rank\": " << word->rank << ", "
-      << "\"page\": " << word->pos->pageNum << ", "
-      << "\"minX\": " << math_utils::round(word->pos->leftX, COORDS_PREC) << ", "
-      << "\"minY\": " << math_utils::round(word->pos->upperY, COORDS_PREC) << ", "
-      << "\"maxX\": " << math_utils::round(word->pos->rightX, COORDS_PREC) << ", "
-      << "\"maxY\": " << math_utils::round(word->pos->lowerY, COORDS_PREC) << ", "
-      << "\"font\": \"" << word->fontName << "\", "
-      << "\"fontSize\": " << word->fontSize << ", "
-      << "\"text\": \"" << string_utils::escapeJson(word->text) << "\", "
-      << "\"block\": \"" << blockId << "\", "
-      << "\"origin\": \"pdftotext++\""
-      << "}"
-      << endl;
+  for (const PdfPage* page : doc->pages) {
+    for (const PdfShape* s : page->shapes) {
+      out << "{"
+        << "\"type\": \"shape\", "
+        << "\"rank\": " << s->rank << ", "
+        << "\"id\": \"" << s->id << "\", "
+        << "\"page\": " << s->pos->pageNum << ", "
+        << "\"minX\": " << round(s->pos->leftX, COORDS_PREC) << ", "
+        << "\"minY\": " << round(s->pos->upperY, COORDS_PREC) << ", "
+        << "\"maxX\": " << round(s->pos->rightX, COORDS_PREC) << ", "
+        << "\"maxY\": " << round(s->pos->lowerY, COORDS_PREC) << ", "
+        << "\"origin\": \"pdftotext++\""
+        << "}"
+        << endl;
+    }
   }
 }
 
 // _________________________________________________________________________________________________
-void JsonlSerializer::serializeTextBlocks(const vector<PdfTextBlock*>& blocks,
-      ostream& stream) const {
-  for (const auto* block : blocks) {
-    stream << "{"
-      << "\"type\": \"block\", "
-      << "\"id\": \"" << block->id << "\", "
-      << "\"rank\": " << block->rank << ", "
-      << "\"page\": " << block->pos->pageNum << ", "
-      << "\"minX\": " << math_utils::round(block->pos->leftX, COORDS_PREC) << ", "
-      << "\"minY\": " << math_utils::round(block->pos->upperY, COORDS_PREC) << ", "
-      << "\"maxX\": " << math_utils::round(block->pos->rightX, COORDS_PREC) << ", "
-      << "\"maxY\": " << math_utils::round(block->pos->lowerY, COORDS_PREC) << ", "
-      << "\"font\": \"" << block->fontName << "\", "
-      << "\"fontSize\": " << block->fontSize << ", "
-      << "\"text\": \"" << string_utils::escapeJson(block->text) << "\", "
-      << "\"role\": \"" << block->role << "\", "
-      << "\"origin\": \"pdftotext++\""
-      << "}"
-      << endl;
+void JsonlSerializer::serializeWords(const PdfDocument* doc,
+    const unordered_set<SemanticRole>& roles, ostream& out) const {
+  assert(doc);
+
+  for (const PdfPage* page : doc->pages) {
+    for (const PdfTextBlock* block : page->blocks) {
+      // Skip the block if its role is not included in 'roles'.
+      if (std::find(roles.begin(), roles.end(), block->role) == roles.end()) {
+        continue;
+      }
+
+      for (const PdfTextLine* line : block->lines) {
+        for (const PdfWord* word : line->words) {
+          out << "{"
+            << "\"type\": \"word\", "
+            << "\"id\": \"" << word->id << "\", "
+            << "\"rank\": " << word->rank << ", "
+            << "\"page\": " << word->pos->pageNum << ", "
+            << "\"minX\": " << round(word->pos->leftX, COORDS_PREC) << ", "
+            << "\"minY\": " << round(word->pos->upperY, COORDS_PREC) << ", "
+            << "\"maxX\": " << round(word->pos->rightX, COORDS_PREC) << ", "
+            << "\"maxY\": " << round(word->pos->lowerY, COORDS_PREC) << ", "
+            << "\"font\": \"" << word->fontName << "\", "
+            << "\"fontSize\": " << word->fontSize << ", "
+            << "\"text\": \"" << ppp::string_utils::escapeJson(word->text) << "\", "
+            << "\"block\": \"" << block->id << "\", "
+            << "\"origin\": \"pdftotext++\""
+            << "}"
+            << endl;
+        }
+      }
+    }
   }
 }
+
+// _________________________________________________________________________________________________
+void JsonlSerializer::serializeTextBlocks(const PdfDocument* doc,
+    const unordered_set<SemanticRole>& roles, ostream& out) const {
+  assert(doc);
+
+  for (const PdfPage* page : doc->pages) {
+    for (const PdfTextBlock* block : page->blocks) {
+      // Skip the block if its role is not included in 'roles'.
+      if (std::find(roles.begin(), roles.end(), block->role) == roles.end()) {
+        continue;
+      }
+
+      out << "{"
+        << "\"type\": \"block\", "
+        << "\"id\": \"" << block->id << "\", "
+        << "\"rank\": " << block->rank << ", "
+        << "\"page\": " << block->pos->pageNum << ", "
+        << "\"minX\": " << round(block->pos->leftX, COORDS_PREC) << ", "
+        << "\"minY\": " << round(block->pos->upperY, COORDS_PREC) << ", "
+        << "\"maxX\": " << round(block->pos->rightX, COORDS_PREC) << ", "
+        << "\"maxY\": " << round(block->pos->lowerY, COORDS_PREC) << ", "
+        << "\"font\": \"" << block->fontName << "\", "
+        << "\"fontSize\": " << block->fontSize << ", "
+        << "\"text\": \"" << string_utils::escapeJson(block->text) << "\", "
+        << "\"role\": \"" << ppp::types::getName(block->role) << "\", "
+        << "\"origin\": \"pdftotext++\""
+        << "}"
+        << endl;
+    }
+  }
+}
+
+}  // namespace ppp:serialization

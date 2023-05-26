@@ -118,7 +118,7 @@ void TextLinesDetector::process() {
         }
 
         double rotation = word->pos->rotation;
-        double lowerY = math_utils::round(word->pos->getRotLowerY(), config::COORDS_PREC);
+        double lowerY = ppp::math_utils::round(word->pos->getRotLowerY(), config::COORDS_PREC);
         clusters[rotation][lowerY].push_back(word);
         _log->debug(p) << q << "cluster: (" << rotation << ", " << lowerY << ")" << endl;
 
@@ -251,7 +251,7 @@ void TextLinesDetector::process() {
 
             // Merge the current line with the previous line when the vertical overlap between the
             // lines is larger or equal to the threshold.
-            if (math_utils::equalOrLarger(yOverlapRatio, yOverlapRatioThreshold)) {
+            if (ppp::math_utils::equalOrLarger(yOverlapRatio, yOverlapRatioThreshold)) {
               mergeTextLines(currLine, prevLine);
 
               _log->debug(p) << qqq << BOLD << "merge currLine with prevLine" << OFF << endl;
@@ -329,7 +329,7 @@ PdfTextLine* TextLinesDetector::createTextLine(const vector<PdfWord*>& words,
   line->doc = _doc;
 
   // Create a (unique) id.
-  line->id = string_utils::createRandomString(ID_LENGTH, "line-");
+  line->id = ppp::string_utils::createRandomString(ID_LENGTH, "line-");
 
   // Set the words.
   line->words = words;

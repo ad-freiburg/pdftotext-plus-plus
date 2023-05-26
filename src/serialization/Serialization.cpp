@@ -14,8 +14,12 @@
 using ppp::types::SerializationFormat;
 using std::string;
 
+// =================================================================================================
+
+namespace ppp::serialization {
+
 // _________________________________________________________________________________________________
-string ppp::serialization::getSerializationFormatChoicesStr() {
+string getSerializationFormatChoicesStr() {
   string resultStr = "";
   for (const auto& entry : SERIALIZERS) {
     if (resultStr.size() > 0) {
@@ -27,6 +31,8 @@ string ppp::serialization::getSerializationFormatChoicesStr() {
 }
 
 // _________________________________________________________________________________________________
-Serializer* ppp::serialization::getSerializer(SerializationFormat format) {
+Serializer* getSerializer(SerializationFormat format) {
   return SERIALIZERS.find(format) != SERIALIZERS.end() ? SERIALIZERS.at(format) : nullptr;
 }
+
+}  // namespace ppp::serialization

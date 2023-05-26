@@ -49,7 +49,7 @@ pair<double, int> DoubleCounter::mostFreqAndCount() const {
 double DoubleCounter::max() const {
   double max = numeric_limits<double>::min();
   for (auto it = begin(); it != end(); ++it) {
-    if (math_utils::larger(it->first, max)) {
+    if (ppp::math_utils::larger(it->first, max)) {
       max = it->first;
     }
   }

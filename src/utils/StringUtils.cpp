@@ -24,7 +24,7 @@ using std::vector;
 using std::wstring;
 
 // _________________________________________________________________________________________________
-void string_utils::splitIntoWords(const wstring& text, vector<wstring>* words) {
+void ppp::string_utils::splitIntoWords(const wstring& text, vector<wstring>* words) {
   assert(words);
 
   size_t n = text.length();
@@ -42,7 +42,7 @@ void string_utils::splitIntoWords(const wstring& text, vector<wstring>* words) {
 }
 
 // _________________________________________________________________________________________________
-void string_utils::splitIntoWords(const string& text, vector<string>* words) {
+void ppp::string_utils::splitIntoWords(const string& text, vector<string>* words) {
   assert(words);
 
   size_t n = text.length();
@@ -58,7 +58,7 @@ void string_utils::splitIntoWords(const string& text, vector<string>* words) {
 }
 
 // _________________________________________________________________________________________________
-string string_utils::createRandomString(size_t len, const string& prefix) {
+string ppp::string_utils::createRandomString(size_t len, const string& prefix) {
   // Append the prefix.
   string tmp_s = prefix;
   tmp_s.reserve(prefix.length() + len);
@@ -75,7 +75,7 @@ string string_utils::createRandomString(size_t len, const string& prefix) {
 // =================================================================================================
 
 // _________________________________________________________________________________________________
-string string_utils::escapeJson(const string& str) {
+string ppp::string_utils::escapeJson(const string& str) {
   // Disclaimer: this code is stolen from https://stackoverflow.com/questions/7724448
   stringstream o;
   for (size_t i = 0; i < str.size(); i++) {
@@ -113,7 +113,7 @@ string string_utils::escapeJson(const string& str) {
 }
 
 // _________________________________________________________________________________________________
-string string_utils::shorten(const string& str, size_t len) {
+string ppp::string_utils::shorten(const string& str, size_t len) {
   if (str.size() <= len) {
     return str;
   }
@@ -122,7 +122,7 @@ string string_utils::shorten(const string& str, size_t len) {
 }
 
 // _________________________________________________________________________________________________
-string string_utils::strip(const string& str) {
+string ppp::string_utils::strip(const string& str) {
   auto start_it = str.begin();
   auto end_it = str.rbegin();
 
@@ -133,7 +133,7 @@ string string_utils::strip(const string& str) {
 }
 
 // _________________________________________________________________________________________________
-string string_utils::wrap(const string& str, size_t width, size_t indent) {
+string ppp::string_utils::wrap(const string& str, size_t width, size_t indent) {
   std::string result = "";
 
   // Split the string into lines.
@@ -173,7 +173,7 @@ string string_utils::wrap(const string& str, size_t width, size_t indent) {
 }
 
 // _________________________________________________________________________________________________
-std::string string_utils::join(const vector<string>& strings, const string& sep) {
+std::string ppp::string_utils::join(const vector<string>& strings, const string& sep) {
   std::string resultStr = "";
   for (const auto& s : strings) {
       if (resultStr.size() > 0) {

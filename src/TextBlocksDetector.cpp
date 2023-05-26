@@ -27,7 +27,7 @@ using std::endl;
 using std::string;
 using std::vector;
 
-using string_utils::shorten;
+using ppp::string_utils::shorten;
 
 namespace config = text_blocks_detector::config;
 
@@ -387,8 +387,8 @@ Trool TextBlocksDetector::startsBlock_fontSize(const PdfTextLine* line) const {
   // parts is likely to have a larger font size than the rest of the caption). The second condition
   // exists to not split text lines with many small characters (which is particularly often the
   // case when the text line contains an inline formula).
-  bool isEqualFontSize = math_utils::equal(prevLine->fontSize, line->fontSize, tolerance);
-  bool isEqualMaxFontSize = math_utils::equal(prevLine->maxFontSize, line->maxFontSize, tolerance);
+  bool isEqualFontSize = ppp::math_utils::equal(prevLine->fontSize, line->fontSize, tolerance);
+  bool isEqualMaxFontSize = ppp::math_utils::equal(prevLine->maxFontSize, line->maxFontSize, tolerance);
   if (!isEqualFontSize && !isEqualMaxFontSize) {
     _log->debug(p) << _q << BLUE << BOLD << " yes → starts block" << OFF << endl;
     return Trool::True;
@@ -406,7 +406,7 @@ Trool TextBlocksDetector::startsBlock_lineDistance(const PdfTextLine* line) cons
   const PdfTextLine* prevLine = line->prevLine;
 
   // Compute the expected line distance.
-  double fontSize = math_utils::round(line->fontSize, config::FONT_SIZE_PREC);
+  double fontSize = ppp::math_utils::round(line->fontSize, config::FONT_SIZE_PREC);
   double expectedLineDistance = 0;
   if (_doc->mostFreqLineDistancePerFontSize.count(fontSize) > 0) {
     double eld = _doc->mostFreqLineDistancePerFontSize.at(fontSize);
@@ -416,7 +416,7 @@ Trool TextBlocksDetector::startsBlock_lineDistance(const PdfTextLine* line) cons
 
   // Compute the actual line distance.
   double actualLineDistance = element_utils::computeVerticalGap(prevLine, line);
-  actualLineDistance = math_utils::round(actualLineDistance, config::LINE_DIST_PREC);
+  actualLineDistance = ppp::math_utils::round(actualLineDistance, config::LINE_DIST_PREC);
 
   double lineDistanceDiff = actualLineDistance - expectedLineDistance;
 
@@ -430,14 +430,14 @@ Trool TextBlocksDetector::startsBlock_lineDistance(const PdfTextLine* line) cons
   _log->debug(p) << _q << " └─ threshold: " << threshold << endl;
 
   // The line does *not* start a new block if the actual line distance is negative.
-  if (math_utils::equalOrSmaller(actualLineDistance, 0)) {
+  if (ppp::math_utils::equalOrSmaller(actualLineDistance, 0)) {
     _log->debug(p) << _q << BLUE << BOLD << " no, distance < 0 → continues block" << OFF << endl;
     return Trool::False;
   }
 
   // The line starts a new block if the actual line distance is larger than the expected line
   // distance, under consideration of the computed tolerance.
-  if (math_utils::larger(actualLineDistance, expectedLineDistance, threshold)) {
+  if (ppp::math_utils::larger(actualLineDistance, expectedLineDistance, threshold)) {
     _log->debug(p) << _q << BLUE << BOLD << " yes → starts block" << OFF << endl;
     return Trool::True;
   }
@@ -460,11 +460,11 @@ Trool TextBlocksDetector::startsBlock_increasedLineDistance(const PdfTextLine* l
 
   // Compute the distance between the previous but one line and the previous line.
   double prevDistance = element_utils::computeVerticalGap(prevPrevLine, prevLine);
-  prevDistance = math_utils::round(prevDistance, config::LINE_DIST_PREC);
+  prevDistance = ppp::math_utils::round(prevDistance, config::LINE_DIST_PREC);
 
   // Compute the distance between the previous line and the current line.
   double distance = element_utils::computeVerticalGap(prevLine, line);
-  distance = math_utils::round(distance, config::LINE_DIST_PREC);
+  distance = ppp::math_utils::round(distance, config::LINE_DIST_PREC);
 
   // Compute the tolerance.
   double threshold = config::getPrevCurrNextLineDistanceTolerance(_doc);
@@ -476,7 +476,7 @@ Trool TextBlocksDetector::startsBlock_increasedLineDistance(const PdfTextLine* l
 
   // The line starts a block if the curr+prev line distance is larger than the prev+prevPrev line
   // distance, under consideration of the computed tolerance.
-  if (math_utils::larger(distance, prevDistance, threshold)) {
+  if (ppp::math_utils::larger(distance, prevDistance, threshold)) {
     _log->debug(p) << _q << BLUE << BOLD << " yes → starts block" << OFF << endl;
     return Trool::True;
   }
@@ -576,7 +576,7 @@ Trool TextBlocksDetector::startsBlock_item(const PdfTextBlock* pBlock, const Pdf
     if (isPrevContLine) {
       // The line does *not* start a block if the line and the previous line are a continuation
       // of an item, and the leftX-offset between the lines is in the given tolerance.
-      if (math_utils::between(leftXOffset, leftXOffsetToleranceLow, leftXOffsetToleranceHigh)) {
+      if (ppp::math_utils::between(leftXOffset, leftXOffsetToleranceLow, leftXOffsetToleranceHigh)) {
         _log->debug(p) << _q << BLUE << BOLD << " + prev line is continuation of item "
             << "+ leftX-offset in tolerance → continues block" << OFF << endl;
         return Trool::False;
@@ -665,12 +665,12 @@ Trool TextBlocksDetector::startsBlock_hangingIndent(const PdfTextBlock* pBlock,
   double hangingIndent = pBlock->hangingIndent;
   double prevLeftMargin = prevLine->leftMargin;
   double currLeftMargin = line->leftMargin;
-  bool isPrevNotIndented = math_utils::smaller(prevLeftMargin, hangingIndent, _doc->avgCharWidth);
-  bool isCurrNotIndented = math_utils::smaller(currLeftMargin, hangingIndent, _doc->avgCharWidth);
-  bool isPrevIndented = math_utils::equal(prevLeftMargin, hangingIndent, _doc->avgCharWidth);
-  bool isCurrIndented = math_utils::equal(currLeftMargin, hangingIndent, _doc->avgCharWidth);
-  bool isPrevMoreIndented = math_utils::larger(prevLeftMargin, hangingIndent, _doc->avgCharWidth);
-  bool isCurrMoreIndented = math_utils::larger(currLeftMargin, hangingIndent, _doc->avgCharWidth);
+  bool isPrevNotIndented = ppp::math_utils::smaller(prevLeftMargin, hangingIndent, _doc->avgCharWidth);
+  bool isCurrNotIndented = ppp::math_utils::smaller(currLeftMargin, hangingIndent, _doc->avgCharWidth);
+  bool isPrevIndented = ppp::math_utils::equal(prevLeftMargin, hangingIndent, _doc->avgCharWidth);
+  bool isCurrIndented = ppp::math_utils::equal(currLeftMargin, hangingIndent, _doc->avgCharWidth);
+  bool isPrevMoreIndented = ppp::math_utils::larger(prevLeftMargin, hangingIndent, _doc->avgCharWidth);
+  bool isCurrMoreIndented = ppp::math_utils::larger(currLeftMargin, hangingIndent, _doc->avgCharWidth);
   double leftXOffset = element_utils::computeLeftXOffset(prevLine, line);
   bool hasPrevLineCapacity = text_lines_utils::computeHasPrevLineCapacity(line);
   pair<double, double> leftXOffsetTolInterval = config::getLeftXOffsetToleranceInterval(_doc);
@@ -693,7 +693,7 @@ Trool TextBlocksDetector::startsBlock_hangingIndent(const PdfTextBlock* pBlock,
   _log->debug(p) << _q << " └─ leftXOffsetToleranceHigh: " << leftXOffsetToleranceHigh << endl;
 
   // Do nothing if the block is not in hanging indent format.
-  if (math_utils::equalOrSmaller(hangingIndent, 0.0)) {
+  if (ppp::math_utils::equalOrSmaller(hangingIndent, 0.0)) {
     return Trool::None;
   }
 
@@ -711,7 +711,7 @@ Trool TextBlocksDetector::startsBlock_hangingIndent(const PdfTextBlock* pBlock,
 
       // The line does *not* start a block if it is indented, the prev. line is more indented
       // than the tolerance, and the leftX-offset between both lines is in the given tolerance.
-      if (math_utils::between(leftXOffset, leftXOffsetToleranceLow, leftXOffsetToleranceHigh)) {
+      if (ppp::math_utils::between(leftXOffset, leftXOffsetToleranceLow, leftXOffsetToleranceHigh)) {
         _log->debug(p) << _q << BLUE << BOLD << " + x-offset is in tolerance → continues block"
             << OFF << endl;
         return Trool::False;
@@ -742,7 +742,7 @@ Trool TextBlocksDetector::startsBlock_hangingIndent(const PdfTextBlock* pBlock,
 
       // The line does *not* start a block if the current and previous line are more indented
       // than the tolerance, and the leftX-offset between both lines is in the given tolerance.
-      if (math_utils::between(leftXOffset, leftXOffsetToleranceLow, leftXOffsetToleranceHigh)) {
+      if (ppp::math_utils::between(leftXOffset, leftXOffsetToleranceLow, leftXOffsetToleranceHigh)) {
         _log->debug(p) << _q << BLUE << BOLD << " + x-offset is in tolerance → continues block"
             << OFF << endl;
         return Trool::False;
@@ -776,10 +776,10 @@ Trool TextBlocksDetector::startsBlock_indent(const PdfTextLine* line) const {
   pair<double, double> indentToleranceInterval = config::getIndentToleranceInterval(_doc);
   double indentTolLow = indentToleranceInterval.first;
   double indentTolHigh = indentToleranceInterval.second;
-  bool isPrevIndented = math_utils::between(prevLeftMargin, indentTolLow, indentTolHigh);
-  bool isCurrIndented = math_utils::between(currLeftMargin, indentTolLow, indentTolHigh);
-  bool isPrevMoreIndented = math_utils::larger(prevLeftMargin, indentTolHigh);
-  bool isCurrMoreIndented = math_utils::larger(currLeftMargin, indentTolHigh);
+  bool isPrevIndented = ppp::math_utils::between(prevLeftMargin, indentTolLow, indentTolHigh);
+  bool isCurrIndented = ppp::math_utils::between(currLeftMargin, indentTolLow, indentTolHigh);
+  bool isPrevMoreIndented = ppp::math_utils::larger(prevLeftMargin, indentTolHigh);
+  bool isCurrMoreIndented = ppp::math_utils::larger(currLeftMargin, indentTolHigh);
   double absLeftXOffset = abs(element_utils::computeLeftXOffset(prevLine, line));
   bool hasPrevLineCapacity = text_lines_utils::computeHasPrevLineCapacity(line);
 
@@ -801,7 +801,7 @@ Trool TextBlocksDetector::startsBlock_indent(const PdfTextLine* line) const {
 
     // The line does *not* start a block if it is more indented than the given tolerance and
     // its leftX offset is equal to zero (under consideration of a small threshold).
-    if (math_utils::equal(absLeftXOffset, 0, _doc->avgCharWidth)) {
+    if (ppp::math_utils::equal(absLeftXOffset, 0, _doc->avgCharWidth)) {
       _log->debug(p) << _q << BLUE << BOLD << " + leftXOffset ≈ 0 → continues block" << OFF << endl;
       return Trool::False;
     }
@@ -818,7 +818,7 @@ Trool TextBlocksDetector::startsBlock_indent(const PdfTextLine* line) const {
     // The line starts a block if the current and previous line are more indented
     // than the tolerance, and the leftX-offset between both lines is equal to 0 (under
     // consideration of a small threshold).
-    if (math_utils::equal(absLeftXOffset, 0, _doc->avgCharWidth)) {
+    if (ppp::math_utils::equal(absLeftXOffset, 0, _doc->avgCharWidth)) {
       _log->debug(p) << _q << BLUE << BOLD << " + leftXOffset ≈ 0 → continues block" << OFF << endl;
       return Trool::False;
     }

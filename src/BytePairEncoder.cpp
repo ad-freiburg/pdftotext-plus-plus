@@ -36,7 +36,7 @@ void BytePairEncoder::encode(const wstring& text, size_t targetLength, vector<in
   // Split the text into words. For example, split "This is some text" into
   // ["This", "is", "some", "text"].
   vector<wstring> words;
-  string_utils::splitIntoWords(text, &words);
+  ppp::string_utils::splitIntoWords(text, &words);
 
   // Iterate through the words and encode each word using byte pair encoding.
   for (auto& word : words) {

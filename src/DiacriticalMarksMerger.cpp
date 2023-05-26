@@ -143,7 +143,7 @@ void DiacriticalMarksMerger::process() const {
       _log->debug(p) << "xOverlapRatio current/next char: " << nextXOverlapRatio << endl;
 
       // Skip the character if both overlap ratios are equal to zero.
-      if (math_utils::equal(prevXOverlapRatio, 0) && math_utils::equal(nextXOverlapRatio, 0)) {
+      if (ppp::math_utils::equal(prevXOverlapRatio, 0) && ppp::math_utils::equal(nextXOverlapRatio, 0)) {
         _log->debug(p) << BOLD << "Skipping char (both overlaps == 0)." << OFF << endl;
         continue;
       }
@@ -151,7 +151,7 @@ void DiacriticalMarksMerger::process() const {
       // Consider the character that yields the larger overlap ratio to be the base character.
       PdfCharacter* mark = currChar;
       PdfCharacter* base;
-      if (math_utils::larger(prevXOverlapRatio, nextXOverlapRatio)) {
+      if (ppp::math_utils::larger(prevXOverlapRatio, nextXOverlapRatio)) {
         _log->debug(p) << BOLD << "Merge diacritic with previous character." << OFF << endl;
         base = prevChar;
       } else {

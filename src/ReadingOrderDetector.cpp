@@ -238,14 +238,14 @@ void ReadingOrderDetector::choosePrimaryYCuts(const vector<Cut*>& cuts,
     // Consider the gap to be a primary y-cut when the element above or below the gap denotes the
     // title, a text block with author info, a page header, or a page footer.
     const PdfTextBlock* blockAbove = dynamic_cast<const PdfTextBlock*>(cut->elementBefore);
-    bool isTitleAbove = blockAbove && blockAbove->role == "TITLE";
-    bool isAuthorInfoAbove = blockAbove && blockAbove->role == "AUTHOR_INFO";
-    bool isMarginalAbove = blockAbove && blockAbove->role == "MARGINAL";
+    bool isTitleAbove = blockAbove && blockAbove->role == SemanticRole::TITLE;
+    bool isAuthorInfoAbove = blockAbove && blockAbove->role == SemanticRole::AUTHOR_INFO;
+    bool isMarginalAbove = blockAbove && blockAbove->role == SemanticRole::MARGINAL;
 
     const PdfTextBlock* blockBelow = dynamic_cast<const PdfTextBlock*>(cut->elementAfter);
-    bool isTitleBelow = blockBelow && blockBelow->role == "TITLE";
-    bool isAuthorInfoBelow = blockBelow && blockBelow->role == "AUTHOR_INFO";
-    bool isMarginalBelow = blockBelow && blockBelow->role == "MARGINAL";
+    bool isTitleBelow = blockBelow && blockBelow->role == SemanticRole::TITLE;
+    bool isAuthorInfoBelow = blockBelow && blockBelow->role == SemanticRole::AUTHOR_INFO;
+    bool isMarginalBelow = blockBelow && blockBelow->role == SemanticRole::MARGINAL;
 
     if (isTitleAbove != isTitleBelow) {
       cut->isChosen = true;

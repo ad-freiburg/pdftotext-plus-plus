@@ -28,7 +28,7 @@ PdfWord* words_utils::createWord(const vector<PdfCharacter*>& characters, const 
   word->doc = doc;
 
   // Create a (unique) id.
-  word->id = string_utils::createRandomString(ID_LENGTH, "word-");
+  word->id = ppp::string_utils::createRandomString(ID_LENGTH, "word-");
 
   // Iterative through the characters and compute the text, the x,y-coordinates of the
   // bounding box, and the font info.

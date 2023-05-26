@@ -23,10 +23,16 @@
 #include "./utils/StringUtils.h"
 #include "./PdfDocumentVisualizer.h"
 #include "./PdfToTextPlusPlus.h"
+#include "./Types.h"
 #include "./Validators.h"
 
+using ppp::types::DocumentUnit;
 using ppp::types::SemanticRole;
 using ppp::types::SerializationFormat;
+using ppp::types::Timing;
+using ppp::serialization::Serializer;
+using ppp::string_utils::wrap;
+using ppp::string_utils::strip;
 using std::chrono::duration_cast;
 using std::chrono::high_resolution_clock;
 using std::chrono::milliseconds;
@@ -37,8 +43,6 @@ using std::exception;
 using std::string;
 using std::unordered_set;
 using std::vector;
-using string_utils::wrap;
-using string_utils::strip;
 
 namespace po = boost::program_options;
 
@@ -78,13 +82,13 @@ static int HELP_OPTION_DESC_INDENT = 4;
  * @param maxLineLength
  *    The maximum length of the lines in the help message.
  * @param optionDescIndent
- *    The amount by which to indent the description of a command line option in the help message.
+ *    The amount by which to indent the description of a command line option.
  * @param privateOpts
  *    The definition of the non-public command-line options. NOTE: This can be omitted when the
  *    private options should not appear in the help message.
  */
-void printHelpMessage(po::options_description* publicOpts, int maxLineLength, int optionDescIndent,
-      po::options_description* privateOpts = 0) {
+void printHelpMessage(const po::options_description* publicOpts, int maxLineLength,
+      int optionDescIndent, const po::options_description* privateOpts = 0) {
   cout << BBLUE << "NAME" << OFF << endl;
   cout << wrap(strip(programName), maxLineLength) << endl;
   cout << endl;
@@ -102,7 +106,7 @@ void printHelpMessage(po::options_description* publicOpts, int maxLineLength, in
   cout << endl;
 
   cout << BBLUE << "OPTIONS" << OFF << endl;
-  for (auto& opt : publicOpts->options()) {
+  for (const auto& opt : publicOpts->options()) {
     cout << opt->format_name() << endl;
     cout << wrap(strip(opt->description()), maxLineLength, optionDescIndent) << endl;
   }
@@ -110,7 +114,7 @@ void printHelpMessage(po::options_description* publicOpts, int maxLineLength, in
 
   if (privateOpts) {
     cout << BBLUE << "NON-PUBLIC OPTIONS" << OFF << endl;
-    for (auto& opt : privateOpts->options()) {
+    for (const auto& opt : privateOpts->options()) {
       cout << opt->format_name() << endl;
       cout << wrap(strip(opt->description()), maxLineLength, optionDescIndent) << endl;
     }
@@ -125,21 +129,25 @@ void printHelpMessage(po::options_description* publicOpts, int maxLineLength, in
  * running the extraction pipeline on a specified PDF, and outputting the extracted text.
  */
 int main(int argc, char* argv[]) {
-  SerializationFormat format = SerializationFormat::TXT;
-  vector<string> roles = {};
+  // The path to the PDF file to process.
+  string pdfFilePath;
+  // The path to the file into which to output the extracted text.
+  // NOTE: If specified as "-", the text is output to stdout.
+  string outputFilePath = "-";
 
-  bool addControlCharacters = false;
-  bool addSemanticRoles = false;
-  bool noScripts = false;
+  // The format in which to output the extracted text.
+  SerializationFormat format = SerializationFormat::TXT;
+  // The semantic roles of the text blocks to output.
+  vector<SemanticRole> roles = ppp::types::getSemanticRoles();
+  // The units of the text to output.
+  vector<DocumentUnit> units = ppp::types::getDocumentUnits();
+
+  bool addControlCharacters = false; // TODO: Introduce an extra format.
+  bool addSemanticRoles = false;  // TODO: Introduce an extra format.
+  bool noScripts = false;  // TODO: Allow to disable all optional components of the pipeline.
   bool noEmbeddedFontFiles = false;
   bool noDehyphenation = false;
   bool parseMode = false;
-  bool outputPages = false;
-  bool outputChars = false;
-  bool outputFigures = false;
-  bool outputShapes = false;
-  bool outputWords = false;
-  bool outputBlocks = false;
   bool visualizeChars = false;
   bool visualizeWords = false;
   bool visualizeTextLines = false;
@@ -153,7 +161,7 @@ int main(int argc, char* argv[]) {
   bool visualizeReadingOrderCuts = false;
   string visualizeFilePath = "";
   string verbosity = "error";
-  bool debugPdfParsing = false;
+  bool debugPdfParsing = false;  // TODO: Introduce advanced logging.
   bool debugStatisticsComputation = false;
   bool debugDiacriticMarksMerging = false;
   bool debugWordsDetection = false;
@@ -166,8 +174,7 @@ int main(int argc, char* argv[]) {
   bool printVersion = false;
   bool printHelp = false;
   bool printFullHelp = false;
-  string pdfFilePath;
-  string outputFilePath = "-";
+
 
   // Specify the public options (= options that will be shown to the user when printing the help).
   po::options_description publicOpts;
@@ -180,10 +187,19 @@ int main(int argc, char* argv[]) {
     )
     (
       "role",
-      po::value<vector<string>>(&roles),
+      po::value<vector<SemanticRole>>(&roles),
       (string("Only output text from text blocks with the specified roles. Use the syntax\n")
         + string("'--role <value1> --role <value2> ...' to specify multiple roles.\nValid roles: ")
         + ppp::types::getSemanticRolesStr() + string(".\n")).c_str()
+    )
+    (
+      "unit",
+      po::value<vector<DocumentUnit>>(&units),
+      (string("Output semantic and layout information about the specified document unit(s). Use\n")
+        + string("the syntax '--unit <value1> --unit <value2> ...' to specify multiple units.\n")
+        + string("NOTE: This option does not have an effect when used together with the ")
+        + string("'--format txt' or '--format txt-extended' option.\n")
+        + string("Valid units: ") + ppp::types::getDocumentUnitsStr() + string(".\n")).c_str()
     )
     (
       "control-characters",
@@ -219,43 +235,6 @@ int main(int argc, char* argv[]) {
       "Do not parse the font files embedded into the PDF file. "
       "NOTE: Using this option results in a faster extraction process, but a less accurate "
       "extraction result."
-    )
-    // TODO(korzen): This option should be removed when more structured formats are available.
-    (
-      "output-pages",
-      po::bool_switch(&outputPages),
-      "Output information about the pages (e.g., the widths and heights) in JSONL format."
-    )
-    // TODO(korzen): This option should be removed when more structured formats are available.
-    (
-      "output-characters",
-      po::bool_switch(&outputChars),
-      "Output information about the characters (e.g., the positions and fonts) in JSONL format."
-    )
-    // TODO(korzen): This option should be removed when more structured formats are available.
-    (
-      "output-figures",
-      po::bool_switch(&outputFigures),
-      "Output information about the figures (e.g., the positions) in JSONL format."
-    )
-    // TODO(korzen): This option should be removed when more structured formats are available.
-    (
-      "output-shapes",
-      po::bool_switch(&outputShapes),
-      "Output information about the shapes (e.g., the positions) in JSONL format."
-    )
-    // TODO(korzen): This option should be removed when more structured formats are available.
-    (
-      "output-words",
-      po::bool_switch(&outputWords),
-      "Output information about the detected words (e.g., the positions and fonts) in JSONL format."
-    )
-    // TODO(korzen): This option should be removed when more structured formats are available.
-    (
-      "output-text-blocks",
-      po::bool_switch(&outputBlocks),
-      "Output information about the detected text blocks (e.g., the positions and fonts) in JSONL "
-      "format."
     )
     (
       "visualization-path",
@@ -559,8 +538,9 @@ int main(int argc, char* argv[]) {
   // }
   Serializer* serializer = ppp::serialization::getSerializer(format);
   if (serializer) {
-    unordered_set<string> rolesSet(roles.begin(), roles.end());
-    serializer->serialize(&doc, rolesSet, outputFilePath);
+    unordered_set<SemanticRole> rolesSet(roles.begin(), roles.end());
+    unordered_set<DocumentUnit> unitsSet(units.begin(), units.end());
+    serializer->serialize(&doc, rolesSet, unitsSet, outputFilePath);
   }
   auto end = high_resolution_clock::now();
   Timing timingSerializeChars("Serialize", duration_cast<milliseconds>(end - start).count());
@@ -626,7 +606,7 @@ int main(int argc, char* argv[]) {
       string prefix = " * " + timing.name + ":";
       cout << std::left << std::setw(25) << prefix;
       cout << std::right << std::setw(4) << timing.time << " ms ";
-      double time = math_utils::round(timing.time / static_cast<double>(timeTotal) * 100, 1);
+      double time = ppp::math_utils::round(timing.time / static_cast<double>(timeTotal) * 100, 1);
       cout << "(" << time << "%)";
       cout << endl;
     }

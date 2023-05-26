@@ -15,7 +15,9 @@
 #include <vector>
 
 #include "./PdfFontInfo.h"
+#include "./Types.h"
 
+using ppp::types::SemanticRole;
 using std::numeric_limits;
 using std::string;
 using std::unordered_map;
@@ -30,31 +32,6 @@ class PdfTextBlock;
 class PdfTextElement;
 class PdfTextLine;
 class PdfWord;
-
-// =================================================================================================
-
-/**
- * A struct for storing a running time needed by a particular action or method to complete.
- */
-struct Timing {
-  /**
-   * This constructor creates and initializes a new instance of this struct.
-   *
-   * @param nameA
-   *    A (short) name describing the action/method.
-   * @param timeA
-   *    The running time of the action/method.
-   */
-  Timing(const string& nameA, int64_t timeA) {
-    name = nameA;
-    time = timeA;
-  }
-
-  // The name of the action/method.
-  string name;
-  // The running time of the action/method.
-  int64_t time = 0;
-};
 
 // =================================================================================================
 
@@ -695,7 +672,7 @@ class PdfTextBlock : public PdfTextElement {
   const PdfPageSegment* segment = nullptr;
 
   // The semantic role of this text block.
-  string role;
+  SemanticRole role;
 
   // A boolean flag indicating whether or not the text lines in this text block are centered.
   bool isLinesCentered = false;

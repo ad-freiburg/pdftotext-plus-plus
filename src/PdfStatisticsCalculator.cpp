@@ -115,13 +115,13 @@ void PdfStatisticsCalculator::computeWordStatistics() const {
       PdfWord* currWord = page->words[i];
 
       // Skip the word if its font size is smaller than the most frequent font size.
-      if (math_utils::smaller(currWord->fontSize, _doc->mostFreqFontSize,
+      if (ppp::math_utils::smaller(currWord->fontSize, _doc->mostFreqFontSize,
           config::FSIZE_EQUAL_TOLERANCE)) {
         continue;
       }
 
       // Count the word height.
-      double height = math_utils::round(currWord->pos->getHeight(), config::COORDS_PREC);
+      double height = ppp::math_utils::round(currWord->pos->getHeight(), config::COORDS_PREC);
       wordHeightCounter[height]++;
 
       // Skip to the next word if there is no previous word.
@@ -141,7 +141,7 @@ void PdfStatisticsCalculator::computeWordStatistics() const {
 
       // Skip to the next word if the font size of the previous word is not equal to the most
       // frequent font size.
-      if (!math_utils::equal(prevWord->fontSize, _doc->mostFreqFontSize,
+      if (!ppp::math_utils::equal(prevWord->fontSize, _doc->mostFreqFontSize,
           config::FSIZE_EQUAL_TOLERANCE)) {
         continue;
       }
@@ -150,17 +150,17 @@ void PdfStatisticsCalculator::computeWordStatistics() const {
 
       // Add the horizontal gap between the previous word and the current word to the counter,
       // when one word vertically overlaps at least the half of the height of the other word.
-      if (math_utils::equalOrLarger(maxYOverlapRatio, sameLineYOverlapRatioThreshold)) {
+      if (ppp::math_utils::equalOrLarger(maxYOverlapRatio, sameLineYOverlapRatioThreshold)) {
         double gap = element_utils::computeHorizontalGap(prevWord, currWord);
-        gap = math_utils::round(gap, config::COORDS_PREC);
+        gap = ppp::math_utils::round(gap, config::COORDS_PREC);
         horizontalGapCounter[gap]++;
       }
 
       // Add the vertical gap between the previous word and the current word to the counter, when
       // they do *not* vertically overlap.
-      if (math_utils::equalOrSmaller(maxYOverlapRatio, otherLineYOverlapRatioThreshold)) {
+      if (ppp::math_utils::equalOrSmaller(maxYOverlapRatio, otherLineYOverlapRatioThreshold)) {
         double gap = element_utils::computeVerticalGap(prevWord, currWord);
-        gap = math_utils::round(gap, config::COORDS_PREC);
+        gap = ppp::math_utils::round(gap, config::COORDS_PREC);
         verticalGapCounter[gap]++;
       }
     }
@@ -215,15 +215,15 @@ void PdfStatisticsCalculator::computeTextLineStatistics() const {
         // when one or both lines contain sub- or superscripts. By our experience, computing the
         // line distance with sub- and superscripts ignored results in more accurate line distances.
         double dist = currLine->baseBBoxUpperY - prevLine->baseBBoxLowerY;
-        dist = max(0.0, math_utils::round(dist, config::LINE_DIST_PREC));
+        dist = max(0.0, ppp::math_utils::round(dist, config::LINE_DIST_PREC));
         lineDistanceCounter[dist]++;
 
         // If the font sizes of the text lines are equal, add the distance also to
         // lineDistanceCountersPerFontSize, for computing the most frequent line distances broken
         // down by font size.
-        double prevFontSize = math_utils::round(prevLine->fontSize, config::FONT_SIZE_PREC);
-        double currFontSize = math_utils::round(currLine->fontSize, config::FONT_SIZE_PREC);
-        if (math_utils::equal(prevFontSize, currFontSize, config::FSIZE_EQUAL_TOLERANCE)) {
+        double prevFontSize = ppp::math_utils::round(prevLine->fontSize, config::FONT_SIZE_PREC);
+        double currFontSize = ppp::math_utils::round(currLine->fontSize, config::FONT_SIZE_PREC);
+        if (ppp::math_utils::equal(prevFontSize, currFontSize, config::FSIZE_EQUAL_TOLERANCE)) {
           lineDistanceCountersPerFontSize[currFontSize][dist]++;
         }
       }

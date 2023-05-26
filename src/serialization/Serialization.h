@@ -14,17 +14,23 @@
 
 #include "../Types.h"
 #include "./Serializer.h"
-#include "./TextSerializer.h"
+#include "./PlainTextSerializer.h"
+#include "./PlainTextExtendedSerializer.h"
+#include "./JsonlSerializer.h"
 
 using ppp::types::SerializationFormat;
 using std::string;
 using std::unordered_map;
 
+// =================================================================================================
+
 namespace ppp::serialization {
 
 // The mapping of serialization formats to serializers.
 const unordered_map<SerializationFormat, Serializer*> SERIALIZERS {
-  { SerializationFormat::TXT, new TextSerializer() }
+  { SerializationFormat::TXT, new PlainTextSerializer() },
+  { SerializationFormat::TXT_EXTENDED, new PlainTextExtendedSerializer() },
+  { SerializationFormat::JSONL, new JsonlSerializer() }
 };
 
 /**
@@ -32,7 +38,8 @@ const unordered_map<SerializationFormat, Serializer*> SERIALIZERS {
  * text extracted from a PDF. The serialization formats are separated from each other by commas.
  *
  * @return
- *     A string containing all available serialization formats.
+ *     A string containing all formats into which pdftotext++ allows to serialize text extracted
+ *     from a PDF.
  */
 string getSerializationFormatChoicesStr();
 

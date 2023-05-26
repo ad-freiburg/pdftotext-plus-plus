@@ -212,7 +212,7 @@ Trool PageSegmentator::chooseXCut_overlappingElements(const Cut* cut, const vect
     double topMargin = element->pos->upperY - cut->y1;
     double bottomMargin = cut->y2 - element->pos->lowerY;
 
-    if (math_utils::smaller(topMargin, marginThreshold)) {
+    if (ppp::math_utils::smaller(topMargin, marginThreshold)) {
       if (!silent) {
         _log->debug(p) << BLUE << BOLD << " yes → do not choose" << OFF << endl;
         _log->debug(p) << "  └─ element: " << element->toShortString() << endl;
@@ -221,7 +221,7 @@ Trool PageSegmentator::chooseXCut_overlappingElements(const Cut* cut, const vect
       return Trool::False;
     }
 
-    if (math_utils::smaller(bottomMargin, marginThreshold)) {
+    if (ppp::math_utils::smaller(bottomMargin, marginThreshold)) {
       if (!silent) {
         _log->debug(p) << BLUE << BOLD << " yes → do not choose" << OFF << endl;
         _log->debug(p) << "  └─ element: " << element->toShortString() << endl;
@@ -251,8 +251,8 @@ Trool PageSegmentator::chooseXCut_smallGapWidthHeight(const Cut* cut, bool silen
     _log->debug(p) << " └─ threshold gapHeight: " << hThreshold << endl;
   }
 
-  if (math_utils::smaller(cut->gapWidth, wThreshold)
-        && math_utils::smaller(cut->gapHeight, hThreshold)) {
+  if (ppp::math_utils::smaller(cut->gapWidth, wThreshold)
+        && ppp::math_utils::smaller(cut->gapHeight, hThreshold)) {
     _log->debug(p) << BLUE << BOLD << " si → do not choose" << OFF << endl;
     return Trool::False;
   }
@@ -304,7 +304,7 @@ Trool PageSegmentator::chooseXCut_contiguousWords(const Cut* cut,
       _log->debug(p) << " └─ max y-overlap ratio: " << maxYOverlapRatio << endl;
       _log->debug(p) << " └─ max y-overlap ratio threshold: " << yOverlapRatioThreshold << endl;
     }
-    if (math_utils::smaller(maxYOverlapRatio, yOverlapRatioThreshold)) {
+    if (ppp::math_utils::smaller(maxYOverlapRatio, yOverlapRatioThreshold)) {
       continue;
     }
 
@@ -344,7 +344,7 @@ Trool PageSegmentator::chooseXCut_slimGroups(const Cut* prevChosenCut, const Cut
     _log->debug(p) << " └─ threshold: " << widthThreshold << endl;
   }
 
-  if (math_utils::smaller(leftGroupWidth, widthThreshold)) {
+  if (ppp::math_utils::smaller(leftGroupWidth, widthThreshold)) {
     if (!silent) {
       _log->debug(p) << BLUE << BOLD << " yes (leftGroup) → do not choose" << OFF << endl;
     }
@@ -367,7 +367,7 @@ Trool PageSegmentator::chooseXCut_slimGroups(const Cut* prevChosenCut, const Cut
     _log->debug(p) << " └─ threshold: " << widthThreshold << endl;
   }
 
-  if (math_utils::smaller(rightGroupWidth, widthThreshold)) {
+  if (ppp::math_utils::smaller(rightGroupWidth, widthThreshold)) {
     if (!silent) {
       _log->debug(p) << BLUE << BOLD << " yes (rightGroup) → do not choose" << OFF << endl;
     }

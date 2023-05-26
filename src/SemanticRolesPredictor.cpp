@@ -93,9 +93,9 @@ void SemanticRolesPredictor::readModel() {
     size_t posTab = line.find("\t");
     if (posTab == string::npos) { continue; }
 
-    string roleName = line.substr(0, posTab);
+    string roleStr = line.substr(0, posTab);
     int roleId = std::stoi(line.substr(posTab + 1));
-    _rolesVocab[roleId] = roleName;
+    _rolesVocab[roleId] = roleStr;
   }
 
   bpeVocabFile.close();
@@ -130,14 +130,14 @@ void SemanticRolesPredictor::predict(const PdfDocument* doc) {
     for (auto* block : page->blocks) {
       // For the block, find the role with the highest probability.
       float maxProb = 0;
-      string maxSemanticRole;
+      int64_t maxSemanticRoleNum = 0;
       for (int64_t roleNum = 0; roleNum < yDim; roleNum++) {
         if (outputData[blockIndex * yDim + roleNum] > maxProb) {
           maxProb = outputData[blockIndex * yDim + roleNum];
-          maxSemanticRole = _rolesVocab[roleNum];
+          maxSemanticRoleNum = roleNum;
         }
       }
-      block->role = maxSemanticRole;
+      block->role = SemanticRole(maxSemanticRoleNum);
       blockIndex++;
     }
   }

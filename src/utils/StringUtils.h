@@ -21,7 +21,7 @@ using std::wstring;
 // =================================================================================================
 // CONFIG
 
-namespace string_utils::config {
+namespace ppp::string_utils::config {
 
 // An alphabet that is used for creating random strings. It contains all characters we consider to
 // be alphanumerical.
@@ -31,7 +31,7 @@ const char* const ALPHA_NUM_ALPHABET = global_config::ALPHA_NUM_ALPHABET;
 // consider to be a word delimiter.
 const char* const WORD_DELIMITERS_ALPHABET = global_config::WORD_DELIMITERS_ALPHABET;
 
-}  // namespace string_utils::config
+}  // namespace ppp::string_utils::config
 
 // =================================================================================================
 
@@ -39,7 +39,7 @@ const char* const WORD_DELIMITERS_ALPHABET = global_config::WORD_DELIMITERS_ALPH
 /**
  * A collection of some useful and commonly used functions in context of strings.
  */
-namespace string_utils {
+namespace ppp::string_utils {
 
 /**
  * This method splits the given text (given as a wstring) into words and appends the words to the

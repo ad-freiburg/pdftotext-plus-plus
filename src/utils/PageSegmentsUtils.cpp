@@ -33,7 +33,7 @@ PdfPageSegment* page_segment_utils::createPageSegment(const vector<PdfElement*>&
   segment->doc = doc;
 
   // Create a (unique) id.
-  segment->id = string_utils::createRandomString(ID_LENGTH, "segment-");
+  segment->id = ppp::string_utils::createRandomString(ID_LENGTH, "segment-");
 
   // Set the page number.
   segment->pos->pageNum = !elements.empty() ? elements[0]->pos->pageNum : -1;
@@ -66,7 +66,7 @@ tuple<double, double, double, double> page_segment_utils::computeTrimBox(
   // Compute the most frequent rightX among the text lines.
   DoubleCounter rightXCounter;
   for (auto* line : segment->lines) {
-    double rightX = math_utils::round(line->pos->getRotRightX(), config::TRIM_BOX_COORDS_PREC);
+    double rightX = ppp::math_utils::round(line->pos->getRotRightX(), config::TRIM_BOX_COORDS_PREC);
     rightXCounter[rightX]++;
   }
   pair<double, double> mostFreqRightXPair = rightXCounter.mostFreqAndCount();
@@ -78,7 +78,7 @@ tuple<double, double, double, double> page_segment_utils::computeTrimBox(
   double mostFreqRightXRatio = nLines > 0 ? mostFreqRightXCount / static_cast<double>(nLines) : 0.0;
 
   // If the percentage is larger or equal to the given threshold, set trimRightX to this value.
-  if (math_utils::equalOrLarger(mostFreqRightXRatio, config::MIN_PERC_LINES_SAME_RIGHT_X)) {
+  if (ppp::math_utils::equalOrLarger(mostFreqRightXRatio, config::MIN_PERC_LINES_SAME_RIGHT_X)) {
     trimRightX = mostFreqRightX;
   }
 
