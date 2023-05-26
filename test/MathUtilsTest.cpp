@@ -10,13 +10,13 @@
 
 #include "../src/utils/MathUtils.h"
 
-using math_utils::between;
-using math_utils::equal;
-using math_utils::equalOrLarger;
-using math_utils::equalOrSmaller;
-using math_utils::larger;
-using math_utils::round;
-using math_utils::smaller;
+using ppp::math_utils::between;
+using ppp::math_utils::equal;
+using ppp::math_utils::equalOrLarger;
+using ppp::math_utils::equalOrSmaller;
+using ppp::math_utils::larger;
+using ppp::math_utils::round;
+using ppp::math_utils::smaller;
 
 // The allowed tolerance on comparing two float values.
 const double TOL = 0.0001;

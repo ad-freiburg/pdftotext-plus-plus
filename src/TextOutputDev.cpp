@@ -151,7 +151,7 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   // ----------------------------------
   // Create and set a (unique) id.
 
-  ch->id = string_utils::createRandomString(ID_LENGTH, "char-");
+  ch->id = ppp::string_utils::createRandomString(ID_LENGTH, "char-");
   _log->debug(_p) << " └─ char.id: \"" << ch->id << "\"" << endl;
 
   // ----------------------------------
@@ -236,10 +236,10 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
     m[2] = m2[2];
     m[3] = m2[3];
   }
-  if (math_utils::larger(fabs(m[0] * m[3]), fabs(m[1] * m[2]))) {
-    ch->pos->rotation = (math_utils::larger(m[0], 0) || math_utils::smaller(m[3], 0)) ? 0 : 2;
+  if (ppp::math_utils::larger(fabs(m[0] * m[3]), fabs(m[1] * m[2]))) {
+    ch->pos->rotation = (ppp::math_utils::larger(m[0], 0) || ppp::math_utils::smaller(m[3], 0)) ? 0 : 2;
   } else {
-    ch->pos->rotation = (math_utils::larger(m[2], 0)) ? 1 : 3;
+    ch->pos->rotation = (ppp::math_utils::larger(m[2], 0)) ? 1 : 3;
   }
   // In vertical writing mode, the lines are effectively rotated by 90 degrees.
   if (gfxFont && gfxFont->getWMode()) {
@@ -412,8 +412,8 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
     lowerY = max(upperY3, lowerY3);
 
     // Update the bounding box when the alternative bounding box has a larger vertical extent.
-    if (math_utils::smaller(upperY, ch->pos->upperY)
-        || math_utils::larger(lowerY, ch->pos->lowerY)) {
+    if (ppp::math_utils::smaller(upperY, ch->pos->upperY)
+        || ppp::math_utils::larger(lowerY, ch->pos->lowerY)) {
       ch->pos->leftX = leftX;
       ch->pos->upperY = upperY;
       ch->pos->rightX = rightX;
@@ -443,7 +443,7 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   // ----------------------------------
   // Set the font size.
 
-  ch->fontSize = math_utils::round(transformedFontSize, FONT_SIZE_PREC);
+  ch->fontSize = ppp::math_utils::round(transformedFontSize, FONT_SIZE_PREC);
   _log->debug(_p) << " └─ char.fontSize: " << ch->fontSize << endl;
 
   // ----------------------------------
@@ -486,10 +486,10 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
       << "; rightX: " << clipRightX << "; lowerY: " << clipLowerY << endl;
 
   // Check if the clip box is equal to the page's clip box. If so, add the character to the page.
-  if (math_utils::equal(clipLeftX, _page->clipLeftX, COORDS_EQUAL_TOLERANCE)
-        && math_utils::equal(clipUpperY, _page->clipUpperY, COORDS_EQUAL_TOLERANCE)
-        && math_utils::equal(clipRightX, _page->clipRightX, COORDS_EQUAL_TOLERANCE)
-        && math_utils::equal(clipLowerY, _page->clipLowerY, COORDS_EQUAL_TOLERANCE)) {
+  if (ppp::math_utils::equal(clipLeftX, _page->clipLeftX, COORDS_EQUAL_TOLERANCE)
+        && ppp::math_utils::equal(clipUpperY, _page->clipUpperY, COORDS_EQUAL_TOLERANCE)
+        && ppp::math_utils::equal(clipRightX, _page->clipRightX, COORDS_EQUAL_TOLERANCE)
+        && ppp::math_utils::equal(clipLowerY, _page->clipLowerY, COORDS_EQUAL_TOLERANCE)) {
     _page->characters.push_back(ch);
     _log->debug(_p) << "Append to page " << _page->pageNum << "." << endl;
     return;
@@ -498,10 +498,10 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   // Iterate through the figures to check if there is a figure with a clip box equal to the
   // current clip box. If so, append the character to this figure.
   for (auto* figure : _page->figures) {
-    if (math_utils::equal(clipLeftX, figure->clipLeftX, COORDS_EQUAL_TOLERANCE)
-          && math_utils::equal(clipUpperY, figure->clipUpperY, COORDS_EQUAL_TOLERANCE)
-          && math_utils::equal(clipRightX, figure->clipRightX, COORDS_EQUAL_TOLERANCE)
-          && math_utils::equal(clipLowerY, figure->clipLowerY, COORDS_EQUAL_TOLERANCE)) {
+    if (ppp::math_utils::equal(clipLeftX, figure->clipLeftX, COORDS_EQUAL_TOLERANCE)
+          && ppp::math_utils::equal(clipUpperY, figure->clipUpperY, COORDS_EQUAL_TOLERANCE)
+          && ppp::math_utils::equal(clipRightX, figure->clipRightX, COORDS_EQUAL_TOLERANCE)
+          && ppp::math_utils::equal(clipLowerY, figure->clipLowerY, COORDS_EQUAL_TOLERANCE)) {
       // Update the bounding box of the figure.
       figure->pos->leftX = min(figure->pos->leftX, ch->pos->leftX);
       figure->pos->upperY = min(figure->pos->upperY, ch->pos->upperY);
@@ -515,7 +515,7 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
 
   // If there is no figure with a clip box equal to the current clip box, create one.
   PdfFigure* figure = new PdfFigure();
-  figure->id = string_utils::createRandomString(ID_LENGTH, "figure-");
+  figure->id = ppp::string_utils::createRandomString(ID_LENGTH, "figure-");
   figure->doc = _doc;
   figure->pos->pageNum = _page->pageNum;
   figure->pos->leftX = ch->pos->leftX;
@@ -573,10 +573,10 @@ void TextOutputDev::stroke(GfxState* state) {
       // example, when the first endpoint of a line lies left to the clip box and the second
       // endpoint lies right to the clip box (and the connecting line goes straight through the
       // clip box).
-      if (math_utils::equalOrSmaller(x, clipLeftX, COORDS_EQUAL_TOLERANCE)
-          || math_utils::equalOrSmaller(y, clipUpperY, COORDS_EQUAL_TOLERANCE)
-          || math_utils::equalOrLarger(x, clipRightX, COORDS_EQUAL_TOLERANCE)
-          || math_utils::equalOrLarger(y, clipLowerY, COORDS_EQUAL_TOLERANCE)) {
+      if (ppp::math_utils::equalOrSmaller(x, clipLeftX, COORDS_EQUAL_TOLERANCE)
+          || ppp::math_utils::equalOrSmaller(y, clipUpperY, COORDS_EQUAL_TOLERANCE)
+          || ppp::math_utils::equalOrLarger(x, clipRightX, COORDS_EQUAL_TOLERANCE)
+          || ppp::math_utils::equalOrLarger(y, clipLowerY, COORDS_EQUAL_TOLERANCE)) {
         continue;
       }
 
@@ -589,7 +589,7 @@ void TextOutputDev::stroke(GfxState* state) {
 
   // Store the information about the path in form of a `PdfShape`.
   PdfShape* shape = new PdfShape();
-  shape->id = string_utils::createRandomString(ID_LENGTH, "shape-");
+  shape->id = ppp::string_utils::createRandomString(ID_LENGTH, "shape-");
   shape->doc = _doc;
   shape->pos->pageNum = _page->pageNum;
   shape->pos->leftX = leftX;
@@ -619,10 +619,10 @@ void TextOutputDev::stroke(GfxState* state) {
   // box is "seen" for the first time.
 
   // Check if the clip box is equal to the page's clip box. If so, add the shape to the page.
-  if (math_utils::equal(clipLeftX, _page->clipLeftX, COORDS_EQUAL_TOLERANCE)
-        && math_utils::equal(clipUpperY, _page->clipUpperY, COORDS_EQUAL_TOLERANCE)
-        && math_utils::equal(clipRightX, _page->clipRightX, COORDS_EQUAL_TOLERANCE)
-        && math_utils::equal(clipLowerY, _page->clipLowerY, COORDS_EQUAL_TOLERANCE)) {
+  if (ppp::math_utils::equal(clipLeftX, _page->clipLeftX, COORDS_EQUAL_TOLERANCE)
+        && ppp::math_utils::equal(clipUpperY, _page->clipUpperY, COORDS_EQUAL_TOLERANCE)
+        && ppp::math_utils::equal(clipRightX, _page->clipRightX, COORDS_EQUAL_TOLERANCE)
+        && ppp::math_utils::equal(clipLowerY, _page->clipLowerY, COORDS_EQUAL_TOLERANCE)) {
     _page->shapes.push_back(shape);
     _log->debug(_p) << "Append to page " << _page->pageNum << "." << endl;
     return;
@@ -631,10 +631,10 @@ void TextOutputDev::stroke(GfxState* state) {
   // Iterate through the figures to check if there is a figure with a clip box equal to the current
   // clip box. If so, append the shape to this figure.
   for (auto* figure : _page->figures) {
-    if (math_utils::equal(clipLeftX, figure->clipLeftX, COORDS_EQUAL_TOLERANCE)
-          && math_utils::equal(clipUpperY, figure->clipUpperY, COORDS_EQUAL_TOLERANCE)
-          && math_utils::equal(clipRightX, figure->clipRightX, COORDS_EQUAL_TOLERANCE)
-          && math_utils::equal(clipLowerY, figure->clipLowerY, COORDS_EQUAL_TOLERANCE)) {
+    if (ppp::math_utils::equal(clipLeftX, figure->clipLeftX, COORDS_EQUAL_TOLERANCE)
+          && ppp::math_utils::equal(clipUpperY, figure->clipUpperY, COORDS_EQUAL_TOLERANCE)
+          && ppp::math_utils::equal(clipRightX, figure->clipRightX, COORDS_EQUAL_TOLERANCE)
+          && ppp::math_utils::equal(clipLowerY, figure->clipLowerY, COORDS_EQUAL_TOLERANCE)) {
       // Update the bounding box of the figure.
       figure->pos->leftX = min(figure->pos->leftX, shape->pos->leftX);
       figure->pos->upperY = min(figure->pos->upperY, shape->pos->upperY);
@@ -648,7 +648,7 @@ void TextOutputDev::stroke(GfxState* state) {
 
   // If there is no figure with a clip box equal to the current clip box, create one.
   PdfFigure* figure = new PdfFigure();
-  figure->id = string_utils::createRandomString(ID_LENGTH, "figure-");
+  figure->id = ppp::string_utils::createRandomString(ID_LENGTH, "figure-");
   figure->doc = _doc;
   figure->pos->pageNum = _page->pageNum;
   figure->pos->leftX = shape->pos->leftX;
@@ -728,16 +728,16 @@ void TextOutputDev::drawGraphic(GfxState* state) {
 
   // Ignore the graphic if it lies outside the clip box (since graphics outside the clip box are
   // not visible). Example PDF where a graphic lies outside the clip box: 1001.5159.
-  if (math_utils::equalOrSmaller(leftX, clipLeftX, COORDS_EQUAL_TOLERANCE)
-      || math_utils::equalOrSmaller(upperY, clipUpperY, COORDS_EQUAL_TOLERANCE)
-      || math_utils::equalOrLarger(rightX, clipRightX, COORDS_EQUAL_TOLERANCE)
-      || math_utils::equalOrLarger(lowerY, clipLowerY, COORDS_EQUAL_TOLERANCE)) {
+  if (ppp::math_utils::equalOrSmaller(leftX, clipLeftX, COORDS_EQUAL_TOLERANCE)
+      || ppp::math_utils::equalOrSmaller(upperY, clipUpperY, COORDS_EQUAL_TOLERANCE)
+      || ppp::math_utils::equalOrLarger(rightX, clipRightX, COORDS_EQUAL_TOLERANCE)
+      || ppp::math_utils::equalOrLarger(lowerY, clipLowerY, COORDS_EQUAL_TOLERANCE)) {
     return;
   }
 
   // Store the information about the graphic in form of a `PdfGraphic`.
   PdfGraphic* graphic = new PdfGraphic();
-  graphic->id = string_utils::createRandomString(ID_LENGTH, "graphic-");
+  graphic->id = ppp::string_utils::createRandomString(ID_LENGTH, "graphic-");
   graphic->doc = _doc;
   graphic->pos->pageNum = _page->pageNum;
   graphic->pos->leftX = max(min(leftX, rightX), clipLeftX);
@@ -767,10 +767,10 @@ void TextOutputDev::drawGraphic(GfxState* state) {
   // box is "seen" for the first time.
 
   // Check if the clip box is equal to the page's clip box. If so, add the graphic to the page.
-  if (math_utils::equal(clipLeftX, _page->clipLeftX, COORDS_EQUAL_TOLERANCE)
-        && math_utils::equal(clipUpperY, _page->clipUpperY, COORDS_EQUAL_TOLERANCE)
-        && math_utils::equal(clipRightX, _page->clipRightX, COORDS_EQUAL_TOLERANCE)
-        && math_utils::equal(clipLowerY, _page->clipLowerY, COORDS_EQUAL_TOLERANCE)) {
+  if (ppp::math_utils::equal(clipLeftX, _page->clipLeftX, COORDS_EQUAL_TOLERANCE)
+        && ppp::math_utils::equal(clipUpperY, _page->clipUpperY, COORDS_EQUAL_TOLERANCE)
+        && ppp::math_utils::equal(clipRightX, _page->clipRightX, COORDS_EQUAL_TOLERANCE)
+        && ppp::math_utils::equal(clipLowerY, _page->clipLowerY, COORDS_EQUAL_TOLERANCE)) {
     _page->graphics.push_back(graphic);
     _log->debug(_p) << "Append to page " << _page->pageNum << "." << endl;
     return;
@@ -779,10 +779,10 @@ void TextOutputDev::drawGraphic(GfxState* state) {
   // Iterate through the figures to check if there is a figure with a clip box equal to the current
   // clip box. If so, append the graphic to this figure.
   for (auto* figure : _page->figures) {
-    if (math_utils::equal(clipLeftX, figure->clipLeftX, COORDS_EQUAL_TOLERANCE)
-          && math_utils::equal(clipUpperY, figure->clipUpperY, COORDS_EQUAL_TOLERANCE)
-          && math_utils::equal(clipRightX, figure->clipRightX, COORDS_EQUAL_TOLERANCE)
-          && math_utils::equal(clipLowerY, figure->clipLowerY, COORDS_EQUAL_TOLERANCE)) {
+    if (ppp::math_utils::equal(clipLeftX, figure->clipLeftX, COORDS_EQUAL_TOLERANCE)
+          && ppp::math_utils::equal(clipUpperY, figure->clipUpperY, COORDS_EQUAL_TOLERANCE)
+          && ppp::math_utils::equal(clipRightX, figure->clipRightX, COORDS_EQUAL_TOLERANCE)
+          && ppp::math_utils::equal(clipLowerY, figure->clipLowerY, COORDS_EQUAL_TOLERANCE)) {
       // Update the bounding box of the figure.
       figure->pos->leftX = min(figure->pos->leftX, graphic->pos->leftX);
       figure->pos->upperY = min(figure->pos->upperY, graphic->pos->upperY);
@@ -796,7 +796,7 @@ void TextOutputDev::drawGraphic(GfxState* state) {
 
   // If there is no figure with a clip box equal to the current clip box, create one.
   PdfFigure* figure = new PdfFigure();
-  figure->id = string_utils::createRandomString(ID_LENGTH, "figure-");
+  figure->id = ppp::string_utils::createRandomString(ID_LENGTH, "figure-");
   figure->doc = _doc;
   figure->pos->pageNum = _page->pageNum;
   figure->pos->leftX = graphic->pos->leftX;

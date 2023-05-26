@@ -25,6 +25,7 @@ const char* const RED = "\033[31m";
 const char* const GREEN = "\033[32m";
 const char* const YELLOW = "\033[33m";
 const char* const BLUE = "\033[34m";
+const char* const BBLUE = "\033[1;34m";
 const char* const MAGENTA = "\033[35m";
 const char* const GRAY = "\033[90m";
 const char* const OFF = "\033[0m";

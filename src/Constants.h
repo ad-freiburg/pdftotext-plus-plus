@@ -36,7 +36,7 @@ const char* const FORMULA_ID_ALPHABET = "=+";
 
 /**
  * The characters we consider to be alphanumerical. Used by, for example, the
- * string_utils::createRandomString() method.
+ * ppp::ppp::string_utils::createRandomString() method.
  */
 const char* const ALPHA_NUM_ALPHABET =
     "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -81,7 +81,5 @@ const double V_DPI = 72.0;
  * method.
  */
 const char* const SPECIAL_FOOTNOTE_LABELS_ALPHABET = "*∗†‡§‖¶?";
-
-
 
 #endif  // CONSTANTS_H_

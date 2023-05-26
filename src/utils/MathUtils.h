@@ -18,7 +18,7 @@ using global_config::DOUBLE_EQUAL_TOLERANCE;
 /**
  * A collection of some useful and commonly used math functions.
  */
-namespace math_utils {
+namespace ppp::math_utils {
 
 /**
  * This method returns true, if the two given values d1 and d2 are (approximately) equal.
@@ -147,6 +147,6 @@ bool between(double d, double lower, double upper, double tolerance = DOUBLE_EQU
  */
 double round(double d, int numDecimals = 0);
 
-}  // namespace math_utils
+}  // namespace ppp::math_utils
 
 #endif  // UTILS_MATHUTILS_H_

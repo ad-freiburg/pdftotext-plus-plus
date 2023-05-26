@@ -77,8 +77,8 @@ bool text_blocks_utils::computeIsTextLinesCentered(const PdfTextBlock* block) {
     double absLeftXOffset = abs(element_utils::computeLeftXOffset(prevLine, currLine));
     double absRightXOffset = abs(element_utils::computeRightXOffset(prevLine, currLine));
     double xOffsetThreshold = config::getCenteringXOffsetThreshold(currLine->doc);
-    bool isLargeLeftXOffset = math_utils::larger(absLeftXOffset, xOffsetThreshold);
-    bool isLargeRightXOffset = math_utils::larger(absRightXOffset, xOffsetThreshold);
+    bool isLargeLeftXOffset = ppp::math_utils::larger(absLeftXOffset, xOffsetThreshold);
+    bool isLargeRightXOffset = ppp::math_utils::larger(absRightXOffset, xOffsetThreshold);
     bool isLargeXOffset = isLargeLeftXOffset || isLargeRightXOffset;
 
     // Check if the line is not a formula and has a leftX offset (or rightX offset) larger than
@@ -133,8 +133,8 @@ double text_blocks_utils::computeHangingIndent(const PdfTextBlock* block) {
     }
 
     // Count the number of lines with a left margin >= the given threshold.
-    double leftMargin = math_utils::round(line->leftMargin);
-    if (math_utils::equalOrLarger(leftMargin, marginThreshold)) {
+    double leftMargin = ppp::math_utils::round(line->leftMargin);
+    if (ppp::math_utils::equalOrLarger(leftMargin, marginThreshold)) {
       largeLeftMarginCounter[leftMargin]++;
       numLargeLeftMarginLines++;
     }
@@ -147,7 +147,7 @@ double text_blocks_utils::computeHangingIndent(const PdfTextBlock* block) {
 
   // The block is *not* in hanging indent format if the percentage of lines exhibiting the
   // most frequent left margin is smaller than a threshold.
-  if (math_utils::equalOrSmaller(mostFreqLargeLeftMarginCount,
+  if (ppp::math_utils::equalOrSmaller(mostFreqLargeLeftMarginCount,
         config::HANG_INDENT_MIN_PERC_LINES_SAME_LEFT_MARGIN * numLargeLeftMarginLines)) {
     return 0.0;
   }
@@ -162,21 +162,21 @@ double text_blocks_utils::computeHangingIndent(const PdfTextBlock* block) {
     }
 
     // Ignore lines that are centered.
-    bool isEqualMargin = math_utils::equal(line->leftMargin, line->rightMargin, marginThreshold);
-    bool isLargeMargin = math_utils::larger(line->leftMargin, marginThreshold);
+    bool isEqualMargin = ppp::math_utils::equal(line->leftMargin, line->rightMargin, marginThreshold);
+    bool isLargeMargin = ppp::math_utils::larger(line->leftMargin, marginThreshold);
     bool isCentered = isEqualMargin && isLargeMargin;
     if (isCentered) {
       continue;
     }
 
     // Count the number of non-indented lines.
-    bool isNonIndented = math_utils::equal(line->leftMargin, 0, marginThreshold);
+    bool isNonIndented = ppp::math_utils::equal(line->leftMargin, 0, marginThreshold);
     if (isNonIndented) {
       numNonIndentedLines++;
     }
 
     // Count the number of indented lines.
-    bool isIndented = math_utils::equal(line->leftMargin, mostFreqLargeLeftMargin, marginThreshold);
+    bool isIndented = ppp::math_utils::equal(line->leftMargin, mostFreqLargeLeftMargin, marginThreshold);
     if (isIndented) {
       numIndentedLines++;
     }
@@ -258,7 +258,7 @@ void text_blocks_utils::computeTextLineMargins(const PdfTextBlock* block) {
   if (block->lines.size() == 2) {
     double leftMargin = block->pos->leftX - block->segment->pos->leftX;
     double rightMargin = block->segment->pos->rightX - block->pos->rightX;
-    double isCentered = math_utils::equal(leftMargin, rightMargin, block->doc->avgCharWidth);
+    double isCentered = ppp::math_utils::equal(leftMargin, rightMargin, block->doc->avgCharWidth);
     if (!isCentered) {
       if (prevBlock) { blockTrimRightX = max(blockTrimRightX, prevBlock->trimRightX); }
       if (nextBlock) { blockTrimRightX = max(blockTrimRightX, nextBlock->trimRightX); }
@@ -267,8 +267,8 @@ void text_blocks_utils::computeTextLineMargins(const PdfTextBlock* block) {
 
   for (auto* line : block->lines) {
     // TODO(korzen): Should this really be rounded?
-    line->leftMargin = math_utils::round(line->pos->leftX - block->trimLeftX);
-    line->rightMargin = math_utils::round(blockTrimRightX - line->pos->rightX);
+    line->leftMargin = ppp::math_utils::round(line->pos->leftX - block->trimLeftX);
+    line->rightMargin = ppp::math_utils::round(blockTrimRightX - line->pos->rightX);
   }
 }
 
@@ -279,7 +279,7 @@ void text_blocks_utils::createTextBlock(const vector<PdfTextLine*>& lines,
   assert(blocks);
 
   PdfTextBlock* block = new PdfTextBlock();
-  block->id = string_utils::createRandomString(global_config::ID_LENGTH, "block-");
+  block->id = ppp::string_utils::createRandomString(global_config::ID_LENGTH, "block-");
 
   // Set the reference to the document.
   block->doc = lines[0]->doc;

@@ -21,7 +21,7 @@ using std::wstring;
 // =================================================================================================
 // CONFIG
 
-namespace string_utils::config {
+namespace ppp::string_utils::config {
 
 // An alphabet that is used for creating random strings. It contains all characters we consider to
 // be alphanumerical.
@@ -31,7 +31,7 @@ const char* const ALPHA_NUM_ALPHABET = global_config::ALPHA_NUM_ALPHABET;
 // consider to be a word delimiter.
 const char* const WORD_DELIMITERS_ALPHABET = global_config::WORD_DELIMITERS_ALPHABET;
 
-}  // namespace string_utils::config
+}  // namespace ppp::string_utils::config
 
 // =================================================================================================
 
@@ -39,7 +39,7 @@ const char* const WORD_DELIMITERS_ALPHABET = global_config::WORD_DELIMITERS_ALPH
 /**
  * A collection of some useful and commonly used functions in context of strings.
  */
-namespace string_utils {
+namespace ppp::string_utils {
 
 /**
  * This method splits the given text (given as a wstring) into words and appends the words to the
@@ -105,6 +105,48 @@ string escapeJson(const string& str);
  *    The shortened string.
  */
 string shorten(const string& str, size_t len = 40);  // TODO(korzen): Parameterize.
+
+/**
+ * This method removes all leading and trailing whitespaces from the given string.
+ *
+ * @param str
+ *   The string to process.
+ *
+ * @return
+ *   The string without leading and trailing whitespaces.
+ */
+string strip(const string& str);
+
+/**
+ * This method wraps the specified string so that every line is indented by <indent>-many
+ * whitespaces and the length of each line (+ the length of the indent) is not larger than <width>.
+ *
+ * @param str
+ *    The string to wrap.
+ * @param width
+ *    The maximal length of each line (and its indent).
+ * @param indent
+ *    The amount by which each line is to be indented.
+ *
+ * @return
+ *    A string containing <str> wrapped into lines, with each lines separated by a single newline
+ *    character.
+ */
+string wrap(const string& str, size_t width = 100, size_t indent = 0);
+
+/**
+ * This method concatenates all strings in the specified vector, using the specified character(s)
+ * as separator.
+ *
+ * @param strings
+ *    The strings to concatenate.
+ * @param separator
+ *    The separator.
+ *
+ * @return
+ *    The string containing all strings in the specified vector concatenated.
+ */
+string join(const vector<string>& strings, const string& separator = ", ");
 
 }  // namespace string_utils
 

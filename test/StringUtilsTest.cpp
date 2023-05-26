@@ -13,10 +13,10 @@
 
 #include "../src/utils/StringUtils.h"
 
-using string_utils::createRandomString;
-using string_utils::escapeJson;
-using string_utils::shorten;
-using string_utils::splitIntoWords;
+using ppp::string_utils::createRandomString;
+using ppp::string_utils::escapeJson;
+using ppp::string_utils::shorten;
+using ppp::string_utils::splitIntoWords;
 
 // _________________________________________________________________________________________________
 TEST(StringUtils, splitStringIntoWords) {

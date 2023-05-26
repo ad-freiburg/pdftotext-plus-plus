@@ -12,9 +12,11 @@
 #include <string>
 #include <vector>
 
-#include "./PdfDocument.h"
 #include "./utils/Log.h"
+#include "./PdfDocument.h"
+#include "./Types.h"
 
+using ppp::types::Timing;
 using std::string;
 using std::vector;
 

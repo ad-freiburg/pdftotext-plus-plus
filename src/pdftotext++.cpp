@@ -6,308 +6,469 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
+#include <boost/program_options.hpp>
+
 #include <chrono>    // std::chrono::high_resolution_clock
 #include <cstdlib>   // putenv
 #include <iomanip>   // std::setw, std::setprecision
 #include <iostream>  // std::cout
 #include <locale>    // imbue
 #include <string>
+#include <unordered_set>
 #include <vector>
 
-#include "./serializers/JsonlSerializer.h"
-#include "./serializers/TextSerializer.h"
+#include "./serialization/Serialization.h"
+#include "./utils/Log.h"  // BBLUE, OFF
 #include "./utils/MathUtils.h"
-#include "./utils/parseargs.h"
+#include "./utils/StringUtils.h"
 #include "./PdfDocumentVisualizer.h"
 #include "./PdfToTextPlusPlus.h"
+#include "./Types.h"
+#include "./Validators.h"
 
+using ppp::types::DocumentUnit;
+using ppp::types::SemanticRole;
+using ppp::types::SerializationFormat;
+using ppp::types::Timing;
+using ppp::serialization::Serializer;
+using ppp::string_utils::wrap;
+using ppp::string_utils::strip;
 using std::chrono::duration_cast;
 using std::chrono::high_resolution_clock;
 using std::chrono::milliseconds;
 using std::cerr;
 using std::cout;
 using std::endl;
+using std::exception;
 using std::string;
+using std::unordered_set;
 using std::vector;
+
+namespace po = boost::program_options;
 
 // =================================================================================================
 // Parameters.
+// NOTE: The variables starting with "CXX_" need to be specified at compile time, in form of a
+// preprocessor variable. For example, to define the variable 'CXX_PROGRAM_NAME', type the
+// following: "g++ -DCXX_PROGRAM_NAME='pdftotext++' ..."
 
 // The program name.
-static const char* programName = "pdftotext++";
+static const char* programName = CXX_PROGRAM_NAME;
 
-// The version number (need to be specified at compile time, in form of a preprocessor variable).
-// For example, to define this variable, type: "g++ -DCXX_PROJECT_VERSION='1.2.3' ..."
-static const char* version = CXX_PROJECT_VERSION;
+// The version number.
+static const char* version = CXX_PROGRAM_VERSION;
 
-// The description of this program to be displayed in the help message.
-static const char* description =
-"pdftotext++ extracts text from PDF files. It is an extension of Poppler's pdftotext\n"
-"(https://poppler.freedesktop.org/) and provides the following features useful for\n"
-"applications like search, information retrieval or document analysis:\n\n"
-"\033[34m• Words Detection\033[0m\n"
-"PDF is a format that does not provide the included text word-wise, but character-wise.\n"
-"Pdftotext++ has techniques that reassembles the words from the characters accurately.\n"
-"\n"
-"\033[34m• Words Dehyphenation\033[0m\n"
-"PDF can contain hyphenated words, that is: words that appear broken in two parts, with a\n"
-"hyphen in between. Pdftotext++ merges the parts of hyphenated words to single words, under\n"
-"consideration whether the hyphen needs to be retained because it is part of a compound word\n"
-"(like in \"well-known\") or removed because it is not part of a compound word.\n"
-"\n"
-"\033[34m• Splitting of ligatures\033[0m\n"
-"PDF can contain ligatures, that is: symbols that are one character in the PDF, but actually\n"
-"represent multiple characters (like \"ﬁ\" or \"ﬃ\"). Pdftotext++ splits ligatures into the\n"
-"characters they actually represent (e.g., it splits \"ﬁ\" into \"fi\" and \"ﬃ\" into \"ffi\").\n"
-"\n"
-"\033[34m• Merging of diacritical marks\033[0m\n"
-"PDF can contain characters with diacritical marks (like ü or à), which are often represented\n"
-"by two characters in the PDF (the base character and the diacritical mark). Pdftotext++ merges\n"
-"them to single characters (e.g., it merges \"a\" and \"`\" to \"à\"). \n"
-"\n"
-"\033[34m• Text Blocks Detection\033[0m\n"
-"A PDF typically consists of one or more text blocks. By a text block we mean a group of text\n"
-"that logically belong together and that is recognizably set off from other text blocks. Text\n"
-"blocks play different semantic roles in the PDF (e.g., \"title\", \"heading\", \"paragraph\",\n"
-"\"footnote\"). Pdftotext++ detects the beginning and end of text blocks and is able to\n"
-"identify the semantic roles of the text blocks.\n"
-"\n"
-"\033[34m• Reading Order Detection\033[0m\n"
-"A PDF does not necessarily store the characters in natural reading order. For example, PDFs\n"
-"with a multi-column layout can store the characters in an order interleaving between the\n"
-"columns. Pdftotext++ has techniques to detect multi-column layouts and to correctly detect\n"
-"the natural reading order in such layouts.\n"
-"\n"
-"\033[34m• Output Formats\033[0m\n"
-"Pdftotext++ allows to output the extracted text in the following formats:\n\n"
-"  \033[36m• Continuous Text:\033[0m\n"
-"    Contains the extracted text in plain text format, with the words of a text block separated\n"
-"    by whitespaces and the text blocks separated by blank lines.\n\n"
-"  \033[36m• JSONL:\033[0m\n"
-"    Contains the extracted text in a structured form, broken down by a given text unit (e.g.,\n"
-"    \"characters\", \"words\", or \"blocks\"). It contains one line per instance of the\n"
-"    respective unit (e.g., one line per word if the unit is \"words\"), each providing all\n"
-"    a vailable layout information about the instance. Here is an example line, showing the\n"
-"    general structure of a line and which information are provided for a word:\n"
-"    {\"type\": \"word\", \"page\": 9, \"minX\": 448.8, \"minY\": 635.9, \"maxX\": 459.4, ⮨\n"
-"      \"maxY\": 647.6, \"font\": \"RSEUZH+CMBX9\", \"fontSize\": 8.9, \"text\": \"panel\"}\n\n"
-"Continuous text is the default format. To output the text in JSONL instead, you can use the\n"
-"different --output-* options. Note that the --output-* options can be combined; for example,\n"
-"if you use --output-characters in conjunction with --output-words, the outputted JSONL\n"
-"contains one line for each character and each word. If one or more --output-* option is used,\n"
-"the output format is JSONL, otherwise the output format is continuous text.\n"
-"\n"
-"• \033[34mVisualization\033[0m\n"
-"Pdftotext++ allows to create a visualization of the extracted text, that is: a copy of the PDF\n"
-"file, with different annotations added to it, for example: the bounding boxes or the semantic\n"
-"roles of the extracted text blocks. This is particularly useful for debugging the extracted\n"
-"text with respect to different aspects. Which annotations are added to the visualization can\n"
-"be controlled via the --visualize-* flags. Multiple --visualize-* options can be combined.\n"
-"Note that the --visualize-* options must be used in conjunction with --visualization-path;\n"
-"otherwise, no visualization will be created.";
+// The program description.
+static const char* description = CXX_PROGRAM_DESCRIPTION;
 
-// The usage.
-static const char* usage = "pdftotext++ [options] <pdf-file> [<output-file>]\n"
-"\n"
-"This processes the PDF file <pdf-file>. The extracted text is written to the file <output-file>.\n"
-"If <output-file> is not specified, or specified as '-', the extracted text is printed to stdout.";
+// The usage of this program.
+static const char* usage = CXX_PROGRAM_USAGE;
+
+// The maximum length of the lines in the help message.
+static int HELP_MAX_WIDTH = 100;
+
+// The amount by which to indent the description of a command line option in the help message.
+static int HELP_OPTION_DESC_INDENT = 4;
 
 // =================================================================================================
-// Options.
-
-static bool printVersion = false;
-static bool printHelp = false;
-static bool addControlCharacters = false;
-static bool addSemanticRoles = false;
-static bool noScripts = false;
-static bool noEmbeddedFontFiles = false;
-static bool noDehyphenation = false;
-static bool parseMode = false;
-static bool outputPages = false;
-static bool outputChars = false;
-static bool outputFigures = false;
-static bool outputShapes = false;
-static bool outputWords = false;
-static bool outputBlocks = false;
-static bool visualizeChars = false;
-static bool visualizeWords = false;
-static bool visualizeTextLines = false;
-static bool visualizeTextBlocks = false;
-static bool visualizePageSegments = false;
-static bool visualizeFigures = false;
-static bool visualizeShapes = false;
-static bool visualizeGraphics = false;
-static bool visualizeReadingOrder = false;
-static bool visualizeSegmentCuts = false;
-static bool visualizeReadingOrderCuts = false;
-static char visualizeFilePath[256] = "";
-static char loggingLevel[16] = "";
-static bool debugPdfParsing = false;
-static bool debugStatisticsComputation = false;
-static bool debugDiacriticMarksMerging = false;
-static bool debugWordsDetection = false;
-static bool debugPageSegmentation = false;
-static bool debugTextLinesDetection = false;
-static bool debugSubSuperScriptsDetection = false;
-static bool debugTextBlocksDetection = false;
-static int debugPageFilter = -1;
-static bool printRunningTimes = false;
-
-static const ArgDesc options[] = {
-  { "--control-characters", argFlag, &addControlCharacters, 0,
-      "Add the following control characters to the continuous text:\n"
-      "\"^A\" (start of heading) in front of each emphasized text block; "
-      "\"^L\" (form feed) between two text blocks when there is a page break in between. "
-      "Has no effect when used together with one or more --output-* options." },
-  { "--semantic-roles", argFlag, &addSemanticRoles, 0,
-      "Prefix each text block by its semantic role in the continuous text. "
-      "Has no effect when used together with one or more --output-* options." },
-  { "--no-scripts", argFlag, &noScripts, 0,
-      "Remove subscripted and superscripted characters from the continuous text. "
-      "Has no effect when used together with one or more --output-* options." },
-  { "--no-embedded-font-files", argFlag, &noEmbeddedFontFiles, 0,
-      "Disable the parsing of embedded font files. The consequence is a faster extraction process, "
-      "but a lower accuracy of the extracted text." },
-  { "--no-dehyphenation", argFlag, &noDehyphenation, 0,
-      "Disable words dehyphenation. The consequence is that each part into which a hyphenated "
-      "word is split will appear as a separate word in the continuous text and the JSONL." },
-  { "--parse-mode", argFlag, &parseMode, 0,
-      "Activate a special mode that parses the content streams of the PDF file for characters, "
-      "figures, and shapes, and stops afterwards. It does not detect words, text lines, and text "
-      "blocks. To output the extracted elements, use --output-characters, --output-figures and/or "
-      "--output-shapes." },
-  { "--output-pages", argFlag, &outputPages, 0, "Instead of continuous text, output JSONL "
-      "with all available information about the pages of the PDF file (e.g., the widths and "
-      "heights)." },
-  { "--output-characters", argFlag, &outputChars, 0, "Instead of continuous text, output "
-      "JSONL with all available information about the characters in the PDF file (e.g., the "
-      "positions and fonts)." },
-  { "--output-figures", argFlag, &outputFigures, 0, "Instead of continuous text, output "
-      "JSONL with all available information about the figures in the PDF file (e.g., the "
-      "positions)." },
-  { "--output-shapes", argFlag, &outputShapes, 0, "Instead of continuous text, output "
-      "JSONL with all available information about the shapes in the PDF file (e.g., the "
-      "positions)." },
-  { "--output-words", argFlag, &outputWords, 0, "Instead of continuous text, output JSONL "
-      "with all available information about the words in the PDF file (e.g., the positions and "
-      "the fonts)." },
-  { "--output-text-blocks", argFlag, &outputBlocks, 0, "Instead of continuous text, output "
-      "JSONL with all available information about the text blocks in the PDF file (e.g., the "
-      "positions and the fonts)." },
-  { "--visualize-characters", argFlag, &visualizeChars, 0,
-      "Add the bounding boxes of the detected characters to the visualization. Must be used "
-      "together with --visualization-path." },
-  { "--visualize-graphics", argFlag, &visualizeGraphics, 0,
-      "Add the bounding boxes of the detected graphics to the visualization. Must be used "
-      "together with --visualization-path." },
-  { "--visualize-figures", argFlag, &visualizeFigures, 0,
-      "Add the bounding boxes of the detected figures to the visualization. Must be used together "
-      "with --visualization-path." },
-  { "--visualize-shapes", argFlag, &visualizeShapes, 0,
-      "Add the bounding boxes of the detected shapes to the visualization. Must be used together "
-      "with --visualization-path." },
-  { "--visualize-words", argFlag, &visualizeWords, 0,
-      "Add the bounding boxes of the detected words to the visualization. Must be used together "
-      "with --visualization-path." },
-  { "--visualize-text-lines", argFlag, &visualizeTextLines, 0,
-      "Add the bounding boxes of the detected text lines to the visualization. Must be used "
-      "together with --visualization-path." },
-  { "--visualize-text-blocks", argFlag, &visualizeTextBlocks, 0,
-      "Add the bounding boxes and the semantic roles of the detected text blocks to the "
-      "visualization. Must be used together with --visualization-path." },
-  { "--visualize-segments", argFlag, &visualizePageSegments, 0,
-      "Add the bounding boxes of the detected page segments to the visualization. Must be used "
-      "together with --visualization-path." },
-  { "--visualize-reading-order", argFlag, &visualizeReadingOrder, 0,
-      "Add the detected reading order of the text blocks to the visualization. Must be used "
-      "together with --visualization-path." },
-  { "--visualize-segment-cuts", argFlag, &visualizeSegmentCuts, 0,
-      "Add the XY-cuts made by the page segmentation. Must be used together with "
-      "--visualization-path." },
-  { "--visualize-reading-order-cuts", argFlag, &visualizeReadingOrderCuts, 0,
-      "Add the XY-cuts made to detect the reading order to the visualization. Must be used "
-      "together with --visualization-path." },
-  { "--visualization-path", argString, &visualizeFilePath, sizeof(visualizeFilePath),
-      "The target path for the visualization. If not specified, no visualization file will "
-      "be created, even if one or more of the --visualize-* options is used." },
-  { "--log", argString, &loggingLevel, sizeof(loggingLevel),
-      "Sets the general verbosity level of the logging messages. Valid levels are: trace, debug, "
-      "info, warn, error. Logging messages with a level lower than the specified level will be "
-      "not printed to the console. Default: info." },
-  { "--debug-pdf-parsing", argFlag, &debugPdfParsing, 0,
-      "Print the debug messages produced while parsing the content streams of the PDF file." },
-  { "--debug-statistics", argFlag, &debugStatisticsComputation, 0,
-      "Print the debug messages produced while computing the statistics." },
-  { "--debug-diacritic-marks-merging", argFlag, &debugDiacriticMarksMerging, 0,
-      "Print the debug messages produced while merging diacritical marks with their base "
-      "characters." },
-  { "--debug-words-detection", argFlag, &debugWordsDetection, 0,
-      "Print the debug messages produced while detecting words." },
-  { "--debug-page-segmentation", argFlag, &debugPageSegmentation, 0,
-      "Print the debug messages produced while segmenting the pages." },
-  { "--debug-text-lines-detection", argFlag, &debugTextLinesDetection, 0,
-      "Print the debug messages produced while detecting text lines." },
-  { "--debug-sub-super-scripts-detection", argFlag, &debugSubSuperScriptsDetection, 0,
-      "Print the debug messages produced while detecting sub-/superscripts." },
-  { "--debug-text-blocks-detection", argFlag, &debugTextBlocksDetection, 0,
-      "Print the debug messages produced while detecting text blocks." },
-  { "--debug-page-filter", argInt, &debugPageFilter, 0,
-      "When one or more of the --debug-* options are used, print only the debug messages "
-      "that are produced while processing the specified page. Note that the page numbers are "
-      "1-based; so to print the debug messages produced while processing the first page, type "
-      "\"--debug-page-filter 1\". " },
-  { "--print-running-times", argFlag, &printRunningTimes, 0,
-      "Print the running times needed by the different extraction steps, for debugging purposes." },
-  { "-v", argFlag, &printVersion, 0,
-      "Print the version info." },
-  { "-version", argFlag, &printVersion, 0,
-      "Print the version info." },
-  { "--version", argFlag, &printVersion, 0,
-      "Print the version info." },
-  { "-h", argFlag, &printHelp, 0,
-      "Print the help info." },
-  { "-help", argFlag, &printHelp, 0,
-      "Print the help info." },
-  { "--help", argFlag, &printHelp, 0,
-      "Print the help info." },
-  { "-?", argFlag, &printHelp, 0,
-      "Print the help info." },
-  {}
-};
-
-// =================================================================================================
-// Print methods.
+// Helper methods.
 
 /**
- * This method prints the usage info (that is: the help message without the description) to stdout.
+ * This method prints the help message - containing the program name, the program version, a
+ * general program description and a description of the command-line options.
+ *
+ * @param publicOpts
+ *    The definition of the public command-line options.
+ * @param maxLineLength
+ *    The maximum length of the lines in the help message.
+ * @param optionDescIndent
+ *    The amount by which to indent the description of a command line option.
+ * @param privateOpts
+ *    The definition of the non-public command-line options. NOTE: This can be omitted when the
+ *    private options should not appear in the help message.
  */
-void printUsageInfo() {
-  printHelpInfo(programName, version, nullptr, usage, options);
-}
+void printHelpMessage(const po::options_description* publicOpts, int maxLineLength,
+      int optionDescIndent, const po::options_description* privateOpts = 0) {
+  cout << BBLUE << "NAME" << OFF << endl;
+  cout << wrap(strip(programName), maxLineLength) << endl;
+  cout << endl;
 
-/**
- * This method prints the help message (that is: a detailed description of the program, the usage
- * info, and a description of the command line options) to stdout.
- */
-void printHelpInfo() {
-  printHelpInfo(programName, version, description, usage, options);
-}
+  cout << BBLUE << "VERSION" << OFF << endl;
+  cout << wrap(strip(version), maxLineLength) << endl;
+  cout << endl;
 
-/**
- * This method prints the version info to stdout.
- */
-void printVersionInfo() {
-  cout << programName << " version " << version << endl;
+  cout << BBLUE << "DESCRIPTION" << OFF << endl;
+  cout << wrap(strip(description), maxLineLength) << endl;
+  cout << endl;
+
+  cout << BBLUE << "USAGE" << OFF << endl;
+  cout << wrap(strip(usage), maxLineLength) << endl;
+  cout << endl;
+
+  cout << BBLUE << "OPTIONS" << OFF << endl;
+  for (const auto& opt : publicOpts->options()) {
+    cout << opt->format_name() << endl;
+    cout << wrap(strip(opt->description()), maxLineLength, optionDescIndent) << endl;
+  }
+  cout << endl;
+
+  if (privateOpts) {
+    cout << BBLUE << "NON-PUBLIC OPTIONS" << OFF << endl;
+    for (const auto& opt : privateOpts->options()) {
+      cout << opt->format_name() << endl;
+      cout << wrap(strip(opt->description()), maxLineLength, optionDescIndent) << endl;
+    }
+    cout << endl;
+  }
 }
 
 // =================================================================================================
 
 /**
- * The main method of pdftotext++. It is responsible for parsing the command line arguments,
- * running pdftotext++ to extract the text from PDF, and serializing and visualizing the extracted
- * text.
+ * The main method of pdftotext++. It is responsible for parsing the command line options,
+ * running the extraction pipeline on a specified PDF, and outputting the extracted text.
  */
 int main(int argc, char* argv[]) {
+  // The path to the PDF file to process.
+  string pdfFilePath;
+  // The path to the file into which to output the extracted text.
+  // NOTE: If specified as "-", the text is output to stdout.
+  string outputFilePath = "-";
+
+  // The format in which to output the extracted text.
+  SerializationFormat format = SerializationFormat::TXT;
+  // The semantic roles of the text blocks to output.
+  vector<SemanticRole> roles = ppp::types::getSemanticRoles();
+  // The units of the text to output.
+  vector<DocumentUnit> units = ppp::types::getDocumentUnits();
+
+  bool addControlCharacters = false; // TODO: Introduce an extra format.
+  bool addSemanticRoles = false;  // TODO: Introduce an extra format.
+  bool noScripts = false;  // TODO: Allow to disable all optional components of the pipeline.
+  bool noEmbeddedFontFiles = false;
+  bool noDehyphenation = false;
+  bool parseMode = false;
+  bool visualizeChars = false;
+  bool visualizeWords = false;
+  bool visualizeTextLines = false;
+  bool visualizeTextBlocks = false;
+  bool visualizePageSegments = false;
+  bool visualizeFigures = false;
+  bool visualizeShapes = false;
+  bool visualizeGraphics = false;
+  bool visualizeReadingOrder = false;
+  bool visualizeSegmentCuts = false;
+  bool visualizeReadingOrderCuts = false;
+  string visualizeFilePath = "";
+  string verbosity = "error";
+  bool debugPdfParsing = false;  // TODO: Introduce advanced logging.
+  bool debugStatisticsComputation = false;
+  bool debugDiacriticMarksMerging = false;
+  bool debugWordsDetection = false;
+  bool debugPageSegmentation = false;
+  bool debugTextLinesDetection = false;
+  bool debugSubSuperScriptsDetection = false;
+  bool debugTextBlocksDetection = false;
+  int debugPageFilter = -1;
+  bool printRunningTimes = false;
+  bool printVersion = false;
+  bool printHelp = false;
+  bool printFullHelp = false;
+
+
+  // Specify the public options (= options that will be shown to the user when printing the help).
+  po::options_description publicOpts;
+  publicOpts.add_options()
+    (
+      "format",
+      po::value<SerializationFormat>(&format),
+      (string("Output the extracted text in the specified format.\nValid formats: ")
+        + ppp::serialization::getSerializationFormatChoicesStr() + string(".\n")).c_str()
+    )
+    (
+      "role",
+      po::value<vector<SemanticRole>>(&roles),
+      (string("Only output text from text blocks with the specified roles. Use the syntax\n")
+        + string("'--role <value1> --role <value2> ...' to specify multiple roles.\nValid roles: ")
+        + ppp::types::getSemanticRolesStr() + string(".\n")).c_str()
+    )
+    (
+      "unit",
+      po::value<vector<DocumentUnit>>(&units),
+      (string("Output semantic and layout information about the specified document unit(s). Use\n")
+        + string("the syntax '--unit <value1> --unit <value2> ...' to specify multiple units.\n")
+        + string("NOTE: This option does not have an effect when used together with the ")
+        + string("'--format txt' or '--format txt-extended' option.\n")
+        + string("Valid units: ") + ppp::types::getDocumentUnitsStr() + string(".\n")).c_str()
+    )
+    (
+      "control-characters",
+      po::bool_switch(&addControlCharacters),
+      "Output the extracted text together with the following control characters:\n"
+      "• \"^A\" (start of heading) in front of each emphasized text block\n"
+      "• \"^L\" (form feed) between two text blocks when there is a page break in between.\n"
+      "NOTE: This option only has an effect when used together with the '--format txt' option."
+    )
+    // TODO(korzen): This option should be removed, when there are more structured formats.
+    (
+      "semantic-roles",
+      po::bool_switch(&addSemanticRoles),
+      "Output each extracted text block together with its semantic role. "
+      "NOTE: This option only has an effect when used together with the '--format txt' option."
+    )
+    (
+      "no-scripts",
+      po::bool_switch(&noScripts),
+      "Output the extracted text without characters that appear as a subscript or superscript in "
+      "the PDF."
+    )
+    (
+      "no-dehyphenation",
+      po::bool_switch(&noDehyphenation),
+      "Do not merge hyphenated words. "
+      "NOTE: Using this option has the consequence that each part into which a hyphenated word is "
+      "divided appears as a separate word in the extracted text."
+    )
+    (
+      "no-embedded-font-files",
+      po::bool_switch(&noEmbeddedFontFiles),
+      "Do not parse the font files embedded into the PDF file. "
+      "NOTE: Using this option results in a faster extraction process, but a less accurate "
+      "extraction result."
+    )
+    (
+      "visualization-path",
+      po::value<string>(&visualizeFilePath),
+      "Create a visualization PDF file, that is: a copy of the PDF file, with annotations added "
+      "by the different '--visualize-*' options below, and write it to the specified file. "
+      "NOTE: If not specified, no such visualization will be created, even if one or more of the "
+      "'--visualize-*' options is used."
+    )
+    (
+      "visualize-characters",
+      po::bool_switch(&visualizeChars),
+      "Draw bounding boxes around the detected characters into the visualization PDF file. "
+      "NOTE: This option only has an effect when used together with the "
+      "'--visualization-path <string>' option."
+    )
+    // TODO(korzen): explain the difference between graphics and figure.
+    (
+      "visualize-graphics",
+      po::bool_switch(&visualizeGraphics),
+      "Draw bounding boxes around the detected graphics into the visualization PDF file. "
+      "NOTE: This option only has an effect when used together with the "
+      "'--visualization-path <string>' option."
+    )
+    (
+      "visualize-figures",
+      po::bool_switch(&visualizeFigures),
+      "Draw bounding boxes around the detected figures into the visualization PDF file. "
+      "NOTE: This option only has an effect when used together with the "
+      "'--visualization-path <string>' option."
+    )
+    (
+      "visualize-shapes",
+      po::bool_switch(&visualizeShapes),
+      "Draw bounding boxes around the detected shapes into the visualization PDF file. "
+      "NOTE: This option only has an effect when used together with the "
+      "'--visualization-path <string>' option."
+    )
+    (
+      "visualize-words",
+      po::bool_switch(&visualizeWords),
+      "Draw bounding boxes around the detected words into the visualization PDF file. "
+      "NOTE: This option only has an effect when used together with the "
+      "'--visualization-path <string>' option."
+    )
+    (
+      "visualize-text-lines",
+      po::bool_switch(&visualizeTextLines),
+      "Draw bounding boxes around the detected text lines into the visualization PDF file. "
+      "NOTE: This option only has an effect when used together with the "
+      "'--visualization-path <string>' option."
+    )
+    (
+      "visualize-text-blocks",
+      po::bool_switch(&visualizeTextBlocks),
+      "Draw bounding boxes around the detected text blocks into the visualization PDF file. "
+      "NOTE: This option only has an effect when used together with the "
+      "'--visualization-path <string>' option."
+    )
+    (
+      "visualize-segments",
+      po::bool_switch(&visualizePageSegments),
+      "Draw bounding boxes around the detected page segments into the visualization PDF file. "
+      "NOTE: This option only has an effect when used together with the "
+      "'--visualization-path <string>' option."
+    )
+    (
+      "visualize-segment-cuts",
+      po::bool_switch(&visualizeSegmentCuts),
+      "Draw the XY-cuts made to segment the pages into the visualization PDF file. "
+      "NOTE: This option only has an effect when used together with the "
+      "'--visualization-path <string>' option."
+    )
+    (
+      "visualize-reading-order",
+      po::bool_switch(&visualizeReadingOrder),
+      "Draw (directed) edges between the detected text blocks into the visualization PDF file, for "
+      "visualizing the detected reading order. "
+      "NOTE: This option only has an effect when used together with the "
+      "'--visualization-path <string>' option."
+    )
+    (
+      "visualize-reading-order-cuts",
+      po::bool_switch(&visualizeReadingOrderCuts),
+      "Draw the XY-cuts made to detect the reading order into the visualization PDF file. "
+      "NOTE: This option only has an effect when used together with the "
+      "'--visualization-path <string>' option."
+    )
+    (
+      "verbosity",
+      po::value<string>(&verbosity),
+      "Specify the verbosity. Valid values are: trace, debug, info, warn, error. "
+      "Logging messages with a level lower than the specified value will be not printed to the "
+      "console. Default: error."  // TODO(korzen): Specify the default value.
+    )
+    (
+      "version,v",
+      po::bool_switch(&printVersion),
+      "Print the version info."
+    )
+    (
+      "help,h",
+      po::bool_switch(&printHelp),
+      "Print the help.");
+
+  // Specify the private options (= options that will not be shown in the help message).
+  // NOTE: these options *must* include an entry for each positional option (defined below), this
+  // is a restriction of the boost library.
+  po::options_description privateOpts("");
+  privateOpts.add_options()
+    (
+      "pdf-file",
+      po::value<string>(&pdfFilePath)->required(),
+      "The path to the PDF file to process."
+    )
+    (
+      "output-file",
+      po::value<string>(&outputFilePath),
+      "The path to the file into which the extracted text should be written."
+    )
+    (
+      "parse-mode",
+      po::bool_switch(&parseMode),
+      "Only parse the content streams of the PDF file for characters, figures, and shapes. "
+      "Do not detect words, text lines, and text blocks. "
+      "NOTE: To output the extracted elements, use the '--output-characters', '--output-figures' "
+      "and/or '--output-shapes' options."
+    )
+    // TODO(korzen): Think about how to handle logging (one log per module?).
+    (
+      "debug-pdf-parsing",
+      po::bool_switch(&debugPdfParsing),
+      "Print the debug messages produced while parsing the content streams of the PDF file."
+    )
+    (
+      "debug-statistics",
+      po::bool_switch(&debugStatisticsComputation),
+      "Print the debug messages produced while computing the statistics."
+    )
+    (
+      "debug-diacritic-marks-merging",
+      po::bool_switch(&debugDiacriticMarksMerging),
+      "Print the debug messages produced while merging diacritical marks with their base "
+      "characters."
+    )
+    (
+      "debug-words-detection",
+      po::bool_switch(&debugWordsDetection),
+      "Print the debug messages produced while detecting words."
+    )
+    (
+      "debug-page-segmentation",
+      po::bool_switch(&debugPageSegmentation),
+      "Print the debug messages produced while segmenting the pages."
+    )
+    (
+      "debug-text-lines-detection",
+      po::bool_switch(&debugTextLinesDetection),
+      "Print the debug messages produced while detecting text lines."
+    )
+    (
+      "debug-sub-super-scripts-detection",
+      po::bool_switch(&debugSubSuperScriptsDetection),
+      "Print the debug messages produced while detecting sub-/superscripts."
+    )
+    (
+      "debug-text-blocks-detection",
+      po::bool_switch(&debugTextBlocksDetection),
+      "Print the debug messages produced while detecting text blocks."
+    )
+    (
+      "debug-page-filter",
+      po::value<int>(&debugPageFilter),
+      "When one or more of the '--debug-*' options are used, print only the debug messages that "
+      "are produced while processing the specified page. "
+      "NOTE: the page numbers are 1-based; so to print the debug messages produced while "
+      "processing the first page, type \"--debug-page-filter 1\". "
+    )
+    (
+      "print-running-times",
+      po::bool_switch(&printRunningTimes),
+      "Print the running times needed by the different steps in the extraction pipeline."
+    )
+    (
+      "full-help",
+      po::bool_switch(&printFullHelp),
+      "Print the full help (containing also the descriptions of all non-public commands).");
+
+  // Specify the positional options.
+  po::positional_options_description positional;
+  positional.add("pdf-file", 1);
+  positional.add("output-file", 1);
+
+  // Parse the command-line options.
+  po::options_description opts;
+  opts.add(publicOpts).add(privateOpts);
+  po::variables_map vm;
+  try {
+    po::store(po::command_line_parser(argc, argv).options(opts).positional(positional).run(), vm);
+    po::notify(vm);
+  } catch (const exception& e) {
+    bool showFullHelp = vm.count("full-help") ? vm["full-help"].as<bool>() : false;
+    if (showFullHelp) {
+      printHelpMessage(&publicOpts, HELP_MAX_WIDTH, HELP_OPTION_DESC_INDENT, &privateOpts);
+      return EXIT_SUCCESS;
+    }
+    bool showHelp = vm.count("help") ? vm["help"].as<bool>() : false;
+    if (showHelp) {
+      printHelpMessage(&publicOpts, HELP_MAX_WIDTH, HELP_OPTION_DESC_INDENT);
+      return EXIT_SUCCESS;
+    }
+    cerr << "An error occurred on parsing the command-line options: " << e.what() << endl;
+    cerr << "Type \"" << programName << " --help\" for printing the help." << endl;
+    return EXIT_FAILURE;
+  }
+
+  // Print the full help info if explicitly requested by the user.
+  if (printFullHelp) {
+    printHelpMessage(&publicOpts, HELP_MAX_WIDTH, HELP_OPTION_DESC_INDENT, &privateOpts);
+    return EXIT_SUCCESS;
+  }
+
+  // Print the help info if explicitly requested by the user.
+  if (printHelp) {
+    printHelpMessage(&publicOpts, HELP_MAX_WIDTH, HELP_OPTION_DESC_INDENT);
+    return EXIT_SUCCESS;
+  }
+
+  // Print the version info if explicitly requested by the user.
+  if (printVersion) {
+    cout << programName << ", version " << version << endl;
+    return EXIT_SUCCESS;
+  }
+
   // Disable the log output of Tensorflow.
   char env[] = "TF_CPP_MIN_LOG_LEVEL=3";
   putenv(env);
@@ -315,49 +476,14 @@ int main(int argc, char* argv[]) {
   // Seed the random generator (needed for creating the random ids of the text elements).
   srand((unsigned) time(NULL) * getpid());
 
-  // Parse the command line arguments.
-  bool ok = parseArgs(options, &argc, argv);
-
-  // Print the usage info if the command line arguments couldn't be parsed successfully.
-  if (!ok) {
-    printUsageInfo();
-    return 1;
-  }
-
-  // Print the help info if explicitly requested by the user.
-  if (printHelp) {
-    printHelpInfo();
-    return 0;
-  }
-
-  // Print the version info if explicitly requested by the user.
-  if (printVersion) {
-    printVersionInfo();
-    return 0;
-  }
-
-  // Print the usage info if not all required positional arguments were specified by the user.
-  if (argc < 2) {
-    printUsageInfo();
-    return 2;
-  }
-
-  // Obtain the path to the input PDF file.
-  string pdfFilePathStr(argv[1]);
-
-  // Obtain the path to the output file. Note: This path may not specified by the user when
-  // she wants to print the text to stdout. If not specified, set the path to "-".
-  string outputFilePathStr(argc > 2 ? argv[2] : "-");
-
   // ------------
   // Start the extraction process.
 
-  const string logLevelStr(loggingLevel);
   LogLevel logLevel = ERROR;
-  if (logLevelStr == "trace" || logLevelStr == "TRACE") { logLevel = LogLevel::TRACE; }
-  if (logLevelStr == "debug" || logLevelStr == "DEBUG") { logLevel = LogLevel::DEBUG; }
-  if (logLevelStr == "info" || logLevelStr == "INFO") { logLevel = LogLevel::INFO; }
-  if (logLevelStr == "warn" || logLevelStr == "WARN") { logLevel = LogLevel::WARN; }
+  if (verbosity == "trace" || verbosity == "TRACE") { logLevel = LogLevel::TRACE; }
+  if (verbosity == "debug" || verbosity == "DEBUG") { logLevel = LogLevel::DEBUG; }
+  if (verbosity == "info" || verbosity == "INFO") { logLevel = LogLevel::INFO; }
+  if (verbosity == "warn" || verbosity == "WARN") { logLevel = LogLevel::WARN; }
 
   PdfToTextPlusPlus engine(
     noEmbeddedFontFiles,
@@ -371,8 +497,7 @@ int main(int argc, char* argv[]) {
     debugTextLinesDetection ? DEBUG : logLevel,
     debugSubSuperScriptsDetection ? DEBUG : logLevel,
     debugTextBlocksDetection ? DEBUG : logLevel,
-    debugPageFilter
-  );
+    debugPageFilter);
 
   PdfDocument doc;
   vector<Timing> timings;
@@ -381,7 +506,7 @@ int main(int argc, char* argv[]) {
   // TODO(korzen): Don't use the invalid argument exception; it is currently thrown by
   // SemanticRolesPredictor. Instead, use the exit code to check if something went wrong.
   try {
-    status = engine.process(pdfFilePathStr, &doc, &timings);
+    status = engine.process(pdfFilePath, &doc, &timings);
   } catch (const std::invalid_argument& ia) {
     cerr << "An error occurred: " << ia.what() << '\n';
     return 3;
@@ -395,21 +520,27 @@ int main(int argc, char* argv[]) {
   // Serialize the extraction result. If one of the --output-* options is used, output the text in
   // JSONL format. Otherwise, output the text as continuous text.
   auto start = high_resolution_clock::now();
-  if (outputPages || outputChars || outputFigures || outputShapes || outputWords|| outputBlocks) {
-    JsonlSerializer serializer(&doc,
-      outputPages,
-      outputChars,
-      outputFigures,
-      outputShapes,
-      outputWords,
-      outputBlocks);
-    serializer.serialize(outputFilePathStr);
-  } else {
-    TextSerializer serializer(&doc,
-      addControlCharacters,
-      addSemanticRoles,
-      noScripts);
-    serializer.serialize(outputFilePathStr);
+  // if (outputPages || outputChars || outputFigures || outputShapes || outputWords|| outputBlock) {
+  //   JsonlSerializer serializer(&doc,
+  //     outputPages,
+  //     outputChars,
+  //     outputFigures,
+  //     outputShapes,
+  //     outputWords,
+  //     outputBlocks);
+  //   serializer.serialize(outputFilePath);
+  // } else {
+  //   TextSerializer serializer(&doc,
+  //     addControlCharacters,
+  //     addSemanticRoles,
+  //     noScripts);
+  //   serializer.serialize(outputFilePath);
+  // }
+  Serializer* serializer = ppp::serialization::getSerializer(format);
+  if (serializer) {
+    unordered_set<SemanticRole> rolesSet(roles.begin(), roles.end());
+    unordered_set<DocumentUnit> unitsSet(units.begin(), units.end());
+    serializer->serialize(&doc, rolesSet, unitsSet, outputFilePath);
   }
   auto end = high_resolution_clock::now();
   Timing timingSerializeChars("Serialize", duration_cast<milliseconds>(end - start).count());
@@ -419,7 +550,7 @@ int main(int argc, char* argv[]) {
   const string visualizeFilePathStr(visualizeFilePath);
   if (!visualizeFilePathStr.empty()) {
     auto start = high_resolution_clock::now();
-    PdfDocumentVisualizer visualizer(pdfFilePathStr);
+    PdfDocumentVisualizer visualizer(pdfFilePath);
     if (visualizeChars) {
       visualizer.visualizeCharacters(doc, visualizer::color_schemes::blue);
     }
@@ -475,11 +606,11 @@ int main(int argc, char* argv[]) {
       string prefix = " * " + timing.name + ":";
       cout << std::left << std::setw(25) << prefix;
       cout << std::right << std::setw(4) << timing.time << " ms ";
-      double time = math_utils::round(timing.time / static_cast<double>(timeTotal) * 100, 1);
+      double time = ppp::math_utils::round(timing.time / static_cast<double>(timeTotal) * 100, 1);
       cout << "(" << time << "%)";
       cout << endl;
     }
   }
 
-  return 0;
+  return EXIT_SUCCESS;
 }

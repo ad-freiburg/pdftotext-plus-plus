@@ -147,10 +147,10 @@ string PdfPosition::toString() const {
   stringstream ss;
   ss << "PdfPosition("
      << "page=" << pageNum << "; "
-     << "leftX=" << math_utils::round(leftX, COORDS_PREC) << "; "
-     << "upperY=" << math_utils::round(upperY, COORDS_PREC) << "; "
-     << "rightX=" << math_utils::round(rightX, COORDS_PREC) << "; "
-     << "lowerY=" << math_utils::round(lowerY, COORDS_PREC) << "; "
+     << "leftX=" << ppp::math_utils::round(leftX, COORDS_PREC) << "; "
+     << "upperY=" << ppp::math_utils::round(upperY, COORDS_PREC) << "; "
+     << "rightX=" << ppp::math_utils::round(rightX, COORDS_PREC) << "; "
+     << "lowerY=" << ppp::math_utils::round(lowerY, COORDS_PREC) << "; "
      << "rotation=" << rotation << "; "
      << "wMode=" << wMode << ")";
   return ss.str();
@@ -160,10 +160,10 @@ string PdfPosition::toString() const {
 string PdfPosition::toShortString() const {
   stringstream ss;
   ss << "p=" << pageNum
-     << "; leftX=" << math_utils::round(leftX, COORDS_PREC)
-     << "; upperY=" << math_utils::round(upperY, COORDS_PREC)
-     << "; rightX=" << math_utils::round(rightX, COORDS_PREC)
-     << "; lowerY=" << math_utils::round(lowerY, COORDS_PREC);
+     << "; leftX=" << ppp::math_utils::round(leftX, COORDS_PREC)
+     << "; upperY=" << ppp::math_utils::round(upperY, COORDS_PREC)
+     << "; rightX=" << ppp::math_utils::round(rightX, COORDS_PREC)
+     << "; lowerY=" << ppp::math_utils::round(lowerY, COORDS_PREC);
   return ss.str();
 }
 
@@ -357,7 +357,7 @@ string PdfTextBlock::toString() const {
   stringstream ss;
   ss << "PdfTextBlock("
      << "pos=" << pos->toString() << "; "
-     << "role=" << role << "; "
+     << "role=" << ppp::types::getName(role) << "; "
      << "isCentered=" << isLinesCentered << "; "
      << "isEmphasized=" << isEmphasized << "; "
      << "text=\"" << text << "\")";
