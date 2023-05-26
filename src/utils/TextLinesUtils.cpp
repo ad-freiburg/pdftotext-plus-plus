@@ -19,6 +19,11 @@
 #include "./PdfElementsUtils.h"
 #include "./TextLinesUtils.h"
 
+using ppp::math_utils::equal;
+using ppp::math_utils::equalOrLarger;
+using ppp::math_utils::equalOrSmaller;
+using ppp::math_utils::larger;
+using ppp::math_utils::smaller;
 using std::smatch;
 using std::stack;
 using std::string;
@@ -60,7 +65,7 @@ bool text_lines_utils::computeIsFirstLineOfItem(const PdfTextLine* line,
     bool hasEqualFont = text_element_utils::computeHasEqualFont(line->prevLine, line);
     bool hasEqualFontSize = text_element_utils::computeHasEqualFontSize(line->prevLine, line);
     double distance = element_utils::computeVerticalGap(line->prevLine, line);
-    bool hasNegativeDistance = ppp::math_utils::equalOrSmaller(distance, 0);
+    bool hasNegativeDistance = equalOrSmaller(distance, 0);
     bool hasSentenceDelim = text_element_utils::computeEndsWithSentenceDelimiter(line->prevLine);
     bool hasEqualLeftX = element_utils::computeHasEqualLeftX(line->prevLine, line, avgCharWidth);
 
@@ -214,7 +219,7 @@ bool text_lines_utils::computeHasPrevLineCapacity(const PdfTextLine* line) {
   // The previous line has capacity if its right margin is larger than the width of the first word
   // of the given line, under consideration of the threshold.
   double threshold = config::getPrevTextLineCapacityThreshold(line->doc);
-  return ppp::math_utils::larger(line->prevLine->rightMargin, firstWordWidth, threshold);
+  return larger(line->prevLine->rightMargin, firstWordWidth, threshold);
 }
 
 
@@ -246,7 +251,7 @@ void text_lines_utils::computeTextLineHierarchy(const PdfPage* page) {
         bool hasSameWMode = prevLine->pos->wMode == line->pos->wMode;
         if (hasSameRotation && hasSameWMode) {
           double absLineDistance = abs(element_utils::computeVerticalGap(prevLine, line));
-          if (ppp::math_utils::larger(absLineDistance, maxLineDist, config::COORDS_EQUAL_TOLERANCE)) {
+          if (larger(absLineDistance, maxLineDist, config::COORDS_EQUAL_TOLERANCE)) {
             lineStack = stack<PdfTextLine*>();
           }
         }
@@ -258,7 +263,7 @@ void text_lines_utils::computeTextLineHierarchy(const PdfPage* page) {
       while (!lineStack.empty()) {
         double topStackLeftX = lineStack.top()->pos->leftX;
         double lineLeftX = line->pos->leftX;
-        if (!ppp::math_utils::larger(topStackLeftX, lineLeftX, leftXOffsetThreshold)) {
+        if (!larger(topStackLeftX, lineLeftX, leftXOffsetThreshold)) {
           break;
         }
         lineStack.pop();
@@ -277,7 +282,7 @@ void text_lines_utils::computeTextLineHierarchy(const PdfPage* page) {
       // sibling line of a line in a different column.
       double topStackLowerY = lineStack.top()->pos->lowerY;
       double lineLowerY = line->pos->lowerY;
-      if (ppp::math_utils::equalOrLarger(topStackLowerY, lineLowerY, config::COORDS_EQUAL_TOLERANCE)) {
+      if (equalOrLarger(topStackLowerY, lineLowerY, config::COORDS_EQUAL_TOLERANCE)) {
         continue;
       }
 
@@ -289,7 +294,7 @@ void text_lines_utils::computeTextLineHierarchy(const PdfPage* page) {
       //     current line.
       double topStackLeftX = lineStack.top()->pos->leftX;
       double lineLeftX = line->pos->leftX;
-      if (ppp::math_utils::equal(topStackLeftX, lineLeftX, leftXOffsetThreshold)) {
+      if (equal(topStackLeftX, lineLeftX, leftXOffsetThreshold)) {
         lineStack.top()->nextSiblingLine = line;
         line->prevSiblingLine = lineStack.top();
         line->parentLine = lineStack.top()->parentLine;
@@ -301,7 +306,7 @@ void text_lines_utils::computeTextLineHierarchy(const PdfPage* page) {
       // Check if the topmost line in the stack has a smaller leftX than the current line
       // (under consideration of the given tolerance). If so, the topmost line in the stack is the
       // parent line of the current line.
-      if (ppp::math_utils::smaller(topStackLeftX, lineLeftX, leftXOffsetThreshold)) {
+      if (smaller(topStackLeftX, lineLeftX, leftXOffsetThreshold)) {
         line->parentLine = lineStack.top();
 
         lineStack.push(line);
@@ -383,7 +388,7 @@ bool text_lines_utils::computeIsCentered(const PdfTextLine* line1, const PdfText
   // The lines are not centered when the maximum x-overlap ratio between the lines is smaller than
   // the threshold.
   double maxXOverlapRatio = element_utils::computeMaxXOverlapRatio(line1, line2);
-  if (ppp::math_utils::smaller(maxXOverlapRatio, config::CENTERING_X_OVERLAP_RATIO_THRESHOLD)) {
+  if (smaller(maxXOverlapRatio, config::CENTERING_X_OVERLAP_RATIO_THRESHOLD)) {
     return false;
   }
 
@@ -392,7 +397,7 @@ bool text_lines_utils::computeIsCentered(const PdfTextLine* line1, const PdfText
   double absLeftXOffset = abs(element_utils::computeLeftXOffset(line1, line2));
   double absRightXOffset = abs(element_utils::computeRightXOffset(line1, line2));
   double xOffsetTolerance = config::getCenteringXOffsetEqualTolerance(line1->doc);
-  if (!ppp::math_utils::equal(absLeftXOffset, absRightXOffset, xOffsetTolerance)) {
+  if (!equal(absLeftXOffset, absRightXOffset, xOffsetTolerance)) {
     return false;
   }
 

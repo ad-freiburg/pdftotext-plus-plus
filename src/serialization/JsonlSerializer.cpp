@@ -261,4 +261,4 @@ void JsonlSerializer::serializeTextBlocks(const PdfDocument* doc,
   }
 }
 
-}  // namespace ppp:serialization
+}  // namespace ppp::serialization

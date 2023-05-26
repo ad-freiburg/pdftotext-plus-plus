@@ -22,6 +22,10 @@ using comparators::LeftXAscComparator;
 using comparators::RightXDescComparator;
 using comparators::UpperYAscComparator;
 
+using ppp::math_utils::equal;
+using ppp::math_utils::equalOrLarger;
+using ppp::math_utils::larger;
+using ppp::math_utils::smaller;
 using std::max;
 using std::min;
 using std::numeric_limits;
@@ -146,7 +150,7 @@ bool xCut(const vector<PdfElement*>& elements, double minGapWidth, int maxNumOve
       // Compute the x-coordinate of the cut (= the horizontal midpoint of the gap).
       double gapX = prevElement->pos->rightX + ((gapWidth) / 2.0);
 
-      if (ppp::math_utils::equalOrLarger(gapWidth, minGapWidth)) {
+      if (equalOrLarger(gapWidth, minGapWidth)) {
         Cut* cut = new Cut(CutDir::X);
         cut->id = ppp::string_utils::createRandomString(3);
         cut->posInElements = pos;
@@ -169,7 +173,7 @@ bool xCut(const vector<PdfElement*>& elements, double minGapWidth, int maxNumOve
     }
 
     // Add the element to the queue if its rightX is larger than the smallest rightX in the queue.
-    if (ppp::math_utils::larger(element->pos->rightX, elementsLargestRightXQueue.top()->pos->rightX)) {
+    if (larger(element->pos->rightX, elementsLargestRightXQueue.top()->pos->rightX)) {
       elementsLargestRightXQueue.push(element);
     }
   }
@@ -248,7 +252,7 @@ bool yCut(const vector<PdfElement*>& elements, double minGapHeight,
     // Compute the y-coordinate of the cut (= the vertical midpoint of the gap).
     double gapY = elementLargestLowerY->pos->lowerY + ((gapHeight) / 2.0);
 
-    if (ppp::math_utils::equalOrLarger(gapHeight, minGapHeight)) {
+    if (equalOrLarger(gapHeight, minGapHeight)) {
       Cut* cut = new Cut(CutDir::Y);
       cut->id = ppp::string_utils::createRandomString(3);
       cut->posInElements = pos;
@@ -266,7 +270,7 @@ bool yCut(const vector<PdfElement*>& elements, double minGapHeight,
     }
 
     // Update elementLargestLowerY if lowerY of the current element is larger.
-    if (ppp::math_utils::larger(element->pos->lowerY, elementLargestLowerY->pos->lowerY)) {
+    if (larger(element->pos->lowerY, elementLargestLowerY->pos->lowerY)) {
       elementLargestLowerY = element;
     }
   }

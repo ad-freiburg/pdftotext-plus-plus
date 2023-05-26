@@ -31,6 +31,8 @@ using global_config::COORDS_EQUAL_TOLERANCE;
 using global_config::FONT_SIZE_PREC;
 using global_config::ID_LENGTH;
 
+using ppp::math_utils::larger;
+using ppp::math_utils::smaller;
 using std::endl;
 using std::get;
 using std::max;
@@ -236,10 +238,10 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
     m[2] = m2[2];
     m[3] = m2[3];
   }
-  if (ppp::math_utils::larger(fabs(m[0] * m[3]), fabs(m[1] * m[2]))) {
-    ch->pos->rotation = (ppp::math_utils::larger(m[0], 0) || ppp::math_utils::smaller(m[3], 0)) ? 0 : 2;
+  if (larger(fabs(m[0] * m[3]), fabs(m[1] * m[2]))) {
+    ch->pos->rotation = (larger(m[0], 0) || smaller(m[3], 0)) ? 0 : 2;
   } else {
-    ch->pos->rotation = (ppp::math_utils::larger(m[2], 0)) ? 1 : 3;
+    ch->pos->rotation = (larger(m[2], 0)) ? 1 : 3;
   }
   // In vertical writing mode, the lines are effectively rotated by 90 degrees.
   if (gfxFont && gfxFont->getWMode()) {
