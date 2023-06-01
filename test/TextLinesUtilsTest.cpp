@@ -488,41 +488,41 @@ TEST_F(TextLinesUtilsTest, computePotentialFootnoteLabelsPdf1) {
   std::unordered_set<string> labels;
   PdfTextLine* line = segment->lines[0];
   computePotentialFootnoteLabels(line, &labels);
-  ASSERT_EQ(0, labels.size()) << "Line: " << segment->lines[0]->toString();
+  ASSERT_EQ(size_t(0), labels.size()) << "Line: " << segment->lines[0]->toString();
 
   // Test the fifth line of the first text block in the Introduction ("tas iriure...").
   line = segment->lines[5];
   computePotentialFootnoteLabels(line, &labels);
-  ASSERT_EQ(1, labels.size()) << "Line: " << line->toString();
-  ASSERT_GT(labels.count("1"), 0) << "Line: " << line->toString();
+  ASSERT_EQ(size_t(1), labels.size()) << "Line: " << line->toString();
+  ASSERT_GT(labels.count("1"), size_t(0)) << "Line: " << line->toString();
 
   // Test the first line of the first enumeration ("1. This is the first...").
   labels.clear();
   line = segment->lines[16];
   computePotentialFootnoteLabels(line, &labels);
-  ASSERT_EQ(0, labels.size()) << "Line: " << line->toString();
+  ASSERT_EQ(size_t(0), labels.size()) << "Line: " << line->toString();
 
   // Test the third line in the block after the first enumeration ("2Id, vis at..."). Should return
   // no labels, since a superscript should be ignored when it is a prefix of a line.
   labels.clear();
   line = segment->lines[21];
   computePotentialFootnoteLabels(line, &labels);
-  ASSERT_EQ(0, labels.size()) << "Line: " << line->toString();
+  ASSERT_EQ(size_t(0), labels.size()) << "Line: " << line->toString();
 
   // Test the 3rd line in the last block of the left column ("phaedrum te...").
   labels.clear();
   line = segment->lines[36];
   computePotentialFootnoteLabels(line, &labels);
-  ASSERT_EQ(2, labels.size()) << "Line: " << line->toString();
-  ASSERT_GT(labels.count("†"), 0) << "Line: " << line->toString();
-  ASSERT_GT(labels.count("‡"), 0) << "Line: " << line->toString();
+  ASSERT_EQ(size_t(2), labels.size()) << "Line: " << line->toString();
+  ASSERT_GT(labels.count("†"), size_t(0)) << "Line: " << line->toString();
+  ASSERT_GT(labels.count("‡"), size_t(0)) << "Line: " << line->toString();
 
   // Test the footnote at the end of the left column. Should return no label, since a superscript
   // should be ignored when it is a prefix of a line.
   labels.clear();
   line = segment->lines[40];
   computePotentialFootnoteLabels(line, &labels);
-  ASSERT_EQ(0, labels.size()) << "Line: " << line->toString();
+  ASSERT_EQ(size_t(0), labels.size()) << "Line: " << line->toString();
 }
 
 // _________________________________________________________________________________________________

@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 LABEL MAINTAINER "Claudius Korzen <korzen@cs.uni-freiburg.de>"
 
@@ -24,6 +24,9 @@ WORKDIR /project
 COPY scripts scripts
 COPY Makefile .
 COPY config.yml .
+COPY project.description .
+COPY project.usage .
+COPY project.version .
 
 RUN apt-get update && apt-get install -y make
 RUN make requirements/pre USR_DIR="$USR_DIR"
@@ -39,7 +42,7 @@ CMD ./scripts/package.sh build_deb_package "$PROJECT_NAME" "$PROJECT_DESCRIPTION
 # ==================================================================================================
 
 # Build Docker image:
-# docker build -f Dockerfiles/Dockerfile.package.ubuntu2004-amd64 -t pdftotext-plus-plus.package:ubuntu2004-amd64 .
+# docker build -f Dockerfiles/Dockerfile.package.ubuntu2204-amd64 -t pdftotext-plus-plus.package:ubuntu2204-amd64 .
 #
 # Run Docker container:
-# docker run --rm --name pdftotext-plus-plus.package.ubuntu2004-amd64 -e PROJECT_NAME="<name>" -e PROJECT_DESCRIPTION="<description>" -e PROJECT_VERSION="<version>" -e PACKAGE_MAINTAINER_NAME="<name>" -e PACKAGE_MAINTAINER_MAIL="<mail>" -v "<output-dir>":/out pdftotext-plus-plus.package:ubuntu2004-amd64
+# docker run --rm --name pdftotext-plus-plus.package.ubuntu2204-amd64 -e PROJECT_NAME="<name>" -e PROJECT_DESCRIPTION="<description>" -e PROJECT_VERSION="<version>" -e PACKAGE_MAINTAINER_NAME="<name>" -e PACKAGE_MAINTAINER_MAIL="<mail>" -v "<output-dir>":/out pdftotext-plus-plus.package:ubuntu2204-amd64

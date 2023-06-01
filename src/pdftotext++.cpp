@@ -13,6 +13,7 @@
 #include <iomanip>   // std::setw, std::setprecision
 #include <iostream>  // std::cout
 #include <locale>    // imbue
+#include <memory>    // std::make_unique
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -21,6 +22,7 @@
 #include "./utils/Log.h"  // BBLUE, OFF
 #include "./utils/MathUtils.h"
 #include "./utils/StringUtils.h"
+#include "./Globals.h"
 #include "./PdfDocumentVisualizer.h"
 #include "./PdfToTextPlusPlus.h"
 #include "./Types.h"
@@ -47,30 +49,6 @@ using std::vector;
 namespace po = boost::program_options;
 
 // =================================================================================================
-// Parameters.
-// NOTE: The variables starting with "CXX_" need to be specified at compile time, in form of a
-// preprocessor variable. For example, to define the variable 'CXX_PROGRAM_NAME', type the
-// following: "g++ -DCXX_PROGRAM_NAME='pdftotext++' ..."
-
-// The program name.
-static const char* programName = CXX_PROGRAM_NAME;
-
-// The version number.
-static const char* version = CXX_PROGRAM_VERSION;
-
-// The program description.
-static const char* description = CXX_PROGRAM_DESCRIPTION;
-
-// The usage of this program.
-static const char* usage = CXX_PROGRAM_USAGE;
-
-// The maximum length of the lines in the help message.
-static int HELP_MAX_WIDTH = 100;
-
-// The amount by which to indent the description of a command line option in the help message.
-static int HELP_OPTION_DESC_INDENT = 4;
-
-// =================================================================================================
 // Helper methods.
 
 /**
@@ -79,30 +57,31 @@ static int HELP_OPTION_DESC_INDENT = 4;
  *
  * @param publicOpts
  *    The definition of the public command-line options.
+ * @param privateOpts
+ *    The definition of the non-public command-line options. NOTE: This can be omitted when the
+ *    private options should not appear in the help message.
  * @param maxLineLength
  *    The maximum length of the lines in the help message.
  * @param optionDescIndent
  *    The amount by which to indent the description of a command line option.
- * @param privateOpts
- *    The definition of the non-public command-line options. NOTE: This can be omitted when the
- *    private options should not appear in the help message.
  */
-void printHelpMessage(const po::options_description* publicOpts, int maxLineLength,
-      int optionDescIndent, const po::options_description* privateOpts = 0) {
+void printHelpMessage(
+    const po::options_description* publicOpts, const po::options_description* privateOpts = 0,
+    int maxLineLength = 100, int optionDescIndent = 4) {
   cout << BBLUE << "NAME" << OFF << endl;
-  cout << wrap(strip(programName), maxLineLength) << endl;
+  cout << wrap(strip(globals->programName), maxLineLength) << endl;
   cout << endl;
 
   cout << BBLUE << "VERSION" << OFF << endl;
-  cout << wrap(strip(version), maxLineLength) << endl;
+  cout << wrap(strip(globals->programVersion), maxLineLength) << endl;
   cout << endl;
 
   cout << BBLUE << "DESCRIPTION" << OFF << endl;
-  cout << wrap(strip(description), maxLineLength) << endl;
+  cout << wrap(strip(globals->programDescription), maxLineLength) << endl;
   cout << endl;
 
   cout << BBLUE << "USAGE" << OFF << endl;
-  cout << wrap(strip(usage), maxLineLength) << endl;
+  cout << wrap(strip(globals->programUsage), maxLineLength) << endl;
   cout << endl;
 
   cout << BBLUE << "OPTIONS" << OFF << endl;
@@ -129,6 +108,17 @@ void printHelpMessage(const po::options_description* publicOpts, int maxLineLeng
  * running the extraction pipeline on a specified PDF, and outputting the extracted text.
  */
 int main(int argc, char* argv[]) {
+  // Global parameters.
+  // NOTE: The variables starting with "CXX_" need to be specified at compile time, in form of a
+  // preprocessor variable. For example, to define the variable 'CXX_PROGRAM_NAME', type the
+  // following: "g++ -DCXX_PROGRAM_NAME='pdftotext++' ..."
+  globals = std::make_unique<Globals>();
+  globals->programDescription = CXX_PROGRAM_DESCRIPTION;
+  globals->programUsage = CXX_PROGRAM_USAGE;
+  globals->programName = CXX_PROGRAM_NAME;
+  globals->programVersion = CXX_PROGRAM_VERSION;
+  globals->semanticRolesDetectionModelsDir = CXX_SEMANTIC_ROLES_DETECTION_MODELS_DIR;
+
   // The path to the PDF file to process.
   string pdfFilePath;
   // The path to the file into which to output the extracted text.
@@ -174,7 +164,6 @@ int main(int argc, char* argv[]) {
   bool printVersion = false;
   bool printHelp = false;
   bool printFullHelp = false;
-
 
   // Specify the public options (= options that will be shown to the user when printing the help).
   po::options_description publicOpts;
@@ -438,34 +427,34 @@ int main(int argc, char* argv[]) {
   } catch (const exception& e) {
     bool showFullHelp = vm.count("full-help") ? vm["full-help"].as<bool>() : false;
     if (showFullHelp) {
-      printHelpMessage(&publicOpts, HELP_MAX_WIDTH, HELP_OPTION_DESC_INDENT, &privateOpts);
+      printHelpMessage(&publicOpts, &privateOpts);
       return EXIT_SUCCESS;
     }
     bool showHelp = vm.count("help") ? vm["help"].as<bool>() : false;
     if (showHelp) {
-      printHelpMessage(&publicOpts, HELP_MAX_WIDTH, HELP_OPTION_DESC_INDENT);
+      printHelpMessage(&publicOpts);
       return EXIT_SUCCESS;
     }
     cerr << "An error occurred on parsing the command-line options: " << e.what() << endl;
-    cerr << "Type \"" << programName << " --help\" for printing the help." << endl;
+    cerr << "Type \"" << globals->programName << " --help\" for printing the help." << endl;
     return EXIT_FAILURE;
   }
 
   // Print the full help info if explicitly requested by the user.
   if (printFullHelp) {
-    printHelpMessage(&publicOpts, HELP_MAX_WIDTH, HELP_OPTION_DESC_INDENT, &privateOpts);
+    printHelpMessage(&publicOpts, &privateOpts);
     return EXIT_SUCCESS;
   }
 
   // Print the help info if explicitly requested by the user.
   if (printHelp) {
-    printHelpMessage(&publicOpts, HELP_MAX_WIDTH, HELP_OPTION_DESC_INDENT);
+    printHelpMessage(&publicOpts);
     return EXIT_SUCCESS;
   }
 
   // Print the version info if explicitly requested by the user.
   if (printVersion) {
-    cout << programName << ", version " << version << endl;
+    cout << globals->programName << ", version " << globals->programVersion << endl;
     return EXIT_SUCCESS;
   }
 

@@ -231,7 +231,7 @@ TEST_F(TextBlocksUtilsTest, createTextBlockPdf1) {
   text_blocks_utils::createTextBlock(lines, &blocks);
 
   PdfTextBlock* block = blocks.back();
-  ASSERT_EQ(block->id.size(), global_config::ID_LENGTH + 6);  // +6 for "block-"
+  ASSERT_EQ(block->id.size(), size_t(global_config::ID_LENGTH + 6));  // +6 for "block-"
   ASSERT_EQ(block->doc, pdf1);
   ASSERT_EQ(block->segment, line0->segment);
   ASSERT_EQ(block->lines, lines);
@@ -272,7 +272,7 @@ TEST_F(TextBlocksUtilsTest, createTextBlockPdf1) {
   text_blocks_utils::createTextBlock(lines, &blocks);
 
   block = blocks.back();
-  ASSERT_EQ(block->id.size(), global_config::ID_LENGTH + 6);  // +6 for "block-"
+  ASSERT_EQ(block->id.size(), size_t(global_config::ID_LENGTH + 6));  // +6 for "block-"
   ASSERT_EQ(block->doc, pdf1);
   ASSERT_EQ(block->segment, line0->segment);
   ASSERT_EQ(block->lines, lines);

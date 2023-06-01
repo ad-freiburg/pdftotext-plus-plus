@@ -42,15 +42,15 @@ class StringDescComparator {
 TEST(FixedPriorityQueue, pushpop) {
   // Create a priority queue of capacity 3.
   FixedPriorityQueue<int, IntDescComparator> queue(3);
-  ASSERT_EQ(queue._capacity, 3);
-  ASSERT_EQ(queue.size(), 0);
+  ASSERT_EQ(queue._capacity, size_t(3));
+  ASSERT_EQ(queue.size(), size_t(0));
   queue.push(2);
   queue.push(8);
   queue.push(3);
-  ASSERT_EQ(queue.size(), 3);
+  ASSERT_EQ(queue.size(), size_t(3));
   queue.push(5);
   queue.push(6);
-  ASSERT_EQ(queue.size(), 3);
+  ASSERT_EQ(queue.size(), size_t(3));
   ASSERT_EQ(queue.top(), 5);
   queue.pop();
   ASSERT_EQ(queue.top(), 6);
@@ -66,19 +66,19 @@ TEST(FixedPriorityQueue, pushpop) {
   std::string tuv = "tuv";
   std::string vwx = "vwx";
   FixedPriorityQueue<std::string, StringDescComparator> queue2(4);
-  ASSERT_EQ(queue2._capacity, 4);
-  ASSERT_EQ(queue2.size(), 0);
+  ASSERT_EQ(queue2._capacity, size_t(4));
+  ASSERT_EQ(queue2.size(), size_t(0));
   queue2.push(tuv);
   queue2.push(ghi);
   queue2.push(klm);
-  ASSERT_EQ(queue2.size(), 3);
+  ASSERT_EQ(queue2.size(), size_t(3));
   queue2.push(abc);
-  ASSERT_EQ(queue2.size(), 4);
+  ASSERT_EQ(queue2.size(), size_t(4));
   ASSERT_EQ(queue2.top(), tuv);
   queue2.pop();
   queue2.push(vwx);
   queue2.push(bcd);
-  ASSERT_EQ(queue2.size(), 4);
+  ASSERT_EQ(queue2.size(), size_t(4));
   ASSERT_EQ(queue2.top(), klm);
   queue2.pop();
   ASSERT_EQ(queue2.top(), ghi);
@@ -95,13 +95,13 @@ TEST(FixedPriorityQueue, sort) {
 
   std::vector<int> sorted;
   queue.sort(IntDescComparator(), &sorted);
-  ASSERT_EQ(sorted.size(), 0);
+  ASSERT_EQ(sorted.size(), size_t(0));
 
   queue.push(2);
   queue.push(8);
   std::vector<int> sorted2;
   queue.sort(IntDescComparator(), &sorted2);
-  ASSERT_EQ(sorted2.size(), 2);
+  ASSERT_EQ(sorted2.size(), size_t(2));
   ASSERT_EQ(sorted2[0], 8);
   ASSERT_EQ(sorted2[1], 2);
 
@@ -111,7 +111,7 @@ TEST(FixedPriorityQueue, sort) {
   queue.push(6);
   std::vector<int> sorted3;
   queue.sort(IntDescComparator(), &sorted3);
-  ASSERT_EQ(sorted3.size(), 4);
+  ASSERT_EQ(sorted3.size(), size_t(4));
   ASSERT_EQ(sorted3[0], 8);
   ASSERT_EQ(sorted3[1], 7);
   ASSERT_EQ(sorted3[2], 6);
@@ -120,7 +120,7 @@ TEST(FixedPriorityQueue, sort) {
   queue.pop();
   std::vector<int> sorted4;
   queue.sort(IntAscComparator(), &sorted4);
-  ASSERT_EQ(sorted4.size(), 3);
+  ASSERT_EQ(sorted4.size(), size_t(3));
   ASSERT_EQ(sorted4[0], 6);
   ASSERT_EQ(sorted4[1], 7);
   ASSERT_EQ(sorted4[2], 8);

@@ -1,17 +1,16 @@
+PROJECT_NAME = pdftotext-plus-plus
+BINARY_NAME = pdftotext++
+MAINTAINER_NAME = Claudius Korzen
+MAINTAINER_MAIL = korzen@cs.uni-freiburg.de
+PROJECT_DESCRIPTION = $(shell cat project.description | sed ':a;N;$$!ba;s/\n/\\n/g')  # the sed command replaces each newline by "\n".
+PROJECT_USAGE = $(shell cat project.usage | sed ':a;N;$$!ba;s/\n/\\n/g')  # the sed command replaces each newline by "\n".
+VERSION = $(shell cat project.version)
+
 SRC_DIR = src
 TEST_DIR = test
 RESOURCES_DIR = resources
-
 USR_DIR = usr
 BUILD_DIR = build
-PACKAGES_DIR = /local/data/pdftotext-plus-plus/packages
-
-CONF_FILE = config.yml
-VERSION_FILE = version.txt
-PROJECT_NAME = $(shell yq ".project.name" "$(CONF_FILE)")
-PROJECT_DESCRIPTION = $(shell yq ".project.description" "$(CONF_FILE)" | sed ':a;N;$$!ba;s/\n/\\n/g')  # the sed command replaces each newline by "\n".
-PROJECT_USAGE = $(shell yq ".project.usage" "$(CONF_FILE)" | sed ':a;N;$$!ba;s/\n/\\n/g')
-VERSION = $(shell cat $(VERSION_FILE))
 
 MAIN_CPP_FILE = src/pdftotext++.cpp
 MAIN_BINARY = $(basename $(notdir $(MAIN_CPP_FILE)))
@@ -24,32 +23,41 @@ SRC_OBJECT_FILES = $(SRC_CPP_FILES:%.cpp=$(BUILD_DIR)/%.o)
 TEST_CPP_FILES = $(wildcard $(TEST_DIR)/*Test.cpp $(TEST_DIR)/**/*Test.cpp)
 TEST_BINARIES = $(basename $(TEST_CPP_FILES:%.cpp=$(BUILD_DIR)/%.o))
 
-# Compiling.
-CXX_EXTRA = -O3 -Wall
-CXX = g++ -std=c++17 $(CXX_EXTRA) -DCXX_PROGRAM_NAME="\"$(PROJECT_NAME)\"" -DCXX_PROGRAM_DESCRIPTION="\"$(PROJECT_DESCRIPTION)\"" -DCXX_PROGRAM_USAGE="\"$(PROJECT_USAGE)\"" -DCXX_PROGRAM_VERSION="\"$(VERSION)\"" -DCXX_PROJECT_RESOURCES_DIR="\"$(RESOURCES_DIR)\""
-LIBS = -I$(USR_DIR)/include -L$(USR_DIR)/lib -ltensorflow_framework -ltensorflow -lpoppler -lutf8proc -lboost_program_options
-LIBS_TEST = $(LIBS) -lgtest -lgtest_main -lpthread
+SEMANTIC_ROLES_DETECTION_MODELS_DIR=$(RESOURCES_DIR)/models/2021-08-30_model-3K-documents
 
-# APT repository.
+# Settings related to packaging.
+PACKAGING_DOCKERFILES_DIR = Dockerfiles.packages
+PACKAGING_TARGET_DIR = /local/data/pdftotext-plus-plus/packages
+PACKAGING_APT_RUN_REQUIREMENTS = libboost-all-dev libfontconfig1-dev libfreetype6-dev libnss3-dev libopenjp2-7-dev libtiff5-dev
+
+# Settings related to the APT repository.
 APT_REPO_DOCKERFILE = services/apt-repo/Dockerfile
 APT_REPO_IMAGE_NAME = pdftotext-plus-plus.apt-repo
 APT_REPO_SERVER_CONTAINER_NAME = pdftotext-plus-plus.apt-repo.server
 APT_REPO_UPDATE_CONTAINER_NAME = pdftotext-plus-plus.apt-repo.update
-APT_REPO_POOL_DIR = $(PACKAGES_DIR)
+APT_REPO_POOL_DIR = $(PACKAGING_TARGET_DIR)
 APT_REPO_DISTS_DIR = /local/data/pdftotext-plus-plus/apt-repo/dists
 APT_REPO_GPG_DIR = /local/data/pdftotext-plus-plus/keyrings/apt-repo
 APT_REPO_SERVER_PORT = 7192
 
-# Message styles.
+# Settings related to logging.
 INFO_STYLE = \033[34;1m
 ERROR_STYLE = \033[31;1m
 N = \033[0m
 
 # ==================================================================================================
 
+CXX_EXTRA = -O3 -Wall
+CXX_MACROS = -DCXX_PROGRAM_NAME="\"$(BINARY_NAME)\"" -DCXX_PROGRAM_DESCRIPTION="\"$(PROJECT_DESCRIPTION)\"" -DCXX_PROGRAM_USAGE="\"$(PROJECT_USAGE)\"" -DCXX_PROGRAM_VERSION="\"$(VERSION)\"" -DCXX_SEMANTIC_ROLES_DETECTION_MODELS_DIR="\"$(SEMANTIC_ROLES_DETECTION_MODELS_DIR)\""
+CXX = g++ -std=c++17 $(CXX_EXTRA)
+LIBS = -I$(USR_DIR)/include -L$(USR_DIR)/lib -ltensorflow_framework -ltensorflow -lpoppler -lutf8proc -lboost_program_options
+LIBS_TEST = $(LIBS) -lgtest -lgtest_main -lpthread
+
+# ==================================================================================================
+
 .PHONY: help checkstyle compile test release set-version packages clean apt-repo \
 	apt-repo/build-docker-image apt-repo/update apt-repo/server/start apt-repo/server/start/force \
-	apt-repo/server/stop requirements/pre requirements/checkstyle requirements/compile \
+	apt-repo/server/stop requirements/checkstyle requirements/compile \
 	requirements/test requirements/install requirements/packages
 
 # ==================================================================================================
@@ -87,7 +95,11 @@ $(MAIN_BINARY): $(MAIN_OBJECT_FILE) $(SRC_OBJECT_FILES)
 $(BUILD_DIR)/%.o: %.cpp $(SRC_HEADER_FILES)
 	@echo "$(INFO_STYLE)[compile] Compiling '$<' ...$(N)"
 	@mkdir -p "$(dir $@)"
-	$(CXX) -c $< -o "$@" $(LIBS)
+	@if [ "$<" = "$(MAIN_CPP_FILE)" ]; then\
+    $(CXX) $(CXX_MACROS) -c $< -o "$@" $(LIBS);\
+	else\
+		$(CXX) -c $< -o "$@" $(LIBS);\
+  fi
 
 # ==================================================================================================
 # Testing.
@@ -112,7 +124,7 @@ $(BUILD_DIR)/%Test.o: %Test.cpp $(SRC_HEADER_FILES)
 # ==================================================================================================
 # Installing.
 
-install: requirements/pre requirements/install install-without-deps
+install: requirements/install install-without-deps
 
 install-without-deps: clean compile
 	@echo "$(INFO_STYLE)[$@] Installing pdftotext++ ...$(N)"
@@ -143,16 +155,21 @@ clean:
 release: set-version packages apt-repo github-release
 
 set-version:
-	@if [ "$(VERSION)" = "$(shell cat "$(VERSION_FILE)")" ]; then \
+	@if [ "$(VERSION)" = "$(shell cat project.version)" ]; then \
 		echo "$(ERROR_STYLE)The specified version is equal to the current version ($(VERSION))." ; \
 		echo "$(ERROR_STYLE)Specify another version with: make release VERSION=\"<version>\"$(N)" ; \
 		exit 1 ; \
 	fi
-	@echo "$(VERSION)" > "$(VERSION_FILE)"
+	@echo "$(VERSION)" > project.version
 
 packages:
 	@echo "$(INFO_STYLE)[release] Building packages ...$(N)"
-	./scripts/package.sh build_packages "$(CONF_FILE)" "$(VERSION)" "$(PACKAGES_DIR)"
+	./scripts/package.sh build_packages "$(PACKAGING_DOCKERFILES_DIR)" "$(PROJECT_NAME)" \
+			"$(BINARY_NAME)" "$(PROJECT_DESCRIPTION)" "$(VERSION)" "$(MAINTAINER_NAME)" \
+			"$(MAINTAINER_MAIL)" "$(PACKAGING_APT_RUN_REQUIREMENTS)" "$(PACKAGING_TARGET_DIR)"
+
+version:
+	@echo $(VERSION)
 
 # ==================================================================================================
 # Services.
@@ -198,71 +215,27 @@ apt-repo/server/stop:
 
 github-release:
 	@echo "$(INFO_STYLE)[github-release] Creating Github release ...$(N)"
-	./services/github-release/github-release.sh create_release "$(VERSION)" "$(PACKAGES_DIR)"
+	./services/github-release/github-release.sh create_release "$(VERSION)" "$(PACKAGING_TARGET_DIR)"
 
 # ==================================================================================================
 # Installing requirements.
 
-requirements/pre:
-	apt-get update
-	./scripts/install_requirements.sh install_yq
-
 requirements/checkstyle:
-	@echo "$(INFO_STYLE)[$@] Installing APT packages ...$(N)"
-	apt-get install -y $(shell yq ".project.requirements.checkstyle.apt" "$(CONF_FILE)")
-
-	@echo "$(INFO_STYLE)[$@] Installing other packages ...$(N)"
-	@yq ".project.requirements.checkstyle.other | to_entries | .[] | [.value] | @tsv" "$(CONF_FILE)" | \
-	while read -r CMD ; do \
-		if [ -n "$$CMD" ]; then \
-			echo $$CMD "$(USR_DIR)"; \
-		fi \
-	done
+	@echo "$(INFO_STYLE)[$@] Installing requirements for 'make checkstyle' ...$(N)"
+	$(INSTALL_REQUIREMENTS_SCRIPT) make_checkstyle
 
 requirements/compile:
-	@echo "$(INFO_STYLE)[$@] Installing APT packages ...$(N)"
-	apt-get install -y $(shell yq ".project.requirements.compile.apt" "$(CONF_FILE)")
+	@echo "$(INFO_STYLE)[$@] Installing requirements for 'make compile' ...$(N)"
+	./scripts/install_requirements.sh make_compile
 
-	@echo "$(INFO_STYLE)[$@] Installing other packages ...$(N)"
-	@yq ".project.requirements.compile.other | to_entries | .[] | [.value] | @tsv" "$(CONF_FILE)" | \
-	while read -r CMD ; do \
-		if [ -n "$$CMD" ]; then \
-			$$CMD "$(USR_DIR)"; \
-		fi \
-	done
+requirements/test:
+	@echo "$(INFO_STYLE)[$@] Installing requirements for 'make test' ...$(N)"
+	./scripts/install_requirements.sh make_test
 
-requirements/test: requirements/compile
-	@echo "$(INFO_STYLE)[$@] Installing APT packages ...$(N)"
-	apt-get install -y $(shell yq ".project.requirements.test.apt" "$(CONF_FILE)")
+requirements/install:
+	@echo "$(INFO_STYLE)[$@] Installing requirements for 'make install' ...$(N)"
+	./scripts/install_requirements.sh make_install
 
-	@echo "$(INFO_STYLE)[$@] Installing other packages ...$(N)"
-	@yq ".project.requirements.test.other | to_entries | .[] | [.value] | @tsv" "$(CONF_FILE)" | \
-	while read -r CMD ; do \
-		if [ -n "$$CMD" ]; then \
-			$$CMD "$(USR_DIR)"; \
-		fi \
-	done
-
-requirements/install: requirements/compile
-	@echo "$(INFO_STYLE)[$@] Installing APT packages ...$(N)"
-	apt-get install -y $(shell yq ".project.requirements.install.apt" "$(CONF_FILE)")
-
-	@echo "$(INFO_STYLE)[$@] Installing other packages ...$(N)"
-	@yq ".project.requirements.install.other | to_entries | .[] | [.value] | @tsv" "$(CONF_FILE)" | \
-	while read -r CMD ; do \
-		if [ -n "$$CMD" ]; then \
-			$$CMD "$(USR_DIR)"; \
-		fi \
-	done
-
-requirements/packages: requirements/compile
-	@echo "$(INFO_STYLE)[$@] Installing APT packages ...$(N)"
-	apt-get install -y $(shell yq ".project.requirements.packages.apt" "$(CONF_FILE)")
-
-	@echo "$(INFO_STYLE)[$@] Installing other packages ...$(N)"
-	@yq ".project.requirements.packages.other | to_entries | .[] | [.value] | @tsv" "$(CONF_FILE)" | \
-	while read -r CMD ; do \
-		if [ -n "$$CMD" ]; then \
-			$$CMD "$(USR_DIR)"; \
-		fi \
-	done
+requirements/packages:
+	@echo "$(INFO_STYLE)[$@] Installing requirements for 'make packages' ...$(N)"
+	./scripts/install_requirements.sh make_packages

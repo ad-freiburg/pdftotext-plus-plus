@@ -16,6 +16,9 @@ WORKDIR /project
 COPY scripts scripts
 COPY Makefile .
 COPY config.yml .
+COPY project.description .
+COPY project.usage .
+COPY project.version .
 
 # Install the requirements.
 RUN apt-get update && apt-get install -y make
@@ -25,8 +28,6 @@ RUN make requirements/compile USR_DIR="$USR_DIR"
 # Compile the project and build the package.
 COPY src src
 COPY resources resources
-COPY version.txt .
-
 RUN make clean compile USR_DIR="$USR_DIR"
 
 ENTRYPOINT [ "./build/pdftotext++" ]
