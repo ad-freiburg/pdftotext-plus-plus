@@ -18,6 +18,7 @@
 
 // #include "tensorflow/cc/saved_model/loader.h"
 
+#include "./Config.h"
 #include "./PdfDocument.h"
 
 using std::string;
@@ -32,7 +33,7 @@ using std::unordered_map;
 class SemanticRolesPredictor {
  public:
   /** This constructor creates and initializes a new `SemanticRoles` object. */
-  SemanticRolesPredictor();
+  explicit SemanticRolesPredictor(const ppp::Config* config);
 
   /** The deconstructor. */
   ~SemanticRolesPredictor();
@@ -96,6 +97,9 @@ class SemanticRolesPredictor {
 
   // Whether or not the model was already loaded.
   bool _modelOk = false;
+
+  // The configuration to use.
+  const ppp::Config* _config;
 };
 
 #endif  // SEMANTICROLESPREDICTOR_H_

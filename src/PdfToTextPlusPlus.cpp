@@ -40,6 +40,7 @@ using std::vector;
 
 // _________________________________________________________________________________________________
 PdfToTextPlusPlus::PdfToTextPlusPlus(
+      const ppp::Config* config,
       bool noEmbeddedFontFilesParsing,
       bool noWordsDehyphenation,
       bool parseMode,
@@ -52,6 +53,7 @@ PdfToTextPlusPlus::PdfToTextPlusPlus(
       LogLevel logLevelSubSuperScriptsDetection,
       LogLevel logLevelTextBlocksDetection,
       int logPageFilter) {
+  _config = config,
   _noEmbeddedFontFilesParsing = noEmbeddedFontFilesParsing;
   _noWordsDehyphenation = noWordsDehyphenation;
   _parseMode = parseMode;
@@ -207,7 +209,7 @@ int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
 
   // (12) Detect the reading order of the text blocks.
   start = high_resolution_clock::now();
-  ReadingOrderDetector rod(doc);
+  ReadingOrderDetector rod(doc, _config);
   rod.detect();
   end = high_resolution_clock::now();
   if (timings) {

@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "./utils/Log.h"
+#include "./Config.h"
 #include "./PdfDocument.h"
 #include "./Types.h"
 
@@ -49,6 +50,8 @@ class PdfToTextPlusPlus {
   /**
    * This constructor creates and initializes a new instance of this class.
    *
+   * @param config
+   *   The configuration to use.
    * @param noEmbeddedFontFilesParsing
    *   A boolean flag indicating whether or not to parse the font files, embedded into the current
    *   PDF file, while parsing the content streams. Setting this parameter to true disables the
@@ -103,6 +106,7 @@ class PdfToTextPlusPlus {
    *   messages produced while processing the first page, set this parameter to 1.
    */
   PdfToTextPlusPlus(
+    const ppp::Config* config,
     bool noEmbeddedFontFilesParsing = false,
     bool noWordsDehyphenation = false,
     bool parseMode = false,
@@ -137,6 +141,8 @@ class PdfToTextPlusPlus {
   int process(const string& pdfFilePath, PdfDocument* doc, vector<Timing>* timings = nullptr) const;
 
  private:
+  // The configuration to use.
+  const ppp::Config* _config;
   // Whether or not to parse the embedded font files of a PDF file.
   bool _noEmbeddedFontFilesParsing;
   // Whether or not to disable words dehyphenation.

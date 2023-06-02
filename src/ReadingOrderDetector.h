@@ -11,6 +11,7 @@
 
 #include <vector>
 
+#include "./Config.h"
 #include "./PdfDocument.h"
 #include "./SemanticRolesPredictor.h"
 
@@ -49,8 +50,10 @@ class ReadingOrderDetector {
    *
    * @param doc
    *   The document to process.
+   * @param config
+   *   The configuration to use.
    */
-  explicit ReadingOrderDetector(const PdfDocument* doc);
+  explicit ReadingOrderDetector(const PdfDocument* doc, const ppp::Config* config);
 
   /** The deconstructor. */
   ~ReadingOrderDetector();
@@ -168,8 +171,11 @@ class ReadingOrderDetector {
   double _pageElementsMaxX;
   double _pageElementsMaxY;
 
+  // The configuration to use.
+  const ppp::Config* _config;
+
   // The device for predicting the semantic roles of the text blocks.
-  SemanticRolesPredictor _semanticRolesPredictor;
+  SemanticRolesPredictor* _semanticRolesPredictor;
 };
 
 #endif  // READINGORDERDETECTOR_H_

@@ -18,13 +18,17 @@ S=$(basename "$0")
 #   $1 - The absolute or relative path to a directory containing Dockerfiles (each of which is
 #        supposed to build a package for a specific distribution).
 #        NOTE: If the path is specified relative, it must be relative to this script.
-#   $2 - The name of the project. TODO: Where it is stored?
-#   $3 - The name of the binary. TODO: Where it is stored?
-#   $4 - The description of the project. TODO: Where it is stored?
-#   $5 - The current version of the project. TODO: Where it is stored?
-#        NOTE: This version will be stored in the control files of the packages.
-#   $6 - The name of the maintainer of the project. TODO: Where it is stored?
-#   $7 - The mail of the maintainer of the project. TODO: Where it is stored?
+#   $2 - The name of the project.
+#   $3 - The name of the binary.
+#        NOTE: This name will be stored in the package's control file, under the key "Package".
+#   $4 - The description of the project.
+#        NOTE: This name will be stored in the package's control file, under the key "Description".
+#   $5 - The current version of the project.
+#        NOTE: This name will be stored in the package's control file, under the key "Version".
+#   $6 - The name of the maintainer of the project.
+#        NOTE: This name will be stored in the package's control file, under the key "Maintainer".
+#   $7 - The mail of the maintainer of the project.
+#        NOTE: This name will be stored in the package's control file, under the key "Maintainer".
 #   $8 - The apt packages that need to be installed on the user's system in order to run the binary.
 #   $9 - The absolute or relative path to the directory where the built packages should be stored.
 #        NOTE: If the path is specified relative, it must be relative to this script.
@@ -56,13 +60,13 @@ function build_packages() {
   debug " • APT_RUN_REQUIREMENTS: '$APT_RUN_REQUIREMENTS'"
   debug " • TARGET_DIR:           '$TARGET_DIR'"
   debug " • DOCKERFILES:"
-  for DOCKERFILE in ${DOCKERFILES_DIR}/Dockerfile.package.*; do
+  for DOCKERFILE in ${DOCKERFILES_DIR}/Dockerfile.packaging.*; do
       debug "     • $(basename $DOCKERFILE)"
   done
 
   # Iterate through the Dockerfiles and use each to build a package for a specific distribution.
-  for DOCKERFILE in ${DOCKERFILES_DIR}/Dockerfile.package.*; do
-      build_package "$(echo $DOCKERFILE | cut -d. -f4)" "$DOCKERFILE" "$PROJECT_NAME" \
+  for DOCKERFILE in ${DOCKERFILES_DIR}/Dockerfile.packaging.*; do
+      build_package "$(echo $DOCKERFILE | cut -d. -f4)" "$DOCKERFILE" "$BINARY_NAME" \
           "$PROJECT_DESCRIPTION" "$PROJECT_VERSION" "$MAINTAINER_NAME" "$MAINTAINER_MAIL" \
           "$APT_RUN_REQUIREMENTS" "$TARGET_DIR"
   done
@@ -78,11 +82,11 @@ function build_packages() {
 #        NOTE: This name becomes part of the name of the Docker image and Docker container.
 #   $2 - The absolute or relative path to the Dockerfile.
 #        NOTE: If the path is specified relative, it must be relative to this script.
-#   $3 - The name of the project (for example: "pdftotext++").
+#   $3 - The name of the package (for example: "pdftotext++").
 #        NOTE: This name is passed to the Dockerfile and becomes part of the package's control file.
-#   $4 - The description of the project.
+#   $4 - The description of the package.
 #        NOTE: This description is passed to the Dockerfile and becomes part of the control file.
-#   $5 - The version of the project.
+#   $5 - The version of the package.
 #        NOTE: This version is passed to the Dockerfile and becomes part of the control file.
 #   $6 - The name of the project's maintainer.
 #        NOTE: This name is passed to the Dockerfile and becomes part of the control file.
@@ -104,9 +108,9 @@ function build_package() {
   local M="build-package"
   local DIST_NAME="$1"
   local DOCKERFILE="$2"
-  local PROJECT_NAME="$3"
-  local PROJECT_DESCRIPTION="$4"
-  local PROJECT_VERSION="$5"
+  local PACKAGE_NAME="$3"
+  local PACKAGE_DESCRIPTION="$4"
+  local PACKAGE_VERSION="$5"
   local MAINTAINER_NAME="$6"
   local MAINTAINER_MAIL="$7"
   local APT_RUN_REQUIREMENTS="$8"
@@ -118,9 +122,9 @@ function build_package() {
   info_emph "[$S/$M][$D] Building package ..."
   debug " • DIST_NAME:             '$DIST_NAME'"
   debug " • DOCKERFILE:            '$DOCKERFILE'"
-  debug " • PROJECT_NAME:          '$PROJECT_NAME'"
-  debug " • PROJECT_DESCRIPTION:   '$PROJECT_DESCRIPTION'"
-  debug " • PROJECT_VERSION:       '$PROJECT_VERSION'"
+  debug " • PACKAGE_NAME:          '$PACKAGE_NAME'"
+  debug " • PACKAGE_DESCRIPTION:   '$PACKAGE_DESCRIPTION'"
+  debug " • PACKAGE_VERSION:       '$PACKAGE_VERSION'"
   debug " • MAINTAINER_NAME:       '$MAINTAINER_NAME'"
   debug " • MAINTAINER_MAIL:       '$MAINTAINER_MAIL'"
   debug " • APT_RUN_REQUIREMENTS:  '$APT_RUN_REQUIREMENTS'"
@@ -131,9 +135,9 @@ function build_package() {
   # Validate the arguments.
   [[ -z "$DIST_NAME" ]] && { error "[$S/$M][$D] No distribution name given."; }
   [[ -z "$DOCKERFILE" ]] && { error "[$S/$M][$D] No Dockerfile given."; }
-  [[ -z "$PROJECT_NAME" ]] && { error "[$S/$M][$D] No project name given."; }
-  [[ -z "$PROJECT_DESCRIPTION" ]] && { error "[$S/$M][$D] No project description given."; }
-  [[ -z "$PROJECT_VERSION" ]] && { error "[$S/$M][$D] No project version given."; }
+  [[ -z "$PACKAGE_NAME" ]] && { error "[$S/$M][$D] No project name given."; }
+  [[ -z "$PACKAGE_DESCRIPTION" ]] && { error "[$S/$M][$D] No project description given."; }
+  [[ -z "$PACKAGE_VERSION" ]] && { error "[$S/$M][$D] No project version given."; }
   [[ -z "$MAINTAINER_NAME" ]] && { error "[$S/$M][$D] No maintainer name given."; }
   [[ -z "$MAINTAINER_MAIL" ]] && { error "[$S/$M][$D] No maintainer mail given."; }
   [[ -z "$APT_RUN_REQUIREMENTS" ]] && { error "[$S/$M][$D] No APT run requirements given."; }
@@ -150,9 +154,9 @@ function build_package() {
   info "[$S/$M][$D] Creating and running the Docker container ..."
   mkdir -p -m 777 "$TARGET_DIR"
   docker run --rm --name "$DOCKER_CONTAINER_NAME" \
-    -e PROJECT_NAME="$PROJECT_NAME" \
-    -e PROJECT_DESCRIPTION="$PROJECT_DESCRIPTION" \
-    -e PROJECT_VERSION="$PROJECT_VERSION" \
+    -e PACKAGE_NAME="$PACKAGE_NAME" \
+    -e PACKAGE_DESCRIPTION="$PACKAGE_DESCRIPTION" \
+    -e PACKAGE_VERSION="$PACKAGE_VERSION" \
     -e PACKAGE_MAINTAINER_NAME="$MAINTAINER_NAME" \
     -e PACKAGE_MAINTAINER_MAIL="$MAINTAINER_MAIL" \
     -e PACKAGE_APT_RUN_REQUIREMENTS="$APT_RUN_REQUIREMENTS" \
@@ -232,9 +236,9 @@ function build_deb_package() {
   local PKG_RES_DIR_REL="/usr/share/pdftotext-plus-plus/resources" # The dir where to put resources.
 
   info_emph "[$S/$M] Building (native) DEB package ..."
-  debug " • PROJECT_NAME:          '$PROJECT_NAME'"
-  debug " • PROJECT_DESCRIPTION:   '$PROJECT_DESCRIPTION'"
-  debug " • PROJECT_VERSION:       '$PROJECT_VERSION'"
+  debug " • PACKAGE_NAME:          '$PACKAGE_NAME'"
+  debug " • PACKAGE_DESCRIPTION:   '$PACKAGE_DESCRIPTION'"
+  debug " • PACKAGE_VERSION:       '$PACKAGE_VERSION'"
   debug " • MAINTAINER_NAME:       '$MAINTAINER_NAME'"
   debug " • MAINTAINER_MAIL:       '$MAINTAINER_MAIL'"
   debug " • APT_RUN_REQUIREMENTS:  '$APT_RUN_REQUIREMENTS'"
@@ -254,9 +258,9 @@ function build_deb_package() {
   debug " • PKG_RES_DIR_REL:       '$PKG_RES_DIR_REL'"
 
   # Validate the arguments.
-  [[ -z "$PROJECT_NAME" ]] && { error "[$S/$M] No project name given."; }
-  [[ -z "$PROJECT_DESCRIPTION" ]] && { error "[$S/$M] No project description given."; }
-  [[ -z "$PROJECT_VERSION" ]] && { error "[$S/$M] No project version given."; }
+  [[ -z "$PACKAGE_NAME" ]] && { error "[$S/$M] No project name given."; }
+  [[ -z "$PACKAGE_DESCRIPTION" ]] && { error "[$S/$M] No package description given."; }
+  [[ -z "$PACKAGE_VERSION" ]] && { error "[$S/$M] No package version given."; }
   [[ -z "$MAINTAINER_NAME" ]] && { error "[$S/$M] No maintainer name given."; }
   [[ -z "$MAINTAINER_MAIL" ]] && { error "[$S/$M] No maintainer mail given."; }
   [[ -z "$APT_RUN_REQUIREMENTS" ]] && { error "[$S/$M] No APT package requirements given."; }
@@ -282,17 +286,17 @@ function build_deb_package() {
   info "[$S/$M] Compiling the project ..."
   mkdir -p "$TMP_BUILD_DIR"
   make clean compile BUILD_DIR="$TMP_BUILD_DIR" RESOURCES_DIR="$PKG_RES_DIR_REL" \
-     USR_DIR="$USR_DIR" VERSION="$PROJECT_VERSION" INFO_STYLE="$MG[$S/$M/make]" > "$DEV" 2>&1
+     USR_DIR="$USR_DIR" VERSION="$PACKAGE_VERSION" INFO_STYLE="$MG[$S/$M/make]" > "$DEV" 2>&1
 
   # Create the control file.
   info "[$S/$M] Creating the control file ..."
   local PKG_CONTROL_FILE="$TMP_PACKAGE_DIR/$PKG_CONTROL_FILE_REL"
   mkdir -p $(dirname "$PKG_CONTROL_FILE")
-  echo "Package: $PROJECT_NAME" > "$PKG_CONTROL_FILE"
+  echo "Package: $PACKAGE_NAME" > "$PKG_CONTROL_FILE"
   echo "Depends: $APT_RUN_REQUIREMENTS" >> "$PKG_CONTROL_FILE"
   echo "Maintainer: $MAINTAINER" >> "$PKG_CONTROL_FILE"
-	echo "Description: $PROJECT_DESCRIPTION" >> "$PKG_CONTROL_FILE"
-  echo "Version: $PROJECT_VERSION" >> "$PKG_CONTROL_FILE"
+	echo "Description: $PACKAGE_DESCRIPTION" >> "$PKG_CONTROL_FILE"
+  echo "Version: $PACKAGE_VERSION" >> "$PKG_CONTROL_FILE"
 	echo "Codename: $CODENAME" >> "$PKG_CONTROL_FILE"
   echo "Distribution: $DISTRIBUTION" >> "$PKG_CONTROL_FILE"
 	echo "Architecture: $ARCH" >> "$PKG_CONTROL_FILE"
@@ -345,6 +349,7 @@ function build_deb_package() {
   # Cleaning up.
   rm -rf "$TMP_BUILD_DIR"
   rm -rf "$TMP_PACKAGE_DIR"
+  info "XXX"
 }
 
 # ==================================================================================================

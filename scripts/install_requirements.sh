@@ -9,12 +9,14 @@ S=$(basename "$0")
 
 # This function installs all requirements needed to execute 'make checkstyle'.
 function make_checkstyle() {
-  apt update && apt install -y python3
+  apt-get update && apt-get install -y python3
 }
 
 # This function installs all requirements needed to execute 'make compile'.
 function make_compile() {
-  apt update && apt install -y \
+  local TARGET_DIR="${1:-.}"
+
+  apt-get update && apt-get install -y \
     build-essential \
     git \
     cmake \
@@ -25,38 +27,30 @@ function make_compile() {
     libopenjp2-7-dev \
     libtiff5-dev
 
-  install_tensorflow
-  install_cppflow
-  install_poppler
-  install_utf8proc
+  install_tensorflow ${TARGET_DIR}
+  install_cppflow ${TARGET_DIR}
+  install_poppler ${TARGET_DIR}
+  install_utf8proc ${TARGET_DIR}
 }
 
 # This function installs all requirements needed to execute 'make test'.
 function make_test() {
-  make_compile
-  install_gtest
-}
-
-# This function installs all requirements needed to execute 'make run'.
-function make_run() {
-  apt update && apt install -y \
-    libboost-all-dev \
-    libfontconfig1-dev \
-    libfreetype6-dev \
-    libnss3-dev \
-    libopenjp2-7-dev \
-    libtiff5-dev
+  local TARGET_DIR="${1:-.}"
+  make_compile ${TARGET_DIR}
+  install_gtest ${TARGET_DIR}
 }
 
 # This function installs all requirements needed to execute 'make install'.
 function make_install() {
-  make_compile
+  local TARGET_DIR="${1:-.}"
+  make_compile ${TARGET_DIR}
 }
 
 # This function installs all requirements needed to execute 'make packages'.
 function make_packages() {
-  make_compile
-  apt update && apt install -y: tar lsb-release wget
+  local TARGET_DIR="${1:-.}"
+  make_compile ${TARGET_DIR}
+  apt-get update && apt-get install -y tar lsb-release wget
 }
 
 # ==================================================================================================

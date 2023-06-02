@@ -18,8 +18,8 @@
 #include <iomanip>
 
 #include "./BytePairEncoder.h"
+#include "./Config.h"
 #include "./SemanticRolesPredictor.h"
-#include "./Globals.h"
 
 using std::numeric_limits;
 using std::string;
@@ -27,7 +27,9 @@ using std::vector;
 using std::wstring;
 
 // _________________________________________________________________________________________________
-SemanticRolesPredictor::SemanticRolesPredictor() = default;
+SemanticRolesPredictor::SemanticRolesPredictor(const ppp::Config* config) {
+  _config = config;
+}
 
 // _________________________________________________________________________________________________
 SemanticRolesPredictor::~SemanticRolesPredictor() {
@@ -46,14 +48,17 @@ void SemanticRolesPredictor::readModel() {
 //     throw std::invalid_argument("Could not load model \"" + _modelDirPath + "\"");
 //   }
 
-  _model = new cppflow::model(globals->semanticRolesDetectionModelsDir);
+  // TODO(korzen): Parameterize the file names.
+  string modelsDirPath = _config->semanticRolesDetectionModelsDir;
+  string bpeVocabFilePath = modelsDirPath + "/bpe-vocab.tsv";
+  string rolesVocabFilePath = modelsDirPath + "/roles-vocab.tsv";
+
+  _model = new cppflow::model(modelsDirPath);
   _modelOk = true;
 
   // -----------
   // Read the BPE vocabulary.
 
-  // TODO(korzen): Parameterize the file name.
-  string bpeVocabFilePath = globals->semanticRolesDetectionModelsDir + "/bpe-vocab.tsv";
   std::wifstream bpeVocabFile(bpeVocabFilePath);
 
   // Abort if the file can't be read.
@@ -84,8 +89,6 @@ void SemanticRolesPredictor::readModel() {
   // -----------
   // Read the roles vocabulary.
 
-  // TODO(korzen): Parameterize the file name.
-  string rolesVocabFilePath = globals->semanticRolesDetectionModelsDir + "/roles-vocab.tsv";
   std::ifstream vocabFile(rolesVocabFilePath);
   if (!vocabFile.is_open()) {
     throw std::invalid_argument("Could not load vocab file \"" + rolesVocabFilePath + "\"");

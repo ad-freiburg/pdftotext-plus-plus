@@ -13,6 +13,7 @@
 #include <vector>
 #include <iostream>
 
+#include "./Config.h"
 #include "./PdfDocument.h"
 #include "./ReadingOrderDetector.h"
 #include "./XYCut.h"
@@ -23,12 +24,16 @@ using std::numeric_limits;
 using std::vector;
 
 // _________________________________________________________________________________________________
-ReadingOrderDetector::ReadingOrderDetector(const PdfDocument* doc) {
+ReadingOrderDetector::ReadingOrderDetector(const PdfDocument* doc, const ppp::Config* config) {
   _doc = doc;
+  _config = config;
+  _semanticRolesPredictor = new SemanticRolesPredictor(config);
 }
 
 // _________________________________________________________________________________________________
-ReadingOrderDetector::~ReadingOrderDetector() = default;
+ReadingOrderDetector::~ReadingOrderDetector() {
+  delete _semanticRolesPredictor;
+}
 
 // _________________________________________________________________________________________________
 void ReadingOrderDetector::detect() {
@@ -38,7 +43,7 @@ void ReadingOrderDetector::detect() {
 
 // _________________________________________________________________________________________________
 void ReadingOrderDetector::detectSemanticRoles() {
-  _semanticRolesPredictor.predict(_doc);
+  _semanticRolesPredictor->predict(_doc);
 }
 
 // _________________________________________________________________________________________________

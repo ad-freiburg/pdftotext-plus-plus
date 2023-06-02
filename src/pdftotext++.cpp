@@ -22,7 +22,7 @@
 #include "./utils/Log.h"  // BBLUE, OFF
 #include "./utils/MathUtils.h"
 #include "./utils/StringUtils.h"
-#include "./Globals.h"
+#include "./Config.h"
 #include "./PdfDocumentVisualizer.h"
 #include "./PdfToTextPlusPlus.h"
 #include "./Types.h"
@@ -49,6 +49,17 @@ using std::vector;
 namespace po = boost::program_options;
 
 // =================================================================================================
+// Global parameters.
+// NOTE: The variables in uppercase (for example: PROGRAM_NAME) need to be specified at compile
+// time, in form of a preprocessor variable which is part of the g++ command. For example, to
+// define the variable 'PROGRAM_NAME', type the following: "g++ -DPROGRAM_NAME='pdftotext++' ..."
+
+const char* programName = PROGRAM_NAME;
+const char* programDescription = PROGRAM_DESCRIPTION;
+const char* programUsage = PROGRAM_USAGE;
+const char* version = VERSION;
+
+// =================================================================================================
 // Helper methods.
 
 /**
@@ -69,19 +80,19 @@ void printHelpMessage(
     const po::options_description* publicOpts, const po::options_description* privateOpts = 0,
     int maxLineLength = 100, int optionDescIndent = 4) {
   cout << BBLUE << "NAME" << OFF << endl;
-  cout << wrap(strip(globals->programName), maxLineLength) << endl;
+  cout << wrap(strip(programName), maxLineLength) << endl;
   cout << endl;
 
   cout << BBLUE << "VERSION" << OFF << endl;
-  cout << wrap(strip(globals->programVersion), maxLineLength) << endl;
+  cout << wrap(strip(version), maxLineLength) << endl;
   cout << endl;
 
   cout << BBLUE << "DESCRIPTION" << OFF << endl;
-  cout << wrap(strip(globals->programDescription), maxLineLength) << endl;
+  cout << wrap(strip(programDescription), maxLineLength) << endl;
   cout << endl;
 
   cout << BBLUE << "USAGE" << OFF << endl;
-  cout << wrap(strip(globals->programUsage), maxLineLength) << endl;
+  cout << wrap(strip(programUsage), maxLineLength) << endl;
   cout << endl;
 
   cout << BBLUE << "OPTIONS" << OFF << endl;
@@ -101,6 +112,13 @@ void printHelpMessage(
   }
 }
 
+/**
+ * This method prints the version.
+ */
+void printVersionMessage() {
+  cout << programName << ", version " << version << endl;
+}
+
 // =================================================================================================
 
 /**
@@ -108,17 +126,6 @@ void printHelpMessage(
  * running the extraction pipeline on a specified PDF, and outputting the extracted text.
  */
 int main(int argc, char* argv[]) {
-  // Global parameters.
-  // NOTE: The variables starting with "CXX_" need to be specified at compile time, in form of a
-  // preprocessor variable. For example, to define the variable 'CXX_PROGRAM_NAME', type the
-  // following: "g++ -DCXX_PROGRAM_NAME='pdftotext++' ..."
-  globals = std::make_unique<Globals>();
-  globals->programDescription = CXX_PROGRAM_DESCRIPTION;
-  globals->programUsage = CXX_PROGRAM_USAGE;
-  globals->programName = CXX_PROGRAM_NAME;
-  globals->programVersion = CXX_PROGRAM_VERSION;
-  globals->semanticRolesDetectionModelsDir = CXX_SEMANTIC_ROLES_DETECTION_MODELS_DIR;
-
   // The path to the PDF file to process.
   string pdfFilePath;
   // The path to the file into which to output the extracted text.
@@ -435,8 +442,13 @@ int main(int argc, char* argv[]) {
       printHelpMessage(&publicOpts);
       return EXIT_SUCCESS;
     }
+    bool showVersion = vm.count("version") ? vm["version"].as<bool>() : false;
+    if (showVersion) {
+      printVersionMessage();
+      return EXIT_SUCCESS;
+    }
     cerr << "An error occurred on parsing the command-line options: " << e.what() << endl;
-    cerr << "Type \"" << globals->programName << " --help\" for printing the help." << endl;
+    cerr << "Type \"" << programName << " --help\" for printing the help." << endl;
     return EXIT_FAILURE;
   }
 
@@ -454,7 +466,7 @@ int main(int argc, char* argv[]) {
 
   // Print the version info if explicitly requested by the user.
   if (printVersion) {
-    cout << globals->programName << ", version " << globals->programVersion << endl;
+    printVersionMessage();
     return EXIT_SUCCESS;
   }
 
@@ -474,7 +486,11 @@ int main(int argc, char* argv[]) {
   if (verbosity == "info" || verbosity == "INFO") { logLevel = LogLevel::INFO; }
   if (verbosity == "warn" || verbosity == "WARN") { logLevel = LogLevel::WARN; }
 
+  ppp::Config config;
+  config.semanticRolesDetectionModelsDir = CONFIG_SEMANTIC_ROLES_DETECTION_MODELS_DIR;
+
   PdfToTextPlusPlus engine(
+    &config,
     noEmbeddedFontFiles,
     noDehyphenation,
     parseMode,
