@@ -13,6 +13,7 @@
 #include <tuple>
 #include <vector>
 
+#include "../src/Config.h"
 #include "../src/PdfDocument.h"
 #include "../src/PdfToTextPlusPlus.h"
 #include "../src/utils/PageSegmentsUtils.h"
@@ -29,7 +30,9 @@ class PageSegmentsUtilsTest : public ::testing::Test {
  protected:
   // This method is called before the first test of this test suite.
   static void SetUpTestSuite() {
-    PdfToTextPlusPlus engine;
+    ppp::Config config;
+    config.semanticRolesDetectionModelsDir = CONFIG_SEMANTIC_ROLES_DETECTION_MODELS_DIR;
+    PdfToTextPlusPlus engine(&config);
 
     if (pdf1 == nullptr) {
       pdf1 = new PdfDocument();

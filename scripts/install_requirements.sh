@@ -7,13 +7,50 @@ S=$(basename "$0")
 
 # ==================================================================================================
 
-# TODO: Documentation
-function install_yq() {
-  local TARGET_DIR="${1:-/usr/bin}"
-  local VERSION="${2:-4.32.2}"
-  apt-get update && apt-get install -y wget
-  wget https://github.com/mikefarah/yq/releases/download/v${VERSION}/yq_linux_amd64 \
-    -O "${TARGET_DIR}/yq" && chmod +x "${TARGET_DIR}/yq"
+# This function installs all requirements needed to execute 'make checkstyle'.
+function make_checkstyle() {
+  apt-get update && apt-get install -y python3
+}
+
+# This function installs all requirements needed to execute 'make compile'.
+function make_compile() {
+  local TARGET_DIR="${1:-.}"
+
+  apt-get update && apt-get install -y \
+    build-essential \
+    git \
+    cmake \
+    libboost-all-dev \
+    libfontconfig1-dev \
+    libfreetype6-dev \
+    libnss3-dev \
+    libopenjp2-7-dev \
+    libtiff5-dev
+
+  install_tensorflow ${TARGET_DIR}
+  install_cppflow ${TARGET_DIR}
+  install_poppler ${TARGET_DIR}
+  install_utf8proc ${TARGET_DIR}
+}
+
+# This function installs all requirements needed to execute 'make test'.
+function make_test() {
+  local TARGET_DIR="${1:-.}"
+  make_compile ${TARGET_DIR}
+  install_gtest ${TARGET_DIR}
+}
+
+# This function installs all requirements needed to execute 'make install'.
+function make_install() {
+  local TARGET_DIR="${1:-.}"
+  make_compile ${TARGET_DIR}
+}
+
+# This function installs all requirements needed to execute 'make packages'.
+function make_packages() {
+  local TARGET_DIR="${1:-.}"
+  make_compile ${TARGET_DIR}
+  apt-get update && apt-get install -y tar lsb-release wget
 }
 
 # ==================================================================================================

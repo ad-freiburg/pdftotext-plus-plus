@@ -22,18 +22,18 @@ using ppp::string_utils::splitIntoWords;
 TEST(StringUtils, splitStringIntoWords) {
   std::vector<std::string> words1;
   splitIntoWords("", &words1);
-  ASSERT_EQ(words1.size(), 0);
+  ASSERT_EQ(words1.size(), size_t(0));
 
   std::vector<std::string> words2;
   splitIntoWords("foo bar baz", &words2);
-  ASSERT_EQ(words2.size(), 3);
+  ASSERT_EQ(words2.size(), size_t(3));
   ASSERT_EQ(words2[0], "foo");
   ASSERT_EQ(words2[1], "bar");
   ASSERT_EQ(words2[2], "baz");
 
   std::vector<std::string> words3;
   splitIntoWords("Monday Tuesday\tWednesday\n\nThursday", &words3);
-  ASSERT_EQ(words3.size(), 4);
+  ASSERT_EQ(words3.size(), size_t(4));
   ASSERT_EQ(words3[0], "Monday");
   ASSERT_EQ(words3[1], "Tuesday");
   ASSERT_EQ(words3[2], "Wednesday");
@@ -45,12 +45,12 @@ TEST(StringUtils, splitWStringIntoWords) {
   std::wstring string1 = L"";
   std::vector<std::wstring> words1;
   splitIntoWords(string1, &words1);
-  ASSERT_EQ(words1.size(), 0);
+  ASSERT_EQ(words1.size(), size_t(0));
 
   std::wstring string2 = L"foo bar baz";
   std::vector<std::wstring> words2;
   splitIntoWords(string2, &words2);
-  ASSERT_EQ(words2.size(), 3);
+  ASSERT_EQ(words2.size(), size_t(3));
   std::wstring word20 = L"foo";
   ASSERT_EQ(words2[0], word20);
   std::wstring word21 = L"bar";
@@ -61,7 +61,7 @@ TEST(StringUtils, splitWStringIntoWords) {
   std::wstring string3 = L"Januar Februar\tMärz\n\nApril";
   std::vector<std::wstring> words3;
   splitIntoWords(string3, &words3);
-  ASSERT_EQ(words3.size(), 4);
+  ASSERT_EQ(words3.size(), size_t(4));
   std::wstring word30 = L"Januar";
   ASSERT_EQ(words3[0], word30);
   std::wstring word31 = L"Februar";
@@ -78,11 +78,11 @@ TEST(StringUtils, createRandomString) {
   ASSERT_EQ(s1, "");
 
   std::string s2 = createRandomString(5);
-  ASSERT_EQ(s2.size(), 5);
+  ASSERT_EQ(s2.size(), size_t(5));
 
   std::string s3 = createRandomString(6, "foo-");
-  ASSERT_EQ(s3.size(), 10);
-  ASSERT_EQ(s3.find("foo-"), 0);
+  ASSERT_EQ(s3.size(), size_t(10));
+  ASSERT_EQ(s3.find("foo-"), size_t(0));
 }
 
 // _________________________________________________________________________________________________

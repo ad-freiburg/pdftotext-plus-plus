@@ -1,17 +1,22 @@
+# --------------------------------------------------------------------------------------------------
+# General metadata.
+
+PROJECT_NAME = pdftotext-plus-plus
+PROGRAM_NAME = pdftotext++
+MAINTAINER_NAME = Claudius Korzen
+MAINTAINER_MAIL = korzen@cs.uni-freiburg.de
+DESCRIPTION = $(shell cat project.description | sed ':a;N;$$!ba;s/\n/\\n/g')  # the sed command replaces each newline by "\n".
+USAGE = $(shell cat project.usage | sed ':a;N;$$!ba;s/\n/\\n/g')  # the sed command replaces each newline by "\n".
+VERSION = $(shell cat project.version)
+
+# --------------------------------------------------------------------------------------------------
+# Paths to important files and directories.
+
 SRC_DIR = src
 TEST_DIR = test
 RESOURCES_DIR = resources
-
 USR_DIR = usr
 BUILD_DIR = build
-PACKAGES_DIR = /local/data/pdftotext-plus-plus/packages
-
-CONF_FILE = config.yml
-VERSION_FILE = version.txt
-PROJECT_NAME = $(shell yq ".project.name" "$(CONF_FILE)")
-PROJECT_DESCRIPTION = $(shell yq ".project.description" "$(CONF_FILE)" | sed ':a;N;$$!ba;s/\n/\\n/g')  # the sed command replaces each newline by "\n".
-PROJECT_USAGE = $(shell yq ".project.usage" "$(CONF_FILE)" | sed ':a;N;$$!ba;s/\n/\\n/g')
-VERSION = $(shell cat $(VERSION_FILE))
 
 MAIN_CPP_FILE = src/pdftotext++.cpp
 MAIN_BINARY = $(basename $(notdir $(MAIN_CPP_FILE)))
@@ -24,41 +29,61 @@ SRC_OBJECT_FILES = $(SRC_CPP_FILES:%.cpp=$(BUILD_DIR)/%.o)
 TEST_CPP_FILES = $(wildcard $(TEST_DIR)/*Test.cpp $(TEST_DIR)/**/*Test.cpp)
 TEST_BINARIES = $(basename $(TEST_CPP_FILES:%.cpp=$(BUILD_DIR)/%.o))
 
-# Compiling.
-CXX_EXTRA = -O3 -Wall
-CXX = g++ -std=c++17 $(CXX_EXTRA) -DCXX_PROGRAM_NAME="\"$(PROJECT_NAME)\"" -DCXX_PROGRAM_DESCRIPTION="\"$(PROJECT_DESCRIPTION)\"" -DCXX_PROGRAM_USAGE="\"$(PROJECT_USAGE)\"" -DCXX_PROGRAM_VERSION="\"$(VERSION)\"" -DCXX_PROJECT_RESOURCES_DIR="\"$(RESOURCES_DIR)\""
-LIBS = -I$(USR_DIR)/include -L$(USR_DIR)/lib -ltensorflow_framework -ltensorflow -lpoppler -lutf8proc -lboost_program_options
-LIBS_TEST = $(LIBS) -lgtest -lgtest_main -lpthread
+SEMANTIC_ROLES_DETECTION_MODELS_DIR=$(RESOURCES_DIR)/models/2021-08-30_model-3K-documents
 
-# APT repository.
+# --------------------------------------------------------------------------------------------------
+# Settings related to packaging.
+
+PACKAGING_DOCKERFILES_DIR = Dockerfiles.packaging
+PACKAGING_TARGET_DIR = /local/data/pdftotext-plus-plus/packages
+PACKAGING_APT_PACKAGES_RUN = libboost-all-dev, libfontconfig1-dev, libfreetype6-dev, libnss3-dev, libopenjp2-7-dev, libtiff5-dev
+
+# --------------------------------------------------------------------------------------------------
+# Settings related to the APT repository.
+
 APT_REPO_DOCKERFILE = services/apt-repo/Dockerfile
-APT_REPO_IMAGE_NAME = pdftotext-plus-plus.apt-repo
-APT_REPO_SERVER_CONTAINER_NAME = pdftotext-plus-plus.apt-repo.server
-APT_REPO_UPDATE_CONTAINER_NAME = pdftotext-plus-plus.apt-repo.update
-APT_REPO_POOL_DIR = $(PACKAGES_DIR)
+APT_REPO_IMAGE_NAME = $(PROJECT_NAME).apt-repo
+APT_REPO_SERVER_CONTAINER_NAME = $(PROJECT_NAME).apt-repo.server
+APT_REPO_UPDATE_CONTAINER_NAME = $(PROJECT_NAME).apt-repo.update
+APT_REPO_POOL_DIR = $(PACKAGING_TARGET_DIR)
 APT_REPO_DISTS_DIR = /local/data/pdftotext-plus-plus/apt-repo/dists
 APT_REPO_GPG_DIR = /local/data/pdftotext-plus-plus/keyrings/apt-repo
 APT_REPO_SERVER_PORT = 7192
 
-# Message styles.
+# --------------------------------------------------------------------------------------------------
+# Settings related to logging.
+
 INFO_STYLE = \033[34;1m
 ERROR_STYLE = \033[31;1m
 N = \033[0m
 
+# --------------------------------------------------------------------------------------------------
+# Settings related to CXX.
+
+CXX_MACROS      = -DCONFIG_SEMANTIC_ROLES_DETECTION_MODELS_DIR="\"$(SEMANTIC_ROLES_DETECTION_MODELS_DIR)\""
+CXX_MACROS_MAIN = -DPROGRAM_NAME="\"$(PROGRAM_NAME)\"" -DPROGRAM_DESCRIPTION="\"$(DESCRIPTION)\"" -DPROGRAM_USAGE="\"$(USAGE)\"" -DVERSION="\"$(VERSION)\""
+CXX_LIBS        = -I$(USR_DIR)/include -L$(USR_DIR)/lib -ltensorflow_framework -ltensorflow -lpoppler -lutf8proc -lboost_program_options
+CXX_LIBS_TEST   = $(CXX_LIBS) -lgtest -lgtest_main -lpthread
+CXX_DEBUG       = g++ -std=c++17 -Wall -g $(CXX_MACROS)
+CXX_PROD        = g++ -std=c++17 -Wall -O3 $(CXX_MACROS)
+CXX_TEST        = g++ -std=c++17 -Wall -g $(CXX_MACROS)
+CXX							= $(CXX_PROD)
+
 # ==================================================================================================
 
-.PHONY: help checkstyle compile test release set-version packages clean apt-repo \
+.PHONY: help checkstyle compile-debug compile-prod compile test install \
+  install-without-requirements clean release check-version set-version version packages apt-repo \
 	apt-repo/build-docker-image apt-repo/update apt-repo/server/start apt-repo/server/start/force \
-	apt-repo/server/stop requirements/pre requirements/checkstyle requirements/compile \
+	apt-repo/server/stop requirements/checkstyle requirements/compile \
 	requirements/test requirements/install requirements/packages
 
-# ==================================================================================================
+# --------------------------------------------------------------------------------------------------
 # Help.
 
 help:
 	@echo TODO
 
-# ==================================================================================================
+# --------------------------------------------------------------------------------------------------
 # Checkstyle.
 
 checkstyle:
@@ -71,25 +96,32 @@ checkstyle:
 	@echo "$(INFO_STYLE)[$@] Checking style of test files ...$(N)"
 	python3 cpplint.py --repository="$(TEST_DIR)" "$(TEST_DIR)"/*.cpp
 
-# ==================================================================================================
+# --------------------------------------------------------------------------------------------------
 # Compiling.
 
-compile-debug: CXX_EXTRA = -g
+compile-debug: CXX = $(CXX_DEBUG)
 compile-debug: compile
+
+compile-prod: CXX = $(CXX_PROD)
+compile-prod: compile
 
 compile: $(MAIN_BINARY)
 
 $(MAIN_BINARY): $(MAIN_OBJECT_FILE) $(SRC_OBJECT_FILES)
 	@echo "$(INFO_STYLE)[compile] Creating main binary '$@' ...$(N)"
 	@mkdir -p "$(dir $(BUILD_DIR)/$@)"
-	$(CXX) -o "$(BUILD_DIR)/$@" $^ $(LIBS)
+	$(CXX) -o "$(BUILD_DIR)/$@" $^ $(CXX_LIBS)
 
 $(BUILD_DIR)/%.o: %.cpp $(SRC_HEADER_FILES)
 	@echo "$(INFO_STYLE)[compile] Compiling '$<' ...$(N)"
 	@mkdir -p "$(dir $@)"
-	$(CXX) -c $< -o "$@" $(LIBS)
+	if [ "$<" = "$(MAIN_CPP_FILE)" ]; then\
+		$(CXX) -c $< -o "$@" $(CXX_MACROS_MAIN) $(CXX_LIBS);\
+	else\
+		$(CXX) -c $< -o "$@" $(CXX_LIBS);\
+  fi
 
-# ==================================================================================================
+# --------------------------------------------------------------------------------------------------
 # Testing.
 
 test: $(TEST_BINARIES)
@@ -102,29 +134,29 @@ test: $(TEST_BINARIES)
 %Test: %Test.o $(SRC_OBJECT_FILES)
 	@echo "$(INFO_STYLE)[test] Creating test '$@' ...$(N)"
 	@mkdir -p "$(dir $@)"
-	$(CXX) -o "$@" $^ $(LIBS_TEST)
+	$(CXX_TEST) -o "$@" $^ $(CXX_LIBS_TEST)
 
 $(BUILD_DIR)/%Test.o: %Test.cpp $(SRC_HEADER_FILES)
 	@echo "$(INFO_STYLE)[test] Compiling '$<' ...$(N)"
 	@mkdir -p "$(dir $@)"
-	$(CXX) -c $< -o "$@" $(LIBS_TEST)
+	$(CXX_TEST) -c $< -o "$@" $(CXX_LIBS_TEST)
 
-# ==================================================================================================
+# --------------------------------------------------------------------------------------------------
 # Installing.
 
-install: requirements/pre requirements/install install-without-deps
+install: requirements/install install-without-requirements
 
-install-without-deps: clean compile
+install-without-requirements: clean compile-prod
 	@echo "$(INFO_STYLE)[$@] Installing pdftotext++ ...$(N)"
-	mkdir -p "/usr/lib/pdftotext-plus-plus"
-	cp -Pa "$(USR_DIR)/lib/." "/usr/lib/pdftotext-plus-plus"
-	ldconfig "/usr/lib/pdftotext-plus-plus"
-	mkdir -p "/usr/share/pdftotext-plus-plus/resources"
-	cp -Pa "$(RESOURCES_DIR)/." "/usr/share/pdftotext-plus-plus/resources"
+	mkdir -p "/usr/lib/$(PROJECT_NAME)"
+	cp -Pa "$(USR_DIR)/lib/." "/usr/lib/$(PROJECT_NAME)"
+	ldconfig "/usr/lib/$(PROJECT_NAME)"
+	mkdir -p "/usr/share/$(PROJECT_NAME)/resources"
+	cp -Pa "$(RESOURCES_DIR)/." "/usr/share/$(PROJECT_NAME)/resources"
 	cp "$(BUILD_DIR)/$(MAIN_BINARY)" "/usr/bin/$(MAIN_BINARY)"
 	chmod +x "/usr/bin/$(MAIN_BINARY)"
 
-# ==================================================================================================
+# --------------------------------------------------------------------------------------------------
 # Cleaning.
 
 clean:
@@ -137,25 +169,32 @@ clean:
 	rm -f $(TEST_DIR)/*.log
 	rm -f $(TEST_DIR)/*.synctex.gz
 
-# ==================================================================================================
+# --------------------------------------------------------------------------------------------------
 # Releasing.
 
-release: set-version packages apt-repo github-release
+release: check-version packages apt-repo github-release set-version
 
-set-version:
-	@if [ "$(VERSION)" = "$(shell cat "$(VERSION_FILE)")" ]; then \
+check-version:
+	@if [ "$(VERSION)" = "$(shell cat project.version)" ]; then \
 		echo "$(ERROR_STYLE)The specified version is equal to the current version ($(VERSION))." ; \
 		echo "$(ERROR_STYLE)Specify another version with: make release VERSION=\"<version>\"$(N)" ; \
 		exit 1 ; \
 	fi
-	@echo "$(VERSION)" > "$(VERSION_FILE)"
+
+set-version:
+	@echo "$(VERSION)" > project.version
+
+version:
+	@cat project.version
 
 packages:
 	@echo "$(INFO_STYLE)[release] Building packages ...$(N)"
-	./scripts/package.sh build_packages "$(CONF_FILE)" "$(VERSION)" "$(PACKAGES_DIR)"
+	./scripts/packaging.sh build_packages "$(PACKAGING_DOCKERFILES_DIR)" "$(PROJECT_NAME)" \
+			"$(PROGRAM_NAME)" "$(DESCRIPTION)" "$(VERSION)" "$(MAINTAINER_NAME)" \
+			"$(MAINTAINER_MAIL)" "$(PACKAGING_APT_PACKAGES_RUN)" "$(PACKAGING_TARGET_DIR)"
 
-# ==================================================================================================
-# Services.
+# --------------------------------------------------------------------------------------------------
+# APT repository.
 
 apt-repo: apt-repo/update apt-repo/server/start
 
@@ -193,76 +232,34 @@ apt-repo/server/start/force: apt-repo/server/stop apt-repo/server/start
 
 apt-repo/server/stop:
 	@echo "$(INFO_STYLE)[apt-repo] Stopping the APT repository server ...$(N)"
-
 	docker stop "$(APT_REPO_SERVER_CONTAINER_NAME)"
+
+# ==================================================================================================
+# Github release.
 
 github-release:
 	@echo "$(INFO_STYLE)[github-release] Creating Github release ...$(N)"
-	./services/github-release/github-release.sh create_release "$(VERSION)" "$(PACKAGES_DIR)"
+	./services/github-release/github-release.sh create_release "$(VERSION)" "$(PACKAGING_TARGET_DIR)"
 
 # ==================================================================================================
 # Installing requirements.
 
-requirements/pre:
-	apt-get update
-	./scripts/install_requirements.sh install_yq
-
 requirements/checkstyle:
-	@echo "$(INFO_STYLE)[$@] Installing APT packages ...$(N)"
-	apt-get install -y $(shell yq ".project.requirements.checkstyle.apt" "$(CONF_FILE)")
-
-	@echo "$(INFO_STYLE)[$@] Installing other packages ...$(N)"
-	@yq ".project.requirements.checkstyle.other | to_entries | .[] | [.value] | @tsv" "$(CONF_FILE)" | \
-	while read -r CMD ; do \
-		if [ -n "$$CMD" ]; then \
-			echo $$CMD "$(USR_DIR)"; \
-		fi \
-	done
+	@echo "$(INFO_STYLE)[$@] Installing requirements for 'make checkstyle' ...$(N)"
+	$(INSTALL_REQUIREMENTS_SCRIPT) make_checkstyle $(USR_DIR)
 
 requirements/compile:
-	@echo "$(INFO_STYLE)[$@] Installing APT packages ...$(N)"
-	apt-get install -y $(shell yq ".project.requirements.compile.apt" "$(CONF_FILE)")
+	@echo "$(INFO_STYLE)[$@] Installing requirements for 'make compile' ...$(N)"
+	./scripts/install_requirements.sh make_compile $(USR_DIR)
 
-	@echo "$(INFO_STYLE)[$@] Installing other packages ...$(N)"
-	@yq ".project.requirements.compile.other | to_entries | .[] | [.value] | @tsv" "$(CONF_FILE)" | \
-	while read -r CMD ; do \
-		if [ -n "$$CMD" ]; then \
-			$$CMD "$(USR_DIR)"; \
-		fi \
-	done
+requirements/test:
+	@echo "$(INFO_STYLE)[$@] Installing requirements for 'make test' ...$(N)"
+	./scripts/install_requirements.sh make_test $(USR_DIR)
 
-requirements/test: requirements/compile
-	@echo "$(INFO_STYLE)[$@] Installing APT packages ...$(N)"
-	apt-get install -y $(shell yq ".project.requirements.test.apt" "$(CONF_FILE)")
+requirements/install:
+	@echo "$(INFO_STYLE)[$@] Installing requirements for 'make install' ...$(N)"
+	./scripts/install_requirements.sh make_install $(USR_DIR)
 
-	@echo "$(INFO_STYLE)[$@] Installing other packages ...$(N)"
-	@yq ".project.requirements.test.other | to_entries | .[] | [.value] | @tsv" "$(CONF_FILE)" | \
-	while read -r CMD ; do \
-		if [ -n "$$CMD" ]; then \
-			$$CMD "$(USR_DIR)"; \
-		fi \
-	done
-
-requirements/install: requirements/compile
-	@echo "$(INFO_STYLE)[$@] Installing APT packages ...$(N)"
-	apt-get install -y $(shell yq ".project.requirements.install.apt" "$(CONF_FILE)")
-
-	@echo "$(INFO_STYLE)[$@] Installing other packages ...$(N)"
-	@yq ".project.requirements.install.other | to_entries | .[] | [.value] | @tsv" "$(CONF_FILE)" | \
-	while read -r CMD ; do \
-		if [ -n "$$CMD" ]; then \
-			$$CMD "$(USR_DIR)"; \
-		fi \
-	done
-
-requirements/packages: requirements/compile
-	@echo "$(INFO_STYLE)[$@] Installing APT packages ...$(N)"
-	apt-get install -y $(shell yq ".project.requirements.packages.apt" "$(CONF_FILE)")
-
-	@echo "$(INFO_STYLE)[$@] Installing other packages ...$(N)"
-	@yq ".project.requirements.packages.other | to_entries | .[] | [.value] | @tsv" "$(CONF_FILE)" | \
-	while read -r CMD ; do \
-		if [ -n "$$CMD" ]; then \
-			$$CMD "$(USR_DIR)"; \
-		fi \
-	done
+requirements/packages:
+	@echo "$(INFO_STYLE)[$@] Installing requirements for 'make packages' ...$(N)"
+	./scripts/install_requirements.sh make_packages $(USR_DIR)

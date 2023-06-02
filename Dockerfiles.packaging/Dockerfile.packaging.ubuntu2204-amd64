@@ -7,9 +7,9 @@ ENV LC_ALL "C.UTF-8"
 ENV LC_CTYPE "C.UTF-8"
 ENV DEBIAN_FRONTEND "noninteractive"
 
-ENV PROJECT_NAME "n.a."
-ENV PROJECT_DESCRIPTION "n.a."
-ENV PROJECT_VERSION "n.a."
+ENV PACKAGE_NAME "n.a."
+ENV PACKAGE_DESCRIPTION "n.a."
+ENV PACKAGE_VERSION "n.a."
 ENV PACKAGE_MAINTAINER_NAME "n.a."
 ENV PACKAGE_MAINTAINER_MAIL "n.a."
 ENV PACKAGE_APT_RUN_REQUIREMENTS ""
@@ -24,15 +24,17 @@ WORKDIR /project
 COPY scripts scripts
 COPY Makefile .
 COPY config.yml .
+COPY project.description .
+COPY project.usage .
+COPY project.version .
 
-RUN apt-get update && apt-get install -y make
-RUN make requirements/pre USR_DIR="$USR_DIR"
+RUN apt-get update && apt-get install -y make wget
 RUN make requirements/packages USR_DIR="$USR_DIR"
 
 # Compile the project and build the package.
 COPY src src
 COPY resources resources
-CMD ./scripts/package.sh build_deb_package "$PROJECT_NAME" "$PROJECT_DESCRIPTION" "$PROJECT_VERSION" \
+CMD ./scripts/packaging.sh build_deb_package "$PACKAGE_NAME" "$PACKAGE_DESCRIPTION" "$PACKAGE_VERSION" \
     "$PACKAGE_MAINTAINER_NAME" "$PACKAGE_MAINTAINER_MAIL" "$PACKAGE_APT_RUN_REQUIREMENTS" \
     "$USR_DIR" "$PACKAGE_TARGET_DIR"
 
@@ -42,4 +44,4 @@ CMD ./scripts/package.sh build_deb_package "$PROJECT_NAME" "$PROJECT_DESCRIPTION
 # docker build -f Dockerfiles/Dockerfile.package.ubuntu2204-amd64 -t pdftotext-plus-plus.package:ubuntu2204-amd64 .
 #
 # Run Docker container:
-# docker run --rm --name pdftotext-plus-plus.package.ubuntu2204-amd64 -e PROJECT_NAME="<name>" -e PROJECT_DESCRIPTION="<description>" -e PROJECT_VERSION="<version>" -e PACKAGE_MAINTAINER_NAME="<name>" -e PACKAGE_MAINTAINER_MAIL="<mail>" -v "<output-dir>":/out pdftotext-plus-plus.package:ubuntu2204-amd64
+# docker run --rm --name pdftotext-plus-plus.package.ubuntu2204-amd64 -e PACKAGE_NAME="<name>" -e PACKAGE_DESCRIPTION="<description>" -e PACKAGE_VERSION="<version>" -e PACKAGE_MAINTAINER_NAME="<name>" -e PACKAGE_MAINTAINER_MAIL="<mail>" -v "<output-dir>":/out pdftotext-plus-plus.package:ubuntu2204-amd64

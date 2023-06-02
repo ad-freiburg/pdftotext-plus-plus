@@ -1,0 +1,3 @@
+pdftotext++ [option] <pdf-file> [<output-file>]
+
+This processes the PDF file <pdf-file> and writes the extracted text to the file <output-file>. If <output-file> is not specified, or specified as '-', the extracted text is printed to stdout.

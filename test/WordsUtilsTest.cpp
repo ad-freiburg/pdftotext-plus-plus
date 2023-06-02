@@ -25,7 +25,9 @@ class WordsUtilsTest : public ::testing::Test {
  protected:
   // This method is called before the first test of this test suite.
   static void SetUpTestSuite() {
-    PdfToTextPlusPlus engine;
+    ppp::Config config;
+    config.semanticRolesDetectionModelsDir = CONFIG_SEMANTIC_ROLES_DETECTION_MODELS_DIR;
+    PdfToTextPlusPlus engine(&config);
 
     if (pdf1 == nullptr) {
       pdf1 = new PdfDocument();
@@ -62,7 +64,7 @@ TEST_F(WordsUtilsTest, createWordPdf1) {
   for (size_t i = 1; i < 13; i++) { characters.push_back(page0->characters[i]); }
   PdfWord* word = createWord(characters, pdf1);
   ASSERT_EQ(word->doc, pdf1);
-  ASSERT_EQ(word->id.size(), global_config::ID_LENGTH + 5);  // +5 for "word-"
+  ASSERT_EQ(word->id.size(), size_t(global_config::ID_LENGTH + 5));  // +5 for "word-"
   ASSERT_EQ(word->pos->pageNum, page0->pageNum);
   ASSERT_NEAR(word->pos->leftX, 96.2, TOL);
   ASSERT_NEAR(word->pos->rightX, 185.0, TOL);
@@ -80,7 +82,7 @@ TEST_F(WordsUtilsTest, createWordPdf1) {
   for (size_t i = 18; i < 23; i++) { characters.push_back(page0->characters[i]); }
   word = createWord(characters, pdf1);
   ASSERT_EQ(word->doc, pdf1);
-  ASSERT_EQ(word->id.size(), global_config::ID_LENGTH + 5);  // +5 for "word-"
+  ASSERT_EQ(word->id.size(), size_t(global_config::ID_LENGTH + 5));  // +5 for "word-"
   ASSERT_EQ(word->pos->pageNum, page0->pageNum);
   ASSERT_NEAR(word->pos->leftX, 103.8, TOL);
   ASSERT_NEAR(word->pos->rightX, 129.9, TOL);

@@ -18,6 +18,7 @@
 #include <iomanip>
 
 #include "./BytePairEncoder.h"
+#include "./Config.h"
 #include "./SemanticRolesPredictor.h"
 
 using std::numeric_limits;
@@ -26,7 +27,9 @@ using std::vector;
 using std::wstring;
 
 // _________________________________________________________________________________________________
-SemanticRolesPredictor::SemanticRolesPredictor() = default;
+SemanticRolesPredictor::SemanticRolesPredictor(const ppp::Config* config) {
+  _config = config;
+}
 
 // _________________________________________________________________________________________________
 SemanticRolesPredictor::~SemanticRolesPredictor() {
@@ -44,17 +47,23 @@ void SemanticRolesPredictor::readModel() {
 //   if (!status.ok()) {
 //     throw std::invalid_argument("Could not load model \"" + _modelDirPath + "\"");
 //   }
-  _model = new cppflow::model(_modelDirPath);
+
+  // TODO(korzen): Parameterize the file names.
+  string modelsDirPath = _config->semanticRolesDetectionModelsDir;
+  string bpeVocabFilePath = modelsDirPath + "/bpe-vocab.tsv";
+  string rolesVocabFilePath = modelsDirPath + "/roles-vocab.tsv";
+
+  _model = new cppflow::model(modelsDirPath);
   _modelOk = true;
 
   // -----------
   // Read the BPE vocabulary.
 
-  std::wifstream bpeVocabFile(_bpeVocabFilePath);
+  std::wifstream bpeVocabFile(bpeVocabFilePath);
 
   // Abort if the file can't be read.
   if (!bpeVocabFile.is_open()) {
-    throw std::invalid_argument("Could not load vocab file \"" + _bpeVocabFilePath + "\"");
+    throw std::invalid_argument("Could not load vocab file \"" + bpeVocabFilePath + "\"");
   }
 
   // Tell the wifstream that the file is encoded in UTF-8 and contains multi-byte characters.
@@ -80,9 +89,9 @@ void SemanticRolesPredictor::readModel() {
   // -----------
   // Read the roles vocabulary.
 
-  std::ifstream vocabFile(_rolesVocabFilePath);
+  std::ifstream vocabFile(rolesVocabFilePath);
   if (!vocabFile.is_open()) {
-    throw std::invalid_argument("Could not load vocab file \"" + _rolesVocabFilePath + "\"");
+    throw std::invalid_argument("Could not load vocab file \"" + rolesVocabFilePath + "\"");
   }
   string line;
   while (true) {
