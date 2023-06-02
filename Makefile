@@ -246,7 +246,7 @@ github-release:
 
 requirements/checkstyle:
 	@echo "$(INFO_STYLE)[$@] Installing requirements for 'make checkstyle' ...$(N)"
-	$(INSTALL_REQUIREMENTS_SCRIPT) make_checkstyle $(USR_DIR)
+	./scripts/install_requirements.sh make_checkstyle $(USR_DIR)
 
 requirements/compile:
 	@echo "$(INFO_STYLE)[$@] Installing requirements for 'make compile' ...$(N)"
