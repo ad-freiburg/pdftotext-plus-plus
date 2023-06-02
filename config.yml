@@ -1,8 +1,0 @@
-
-  package:
-    dists:
-      - name: ubuntu2004-amd64
-        Dockerfile: Dockerfiles/Dockerfile.package.ubuntu2004-amd64
-
-      - name: ubuntu2204-amd64
-        Dockerfile: Dockerfiles/Dockerfile.package.ubuntu2204-amd64
