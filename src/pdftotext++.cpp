@@ -487,6 +487,11 @@ int main(int argc, char* argv[]) {
   if (verbosity == "warn" || verbosity == "WARN") { logLevel = LogLevel::WARN; }
 
   ppp::Config config;
+  config.textOutputDev.logLevel = debugPdfParsing ? DEBUG : logLevel;
+  config.textOutputDev.logPageFilter = debugPageFilter;
+  config.textOutputDev.noEmbeddedFontFilesParsing = noEmbeddedFontFiles;
+
+  config.pdfStatisticsCalculator.logLevel = debugStatisticsComputation ? DEBUG : logLevel;
   config.semanticRolesDetectionModelsDir = CONFIG_SEMANTIC_ROLES_DETECTION_MODELS_DIR;
 
   PdfToTextPlusPlus engine(

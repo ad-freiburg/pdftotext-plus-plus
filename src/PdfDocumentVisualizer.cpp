@@ -20,11 +20,13 @@
 
 #include "./utils/MathUtils.h"
 
+#include "./Config.h"
 #include "./PdfDocument.h"
 #include "./PdfDocumentVisualizer.h"
 #include "./TextOutputDev.h"
 #include "./Types.h"
 
+using ppp::Config;
 using ppp::types::SemanticRole;
 using std::make_unique;
 using std::move;
@@ -43,7 +45,10 @@ PdfDocumentVisualizer::PdfDocumentVisualizer(const string& pdfFilePath) {
   _pdfDoc = PDFDocFactory().createPDFDoc(gooPdfFilePath);
 
   _doc = new PdfDocument();
-  _out = new TextOutputDev(true, _doc);
+
+  Config config;
+  config.textOutputDev.noEmbeddedFontFilesParsing = true;
+  _out = new TextOutputDev(_doc, &config);
 
   // Create a Gfx for each PDF page.
   _gfxs.push_back(nullptr);  // Make the vector 1-based.

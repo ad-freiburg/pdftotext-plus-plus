@@ -10,11 +10,7 @@
 #include <string>
 
 #include "./utils/MathUtils.h"
-
-#include "./Constants.h"
 #include "./PdfDocument.h"
-
-using global_config::COORDS_PREC;
 
 using std::string;
 using std::stringstream;
@@ -147,10 +143,10 @@ string PdfPosition::toString() const {
   stringstream ss;
   ss << "PdfPosition("
      << "page=" << pageNum << "; "
-     << "leftX=" << ppp::math_utils::round(leftX, COORDS_PREC) << "; "
-     << "upperY=" << ppp::math_utils::round(upperY, COORDS_PREC) << "; "
-     << "rightX=" << ppp::math_utils::round(rightX, COORDS_PREC) << "; "
-     << "lowerY=" << ppp::math_utils::round(lowerY, COORDS_PREC) << "; "
+     << "leftX=" << ppp::math_utils::round(leftX, 1) << "; "
+     << "upperY=" << ppp::math_utils::round(upperY, 1) << "; "
+     << "rightX=" << ppp::math_utils::round(rightX, 1) << "; "
+     << "lowerY=" << ppp::math_utils::round(lowerY, 1) << "; "
      << "rotation=" << rotation << "; "
      << "wMode=" << wMode << ")";
   return ss.str();
@@ -160,10 +156,10 @@ string PdfPosition::toString() const {
 string PdfPosition::toShortString() const {
   stringstream ss;
   ss << "p=" << pageNum
-     << "; leftX=" << ppp::math_utils::round(leftX, COORDS_PREC)
-     << "; upperY=" << ppp::math_utils::round(upperY, COORDS_PREC)
-     << "; rightX=" << ppp::math_utils::round(rightX, COORDS_PREC)
-     << "; lowerY=" << ppp::math_utils::round(lowerY, COORDS_PREC);
+     << "; leftX=" << ppp::math_utils::round(leftX, 1)
+     << "; upperY=" << ppp::math_utils::round(upperY, 1)
+     << "; rightX=" << ppp::math_utils::round(rightX, 1)
+     << "; lowerY=" << ppp::math_utils::round(lowerY, 1);
   return ss.str();
 }
 

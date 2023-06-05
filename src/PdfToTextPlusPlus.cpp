@@ -95,7 +95,7 @@ int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
   }
 
   // (2) Parse the content streams of the PDF file for characters, graphics and shapes.
-  TextOutputDev out(!_noEmbeddedFontFilesParsing, doc, _logLevelPdfParsing, _logPageFilter);
+  TextOutputDev out(doc, _config);
   start = high_resolution_clock::now();
   pdfDoc->displayPages(
     &out,
@@ -114,7 +114,7 @@ int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
   }
 
   // (3) Compute some statistics about the characters, for example: the most frequent font size.
-  PdfStatisticsCalculator psc(doc, _logLevelStatisticsComputation);
+  PdfStatisticsCalculator psc(doc, _config);
   start = high_resolution_clock::now();
   psc.computeCharacterStatistics();
   end = high_resolution_clock::now();

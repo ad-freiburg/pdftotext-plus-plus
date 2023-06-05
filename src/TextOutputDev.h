@@ -16,8 +16,10 @@
 #include <locale>  // std::wstring_convert
 
 #include "./utils/Log.h"
-
+#include "./Config.h"
 #include "./PdfDocument.h"
+
+using ppp::Config;
 
 // =================================================================================================
 
@@ -33,29 +35,12 @@ class TextOutputDev : public OutputDev {
   /**
    * This constructor creates and initializes a new instance of this class.
    *
-   * @param noEmbeddedFontFilesParsing
-   *   A boolean flag indicating whether or not to parse the font files embedded into the current
-   *   PDF file. Setting this parameter to true disables the parsing; setting it to false enables
-   *   the parsing. Parsing the font files can enable more accurate bounding boxes of the chars
-   *   (in particular, when the chars represent mathematical symbols). It also can enable more
-   *   correct information about the style of a font (for example, whether or not the font is a
-   *   bold font), for the following reason: actually, the PDF standard specifies several font
-   *   flags that describe the style of a font. These flags are however often not set, even if they
-   *   are supposed to be (for example, there is an isBold flag for a font, but this flag is often
-   *   not set, even if the font is actually a bold font). Instead, the missing information is
-   *   often stored in the embedded font file (if the font is actually embedded). The consequence
-   *   of disabling the parsing of the font files is a faster extraction process, but a lower
-   *   accuracy of the extracted text.
    * @param doc
    *   The `PdfDocument` to which the extracted information should be stored.
-   * @param logLevel
-   *   The logging level.
-   * @param logPageFilter
-   *   If set to a value > 0, only the logging messages produced while processing the
-   *   <logPageFilter>-th page of the current PDF file will be printed to the console.
+   * @param config
+   *    The configuration to use.
    */
-  TextOutputDev(bool noEmbeddedFontFilesParsing, PdfDocument* doc, LogLevel logLevel = ERROR,
-      int logPageFilter = -1);
+  TextOutputDev(PdfDocument* doc, const Config* config);
 
   /** The deconstructor. */
   ~TextOutputDev() override;
@@ -254,10 +239,10 @@ class TextOutputDev : public OutputDev {
    */
   void concat(const double* m1, const double* m2, double* res) const;
 
-  // A boolean flag indicating whether or not to parse embedded font files.
-  bool _parseEmbeddedFontFiles;
   // The PDF document to process.
   PdfDocument* _doc;
+  // The configuration to use.
+  const Config* _config;
   // The current page.
   PdfPage* _page;
   // The current page number.

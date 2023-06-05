@@ -10,50 +10,12 @@
 #define PDFSTATISTICSCALCULATOR_H_
 
 #include "./utils/Log.h"
-
+#include "./Config.h"
 #include "./PdfDocument.h"
 
-// =================================================================================================
-// CONFIG
-
-namespace pdf_statistics_calculator::config {
-
-// A parameter that denotes the precision to use when rounding the coordinates of elements before
-// computing the most frequent coordinates.
-const double COORDS_PREC = global_config::COORDS_PREC;
-
-// A parameter that denotes the precision to use when rounding the font sizes of text elements
-// before computing the most frequent font size.
-const double FONT_SIZE_PREC = global_config::FONT_SIZE_PREC;
-
-// A parameter used for computing if two given font sizes are equal. It denotes the maximum allowed
-// difference between two font sizes so that the font sizes are considered to be equal.
-const double FSIZE_EQUAL_TOLERANCE = 0.1;
-
-// ----------
-// computeWordStatistics()
-
-// A parameter that is used for computing whether or not two words are part of the same text line.
-// If the maximum y-overlap ratio between two words is larger or eqaul to the returned threshold,
-// the words are considered to be part of the same text line.
-const double SAME_LINE_Y_OVERLAP_RATIO_THRESHOLD = 0.5;
-
-// A parameter that is used for computing whether or not two words are part of different text lines.
-// If the maximum y-overlap ratio between two words is smaller or eqaul to the returned threshold,
-// the words are considered to be part of different text lines.
-const double OTHER_LINE_Y_OVERLAP_RATIO_THRESHOLD = 0;
-
-// ----------
-// computeTextLineStatistics()
-
-// A parameter that denotes the precision to use when rounding the distances between text lines
-// before computing the most frequent line distance.
-const double LINE_DIST_PREC = global_config::LINE_DIST_PREC;
-
-}  // namespace pdf_statistics_calculator::config
+using ppp::Config;
 
 // =================================================================================================
-
 
 /**
  * This class computes some statistics about the characters, words and text lines in a PDF document,
@@ -69,7 +31,7 @@ class PdfStatisticsCalculator {
    * @param logLevel
    *   The logging level.
    */
-  explicit PdfStatisticsCalculator(PdfDocument* doc, LogLevel logLevel = ERROR);
+  explicit PdfStatisticsCalculator(PdfDocument* doc, const Config* config);
 
   /** The deconstructor. */
   ~PdfStatisticsCalculator();
@@ -114,6 +76,8 @@ class PdfStatisticsCalculator {
  private:
   // The document for which to compute the statistics.
   PdfDocument* _doc;
+  // The configuration to use.
+  const Config* _config;
   // The logger.
   const Logger* _log;
 };
