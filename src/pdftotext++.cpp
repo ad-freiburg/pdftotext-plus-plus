@@ -19,7 +19,7 @@
 #include <vector>
 
 #include "./serialization/Serialization.h"
-#include "./utils/Log.h"  // BBLUE, OFF
+#include "./utils/Log.h"
 #include "./utils/MathUtils.h"
 #include "./utils/StringUtils.h"
 #include "./Config.h"
@@ -28,13 +28,6 @@
 #include "./Types.h"
 #include "./Validators.h"
 
-using ppp::types::DocumentUnit;
-using ppp::types::SemanticRole;
-using ppp::types::SerializationFormat;
-using ppp::types::Timing;
-using ppp::serialization::Serializer;
-using ppp::string_utils::wrap;
-using ppp::string_utils::strip;
 using std::chrono::duration_cast;
 using std::chrono::high_resolution_clock;
 using std::chrono::milliseconds;
@@ -42,9 +35,32 @@ using std::cerr;
 using std::cout;
 using std::endl;
 using std::exception;
+using std::fixed;
+using std::locale;
+using std::setprecision;
+using std::setw;
 using std::string;
 using std::unordered_set;
 using std::vector;
+
+using boost::program_options::bool_switch;
+using boost::program_options::command_line_parser;
+using boost::program_options::notify;
+using boost::program_options::options_description;
+using boost::program_options::positional_options_description;
+using boost::program_options::store;
+using boost::program_options::value;
+using boost::program_options::variables_map;
+
+using ppp::Config;
+using ppp::math_utils::round;
+using ppp::types::DocumentUnit;
+using ppp::types::SemanticRole;
+using ppp::types::SerializationFormat;
+using ppp::types::Timing;
+using ppp::serialization::Serializer;
+using ppp::string_utils::wrap;
+using ppp::string_utils::strip;
 
 namespace po = boost::program_options;
 
@@ -63,21 +79,20 @@ const char* version = VERSION;
 // Helper methods.
 
 /**
- * This method prints the help message - containing the program name, the program version, a
+ * This method prints the help message - including the program name, the program version, a
  * general program description and a description of the command-line options.
  *
- * @param publicOpts
+ * @param pubOpts
  *    The definition of the public command-line options.
- * @param privateOpts
- *    The definition of the non-public command-line options. NOTE: This can be omitted when the
- *    private options should not appear in the help message.
+ * @param privOpts
+ *    The definition of the non-public command-line options.
+ *    NOTE: Can be omitted, when the non-public options should not appear in the help message.
  * @param maxLineLength
- *    The maximum length of the lines in the help message.
+ *    The maximum line length in the help message.
  * @param optionDescIndent
- *    The amount by which to indent the description of a command line option.
+ *    The amount by which the description of a single command line option should be indented.
  */
-void printHelpMessage(
-    const po::options_description* publicOpts, const po::options_description* privateOpts = 0,
+void printHelpMessage(const options_description* pubOpts, const options_description* privOpts = 0,
     int maxLineLength = 100, int optionDescIndent = 4) {
   cout << BBLUE << "NAME" << OFF << endl;
   cout << wrap(strip(programName), maxLineLength) << endl;
@@ -96,15 +111,15 @@ void printHelpMessage(
   cout << endl;
 
   cout << BBLUE << "OPTIONS" << OFF << endl;
-  for (const auto& opt : publicOpts->options()) {
+  for (const auto& opt : pubOpts->options()) {
     cout << opt->format_name() << endl;
     cout << wrap(strip(opt->description()), maxLineLength, optionDescIndent) << endl;
   }
   cout << endl;
 
-  if (privateOpts) {
+  if (privOpts) {
     cout << BBLUE << "NON-PUBLIC OPTIONS" << OFF << endl;
-    for (const auto& opt : privateOpts->options()) {
+    for (const auto& opt : privOpts->options()) {
       cout << opt->format_name() << endl;
       cout << wrap(strip(opt->description()), maxLineLength, optionDescIndent) << endl;
     }
@@ -113,7 +128,7 @@ void printHelpMessage(
 }
 
 /**
- * This method prints the version.
+ * This method prints the version message.
  */
 void printVersionMessage() {
   cout << programName << ", version " << version << endl;
@@ -173,33 +188,35 @@ int main(int argc, char* argv[]) {
   bool printFullHelp = false;
 
   // Specify the public options (= options that will be shown to the user when printing the help).
-  po::options_description publicOpts;
-  publicOpts.add_options()
+  options_description pubOpts;
+  pubOpts.add_options()
     (
       "format",
-      po::value<SerializationFormat>(&format),
+      value<SerializationFormat>(&format),
       (string("Output the extracted text in the specified format.\nValid formats: ")
         + ppp::serialization::getSerializationFormatChoicesStr() + string(".\n")).c_str()
     )
     (
       "role",
-      po::value<vector<SemanticRole>>(&roles),
+      value<vector<SemanticRole>>(&roles),
       (string("Only output text from text blocks with the specified roles. Use the syntax\n")
         + string("'--role <value1> --role <value2> ...' to specify multiple roles.\nValid roles: ")
         + ppp::types::getSemanticRolesStr() + string(".\n")).c_str()
+        // TODO: Rename to getSemanticRolesChoicesStr?
     )
     (
       "unit",
-      po::value<vector<DocumentUnit>>(&units),
+      value<vector<DocumentUnit>>(&units),
       (string("Output semantic and layout information about the specified document unit(s). Use\n")
         + string("the syntax '--unit <value1> --unit <value2> ...' to specify multiple units.\n")
         + string("NOTE: This option does not have an effect when used together with the ")
         + string("'--format txt' or '--format txt-extended' option.\n")
         + string("Valid units: ") + ppp::types::getDocumentUnitsStr() + string(".\n")).c_str()
+        // TODO: Rename to getDocumentUnitsStr?
     )
     (
       "control-characters",
-      po::bool_switch(&addControlCharacters),
+      bool_switch(&addControlCharacters),
       "Output the extracted text together with the following control characters:\n"
       "• \"^A\" (start of heading) in front of each emphasized text block\n"
       "• \"^L\" (form feed) between two text blocks when there is a page break in between.\n"
@@ -208,33 +225,33 @@ int main(int argc, char* argv[]) {
     // TODO(korzen): This option should be removed, when there are more structured formats.
     (
       "semantic-roles",
-      po::bool_switch(&addSemanticRoles),
+      bool_switch(&addSemanticRoles),
       "Output each extracted text block together with its semantic role. "
       "NOTE: This option only has an effect when used together with the '--format txt' option."
     )
     (
       "no-scripts",
-      po::bool_switch(&noScripts),
+      bool_switch(&noScripts),
       "Output the extracted text without characters that appear as a subscript or superscript in "
       "the PDF."
     )
     (
       "no-dehyphenation",
-      po::bool_switch(&noDehyphenation),
+      bool_switch(&noDehyphenation),
       "Do not merge hyphenated words. "
       "NOTE: Using this option has the consequence that each part into which a hyphenated word is "
       "divided appears as a separate word in the extracted text."
     )
     (
       "no-embedded-font-files",
-      po::bool_switch(&noEmbeddedFontFiles),
+      bool_switch(&noEmbeddedFontFiles),
       "Do not parse the font files embedded into the PDF file. "
       "NOTE: Using this option results in a faster extraction process, but a less accurate "
       "extraction result."
     )
     (
       "visualization-path",
-      po::value<string>(&visualizeFilePath),
+      value<string>(&visualizeFilePath),
       "Create a visualization PDF file, that is: a copy of the PDF file, with annotations added "
       "by the different '--visualize-*' options below, and write it to the specified file. "
       "NOTE: If not specified, no such visualization will be created, even if one or more of the "
@@ -242,7 +259,7 @@ int main(int argc, char* argv[]) {
     )
     (
       "visualize-characters",
-      po::bool_switch(&visualizeChars),
+      bool_switch(&visualizeChars),
       "Draw bounding boxes around the detected characters into the visualization PDF file. "
       "NOTE: This option only has an effect when used together with the "
       "'--visualization-path <string>' option."
@@ -250,63 +267,63 @@ int main(int argc, char* argv[]) {
     // TODO(korzen): explain the difference between graphics and figure.
     (
       "visualize-graphics",
-      po::bool_switch(&visualizeGraphics),
+      bool_switch(&visualizeGraphics),
       "Draw bounding boxes around the detected graphics into the visualization PDF file. "
       "NOTE: This option only has an effect when used together with the "
       "'--visualization-path <string>' option."
     )
     (
       "visualize-figures",
-      po::bool_switch(&visualizeFigures),
+      bool_switch(&visualizeFigures),
       "Draw bounding boxes around the detected figures into the visualization PDF file. "
       "NOTE: This option only has an effect when used together with the "
       "'--visualization-path <string>' option."
     )
     (
       "visualize-shapes",
-      po::bool_switch(&visualizeShapes),
+      bool_switch(&visualizeShapes),
       "Draw bounding boxes around the detected shapes into the visualization PDF file. "
       "NOTE: This option only has an effect when used together with the "
       "'--visualization-path <string>' option."
     )
     (
       "visualize-words",
-      po::bool_switch(&visualizeWords),
+      bool_switch(&visualizeWords),
       "Draw bounding boxes around the detected words into the visualization PDF file. "
       "NOTE: This option only has an effect when used together with the "
       "'--visualization-path <string>' option."
     )
     (
       "visualize-text-lines",
-      po::bool_switch(&visualizeTextLines),
+      bool_switch(&visualizeTextLines),
       "Draw bounding boxes around the detected text lines into the visualization PDF file. "
       "NOTE: This option only has an effect when used together with the "
       "'--visualization-path <string>' option."
     )
     (
       "visualize-text-blocks",
-      po::bool_switch(&visualizeTextBlocks),
+      bool_switch(&visualizeTextBlocks),
       "Draw bounding boxes around the detected text blocks into the visualization PDF file. "
       "NOTE: This option only has an effect when used together with the "
       "'--visualization-path <string>' option."
     )
     (
       "visualize-segments",
-      po::bool_switch(&visualizePageSegments),
+      bool_switch(&visualizePageSegments),
       "Draw bounding boxes around the detected page segments into the visualization PDF file. "
       "NOTE: This option only has an effect when used together with the "
       "'--visualization-path <string>' option."
     )
     (
       "visualize-segment-cuts",
-      po::bool_switch(&visualizeSegmentCuts),
+      bool_switch(&visualizeSegmentCuts),
       "Draw the XY-cuts made to segment the pages into the visualization PDF file. "
       "NOTE: This option only has an effect when used together with the "
       "'--visualization-path <string>' option."
     )
     (
       "visualize-reading-order",
-      po::bool_switch(&visualizeReadingOrder),
+      bool_switch(&visualizeReadingOrder),
       "Draw (directed) edges between the detected text blocks into the visualization PDF file, for "
       "visualizing the detected reading order. "
       "NOTE: This option only has an effect when used together with the "
@@ -314,46 +331,46 @@ int main(int argc, char* argv[]) {
     )
     (
       "visualize-reading-order-cuts",
-      po::bool_switch(&visualizeReadingOrderCuts),
+      bool_switch(&visualizeReadingOrderCuts),
       "Draw the XY-cuts made to detect the reading order into the visualization PDF file. "
       "NOTE: This option only has an effect when used together with the "
       "'--visualization-path <string>' option."
     )
     (
       "verbosity",
-      po::value<string>(&verbosity),
+      value<string>(&verbosity),
       "Specify the verbosity. Valid values are: trace, debug, info, warn, error. "
       "Logging messages with a level lower than the specified value will be not printed to the "
       "console. Default: error."  // TODO(korzen): Specify the default value.
     )
     (
       "version,v",
-      po::bool_switch(&printVersion),
+      bool_switch(&printVersion),
       "Print the version info."
     )
     (
       "help,h",
-      po::bool_switch(&printHelp),
+      bool_switch(&printHelp),
       "Print the help.");
 
   // Specify the private options (= options that will not be shown in the help message).
   // NOTE: these options *must* include an entry for each positional option (defined below), this
   // is a restriction of the boost library.
-  po::options_description privateOpts("");
-  privateOpts.add_options()
+  options_description privOpts("");
+  privOpts.add_options()
     (
       "pdf-file",
-      po::value<string>(&pdfFilePath)->required(),
+      value<string>(&pdfFilePath)->required(),
       "The path to the PDF file to process."
     )
     (
       "output-file",
-      po::value<string>(&outputFilePath),
+      value<string>(&outputFilePath),
       "The path to the file into which the extracted text should be written."
     )
     (
       "parse-mode",
-      po::bool_switch(&parseMode),
+      bool_switch(&parseMode),
       "Only parse the content streams of the PDF file for characters, figures, and shapes. "
       "Do not detect words, text lines, and text blocks. "
       "NOTE: To output the extracted elements, use the '--output-characters', '--output-figures' "
@@ -362,48 +379,48 @@ int main(int argc, char* argv[]) {
     // TODO(korzen): Think about how to handle logging (one log per module?).
     (
       "debug-pdf-parsing",
-      po::bool_switch(&debugPdfParsing),
+      bool_switch(&debugPdfParsing),
       "Print the debug messages produced while parsing the content streams of the PDF file."
     )
     (
       "debug-statistics",
-      po::bool_switch(&debugStatisticsComputation),
+      bool_switch(&debugStatisticsComputation),
       "Print the debug messages produced while computing the statistics."
     )
     (
       "debug-diacritic-marks-merging",
-      po::bool_switch(&debugDiacriticMarksMerging),
+      bool_switch(&debugDiacriticMarksMerging),
       "Print the debug messages produced while merging diacritical marks with their base "
       "characters."
     )
     (
       "debug-words-detection",
-      po::bool_switch(&debugWordsDetection),
+      bool_switch(&debugWordsDetection),
       "Print the debug messages produced while detecting words."
     )
     (
       "debug-page-segmentation",
-      po::bool_switch(&debugPageSegmentation),
+      bool_switch(&debugPageSegmentation),
       "Print the debug messages produced while segmenting the pages."
     )
     (
       "debug-text-lines-detection",
-      po::bool_switch(&debugTextLinesDetection),
+      bool_switch(&debugTextLinesDetection),
       "Print the debug messages produced while detecting text lines."
     )
     (
       "debug-sub-super-scripts-detection",
-      po::bool_switch(&debugSubSuperScriptsDetection),
+      bool_switch(&debugSubSuperScriptsDetection),
       "Print the debug messages produced while detecting sub-/superscripts."
     )
     (
       "debug-text-blocks-detection",
-      po::bool_switch(&debugTextBlocksDetection),
+      bool_switch(&debugTextBlocksDetection),
       "Print the debug messages produced while detecting text blocks."
     )
     (
       "debug-page-filter",
-      po::value<int>(&debugPageFilter),
+      value<int>(&debugPageFilter),
       "When one or more of the '--debug-*' options are used, print only the debug messages that "
       "are produced while processing the specified page. "
       "NOTE: the page numbers are 1-based; so to print the debug messages produced while "
@@ -411,35 +428,35 @@ int main(int argc, char* argv[]) {
     )
     (
       "print-running-times",
-      po::bool_switch(&printRunningTimes),
+      bool_switch(&printRunningTimes),
       "Print the running times needed by the different steps in the extraction pipeline."
     )
     (
       "full-help",
-      po::bool_switch(&printFullHelp),
+      bool_switch(&printFullHelp),
       "Print the full help (containing also the descriptions of all non-public commands).");
 
   // Specify the positional options.
-  po::positional_options_description positional;
+  positional_options_description positional;
   positional.add("pdf-file", 1);
   positional.add("output-file", 1);
 
   // Parse the command-line options.
-  po::options_description opts;
-  opts.add(publicOpts).add(privateOpts);
-  po::variables_map vm;
+  options_description opts;
+  opts.add(pubOpts).add(privOpts);
+  variables_map vm;
   try {
-    po::store(po::command_line_parser(argc, argv).options(opts).positional(positional).run(), vm);
-    po::notify(vm);
+    store(command_line_parser(argc, argv).options(opts).positional(positional).run(), vm);
+    notify(vm);
   } catch (const exception& e) {
     bool showFullHelp = vm.count("full-help") ? vm["full-help"].as<bool>() : false;
     if (showFullHelp) {
-      printHelpMessage(&publicOpts, &privateOpts);
+      printHelpMessage(&pubOpts, &privOpts);
       return EXIT_SUCCESS;
     }
     bool showHelp = vm.count("help") ? vm["help"].as<bool>() : false;
     if (showHelp) {
-      printHelpMessage(&publicOpts);
+      printHelpMessage(&pubOpts);
       return EXIT_SUCCESS;
     }
     bool showVersion = vm.count("version") ? vm["version"].as<bool>() : false;
@@ -454,13 +471,13 @@ int main(int argc, char* argv[]) {
 
   // Print the full help info if explicitly requested by the user.
   if (printFullHelp) {
-    printHelpMessage(&publicOpts, &privateOpts);
+    printHelpMessage(&pubOpts, &privOpts);
     return EXIT_SUCCESS;
   }
 
   // Print the help info if explicitly requested by the user.
   if (printHelp) {
-    printHelpMessage(&publicOpts);
+    printHelpMessage(&pubOpts);
     return EXIT_SUCCESS;
   }
 
@@ -481,33 +498,35 @@ int main(int argc, char* argv[]) {
   // Start the extraction process.
 
   LogLevel logLevel = ERROR;
-  if (verbosity == "trace" || verbosity == "TRACE") { logLevel = LogLevel::TRACE; }
-  if (verbosity == "debug" || verbosity == "DEBUG") { logLevel = LogLevel::DEBUG; }
-  if (verbosity == "info" || verbosity == "INFO") { logLevel = LogLevel::INFO; }
-  if (verbosity == "warn" || verbosity == "WARN") { logLevel = LogLevel::WARN; }
+  if (verbosity == "trace" || verbosity == "TRACE") { logLevel = TRACE; }
+  if (verbosity == "debug" || verbosity == "DEBUG") { logLevel = DEBUG; }
+  if (verbosity == "info" || verbosity == "INFO") { logLevel = INFO; }
+  if (verbosity == "warn" || verbosity == "WARN") { logLevel = WARN; }
 
-  ppp::Config config;
-  config.textOutputDev.logLevel = debugPdfParsing ? DEBUG : logLevel;
-  config.textOutputDev.logPageFilter = debugPageFilter;
-  config.textOutputDev.noEmbeddedFontFilesParsing = noEmbeddedFontFiles;
-
-  config.pdfStatisticsCalculator.logLevel = debugStatisticsComputation ? DEBUG : logLevel;
-  config.semanticRolesDetectionModelsDir = CONFIG_SEMANTIC_ROLES_DETECTION_MODELS_DIR;
+  Config config;
+  config.pdfParsing.logLevel = debugPdfParsing ? DEBUG : logLevel;
+  config.pdfParsing.logPageFilter = debugPageFilter;
+  config.pdfParsing.noEmbeddedFontFilesParsing = noEmbeddedFontFiles;
+  config.statisticsCalculation.logLevel = debugStatisticsComputation ? DEBUG : logLevel;
+  config.diacriticsMerging.logLevel = debugDiacriticMarksMerging ? DEBUG : logLevel;
+  config.diacriticsMerging.logPageFilter = debugPageFilter;
+  config.wordsDetection.logLevel = debugWordsDetection ? DEBUG : logLevel;
+  config.wordsDetection.logPageFilter = debugPageFilter;
+  config.pageSegmentation.logLevel = debugPageSegmentation ? DEBUG : logLevel;
+  config.pageSegmentation.logPageFilter = debugPageFilter;
+  config.linesDetection.logLevel = debugTextLinesDetection ? DEBUG : logLevel;
+  config.linesDetection.logPageFilter = debugPageFilter;
+  config.scriptsDetection.logLevel = debugSubSuperScriptsDetection ? DEBUG : logLevel;
+  config.scriptsDetection.logPageFilter = debugPageFilter;
+  config.blocksDetection.logLevel = debugTextBlocksDetection ? DEBUG : logLevel;
+  config.blocksDetection.logPageFilter = debugPageFilter;
+  config.rolesPrediction.modelsDir = CONFIG_SEMANTIC_ROLES_DETECTION_MODELS_DIR;
 
   PdfToTextPlusPlus engine(
-    &config,
+    config,
     noEmbeddedFontFiles,
     noDehyphenation,
-    parseMode,
-    debugPdfParsing ? DEBUG : logLevel,
-    debugStatisticsComputation ? DEBUG : logLevel,
-    debugDiacriticMarksMerging ? DEBUG : logLevel,
-    debugWordsDetection ? DEBUG : logLevel,
-    debugPageSegmentation ? DEBUG : logLevel,
-    debugTextLinesDetection ? DEBUG : logLevel,
-    debugSubSuperScriptsDetection ? DEBUG : logLevel,
-    debugTextBlocksDetection ? DEBUG : logLevel,
-    debugPageFilter);
+    parseMode);
 
   PdfDocument doc;
   vector<Timing> timings;
@@ -560,7 +579,7 @@ int main(int argc, char* argv[]) {
   const string visualizeFilePathStr(visualizeFilePath);
   if (!visualizeFilePathStr.empty()) {
     auto start = high_resolution_clock::now();
-    PdfDocumentVisualizer visualizer(pdfFilePath);
+    PdfDocumentVisualizer visualizer(pdfFilePath, config);
     if (visualizeChars) {
       visualizer.visualizeCharacters(doc, visualizer::color_schemes::blue);
     }
@@ -603,10 +622,10 @@ int main(int argc, char* argv[]) {
   // Print the running times needed by the different processing steps, if requested by the user.
   if (printRunningTimes) {
     // Print the values with thousands separator.
-    cout.imbue(std::locale(""));
+    cout.imbue(locale(""));
     // Print the values with a precision of one decimal point.
-    cout << std::fixed;
-    cout << std::setprecision(1);
+    cout << fixed;
+    cout << setprecision(1);
 
     int64_t timeTotal = 0;
     for (const auto& timing : timings) { timeTotal += timing.time; }
@@ -614,9 +633,9 @@ int main(int argc, char* argv[]) {
 
     for (const auto& timing : timings) {
       string prefix = " * " + timing.name + ":";
-      cout << std::left << std::setw(25) << prefix;
-      cout << std::right << std::setw(4) << timing.time << " ms ";
-      double time = ppp::math_utils::round(timing.time / static_cast<double>(timeTotal) * 100, 1);
+      cout << std::left << setw(25) << prefix;
+      cout << std::right << setw(4) << timing.time << " ms ";
+      double time = round(timing.time / static_cast<double>(timeTotal) * 100, 1);
       cout << "(" << time << "%)";
       cout << endl;
     }

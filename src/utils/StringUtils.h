@@ -12,34 +12,19 @@
 #include <string>
 #include <vector>
 
-#include "../Constants.h"
-
 using std::string;
 using std::vector;
 using std::wstring;
 
 // =================================================================================================
-// CONFIG
-
-namespace ppp::string_utils::config {
-
-// An alphabet that is used for creating random strings. It contains all characters we consider to
-// be alphanumerical.
-const char* const ALPHA_NUM_ALPHABET = global_config::ALPHA_NUM_ALPHABET;
-
-// An alphabet that is used for splitting a string into words. It contains all characters we
-// consider to be a word delimiter.
-const char* const WORD_DELIMITERS_ALPHABET = global_config::WORD_DELIMITERS_ALPHABET;
-
-}  // namespace ppp::string_utils::config
-
-// =================================================================================================
-
 
 /**
  * A collection of some useful and commonly used functions in context of strings.
  */
 namespace ppp::string_utils {
+
+// The alphabet that is used for creating random strings.
+const char* const ALPHA_NUM = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
 /**
  * This method splits the given text (given as a wstring) into words and appends the words to the
@@ -47,10 +32,13 @@ namespace ppp::string_utils {
  *
  * @param text
  *   The text to split into words.
+ * @param wordDelimitersAlphabet
+ *   The (concatenated) symbols to consider to be a word delimiter.
  * @param words
  *   The vector to which the computed words should be appended.
  */
-void splitIntoWords(const wstring& text, vector<wstring>* words);
+void splitIntoWords(const wstring& text, const string& wordDelimitersAlphabet,
+    vector<wstring>* words);
 
 /**
  * This method splits the given text (given as a string) into words and appends the words to the
@@ -58,10 +46,13 @@ void splitIntoWords(const wstring& text, vector<wstring>* words);
  *
  * @param text
  *   The text to split into words.
+ * @param wordDelimitersAlphabet
+ *   The (concatenated) symbols to consider to be a word delimiter.
  * @param words
  *   The vector to which the computed words should be appended.
  */
-void splitIntoWords(const string& text, vector<string>* words);
+void splitIntoWords(const string& text, const string& wordDelimitersAlphabet,
+    vector<string>* words);
 
 /**
  * This method creates a random string of the given length, consisting of alpha-numerical

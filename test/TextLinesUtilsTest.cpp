@@ -9,8 +9,10 @@
 #include <gtest/gtest.h>
 
 #include <iostream>
+#include <regex>
 #include <string>
 #include <unordered_set>
+#include <vector>
 
 #include "../src/PdfToTextPlusPlus.h"
 #include "../src/utils/TextLinesUtils.h"
@@ -22,6 +24,8 @@ using text_lines_utils::computeIsFirstLineOfItem;
 using text_lines_utils::computeIsPrefixedByItemLabel;
 using text_lines_utils::computeIsPrefixedByFootnoteLabel;
 using text_lines_utils::computePotentialFootnoteLabels;
+using std::regex;
+using std::vector;
 
 // _________________________________________________________________________________________________
 class TextLinesUtilsTest : public ::testing::Test {
@@ -29,8 +33,8 @@ class TextLinesUtilsTest : public ::testing::Test {
   // This method is called before the first test of this test suite.
   static void SetUpTestSuite() {
     ppp::Config config;
-    config.semanticRolesDetectionModelsDir = CONFIG_SEMANTIC_ROLES_DETECTION_MODELS_DIR;
-    PdfToTextPlusPlus engine(&config);
+    config.rolesPrediction.modelsDir = CONFIG_SEMANTIC_ROLES_DETECTION_MODELS_DIR;
+    PdfToTextPlusPlus engine(config);
 
     if (pdf1 == nullptr) {
       pdf1 = new PdfDocument();
@@ -58,226 +62,357 @@ class TextLinesUtilsTest : public ::testing::Test {
 PdfDocument* TextLinesUtilsTest::pdf1 = nullptr;
 PdfDocument* TextLinesUtilsTest::pdf2 = nullptr;
 
+// TODO(korzen): Use the variables of Config.h
+const char* SUPER_ITEM_LABEL_ALPHABET = "*∗abcdefghijklmnopqrstuvwxyz01234567890()";
+vector<regex> ITEM_LABEL_REGEXES = {
+  // A regex to find item labels of form "• ", or "- ", or "+ ", etc.
+  regex("^(•|-|–|\\+)\\s+"),
+  // A regex to find item labels of form "I. ", "II. ", "III. ", "IV. ", etc.
+  regex("^(X{0,1}(IX|IV|V?I{0,3}))\\.\\s+", std::regex_constants::icase),
+  // A regex to find item labels of form "(I)", "(II)", "(III)", "(IV) ", etc.
+  regex("^\\((X{0,1}(IX|IV|V?I{0,3}))\\)\\s+", std::regex_constants::icase),
+  // A regex to find item labels of form "a. ", "b. ", "c. ", etc.
+  regex("^([a-z])\\.\\s+"),
+  // A regex to find item labels of form "1. ", "2. ", "3. ", etc.
+  regex("^([0-9]+)\\.\\s+"),
+  // A regex to find item labels of form "(A) ", "(1) ", "(C1) ", "[1] ", "[2] ", etc.
+  regex("^(\\(|\\[)([a-z0-9][0-9]{0,2})(\\)|\\])\\s+", std::regex_constants::icase),
+  // A regex to find item labels of form "[Bu2] ", "[Ch] ", "[Enn2020] ", etc.
+  regex("^(\\[)([A-Z][a-zA-Z0-9]{0,5})(\\])\\s+"),
+  // A regex to find item labels of form "A) " or "1) " or "a1) ".
+  regex("^([a-z0-9][0-9]{0,1})\\)\\s+", std::regex_constants::icase),
+  // A regex to find item labels of form "PACS" (1011.5073).
+  regex("^PACS\\s+", std::regex_constants::icase)
+};
+
+
 // _________________________________________________________________________________________________
 TEST_F(TextLinesUtilsTest, computeIsFirstLineOfItemPdf1) {
+  // TODO: Read from the config.
+  double fontSizeEqualTolerance = 1.0;
+  const string& sentenceDelimAlphabet = "?!.);";
+
   // Test a line with no words.
   PdfTextLine* line = new PdfTextLine();
-  ASSERT_FALSE(computeIsFirstLineOfItem(line));
+  ASSERT_FALSE(computeIsFirstLineOfItem(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES,
+      fontSizeEqualTolerance, sentenceDelimAlphabet));
 
   PdfPageSegment* segment = pdf1->pages[0]->segments[0];
 
   // Test the heading of the Introduction.
   line = segment->lines[0];
-  ASSERT_FALSE(computeIsFirstLineOfItem(line)) << "Line: " << line->toString();
+  ASSERT_FALSE(computeIsFirstLineOfItem(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES,
+      fontSizeEqualTolerance, sentenceDelimAlphabet))
+      << "Line: " << line->toString();
 
   // Test the first five lines of the first block of the Introduction.
   line = segment->lines[1];
-  ASSERT_FALSE(computeIsFirstLineOfItem(line)) << "Line: " << line->toString();
+  ASSERT_FALSE(computeIsFirstLineOfItem(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES,
+      fontSizeEqualTolerance, sentenceDelimAlphabet))
+      << "Line: " << line->toString();
   line = segment->lines[2];
-  ASSERT_FALSE(computeIsFirstLineOfItem(line)) << "Line: " << line->toString();
+  ASSERT_FALSE(computeIsFirstLineOfItem(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES,
+      fontSizeEqualTolerance, sentenceDelimAlphabet))
+      << "Line: " << line->toString();
   line = segment->lines[3];
-  ASSERT_FALSE(computeIsFirstLineOfItem(line)) << "Line: " << line->toString();
+  ASSERT_FALSE(computeIsFirstLineOfItem(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES,
+      fontSizeEqualTolerance, sentenceDelimAlphabet))
+      << "Line: " << line->toString();
   line = segment->lines[4];
-  ASSERT_FALSE(computeIsFirstLineOfItem(line)) << "Line: " << line->toString();
+  ASSERT_FALSE(computeIsFirstLineOfItem(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES,
+      fontSizeEqualTolerance, sentenceDelimAlphabet))
+      << "Line: " << line->toString();
   line = segment->lines[5];
-  ASSERT_FALSE(computeIsFirstLineOfItem(line)) << "Line: " << line->toString();
+  ASSERT_FALSE(computeIsFirstLineOfItem(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES,
+      fontSizeEqualTolerance, sentenceDelimAlphabet))
+      << "Line: " << line->toString();
 
   // Test the sixth lines of the first block of the Introduction (starting with "1. scriptorem...").
   // Should return false, since the line is not part of an enumeration, but the body.
   line = segment->lines[6];
-  ASSERT_FALSE(computeIsFirstLineOfItem(line)) << "Line: " << line->toString();
+  ASSERT_FALSE(computeIsFirstLineOfItem(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES,
+      fontSizeEqualTolerance, sentenceDelimAlphabet))
+      << "Line: " << line->toString();
 
   // Test the three lines of the first enumeration (starting with "1.", "2.", "3.").
   line = segment->lines[16];
-  ASSERT_TRUE(computeIsFirstLineOfItem(line)) << "Line: " << line->toString();
+  ASSERT_TRUE(computeIsFirstLineOfItem(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES,
+      fontSizeEqualTolerance, sentenceDelimAlphabet))
+      << "Line: " << line->toString();
   line = segment->lines[17];
-  ASSERT_TRUE(computeIsFirstLineOfItem(line)) << "Line: " << line->toString();
+  ASSERT_TRUE(computeIsFirstLineOfItem(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES,
+      fontSizeEqualTolerance, sentenceDelimAlphabet))
+      << "Line: " << line->toString();
   line = segment->lines[18];
-  ASSERT_TRUE(computeIsFirstLineOfItem(line)) << "Line: " << line->toString();
+  ASSERT_TRUE(computeIsFirstLineOfItem(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES,
+      fontSizeEqualTolerance, sentenceDelimAlphabet))
+      << "Line: " << line->toString();
 
   // Test the third line of the block after the first enumeration (starting with a superscripted 2).
   // The method should return false since it is not a footnote but part of the body.
   line = segment->lines[21];
-  ASSERT_FALSE(computeIsFirstLineOfItem(line)) << "Line: " << line->toString();
+  ASSERT_FALSE(computeIsFirstLineOfItem(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES,
+      fontSizeEqualTolerance, sentenceDelimAlphabet))
+      << "Line: " << line->toString();
 
   // Test the three first item lines of the second enumeration (starting with "-").
   line = segment->lines[26];
-  ASSERT_TRUE(computeIsFirstLineOfItem(line)) << "Line: " << line->toString();
+  ASSERT_TRUE(computeIsFirstLineOfItem(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES,
+      fontSizeEqualTolerance, sentenceDelimAlphabet))
+      << "Line: " << line->toString();
   line = segment->lines[30];
-  ASSERT_TRUE(computeIsFirstLineOfItem(line)) << "Line: " << line->toString();
+  ASSERT_TRUE(computeIsFirstLineOfItem(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES,
+      fontSizeEqualTolerance, sentenceDelimAlphabet))
+      << "Line: " << line->toString();
   line = segment->lines[33];
-  ASSERT_TRUE(computeIsFirstLineOfItem(line)) << "Line: " << line->toString();
+  ASSERT_TRUE(computeIsFirstLineOfItem(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES,
+      fontSizeEqualTolerance, sentenceDelimAlphabet))
+      << "Line: " << line->toString();
 
   // Test the footnote at the end of the left column ("1 This is a footnote").
   line = segment->lines[40];
-  ASSERT_TRUE(computeIsFirstLineOfItem(line)) << "Line: " << line->toString();
+  ASSERT_TRUE(computeIsFirstLineOfItem(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES,
+      fontSizeEqualTolerance, sentenceDelimAlphabet))
+      << "Line: " << line->toString();
 
   segment = pdf1->pages[0]->segments[1];
 
   // Test the two lines of the third enumeration (starting with "(a)", "(b)").
   line = segment->lines[9];
-  ASSERT_TRUE(computeIsFirstLineOfItem(line)) << "Line: " << line->toString();
+  ASSERT_TRUE(computeIsFirstLineOfItem(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES,
+      fontSizeEqualTolerance, sentenceDelimAlphabet))
+      << "Line: " << line->toString();
   line = segment->lines[10];
-  ASSERT_TRUE(computeIsFirstLineOfItem(line)) << "Line: " << line->toString();
+  ASSERT_TRUE(computeIsFirstLineOfItem(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES,
+      fontSizeEqualTolerance, sentenceDelimAlphabet))
+      << "Line: " << line->toString();
 
   segment = pdf1->pages[1]->segments[0];
 
   // Test the two footnotes at the end of the left column of the second page.
   line = segment->lines[24];
-  ASSERT_TRUE(computeIsFirstLineOfItem(line)) << "Line: " << line->toString();
+  ASSERT_TRUE(computeIsFirstLineOfItem(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES,
+      fontSizeEqualTolerance, sentenceDelimAlphabet))
+      << "Line: " << line->toString();
   line = segment->lines[25];
-  ASSERT_TRUE(computeIsFirstLineOfItem(line)) << "Line: " << line->toString();
+  ASSERT_TRUE(computeIsFirstLineOfItem(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES,
+      fontSizeEqualTolerance, sentenceDelimAlphabet))
+      << "Line: " << line->toString();
 }
 
 // _________________________________________________________________________________________________
 TEST_F(TextLinesUtilsTest, computeIsFirstLineOfItemPdf2) {
+  // TODO: Read from the config.
+  double fontSizeEqualTolerance = 1.0;
+  const string& sentenceDelimAlphabet = "?!.);";
+  const string& specialFootnoteLabelsAlphabet = "*∗†‡§‖¶?";
+
   PdfPageSegment* segment = pdf2->pages[0]->segments[0];
 
   // Iterate through all lines of the first segment, for computing the potential footnote labels.
   std::unordered_set<std::string> labels;
   for (auto* line : segment->lines) {
-    computePotentialFootnoteLabels(line, &labels);
+    computePotentialFootnoteLabels(line, specialFootnoteLabelsAlphabet, &labels);
   }
 
   // Test the footnote at the end of the left column (starting with "§") two times: once without
   // passing potential footnote labels, once with passing. Both variants should return true.
   PdfTextLine* line = segment->lines[31];
-  ASSERT_TRUE(computeIsFirstLineOfItem(line)) << "Line: " << line->toString();
-  ASSERT_TRUE(computeIsFirstLineOfItem(line, &labels)) << "Line: " << line->toString();
+  ASSERT_TRUE(computeIsFirstLineOfItem(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES,
+      fontSizeEqualTolerance, sentenceDelimAlphabet))
+      << "Line: " << line->toString();
+  ASSERT_TRUE(computeIsFirstLineOfItem(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES,
+      fontSizeEqualTolerance, sentenceDelimAlphabet, &labels)) << "Line: " << line->toString();
 }
 
 // _________________________________________________________________________________________________
 TEST_F(TextLinesUtilsTest, computeIsContinuationOfItemPdf1) {
+  // TODO: Read from the config.
+  double fontSizeEqualTolerance = 1.0;
+  const string& sentenceDelimAlphabet = "?!.);";
+
   // Test a line with no words.
   PdfTextLine* line = new PdfTextLine();
-  ASSERT_FALSE(computeIsContinuationOfItem(line));
+  ASSERT_FALSE(computeIsContinuationOfItem(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES,
+      fontSizeEqualTolerance, sentenceDelimAlphabet));
 
   PdfPageSegment* segment = pdf1->pages[0]->segments[0];
 
   // Test the heading of the Introduction.
   line = segment->lines[0];
-  ASSERT_FALSE(computeIsContinuationOfItem(line)) << "Line: " << line->toString();
+  ASSERT_FALSE(computeIsContinuationOfItem(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES,
+      fontSizeEqualTolerance, sentenceDelimAlphabet))
+      << "Line: " << line->toString();
 
   // Test the first five lines of the first block of the Introduction.
   line = segment->lines[1];
-  ASSERT_FALSE(computeIsContinuationOfItem(line)) << "Line: " << line->toString();
+  ASSERT_FALSE(computeIsContinuationOfItem(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES,
+      fontSizeEqualTolerance, sentenceDelimAlphabet))
+      << "Line: " << line->toString();
   line = segment->lines[2];
-  ASSERT_FALSE(computeIsContinuationOfItem(line)) << "Line: " << line->toString();
+  ASSERT_FALSE(computeIsContinuationOfItem(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES,
+      fontSizeEqualTolerance, sentenceDelimAlphabet))
+      << "Line: " << line->toString();
   line = segment->lines[3];
-  ASSERT_FALSE(computeIsContinuationOfItem(line)) << "Line: " << line->toString();
+  ASSERT_FALSE(computeIsContinuationOfItem(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES,
+      fontSizeEqualTolerance, sentenceDelimAlphabet))
+      << "Line: " << line->toString();
   line = segment->lines[4];
-  ASSERT_FALSE(computeIsContinuationOfItem(line)) << "Line: " << line->toString();
+  ASSERT_FALSE(computeIsContinuationOfItem(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES,
+      fontSizeEqualTolerance, sentenceDelimAlphabet))
+      << "Line: " << line->toString();
   line = segment->lines[5];
-  ASSERT_FALSE(computeIsContinuationOfItem(line)) << "Line: " << line->toString();
+  ASSERT_FALSE(computeIsContinuationOfItem(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES,
+      fontSizeEqualTolerance, sentenceDelimAlphabet))
+      << "Line: " << line->toString();
 
   // Test the three lines of the first enumeration (starting with "1.", "2.", "3.").
   line = segment->lines[16];
-  ASSERT_FALSE(computeIsContinuationOfItem(line)) << "Line: " << line->toString();
+  ASSERT_FALSE(computeIsContinuationOfItem(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES,
+      fontSizeEqualTolerance, sentenceDelimAlphabet))
+      << "Line: " << line->toString();
   line = segment->lines[17];
-  ASSERT_FALSE(computeIsContinuationOfItem(line)) << "Line: " << line->toString();
+  ASSERT_FALSE(computeIsContinuationOfItem(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES,
+      fontSizeEqualTolerance, sentenceDelimAlphabet))
+      << "Line: " << line->toString();
   line = segment->lines[18];
-  ASSERT_FALSE(computeIsContinuationOfItem(line)) << "Line: " << line->toString();
+  ASSERT_FALSE(computeIsContinuationOfItem(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES,
+      fontSizeEqualTolerance, sentenceDelimAlphabet))
+      << "Line: " << line->toString();
 
   // Test the continuation lines of the second enumeration (starting with "-").
   line = segment->lines[27];
-  ASSERT_TRUE(computeIsContinuationOfItem(line)) << "Line: " << line->toString();
+  ASSERT_TRUE(computeIsContinuationOfItem(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES,
+      fontSizeEqualTolerance, sentenceDelimAlphabet))
+      << "Line: " << line->toString();
   line = segment->lines[28];
-  ASSERT_TRUE(computeIsContinuationOfItem(line)) << "Line: " << line->toString();
+  ASSERT_TRUE(computeIsContinuationOfItem(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES,
+      fontSizeEqualTolerance, sentenceDelimAlphabet))
+      << "Line: " << line->toString();
   line = segment->lines[29];
-  ASSERT_TRUE(computeIsContinuationOfItem(line)) << "Line: " << line->toString();
+  ASSERT_TRUE(computeIsContinuationOfItem(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES,
+      fontSizeEqualTolerance, sentenceDelimAlphabet))
+      << "Line: " << line->toString();
   line = segment->lines[31];
-  ASSERT_TRUE(computeIsContinuationOfItem(line)) << "Line: " << line->toString();
+  ASSERT_TRUE(computeIsContinuationOfItem(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES,
+      fontSizeEqualTolerance, sentenceDelimAlphabet))
+      << "Line: " << line->toString();
   line = segment->lines[32];
-  ASSERT_TRUE(computeIsContinuationOfItem(line)) << "Line: " << line->toString();
+  ASSERT_TRUE(computeIsContinuationOfItem(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES,
+      fontSizeEqualTolerance, sentenceDelimAlphabet))
+      << "Line: " << line->toString();
 
   // Test the footnote at the end of the left column.
   line = segment->lines[40];
-  ASSERT_FALSE(computeIsContinuationOfItem(line)) << "Line: " << line->toString();
+  ASSERT_FALSE(computeIsContinuationOfItem(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES,
+      fontSizeEqualTolerance, sentenceDelimAlphabet))
+      << "Line: " << line->toString();
 
   segment = pdf1->pages[0]->segments[1];
 
   // Test the continuation lines of the third enumeration (starting with "(a)", "(b)").
   line = segment->lines[11];
-  ASSERT_TRUE(computeIsContinuationOfItem(line)) << "Line: " << line->toString();
+  ASSERT_TRUE(computeIsContinuationOfItem(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES,
+      fontSizeEqualTolerance, sentenceDelimAlphabet))
+      << "Line: " << line->toString();
 }
 
 // _________________________________________________________________________________________________
 TEST_F(TextLinesUtilsTest, computeIsPrefixedByItemLabelPdf1) {
   // Test a line with no words.
   PdfTextLine* line = new PdfTextLine();
-  ASSERT_FALSE(computeIsPrefixedByItemLabel(line));
+  ASSERT_FALSE(computeIsPrefixedByItemLabel(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES));
 
   // Test a line with a word with no characters.
   PdfWord* word = new PdfWord();
   line->words.push_back(word);
-  ASSERT_FALSE(computeIsPrefixedByItemLabel(line));
+  ASSERT_FALSE(computeIsPrefixedByItemLabel(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES));
 
   PdfPageSegment* segment = pdf1->pages[0]->segments[0];
 
   // Test the heading of the Introduction. The method should return false, since "1" is not a valid
   // item label.
   line = segment->lines[0];
-  ASSERT_FALSE(computeIsPrefixedByItemLabel(line)) << "Line: " << line->toString();
+  ASSERT_FALSE(computeIsPrefixedByItemLabel(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES))
+      << "Line: " << line->toString();
 
   // Test the first five lines of the first block of the Introduction.
   line = segment->lines[1];
-  ASSERT_FALSE(computeIsPrefixedByItemLabel(line)) << "Line: " << line->toString();
+  ASSERT_FALSE(computeIsPrefixedByItemLabel(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES))
+      << "Line: " << line->toString();
   line = segment->lines[2];
-  ASSERT_FALSE(computeIsPrefixedByItemLabel(line)) << "Line: " << line->toString();
+  ASSERT_FALSE(computeIsPrefixedByItemLabel(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES))
+      << "Line: " << line->toString();
   line = segment->lines[3];
-  ASSERT_FALSE(computeIsPrefixedByItemLabel(line)) << "Line: " << line->toString();
+  ASSERT_FALSE(computeIsPrefixedByItemLabel(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES))
+      << "Line: " << line->toString();
   line = segment->lines[4];
-  ASSERT_FALSE(computeIsPrefixedByItemLabel(line)) << "Line: " << line->toString();
+  ASSERT_FALSE(computeIsPrefixedByItemLabel(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES))
+      << "Line: " << line->toString();
   line = segment->lines[5];
-  ASSERT_FALSE(computeIsPrefixedByItemLabel(line)) << "Line: " << line->toString();
+  ASSERT_FALSE(computeIsPrefixedByItemLabel(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES))
+      << "Line: " << line->toString();
 
   // Test the sixth lines of the first block of the Introduction (starting with "1.").
   // The method should return true, since it starts with an item label.
   line = segment->lines[6];
-  ASSERT_TRUE(computeIsPrefixedByItemLabel(line)) << "Line: " << line->toString();
+  ASSERT_TRUE(computeIsPrefixedByItemLabel(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES))
+      << "Line: " << line->toString();
 
   // Test the three lines of the first enumeration (starting with "1.", "2.", "3.").
   line = segment->lines[16];
-  ASSERT_TRUE(computeIsPrefixedByItemLabel(line)) << "Line: " << line->toString();
+  ASSERT_TRUE(computeIsPrefixedByItemLabel(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES))
+      << "Line: " << line->toString();
   line = segment->lines[17];
-  ASSERT_TRUE(computeIsPrefixedByItemLabel(line)) << "Line: " << line->toString();
+  ASSERT_TRUE(computeIsPrefixedByItemLabel(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES))
+      << "Line: " << line->toString();
   line = segment->lines[18];
-  ASSERT_TRUE(computeIsPrefixedByItemLabel(line)) << "Line: " << line->toString();
+  ASSERT_TRUE(computeIsPrefixedByItemLabel(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES))
+      << "Line: " << line->toString();
 
   // Test the third line of the block after the first enumeration (starting with a superscripted 2).
   // The method should return true since a superscripted number is a valid label.
   line = segment->lines[21];
-  ASSERT_TRUE(computeIsPrefixedByItemLabel(line)) << "Line: " << line->toString();
+  ASSERT_TRUE(computeIsPrefixedByItemLabel(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES))
+      << "Line: " << line->toString();
 
   // Test the three lines of the second enumeration (starting with "-").
   line = segment->lines[26];
-  ASSERT_TRUE(computeIsPrefixedByItemLabel(line)) << "Line: " << line->toString();
+  ASSERT_TRUE(computeIsPrefixedByItemLabel(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES))
+      << "Line: " << line->toString();
   line = segment->lines[30];
-  ASSERT_TRUE(computeIsPrefixedByItemLabel(line)) << "Line: " << line->toString();
+  ASSERT_TRUE(computeIsPrefixedByItemLabel(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES))
+      << "Line: " << line->toString();
   line = segment->lines[33];
-  ASSERT_TRUE(computeIsPrefixedByItemLabel(line)) << "Line: " << line->toString();
+  ASSERT_TRUE(computeIsPrefixedByItemLabel(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES))
+      << "Line: " << line->toString();
 
   // Test the footnote at the end of the left column. The method should return true since it starts
   // with an item label.
   line = segment->lines[40];
-  ASSERT_TRUE(computeIsPrefixedByItemLabel(line)) << "Line: " << line->toString();
+  ASSERT_TRUE(computeIsPrefixedByItemLabel(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES))
+      << "Line: " << line->toString();
 
   segment = pdf1->pages[0]->segments[1];
 
   // Test the two lines of the third enumeration (the enumeration starting with "(a)", "(b)").
   line = segment->lines[9];
-  ASSERT_TRUE(computeIsPrefixedByItemLabel(line)) << "Line: " << line->toString();
+  ASSERT_TRUE(computeIsPrefixedByItemLabel(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES))
+      << "Line: " << line->toString();
   line = segment->lines[10];
-  ASSERT_TRUE(computeIsPrefixedByItemLabel(line)) << "Line: " << line->toString();
+  ASSERT_TRUE(computeIsPrefixedByItemLabel(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES))
+      << "Line: " << line->toString();
 
   segment = pdf1->pages[1]->segments[0];
 
   // Test the two footnotes at the end of the left column of the second page. The method should
   // return true since they start with an item label.
   line = segment->lines[24];
-  ASSERT_TRUE(computeIsPrefixedByItemLabel(line)) << "Line: " << line->toString();
+  ASSERT_TRUE(computeIsPrefixedByItemLabel(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES))
+      << "Line: " << line->toString();
   line = segment->lines[25];
-  ASSERT_TRUE(computeIsPrefixedByItemLabel(line)) << "Line: " << line->toString();
+  ASSERT_TRUE(computeIsPrefixedByItemLabel(line, SUPER_ITEM_LABEL_ALPHABET, &ITEM_LABEL_REGEXES))
+      << "Line: " << line->toString();
 }
 
 // _________________________________________________________________________________________________
@@ -354,12 +489,14 @@ TEST_F(TextLinesUtilsTest, computeIsPrefixedByFootnoteLabelPdf1) {
 
 // _________________________________________________________________________________________________
 TEST_F(TextLinesUtilsTest, computeIsPrefixedByFootnoteLabelPdf2) {
+  const string& specialFootnoteLabelsAlphabet = "*∗†‡§‖¶?";
+
   PdfPageSegment* segment = pdf2->pages[0]->segments[0];
 
   // Iterate through all lines of the first segment, for computing the potential footnote labels.
   std::unordered_set<std::string> labels;
   for (auto* line : segment->lines) {
-    computePotentialFootnoteLabels(line, &labels);
+    computePotentialFootnoteLabels(line, specialFootnoteLabelsAlphabet, &labels);
   }
 
   // Test the first line of the first block of the Introduction two times: once without passing
@@ -377,9 +514,12 @@ TEST_F(TextLinesUtilsTest, computeIsPrefixedByFootnoteLabelPdf2) {
 
 // _________________________________________________________________________________________________
 TEST_F(TextLinesUtilsTest, computeHasPrevLineCapacityPdf1) {
+  // TODO(korzen): Read the value from the config.
+  double prevTextLineCapacityThresholdFactor = 2.0;
+
   // Test a line with no words.
   PdfTextLine* line = new PdfTextLine();
-  ASSERT_FALSE(computeHasPrevLineCapacity(line));
+  ASSERT_FALSE(computeHasPrevLineCapacity(line, prevTextLineCapacityThresholdFactor));
 
   PdfPageSegment* segment = pdf1->pages[0]->segments[0];
 
@@ -388,25 +528,29 @@ TEST_F(TextLinesUtilsTest, computeHasPrevLineCapacityPdf1) {
   PdfTextLine* prevLine = segment->lines[8];
   line = segment->lines[9];
   line->prevLine = prevLine;
-  ASSERT_TRUE(computeHasPrevLineCapacity(line)) << "Line: " << line->toString();
+  ASSERT_TRUE(computeHasPrevLineCapacity(line, prevTextLineCapacityThresholdFactor))
+      << "Line: " << line->toString();
 
   // Test the second line of the second block of the Introduction ("tam, utinam...").
   prevLine = segment->lines[9];
   line = segment->lines[10];
   line->prevLine = prevLine;
-  ASSERT_FALSE(computeHasPrevLineCapacity(line)) << "Line: " << line->toString();
+  ASSERT_FALSE(computeHasPrevLineCapacity(line, prevTextLineCapacityThresholdFactor))
+      << "Line: " << line->toString();
 
   // Test the first line of the second enumeration ("- This is an item...").
   prevLine = segment->lines[25];
   line = segment->lines[26];
   line->prevLine = prevLine;
-  ASSERT_TRUE(computeHasPrevLineCapacity(line)) << "Line: " << line->toString();
+  ASSERT_TRUE(computeHasPrevLineCapacity(line, prevTextLineCapacityThresholdFactor))
+      << "Line: " << line->toString();
 
   // Test the first line of the second item of the second enumeration ("- This is the second...").
   prevLine = segment->lines[29];
   line = segment->lines[30];
   line->prevLine = prevLine;
-  ASSERT_TRUE(computeHasPrevLineCapacity(line)) << "Line: " << line->toString();
+  ASSERT_TRUE(computeHasPrevLineCapacity(line, prevTextLineCapacityThresholdFactor))
+      << "Line: " << line->toString();
 
   segment = pdf1->pages[0]->segments[1];
 
@@ -414,12 +558,14 @@ TEST_F(TextLinesUtilsTest, computeHasPrevLineCapacityPdf1) {
   prevLine = segment->lines[1];
   line = segment->lines[2];
   line->prevLine = prevLine;
-  ASSERT_TRUE(computeHasPrevLineCapacity(line)) << "Line: " << line->toString();
+  ASSERT_TRUE(computeHasPrevLineCapacity(line, prevTextLineCapacityThresholdFactor))
+      << "Line: " << line->toString();
 
   prevLine = segment->lines[2];
   line = segment->lines[3];
   line->prevLine = prevLine;
-  ASSERT_FALSE(computeHasPrevLineCapacity(line)) << "Line: " << line->toString();
+  ASSERT_FALSE(computeHasPrevLineCapacity(line, prevTextLineCapacityThresholdFactor))
+      << "Line: " << line->toString();
 
   // Test the first line of last block in the first page ("Namliber tempor..."). The method should
   // return false, because the capacity of the previous line is not large enough for the first
@@ -427,13 +573,18 @@ TEST_F(TextLinesUtilsTest, computeHasPrevLineCapacityPdf1) {
   prevLine = segment->lines[29];
   line = segment->lines[30];
   line->prevLine = prevLine;
-  ASSERT_FALSE(computeHasPrevLineCapacity(line)) << "Line: " << line->toString();
+  ASSERT_FALSE(computeHasPrevLineCapacity(line, prevTextLineCapacityThresholdFactor))
+      << "Line: " << line->toString();
 }
 
 // _________________________________________________________________________________________________
 TEST_F(TextLinesUtilsTest, computeTextLineHierarchyPdf1) {
   PdfPage* page1 = pdf1->pages[0];
-  text_lines_utils::computeTextLineHierarchy(page1);
+  // TODO(korzen): Use the 1.0 from the config.
+  double leftXOffsetThresholdFactor = 1.0;
+  double lineHierarchyMaxLineDist = 10.0;
+  text_lines_utils::computeTextLineHierarchy(page1, leftXOffsetThresholdFactor,
+      lineHierarchyMaxLineDist, 1.0);
 
   PdfPageSegment* segment = page1->segments[0];
 
@@ -484,37 +635,39 @@ TEST_F(TextLinesUtilsTest, computeTextLineHierarchyPdf1) {
 
 // _________________________________________________________________________________________________
 TEST_F(TextLinesUtilsTest, computePotentialFootnoteLabelsPdf1) {
+  const string& specialFootnoteLabelsAlphabet = "*∗†‡§‖¶?";
+
   PdfPageSegment* segment = pdf1->pages[0]->segments[0];
 
   // Test the heading of the Introduction.
   std::unordered_set<string> labels;
   PdfTextLine* line = segment->lines[0];
-  computePotentialFootnoteLabels(line, &labels);
+  computePotentialFootnoteLabels(line, specialFootnoteLabelsAlphabet, &labels);
   ASSERT_EQ(size_t(0), labels.size()) << "Line: " << segment->lines[0]->toString();
 
   // Test the fifth line of the first text block in the Introduction ("tas iriure...").
   line = segment->lines[5];
-  computePotentialFootnoteLabels(line, &labels);
+  computePotentialFootnoteLabels(line, specialFootnoteLabelsAlphabet, &labels);
   ASSERT_EQ(size_t(1), labels.size()) << "Line: " << line->toString();
   ASSERT_GT(labels.count("1"), size_t(0)) << "Line: " << line->toString();
 
   // Test the first line of the first enumeration ("1. This is the first...").
   labels.clear();
   line = segment->lines[16];
-  computePotentialFootnoteLabels(line, &labels);
+  computePotentialFootnoteLabels(line, specialFootnoteLabelsAlphabet, &labels);
   ASSERT_EQ(size_t(0), labels.size()) << "Line: " << line->toString();
 
   // Test the third line in the block after the first enumeration ("2Id, vis at..."). Should return
   // no labels, since a superscript should be ignored when it is a prefix of a line.
   labels.clear();
   line = segment->lines[21];
-  computePotentialFootnoteLabels(line, &labels);
+  computePotentialFootnoteLabels(line, specialFootnoteLabelsAlphabet, &labels);
   ASSERT_EQ(size_t(0), labels.size()) << "Line: " << line->toString();
 
   // Test the 3rd line in the last block of the left column ("phaedrum te...").
   labels.clear();
   line = segment->lines[36];
-  computePotentialFootnoteLabels(line, &labels);
+  computePotentialFootnoteLabels(line, specialFootnoteLabelsAlphabet, &labels);
   ASSERT_EQ(size_t(2), labels.size()) << "Line: " << line->toString();
   ASSERT_GT(labels.count("†"), size_t(0)) << "Line: " << line->toString();
   ASSERT_GT(labels.count("‡"), size_t(0)) << "Line: " << line->toString();
@@ -523,56 +676,71 @@ TEST_F(TextLinesUtilsTest, computePotentialFootnoteLabelsPdf1) {
   // should be ignored when it is a prefix of a line.
   labels.clear();
   line = segment->lines[40];
-  computePotentialFootnoteLabels(line, &labels);
+  computePotentialFootnoteLabels(line, specialFootnoteLabelsAlphabet, &labels);
   ASSERT_EQ(size_t(0), labels.size()) << "Line: " << line->toString();
 }
 
 // _________________________________________________________________________________________________
 TEST_F(TextLinesUtilsTest, computeIsCenteredPdf1) {
+  // TODO(korzen): Use the value from the config.
+  double centeringThreshold = 0.99;
+  double equalToleranceFactor = 0.1;
+
   PdfPageSegment* segment = pdf1->pages[0]->segments[0];
 
   // Test the heading of the Introduction and the next line.
   PdfTextLine* l1 = segment->lines[0];
   PdfTextLine* l2 = segment->lines[1];
-  ASSERT_FALSE(computeIsCentered(l1, l2)) << "L1: " << l1->toString() << "\nL2: " << l2->toString();
+  ASSERT_FALSE(computeIsCentered(l1, l2, centeringThreshold, equalToleranceFactor))
+      << "L1: " << l1->toString() << "\nL2: " << l2->toString();
 
   // Test the first five lines of the first block in the Introduction.
   l1 = segment->lines[1];
   l2 = segment->lines[2];
-  ASSERT_TRUE(computeIsCentered(l1, l2)) << "L1: " << l1->toString() << "\nL2: " << l2->toString();
+  ASSERT_TRUE(computeIsCentered(l1, l2, centeringThreshold, equalToleranceFactor))
+      << "L1: " << l1->toString() << "\nL2: " << l2->toString();
   l1 = segment->lines[2];
   l2 = segment->lines[3];
-  ASSERT_TRUE(computeIsCentered(l1, l2)) << "L1: " << l1->toString() << "\nL2: " << l2->toString();
+  ASSERT_TRUE(computeIsCentered(l1, l2, centeringThreshold, equalToleranceFactor))
+      << "L1: " << l1->toString() << "\nL2: " << l2->toString();
   l1 = segment->lines[3];
   l2 = segment->lines[4];
-  ASSERT_TRUE(computeIsCentered(l1, l2)) << "L1: " << l1->toString() << "\nL2: " << l2->toString();
+  ASSERT_TRUE(computeIsCentered(l1, l2, centeringThreshold, equalToleranceFactor))
+      << "L1: " << l1->toString() << "\nL2: " << l2->toString();
   l1 = segment->lines[4];
   l2 = segment->lines[5];
-  ASSERT_TRUE(computeIsCentered(l1, l2)) << "L1: " << l1->toString() << "\nL2: " << l2->toString();
+  ASSERT_TRUE(computeIsCentered(l1, l2, centeringThreshold, equalToleranceFactor))
+      << "L1: " << l1->toString() << "\nL2: " << l2->toString();
 
   // Test the last line of the first block ("altera interpretaris...") and the next line.
   l1 = segment->lines[8];
   l2 = segment->lines[9];
-  ASSERT_FALSE(computeIsCentered(l1, l2)) << "L1: " << l1->toString() << "\nL2: " << l2->toString();
+  ASSERT_FALSE(computeIsCentered(l1, l2, centeringThreshold, equalToleranceFactor))
+      << "L1: " << l1->toString() << "\nL2: " << l2->toString();
 
   // Test the last line of the second block ("argumentum at...") and the next line.
   l1 = segment->lines[15];
   l2 = segment->lines[16];
-  ASSERT_FALSE(computeIsCentered(l1, l2)) << "L1: " << l1->toString() << "\nL2: " << l2->toString();
+  ASSERT_FALSE(computeIsCentered(l1, l2, centeringThreshold, equalToleranceFactor))
+      << "L1: " << l1->toString() << "\nL2: " << l2->toString();
 
   segment = pdf1->pages[0]->segments[1];
 
   // Test the centered lines in the middle of the right column.
   l1 = segment->lines[19];
   l2 = segment->lines[20];
-  ASSERT_FALSE(computeIsCentered(l1, l2)) << "L1: " << l1->toString() << "\nL2: " << l2->toString();
+  ASSERT_FALSE(computeIsCentered(l1, l2, centeringThreshold, equalToleranceFactor))
+      << "L1: " << l1->toString() << "\nL2: " << l2->toString();
   l1 = segment->lines[20];
   l2 = segment->lines[21];
-  ASSERT_TRUE(computeIsCentered(l1, l2)) << "L1: " << l1->toString() << "\nL2: " << l2->toString();
+  ASSERT_TRUE(computeIsCentered(l1, l2, centeringThreshold, equalToleranceFactor))
+      << "L1: " << l1->toString() << "\nL2: " << l2->toString();
   l1 = segment->lines[21];
   l2 = segment->lines[22];
-  ASSERT_TRUE(computeIsCentered(l1, l2)) << "L1: " << l1->toString() << "\nL2: " << l2->toString();
+  ASSERT_TRUE(computeIsCentered(l1, l2, centeringThreshold, equalToleranceFactor))
+      << "L1: " << l1->toString() << "\nL2: " << l2->toString();
   l1 = segment->lines[22];
   l2 = segment->lines[23];
-  ASSERT_TRUE(computeIsCentered(l1, l2)) << "L1: " << l1->toString() << "\nL2: " << l2->toString();
+  ASSERT_TRUE(computeIsCentered(l1, l2, centeringThreshold, equalToleranceFactor))
+      << "L1: " << l1->toString() << "\nL2: " << l2->toString();
 }

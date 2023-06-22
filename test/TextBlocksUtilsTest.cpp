@@ -8,9 +8,10 @@
 
 #include <gtest/gtest.h>
 
+#include <string>
+#include <unordered_set>
 #include <vector>
 
-#include "../src/Constants.h"
 #include "../src/PdfDocument.h"
 #include "../src/PdfDocumentVisualizer.h"
 #include "../src/PdfToTextPlusPlus.h"
@@ -21,7 +22,7 @@ using text_blocks_utils::computeHangingIndent;
 using text_blocks_utils::computeIsTextLinesCentered;
 using text_blocks_utils::computeTextLineMargins;
 
-// The allowed tolerance on comparing two float values.
+// The allowed tolerance on comparing two float values. TODO(korzen): Read from config.
 const double TOL = 0.1;
 
 // _________________________________________________________________________________________________
@@ -30,8 +31,8 @@ class TextBlocksUtilsTest : public ::testing::Test {
   // This method is called before the first test of this test suite.
   static void SetUpTestSuite() {
     ppp::Config config;
-    config.semanticRolesDetectionModelsDir = CONFIG_SEMANTIC_ROLES_DETECTION_MODELS_DIR;
-    PdfToTextPlusPlus engine(&config);
+    config.rolesPrediction.modelsDir = CONFIG_SEMANTIC_ROLES_DETECTION_MODELS_DIR;
+    PdfToTextPlusPlus engine(config);
 
     if (pdf1 == nullptr) {
       pdf1 = new PdfDocument();
@@ -68,27 +69,53 @@ PdfDocument* TextBlocksUtilsTest::pdf2 = nullptr;
 
 // _________________________________________________________________________________________________
 TEST_F(TextBlocksUtilsTest, computeIsTextLinesCenteredPdf1) {
+  // TODO(korzen): Read the parameter from the config.
+  const char* formulaIdAlphabet = "=+";
+  double centeringXOverlapRatioThreshold = 0.99;
+  double centeringXOffsetEqualToleranceFactor = 2.0;
+  int centeringMaxNumJustifiedLines = 5;
+
   PdfPage* page0 = pdf1->pages[0];
   PdfPage* page1 = pdf1->pages[1];
 
   // Test an empty block.
   PdfTextBlock* block = new PdfTextBlock();
-  ASSERT_FALSE(computeIsTextLinesCentered(block)) << "Block: " << block->toString();
+  ASSERT_FALSE(computeIsTextLinesCentered(
+    block,
+    formulaIdAlphabet,
+    centeringXOverlapRatioThreshold,
+    centeringXOffsetEqualToleranceFactor,
+    centeringMaxNumJustifiedLines)) << "Block: " << block->toString();
 
   // Test the first text block of the Introduction. The lines are not centered compared to each
   // other, so the method should return false.
   block = page0->blocks[1];
-  ASSERT_FALSE(computeIsTextLinesCentered(block)) << "Block: " << block->toString();
+  ASSERT_FALSE(computeIsTextLinesCentered(
+    block,
+    formulaIdAlphabet,
+    centeringXOverlapRatioThreshold,
+    centeringXOffsetEqualToleranceFactor,
+    centeringMaxNumJustifiedLines)) << "Block: " << block->toString();
 
   // Test the sixth block of the right column of the first page (the block with the centered lines).
   // The method should return true.
   block = page0->blocks[17];
-  ASSERT_TRUE(computeIsTextLinesCentered(block)) << "Block: " << block->toString();
+  ASSERT_TRUE(computeIsTextLinesCentered(
+    block,
+    formulaIdAlphabet,
+    centeringXOverlapRatioThreshold,
+    centeringXOffsetEqualToleranceFactor,
+    centeringMaxNumJustifiedLines)) << "Block: " << block->toString();
 
   // Test the first text block on the second page. The lines are not centered compared to each
   // other, so the method should return false.
   block = page1->blocks[0];
-  ASSERT_FALSE(computeIsTextLinesCentered(block)) << "Block: " << block->toString();
+  ASSERT_FALSE(computeIsTextLinesCentered(
+    block,
+    formulaIdAlphabet,
+    centeringXOverlapRatioThreshold,
+    centeringXOffsetEqualToleranceFactor,
+    centeringMaxNumJustifiedLines)) << "Block: " << block->toString();
 
   // Test a block composed of the display formula in the left column of the second page and the
   // respective next line. Although the lines are centered compared to each other, the method
@@ -97,12 +124,22 @@ TEST_F(TextBlocksUtilsTest, computeIsTextLinesCenteredPdf1) {
   block->doc = pdf1;
   block->lines.push_back(page1->segments[0]->lines[19]);  // formula
   block->lines.push_back(page1->segments[0]->lines[20]);  // "This equation..."
-  ASSERT_FALSE(computeIsTextLinesCentered(block)) << "Block: " << block->toString();
+  ASSERT_FALSE(computeIsTextLinesCentered(
+    block,
+    formulaIdAlphabet,
+    centeringXOverlapRatioThreshold,
+    centeringXOffsetEqualToleranceFactor,
+    centeringMaxNumJustifiedLines)) << "Block: " << block->toString();
 
   // Test the block after the display formula in the left column of the second page. It consists
   // of two justified text lines, so the method should return false.
   block = page1->blocks[6];
-  ASSERT_FALSE(computeIsTextLinesCentered(block)) << "Block: " << block->toString();
+  ASSERT_FALSE(computeIsTextLinesCentered(
+    block,
+    formulaIdAlphabet,
+    centeringXOverlapRatioThreshold,
+    centeringXOffsetEqualToleranceFactor,
+    centeringMaxNumJustifiedLines)) << "Block: " << block->toString();
 
   // Test a block composed of the lines of the centered block in the right column of the first
   // page, and the respective three following lines. The method should return true.
@@ -110,7 +147,12 @@ TEST_F(TextBlocksUtilsTest, computeIsTextLinesCenteredPdf1) {
   block->doc = pdf1;
   block->lines = page0->blocks[17]->lines;  // "This is a centered ..."
   for (size_t i = 0; i < 3; i++) { block->lines.push_back(page0->blocks[18]->lines[i]); }
-  ASSERT_TRUE(computeIsTextLinesCentered(block)) << "Block: " << block->toString();
+  ASSERT_TRUE(computeIsTextLinesCentered(
+    block,
+    formulaIdAlphabet,
+    centeringXOverlapRatioThreshold,
+    centeringXOffsetEqualToleranceFactor,
+    centeringMaxNumJustifiedLines)) << "Block: " << block->toString();
 
   // Test a block composed of the lines of the centered block in the right column of the first
   // page, and the respective seven following lines. The method should return false, because the
@@ -119,26 +161,73 @@ TEST_F(TextBlocksUtilsTest, computeIsTextLinesCenteredPdf1) {
   block->doc = pdf1;
   block->lines = page0->blocks[17]->lines;  // "This is a centered ..."
   for (size_t i = 0; i < 7; i++) { block->lines.push_back(page0->blocks[18]->lines[i]); }
-  ASSERT_FALSE(computeIsTextLinesCentered(block)) << "Block: " << block->toString();
+  ASSERT_FALSE(computeIsTextLinesCentered(
+    block,
+    formulaIdAlphabet,
+    centeringXOverlapRatioThreshold,
+    centeringXOffsetEqualToleranceFactor,
+    centeringMaxNumJustifiedLines)) << "Block: " << block->toString();
 }
 
 // _________________________________________________________________________________________________
 TEST_F(TextBlocksUtilsTest, computeHangingIndentPdf1) {
+  // TODO(korzen): Read value from config.
+  const unordered_set<string>& lastNamePrefixes =  { "van", "von", "de" };
+  int hangIndentMinLengthLongLines = 3;
+  double prevTextLineCapacityThresholdFactor = 2.0;
+  double hangIndentMinPercLinesSameLeftMargin = 0.5;
+  int hangIndentNumNonIndentedLinesThreshold = 10;
+  double hangIndentMarginThresholdFactor = 1.0;
+  int hangIndentNumLowerNonIndentedLinesThreshold = 0;
+  int hangIndentNumLongLinesThreshold = 4;
+  int hangIndentNumLowerIndentedLinesThreshold = 1;
+
+
   PdfPage* page0 = pdf1->pages[0];
   PdfPage* page1 = pdf1->pages[1];
 
   // Test a block with no lines.
   PdfTextBlock* block = new PdfTextBlock();
   block->doc = pdf1;
-  ASSERT_NEAR(computeHangingIndent(block), 0.0, TOL) << "Block: " << block->toString();
+  ASSERT_NEAR(computeHangingIndent(
+    block,
+    lastNamePrefixes,
+    hangIndentMinLengthLongLines,
+    prevTextLineCapacityThresholdFactor,
+    hangIndentMinPercLinesSameLeftMargin,
+    hangIndentNumNonIndentedLinesThreshold,
+    hangIndentMarginThresholdFactor,
+    hangIndentNumLowerNonIndentedLinesThreshold,
+    hangIndentNumLongLinesThreshold,
+    hangIndentNumLowerIndentedLinesThreshold), 0.0, TOL) << "Block: " << block->toString();
 
   // Test the first text block of the Introduction (not in hanging indent format).
   block = page0->blocks[1];
-  ASSERT_NEAR(computeHangingIndent(block), 0.0, TOL) << "Block: " << block->toString();
+  ASSERT_NEAR(computeHangingIndent(
+    block,
+    lastNamePrefixes,
+    hangIndentMinLengthLongLines,
+    prevTextLineCapacityThresholdFactor,
+    hangIndentMinPercLinesSameLeftMargin,
+    hangIndentNumNonIndentedLinesThreshold,
+    hangIndentMarginThresholdFactor,
+    hangIndentNumLowerNonIndentedLinesThreshold,
+    hangIndentNumLongLinesThreshold,
+    hangIndentNumLowerIndentedLinesThreshold), 0.0, TOL) << "Block: " << block->toString();
 
   // Test the centered text block in the right column of the first page.
   block = page0->blocks[17];
-  ASSERT_NEAR(computeHangingIndent(block), 0.0, TOL) << "Block: " << block->toString();
+  ASSERT_NEAR(computeHangingIndent(
+    block,
+    lastNamePrefixes,
+    hangIndentMinLengthLongLines,
+    prevTextLineCapacityThresholdFactor,
+    hangIndentMinPercLinesSameLeftMargin,
+    hangIndentNumNonIndentedLinesThreshold,
+    hangIndentMarginThresholdFactor,
+    hangIndentNumLowerNonIndentedLinesThreshold,
+    hangIndentNumLongLinesThreshold,
+    hangIndentNumLowerIndentedLinesThreshold), 0.0, TOL) << "Block: " << block->toString();
 
   // Test a block composed of the text lines of the second section ("Movie Listing").
   block = new PdfTextBlock();
@@ -146,34 +235,152 @@ TEST_F(TextBlocksUtilsTest, computeHangingIndentPdf1) {
   for (size_t i = 8; i < 33; i++) {
     block->lines.push_back(page1->segments[1]->lines[i]);
   }
-  ASSERT_NEAR(computeHangingIndent(block), 19.0, TOL) << "Block: " << block->toString();
+  ASSERT_NEAR(computeHangingIndent(
+    block,
+    lastNamePrefixes,
+    hangIndentMinLengthLongLines,
+    prevTextLineCapacityThresholdFactor,
+    hangIndentMinPercLinesSameLeftMargin,
+    hangIndentNumNonIndentedLinesThreshold,
+    hangIndentMarginThresholdFactor,
+    hangIndentNumLowerNonIndentedLinesThreshold,
+    hangIndentNumLongLinesThreshold,
+    hangIndentNumLowerIndentedLinesThreshold), 19.0, TOL) << "Block: " << block->toString();
 }
 
 // _________________________________________________________________________________________________
 TEST_F(TextBlocksUtilsTest, computeHangingIndentPdf2) {
+  // TODO(korzen): Read value from config.
+  const unordered_set<string>& lastNamePrefixes =  { "van", "von", "de" };
+  int hangIndentMinLengthLongLines = 3;
+  double prevTextLineCapacityThresholdFactor = 2.0;
+  double hangIndentMinPercLinesSameLeftMargin = 0.5;
+  int hangIndentNumNonIndentedLinesThreshold = 10;
+  double hangIndentMarginThresholdFactor = 1.0;
+  int hangIndentNumLowerNonIndentedLinesThreshold = 0;
+  int hangIndentNumLongLinesThreshold = 4;
+  int hangIndentNumLowerIndentedLinesThreshold = 1;
+
   PdfPage* page0 = pdf2->pages[0];
 
   // Test the six text blocks of the Introduction.
   PdfTextBlock* block = page0->blocks[3];
-  ASSERT_NEAR(computeHangingIndent(block), 0.0, TOL) << "Block: " << block->toString();
+  ASSERT_NEAR(computeHangingIndent(
+    block,
+    lastNamePrefixes,
+    hangIndentMinLengthLongLines,
+    prevTextLineCapacityThresholdFactor,
+    hangIndentMinPercLinesSameLeftMargin,
+    hangIndentNumNonIndentedLinesThreshold,
+    hangIndentMarginThresholdFactor,
+    hangIndentNumLowerNonIndentedLinesThreshold,
+    hangIndentNumLongLinesThreshold,
+    hangIndentNumLowerIndentedLinesThreshold), 0.0, TOL) << "Block: " << block->toString();
+
   block = page0->blocks[4];
-  ASSERT_NEAR(computeHangingIndent(block), 0.0, TOL) << "Block: " << block->toString();
+  ASSERT_NEAR(computeHangingIndent(
+    block,
+    lastNamePrefixes,
+    hangIndentMinLengthLongLines,
+    prevTextLineCapacityThresholdFactor,
+    hangIndentMinPercLinesSameLeftMargin,
+    hangIndentNumNonIndentedLinesThreshold,
+    hangIndentMarginThresholdFactor,
+    hangIndentNumLowerNonIndentedLinesThreshold,
+    hangIndentNumLongLinesThreshold,
+    hangIndentNumLowerIndentedLinesThreshold), 0.0, TOL) << "Block: " << block->toString();
+
   block = page0->blocks[5];
-  ASSERT_NEAR(computeHangingIndent(block), 0.0, TOL) << "Block: " << block->toString();
+  ASSERT_NEAR(computeHangingIndent(
+    block,
+    lastNamePrefixes,
+    hangIndentMinLengthLongLines,
+    prevTextLineCapacityThresholdFactor,
+    hangIndentMinPercLinesSameLeftMargin,
+    hangIndentNumNonIndentedLinesThreshold,
+    hangIndentMarginThresholdFactor,
+    hangIndentNumLowerNonIndentedLinesThreshold,
+    hangIndentNumLongLinesThreshold,
+    hangIndentNumLowerIndentedLinesThreshold), 0.0, TOL) << "Block: " << block->toString();
+
   block = page0->blocks[6];
-  ASSERT_NEAR(computeHangingIndent(block), 0.0, TOL) << "Block: " << block->toString();
+  ASSERT_NEAR(computeHangingIndent(
+    block,
+    lastNamePrefixes,
+    hangIndentMinLengthLongLines,
+    prevTextLineCapacityThresholdFactor,
+    hangIndentMinPercLinesSameLeftMargin,
+    hangIndentNumNonIndentedLinesThreshold,
+    hangIndentMarginThresholdFactor,
+    hangIndentNumLowerNonIndentedLinesThreshold,
+    hangIndentNumLongLinesThreshold,
+    hangIndentNumLowerIndentedLinesThreshold), 0.0, TOL) << "Block: " << block->toString();
+
   block = page0->blocks[7];
-  ASSERT_NEAR(computeHangingIndent(block), 0.0, TOL) << "Block: " << block->toString();
+  ASSERT_NEAR(computeHangingIndent(
+    block,
+    lastNamePrefixes,
+    hangIndentMinLengthLongLines,
+    prevTextLineCapacityThresholdFactor,
+    hangIndentMinPercLinesSameLeftMargin,
+    hangIndentNumNonIndentedLinesThreshold,
+    hangIndentMarginThresholdFactor,
+    hangIndentNumLowerNonIndentedLinesThreshold,
+    hangIndentNumLongLinesThreshold,
+    hangIndentNumLowerIndentedLinesThreshold), 0.0, TOL) << "Block: " << block->toString();
+
   block = page0->blocks[8];
-  ASSERT_NEAR(computeHangingIndent(block), 0.0, TOL) << "Block: " << block->toString();
+  ASSERT_NEAR(computeHangingIndent(
+    block,
+    lastNamePrefixes,
+    hangIndentMinLengthLongLines,
+    prevTextLineCapacityThresholdFactor,
+    hangIndentMinPercLinesSameLeftMargin,
+    hangIndentNumNonIndentedLinesThreshold,
+    hangIndentMarginThresholdFactor,
+    hangIndentNumLowerNonIndentedLinesThreshold,
+    hangIndentNumLongLinesThreshold,
+    hangIndentNumLowerIndentedLinesThreshold), 0.0, TOL) << "Block: " << block->toString();
 
   // Test the three references of the Bibliography.
   block = page0->blocks[10];
-  ASSERT_NEAR(computeHangingIndent(block), 11.0, TOL) << "Block: " << block->toString();
+  ASSERT_NEAR(computeHangingIndent(
+    block,
+    lastNamePrefixes,
+    hangIndentMinLengthLongLines,
+    prevTextLineCapacityThresholdFactor,
+    hangIndentMinPercLinesSameLeftMargin,
+    hangIndentNumNonIndentedLinesThreshold,
+    hangIndentMarginThresholdFactor,
+    hangIndentNumLowerNonIndentedLinesThreshold,
+    hangIndentNumLongLinesThreshold,
+    hangIndentNumLowerIndentedLinesThreshold), 11.0, TOL) << "Block: " << block->toString();
+
   block = page0->blocks[11];
-  ASSERT_NEAR(computeHangingIndent(block), 11.0, TOL) << "Block: " << block->toString();
+  ASSERT_NEAR(computeHangingIndent(
+    block,
+    lastNamePrefixes,
+    hangIndentMinLengthLongLines,
+    prevTextLineCapacityThresholdFactor,
+    hangIndentMinPercLinesSameLeftMargin,
+    hangIndentNumNonIndentedLinesThreshold,
+    hangIndentMarginThresholdFactor,
+    hangIndentNumLowerNonIndentedLinesThreshold,
+    hangIndentNumLongLinesThreshold,
+    hangIndentNumLowerIndentedLinesThreshold), 11.0, TOL) << "Block: " << block->toString();
+
   block = page0->blocks[12];
-  ASSERT_NEAR(computeHangingIndent(block), 11.0, TOL) << "Block: " << block->toString();
+  ASSERT_NEAR(computeHangingIndent(
+    block,
+    lastNamePrefixes,
+    hangIndentMinLengthLongLines,
+    prevTextLineCapacityThresholdFactor,
+    hangIndentMinPercLinesSameLeftMargin,
+    hangIndentNumNonIndentedLinesThreshold,
+    hangIndentMarginThresholdFactor,
+    hangIndentNumLowerNonIndentedLinesThreshold,
+    hangIndentNumLongLinesThreshold,
+    hangIndentNumLowerIndentedLinesThreshold), 11.0, TOL) << "Block: " << block->toString();
 }
 
 // _________________________________________________________________________________________________
@@ -216,6 +423,24 @@ TEST_F(TextBlocksUtilsTest, computeTextLineMarginsPdf1) {
 
 // _________________________________________________________________________________________________
 TEST_F(TextBlocksUtilsTest, createTextBlockPdf1) {
+  // TODO(korzen): Read the values from the config.
+  int idLength = 8;
+  double centeringXOverlapRatioThreshold = 0.99;
+  double centeringXOffsetEqualToleranceFactor = 2.0;
+  double prevTextLineCapacityThresholdFactor = 2.0;
+  const char* formulaIdAlphabet = "=+";
+  const int centeringMaxNumJustifiedLines = 5;
+  unordered_set<string> lastNamePrefixes = { "van", "von", "de" };
+  int hangIndentMinLengthLongLines = 3;
+  double hangIndentMinPercLinesSameLeftMargin = 0.5;
+  int hangIndentNumNonIndentedLinesThreshold = 10;
+  double hangIndentMarginThresholdFactor = 1.0;
+  int hangIndentNumLowerNonIndentedLinesThreshold = 0;
+  int hangIndentNumLongLinesThreshold = 4;
+  int hangIndentNumLowerIndentedLinesThreshold = 1;
+  double fontSizeEqualTolerance = 1.0;
+  double fontWeightEqualTolerance = 100;
+
   PdfPage* page0 = pdf1->pages[0];
   PdfPage* page1 = pdf1->pages[1];
 
@@ -230,10 +455,28 @@ TEST_F(TextBlocksUtilsTest, createTextBlockPdf1) {
   lines.push_back(line2);
 
   std::vector<PdfTextBlock*> blocks;
-  text_blocks_utils::createTextBlock(lines, &blocks);
+  text_blocks_utils::createTextBlock(
+    lines,
+    idLength,
+    formulaIdAlphabet,
+    centeringXOverlapRatioThreshold,
+    centeringXOffsetEqualToleranceFactor,
+    centeringMaxNumJustifiedLines,
+    prevTextLineCapacityThresholdFactor,
+    lastNamePrefixes,
+    hangIndentMinLengthLongLines,
+    hangIndentMinPercLinesSameLeftMargin,
+    hangIndentNumNonIndentedLinesThreshold,
+    hangIndentMarginThresholdFactor,
+    hangIndentNumLowerNonIndentedLinesThreshold,
+    hangIndentNumLongLinesThreshold,
+    hangIndentNumLowerIndentedLinesThreshold,
+    fontSizeEqualTolerance,
+    fontWeightEqualTolerance,
+    &blocks);
 
   PdfTextBlock* block = blocks.back();
-  ASSERT_EQ(block->id.size(), size_t(global_config::ID_LENGTH + 6));  // +6 for "block-"
+  ASSERT_EQ(block->id.size(), size_t(idLength + 6));  // +6 for "block-"
   ASSERT_EQ(block->doc, pdf1);
   ASSERT_EQ(block->segment, line0->segment);
   ASSERT_EQ(block->lines, lines);
@@ -271,10 +514,28 @@ TEST_F(TextBlocksUtilsTest, createTextBlockPdf1) {
   lines.push_back(line2);
 
   blocks.clear();
-  text_blocks_utils::createTextBlock(lines, &blocks);
+  text_blocks_utils::createTextBlock(
+    lines,
+    idLength,
+    formulaIdAlphabet,
+    centeringXOverlapRatioThreshold,
+    centeringXOffsetEqualToleranceFactor,
+    centeringMaxNumJustifiedLines,
+    prevTextLineCapacityThresholdFactor,
+    lastNamePrefixes,
+    hangIndentMinLengthLongLines,
+    hangIndentMinPercLinesSameLeftMargin,
+    hangIndentNumNonIndentedLinesThreshold,
+    hangIndentMarginThresholdFactor,
+    hangIndentNumLowerNonIndentedLinesThreshold,
+    hangIndentNumLongLinesThreshold,
+    hangIndentNumLowerIndentedLinesThreshold,
+    fontSizeEqualTolerance,
+    fontWeightEqualTolerance,
+    &blocks);
 
   block = blocks.back();
-  ASSERT_EQ(block->id.size(), size_t(global_config::ID_LENGTH + 6));  // +6 for "block-"
+  ASSERT_EQ(block->id.size(), size_t(idLength + 6));  // +6 for "block-"
   ASSERT_EQ(block->doc, pdf1);
   ASSERT_EQ(block->segment, line0->segment);
   ASSERT_EQ(block->lines, lines);
@@ -309,7 +570,25 @@ TEST_F(TextBlocksUtilsTest, createTextBlockPdf1) {
     lines.push_back(page0->segments[1]->lines[i]);
   }
   blocks.clear();
-  text_blocks_utils::createTextBlock(lines, &blocks);
+  text_blocks_utils::createTextBlock(
+    lines,
+    idLength,
+    formulaIdAlphabet,
+    centeringXOverlapRatioThreshold,
+    centeringXOffsetEqualToleranceFactor,
+    centeringMaxNumJustifiedLines,
+    prevTextLineCapacityThresholdFactor,
+    lastNamePrefixes,
+    hangIndentMinLengthLongLines,
+    hangIndentMinPercLinesSameLeftMargin,
+    hangIndentNumNonIndentedLinesThreshold,
+    hangIndentMarginThresholdFactor,
+    hangIndentNumLowerNonIndentedLinesThreshold,
+    hangIndentNumLongLinesThreshold,
+    hangIndentNumLowerIndentedLinesThreshold,
+    fontSizeEqualTolerance,
+    fontWeightEqualTolerance,
+    &blocks);
 
   block = blocks.back();
   ASSERT_EQ(block->pos->pageNum, lines[0]->pos->pageNum);

@@ -10,25 +10,23 @@
 #include <string>
 #include <vector>
 
-#include "../Constants.h"
 #include "../PdfDocument.h"
 
 #include "./Counter.h"
 #include "./StringUtils.h"
 #include "./WordsUtils.h"
 
-using global_config::ID_LENGTH;
-
 using std::max;
 using std::min;
 
 // _________________________________________________________________________________________________
-PdfWord* words_utils::createWord(const vector<PdfCharacter*>& characters, const PdfDocument* doc) {
+PdfWord* words_utils::createWord(const vector<PdfCharacter*>& characters, int idLength,
+    const PdfDocument* doc) {
   PdfWord* word = new PdfWord();
   word->doc = doc;
 
   // Create a (unique) id.
-  word->id = ppp::string_utils::createRandomString(ID_LENGTH, "word-");
+  word->id = ppp::string_utils::createRandomString(idLength, "word-");
 
   // Iterative through the characters and compute the text, the x,y-coordinates of the
   // bounding box, and the font info.

@@ -8,14 +8,16 @@
 
 #include <string>
 
+#include "./Config.h"
 #include "./PdfDocument.h"
 #include "./WordsDehyphenator.h"
 
 using std::string;
 
 // _________________________________________________________________________________________________
-WordsDehyphenator::WordsDehyphenator(const PdfDocument* doc) {
+WordsDehyphenator::WordsDehyphenator(PdfDocument* doc, const Config& config) {
   _doc = doc;
+  _config = config;
 }
 
 // _________________________________________________________________________________________________

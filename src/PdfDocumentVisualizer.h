@@ -40,41 +40,6 @@ struct ColorScheme {
 };
 
 // =================================================================================================
-// CONFIG
-
-namespace visualizer::config {
-
-// The resolution in DPI.
-const double RESOLUTION = 72.0;
-
-// The appearance of a semantic role.
-// "/Helv" is the font name (= Helvetica), "7" is the font size, "0 0 1" is the color (= blue).
-const GooString SEMANTIC_ROLE_APPEARANCE("/Helv 7 Tf 0 0 1 rg");
-
-// The width of a line that connects consecutive text blocks (wrt. the reading order). */
-const double READING_ORDER_LINE_WIDTH = 4.0;
-
-// The radius of a circle containing a reading order index.
-const double READING_ORDER_CIRCLE_RADIUS = 5;
-
-// The appearance of a reading order index (= the number in a reading order circle).
-const GooString READING_ORDER_INDEX_APPEARANCE("/Helv 7 Tf 1 1 1 rg");
-
-// The width of a line that represents an XY-cut.
-const double CUT_WIDTH = 2.0;
-
-// The font appearance of a cut index.
-const GooString CUT_INDEX_APPEARANCE("/Helv 7 Tf 1 1 1 rg");
-
-// The radius of a square containing a cut index.
-const double CUT_SQUARE_RADIUS = 5;
-
-// The font appearance of a cut id.
-const GooString CUT_ID_APPEARANCE("/Helv 6 Tf .7 .7 .7 rg");
-
-}  // namespace visualizer::config
-
-// =================================================================================================
 
 namespace visualizer::colors {
 
@@ -119,8 +84,10 @@ class PdfDocumentVisualizer {
    *
    * @param pdfFilePath
    *   The path to the PDF file to which the annotations should be added.
+   * @param config
+   *    The configuration to use.
    */
-  explicit PdfDocumentVisualizer(const string& pdfFilePath);
+  explicit PdfDocumentVisualizer(const string& pdfFilePath, const Config& config);
 
   /** The deconstructor. */
   ~PdfDocumentVisualizer();
@@ -374,6 +341,9 @@ class PdfDocumentVisualizer {
 
   // The PDF document to process.
   unique_ptr<PDFDoc> _pdfDoc;
+
+  // The configuration to use
+  Config _config;
 
   // The document to process.
   PdfDocument* _doc;

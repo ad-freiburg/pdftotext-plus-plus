@@ -35,29 +35,29 @@ using std::to_string;
 using std::unique_ptr;
 using std::vector;
 
-namespace config = visualizer::config;
 namespace color_schemes = visualizer::color_schemes;
 
 // _________________________________________________________________________________________________
-PdfDocumentVisualizer::PdfDocumentVisualizer(const string& pdfFilePath) {
+PdfDocumentVisualizer::PdfDocumentVisualizer(const string& pdfFilePath, const Config& config) {
   // Load the PDF document.
   GooString gooPdfFilePath(pdfFilePath);
   _pdfDoc = PDFDocFactory().createPDFDoc(gooPdfFilePath);
 
   _doc = new PdfDocument();
 
-  Config config;
-  config.textOutputDev.noEmbeddedFontFilesParsing = true;
-  _out = new TextOutputDev(_doc, &config);
+  Config otherConfig;
+  otherConfig.pdfParsing.noEmbeddedFontFilesParsing = true;
+  _out = new TextOutputDev(_doc, otherConfig);
 
   // Create a Gfx for each PDF page.
   _gfxs.push_back(nullptr);  // Make the vector 1-based.
   for (int i = 1; i <= _pdfDoc->getNumPages(); i++) {
     Page* page = _pdfDoc->getPage(i);
-    Gfx* gfx = page->createGfx(_out, config::RESOLUTION, config::RESOLUTION, 0, true, false, -1,
-        -1, -1, -1, true, nullptr, nullptr, nullptr);
+    Gfx* gfx = page->createGfx(_out, config.hDPI, config.vDPI, 0,
+        true, false, -1, -1, -1, -1, true, nullptr, nullptr, nullptr);
     _gfxs.push_back(gfx);
   }
+  _config = config;
 }
 
 // _________________________________________________________________________________________________
@@ -398,7 +398,8 @@ void PdfDocumentVisualizer::drawTextBlockSemanticRoles(const vector<PdfTextBlock
     PDFRectangle rect(leftX, lowerY, leftX + 100, lowerY + 7);
 
     // Define the font appearance of the semantic role.
-    const DefaultAppearance appearance(&config::SEMANTIC_ROLE_APPEARANCE);
+    const GooString appearanceStr(_config.visualization.semanticRoleAppearance);
+    const DefaultAppearance appearance(&appearanceStr);
 
     // Create the annotation.
     AnnotFreeText* annot = new AnnotFreeText(_pdfDoc.get(), &rect);
@@ -450,7 +451,7 @@ void PdfDocumentVisualizer::drawReadingOrder(const vector<PdfTextBlock*>& blocks
 
     // Define the width of the reading order line.
     std::unique_ptr<AnnotBorder> lineBorder(new AnnotBorderArray());
-    lineBorder->setWidth(config::READING_ORDER_LINE_WIDTH);
+    lineBorder->setWidth(_config.visualization.readingOrderLineWidth);
     lineAnnot->setBorder(move(lineBorder));
 
     // Define the color of the reading order line.
@@ -477,9 +478,8 @@ void PdfDocumentVisualizer::drawReadingOrder(const vector<PdfTextBlock*>& blocks
 void PdfDocumentVisualizer::drawReadingOrderIndexCircle(Page* page, Gfx* gfx, double x,
     double y, int readingOrderIndex, const ColorScheme& cs) const {
   // Define the position of the circle.
-  PDFRectangle circleRect(
-    x - config::READING_ORDER_CIRCLE_RADIUS, y - config::READING_ORDER_CIRCLE_RADIUS,
-    x + config::READING_ORDER_CIRCLE_RADIUS, y + config::READING_ORDER_CIRCLE_RADIUS);
+  double radius = _config.visualization.readingOrderCircleRadius;
+  PDFRectangle circleRect(x - radius, y - radius, x + radius, y + radius);
   AnnotGeometry* circleAnnot = new AnnotGeometry(_pdfDoc.get(), &circleRect,
     Annot::AnnotSubtype::typeCircle);
 
@@ -498,12 +498,11 @@ void PdfDocumentVisualizer::drawReadingOrderIndexCircle(Page* page, Gfx* gfx, do
   // --------
 
   // Define the appearance of the reading order index within the circle.
-  const DefaultAppearance indexAppearance(&config::READING_ORDER_INDEX_APPEARANCE);
+  const GooString indexAppearanceStr(_config.visualization.readingOrderIndexAppearance);
+  const DefaultAppearance indexAppearance(&indexAppearanceStr);
 
   // Define the position of the index.
-  PDFRectangle indexRect(
-    x - config::READING_ORDER_CIRCLE_RADIUS, y - config::READING_ORDER_CIRCLE_RADIUS,
-    x + config::READING_ORDER_CIRCLE_RADIUS, y + config::READING_ORDER_CIRCLE_RADIUS * 0.6);
+  PDFRectangle indexRect(x - radius, y - radius, x + radius, y + radius * 0.6);
   AnnotFreeText* indexAnnot = new AnnotFreeText(_pdfDoc.get(), &indexRect);
   indexAnnot->setDefaultAppearance(indexAppearance);
 
@@ -549,7 +548,7 @@ void PdfDocumentVisualizer::drawCuts(const vector<Cut*>& cuts, const ColorScheme
 
     // Define the line width.
     std::unique_ptr<AnnotBorder> lineBorder(new AnnotBorderArray());
-    lineBorder->setWidth(config::CUT_WIDTH);
+    lineBorder->setWidth(_config.visualization.cutWidth);
     lineAnnot->setBorder(move(lineBorder));
 
     // Define the line color.
@@ -565,9 +564,8 @@ void PdfDocumentVisualizer::drawCuts(const vector<Cut*>& cuts, const ColorScheme
       // Draw a square at the beginning of the line, containing the cut index.
 
       // Define the position of the square.
-      PDFRectangle squareRect(
-        x1 - config::CUT_SQUARE_RADIUS, y1 - config::CUT_SQUARE_RADIUS,
-        x1 + config::CUT_SQUARE_RADIUS, y1 + config::CUT_SQUARE_RADIUS);
+      const double radius = _config.visualization.cutSquareRadius;
+      PDFRectangle squareRect(x1 - radius, y1 - radius, x1 + radius, y1 + radius);
       AnnotGeometry* squareAnnot = new AnnotGeometry(_pdfDoc.get(), &squareRect,
           Annot::AnnotSubtype::typeSquare);
 
@@ -587,12 +585,11 @@ void PdfDocumentVisualizer::drawCuts(const vector<Cut*>& cuts, const ColorScheme
       // ----------
 
       // Define the appearance of the cut index.
-      const DefaultAppearance indexAppearance(&config::CUT_INDEX_APPEARANCE);
+      GooString indexAppearanceStr(_config.visualization.cutIndexAppearance);
+      const DefaultAppearance indexAppearance(&indexAppearanceStr);
 
       // Define the position of the cut index.
-      PDFRectangle indexRect(
-        x1 - config::CUT_SQUARE_RADIUS, y1 - config::CUT_SQUARE_RADIUS,
-        x1 + config::CUT_SQUARE_RADIUS, y1 + config::CUT_SQUARE_RADIUS * 0.6);
+      PDFRectangle indexRect(x1 - radius, y1 - radius, x1 + radius, y1 + radius * 0.6);
       AnnotFreeText* indexAnnot = new AnnotFreeText(_pdfDoc.get(), &indexRect);
       indexAnnot->setDefaultAppearance(indexAppearance);
 
@@ -615,7 +612,8 @@ void PdfDocumentVisualizer::drawCuts(const vector<Cut*>& cuts, const ColorScheme
     // Draw the id of the cut.
 
     // Define the appearance of the id.
-    const DefaultAppearance idAppearance(&config::CUT_ID_APPEARANCE);
+    const GooString idAppearanceStr(_config.visualization.cutIdAppearance);
+    const DefaultAppearance idAppearance(&idAppearanceStr);
 
     // Define the position of the id.
     double rectWidth = 20;

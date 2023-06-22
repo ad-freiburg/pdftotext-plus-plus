@@ -12,52 +12,10 @@
 #include <utility>  // pair
 #include <vector>
 
-#include "../Constants.h"
 #include "../PdfDocument.h"
 
 using std::pair;
 using std::vector;
-
-// =================================================================================================
-// CONFIG
-
-namespace element_utils::config {
-
-// A parameter used for computing whether or not two coordinates are (approximately) equal. It
-// denotes the maximum allowed difference between two coordinates so that both coordinates are
-// considered to be equal.
-const double COORDS_EQUAL_TOLERANCE = global_config::COORDS_EQUAL_TOLERANCE;
-
-// A parameter used for computing whether or not an element is part of a figure. It denotes the
-// minimum percentage of the element's width which must be overlapped by a figure so that the
-// element is considered to be part of the figure.
-const double FIGURE_X_OVERLAP_THRESHOLD = 0.5;
-
-// A parameter used for computing whether or not an element is part of a figure. It denotes the
-// minimum percentage of the element's height which must be overlapped by a figure so that the
-// element is considered to be part of the figure.
-const double FIGURE_Y_OVERLAP_THRESHOLD = 0.5;
-
-}  // namespace element_utils::config
-
-
-namespace text_element_utils::config {
-
-// A parameter used for computing whether or not a text element is emphasized. It denotes the
-// maximum allowed difference between the font size of an element and the most frequent font size
-// so that the element is considered to be emphasized.
-const double FSIZE_EQUAL_TOLERANCE = global_config::FS_EQUAL_TOLERANCE;
-
-// A parameter used for computing whether or not a text element is emphasized. It denotes the
-// maximum allowed difference between the font weight of an element and the most frequent font
-// weight so that the element is considered to be emphasized.
-const int FWEIGHT_EQUAL_TOLERANCE = 100;
-
-// An alphabet used for computing whether or not a text element ends with a sentence delimiter.
-// It contains all characters we consider to be a sentence delimiter.
-const char* const SENTENCE_DELIMITER_ALPHABET = global_config::SENTENCE_DELIMITER_ALPHABET;
-
-}  // namespace text_element_utils::config
 
 // =================================================================================================
 
@@ -246,8 +204,8 @@ double computeMaxYOverlapRatio(const PdfElement* elem1, const PdfElement* elem2)
  * @return
  *    True if the leftX values of the two elements are (approximately) equal, false otherwise.
  */
-bool computeHasEqualLeftX(const PdfElement* elem1, const PdfElement* elem2,
-    double tolerance = config::COORDS_EQUAL_TOLERANCE);
+// TODO(korzen): Read the 0.1 from config.
+bool computeHasEqualLeftX(const PdfElement* elem1, const PdfElement* elem2, double tolerance=0.1);
 
 /**
  * This method returns true, if the upperY values of the two given elements are (approximately)
@@ -266,8 +224,8 @@ bool computeHasEqualLeftX(const PdfElement* elem1, const PdfElement* elem2,
  * @return
  *    True if the upperY values of the two elements are (approximately) equal, false otherwise.
  */
-bool computeHasEqualUpperY(const PdfElement* elem1, const PdfElement* elem2,
-    double tolerance = config::COORDS_EQUAL_TOLERANCE);
+// TODO(korzen): Read the 0.1 from config.
+bool computeHasEqualUpperY(const PdfElement* elem1, const PdfElement* elem2, double tolerance=0.1);
 
 /**
  * This method returns true, if the rightX values of the two given elements are (approximately)
@@ -286,8 +244,8 @@ bool computeHasEqualUpperY(const PdfElement* elem1, const PdfElement* elem2,
  * @return
  *    True if the rightX values of the two elements are (approximately) equal, false otherwise.
  */
-bool computeHasEqualRightX(const PdfElement* elem1, const PdfElement* elem2,
-    double tolerance = config::COORDS_EQUAL_TOLERANCE);
+// TODO(korzen): Read the 0.1 from config.
+bool computeHasEqualRightX(const PdfElement* elem1, const PdfElement* elem2, double tolerance=0.1);
 
 /**
  * This method returns true, if the lowerY values of the two given elements are (approximately)
@@ -306,8 +264,7 @@ bool computeHasEqualRightX(const PdfElement* elem1, const PdfElement* elem2,
  * @return
  *    True if the lowerY values of the two elements are (approximately) equal, false otherwise.
  */
-bool computeHasEqualLowerY(const PdfElement* elem1, const PdfElement* elem2,
-    double tolerance = config::COORDS_EQUAL_TOLERANCE);
+bool computeHasEqualLowerY(const PdfElement* elem1, const PdfElement* elem2, double tolerance=0.1);
 
 // =================================================================================================
 
@@ -354,6 +311,10 @@ double computeRightXOffset(const PdfElement* elem1, const PdfElement* elem2);
  *
  * @param element
  *    The element which should be checked whether or not it is overlapped by a figure.
+ * @param minXOverlapRatio
+ *    The minimum ratio by which the figure must overlap the element horizontally.
+ * @param minYOverlapRatio
+ *    The minimum ratio by which the figure must overlap the element vertically.
  * @param figures
  *    The vector of figures.
  *
@@ -361,7 +322,8 @@ double computeRightXOffset(const PdfElement* elem1, const PdfElement* elem2);
  *    The first figure in the given vector which fulfills the given minimum overlap ratios, or
  *    nullptr if there is no such figure.
  */
-PdfFigure* computeOverlapsFigure(const PdfElement* element, const vector<PdfFigure*>& figures);
+PdfFigure* computeOverlapsFigure(const PdfElement* element, double minXOverlapRatio,
+    double minYOverlapRatio, const vector<PdfFigure*>& figures);
 
 }  // namespace element_utils
 
@@ -393,11 +355,13 @@ bool computeHasEqualFont(const PdfTextElement* element1, const PdfTextElement* e
  *    The first element to process.
  * @param element2
  *    The second element to process.
+ * @param tolerance
+ *    The maximum allowed tolerance.
  *
  * @return
  *    True if the given elements exhibit (approximately) the same font size, false otherwise.
  */
-bool computeHasEqualFontSize(const PdfTextElement* element1, const PdfTextElement* element2);
+bool computeHasEqualFontSize(const PdfTextElement* element1, const PdfTextElement* element2, double tolerance);
 
 /**
  * This method returns true if the text of the given element ends with a sentence delimiter (that
@@ -405,11 +369,14 @@ bool computeHasEqualFontSize(const PdfTextElement* element1, const PdfTextElemen
  *
  * @param element
  *    The element to process.
+ * @param delimAlphabet
+ *    The symbols to consider as a sentence delimiter.
  *
  * @return
  *    True if the text of the given element ends with a sentence delimiter, false otherwise.
  */
-bool computeEndsWithSentenceDelimiter(const PdfTextElement* element);
+bool computeEndsWithSentenceDelimiter(const PdfTextElement* element,
+    const string& delimAlphabet);
 
 /**
  * This method returns true if the text of the given element starts with an uppercase.
@@ -437,11 +404,18 @@ bool computeStartsWithUpper(const PdfTextElement* element);
  *
  * @param element
  *    The element to process.
+ * @param fontSizeEqualTolerance
+ *    The maximum allowed difference between the font size of the element and the most frequent
+ *    font size so that the element is considered to be emphasized.
+ * @param fontWeightEqualTolerance
+ *    The maximum allowed difference between the font weight of the element and the most frequent
+ *    font weight so that the element is considered to be emphasized.
  *
  * @return
  *    True if the text of the given element is emphasized, false otherwise.
  */
-bool computeIsEmphasized(const PdfTextElement* element);
+bool computeIsEmphasized(const PdfTextElement* element,
+    double fontSizeEqualTolerance, double fontWeightEqualTolerance);
 
 }  // namespace text_element_utils
 

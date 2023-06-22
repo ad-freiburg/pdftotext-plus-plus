@@ -31,7 +31,7 @@ class PdfStatisticsCalculator {
    * @param logLevel
    *   The logging level.
    */
-  explicit PdfStatisticsCalculator(PdfDocument* doc, const Config* config);
+  explicit PdfStatisticsCalculator(PdfDocument* doc, const Config& config);
 
   /** The deconstructor. */
   ~PdfStatisticsCalculator();
@@ -77,9 +77,9 @@ class PdfStatisticsCalculator {
   // The document for which to compute the statistics.
   PdfDocument* _doc;
   // The configuration to use.
-  const Config* _config;
+  Config _config;
   // The logger.
-  const Logger* _log;
+  Logger* _log;
 };
 
 #endif  // PDFSTATISTICSCALCULATOR_H_

@@ -26,13 +26,15 @@ namespace words_utils {
  *
  * @param characters
  *   The characters from which to create the word.
+ * @param idLength
+ *   The length of the word's id to be created.
  * @param doc
  *   The PDF document of which the word is a part of.
  *
  * @return
  *    The created word.
  */
-PdfWord* createWord(const vector<PdfCharacter*>& characters, const PdfDocument* doc);
+PdfWord* createWord(const vector<PdfCharacter*>& characters, int idLength, const PdfDocument* doc);
 
 }  // namespace words_utils
 

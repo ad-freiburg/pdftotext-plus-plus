@@ -17,24 +17,6 @@
 using std::tuple;
 
 // =================================================================================================
-// CONFIG
-
-namespace page_segment_utils::config {
-
-// A parameter used for computing the trim box of a segment. It denotes the precision to use when
-// rounding the rightX values of the text lines of the segment before computing the most frequent
-// rightX value.
-const double TRIM_BOX_COORDS_PREC = 0;
-
-// A parameter in [0, 1] used for computing the trim box of a segment. It denotes the minimum
-// percentage of text lines in a given segment that must exhibit the most frequent rightX so that
-// this rightX is considered to be the rightX of the trim box of the segment.
-const double MIN_PERC_LINES_SAME_RIGHT_X = 0.5;
-
-}  // namespace page_segment_utils::config
-
-// =================================================================================================
-
 
 /**
  * A collection of some useful and commonly used functions in context of page segments.
@@ -49,9 +31,11 @@ namespace page_segment_utils {
  *   The elements to create a segment from.
  * @param doc
  *   The PDF document of which this segment is a part.
+ * @param idLength
+ *   The length of the segment's id to be created.
  */
 PdfPageSegment* createPageSegment(const vector<PdfElement*>& elements,
-    const PdfDocument* doc = nullptr);
+    const PdfDocument* doc = nullptr, size_t idLength = 8);
 
 /**
  * This method computes the trim box of the given page segment, that is: the bounding box around
@@ -95,11 +79,20 @@ PdfPageSegment* createPageSegment(const vector<PdfElement*>& elements,
  *
  * @param segment
  *    The segment for which to compute the trim box.
+ * @param trimBoxCoordsPrec
+ *    A parameter used for computing the trim box of a segment. It denotes the precision to use
+ *    when rounding the rightX values of the text lines of the segment before computing the most
+ *    frequent rightX value.
+ * @param minPrecLinesSameRightX
+ *    A parameter in [0, 1] used for computing the trim box of a segment. It denotes the minimum
+ *    percentage of text lines in a given segment that must exhibit the most frequent rightX so
+ *    that this rightX is considered to be the rightX of the trim box of the segment.
  *
  * @return
  *    The leftX, upperY, rightX, and lowerY of the computed trim box.
  */
-tuple<double, double, double, double> computeTrimBox(const PdfPageSegment* segment);
+tuple<double, double, double, double> computeTrimBox(const PdfPageSegment* segment,
+    int trimBoxCoordsPrec, double minPrecLinesSameRightX);
 
 }  // namespace page_segment_utils
 

@@ -21,8 +21,6 @@
 #include "./PdfDocument.h"
 #include "./WordsDetector.h"
 
-using global_config::ID_LENGTH;
-
 using ppp::math_utils::equal;
 using ppp::math_utils::equalOrLarger;
 using ppp::math_utils::larger;
@@ -33,12 +31,11 @@ using std::min;
 using std::string;
 using std::vector;
 
-namespace config = words_detector::config;
-
 // _________________________________________________________________________________________________
-WordsDetector::WordsDetector(const PdfDocument* doc, LogLevel logLevel, int logPageFilter) {
-  _log = new Logger(logLevel, logPageFilter);
+WordsDetector::WordsDetector(PdfDocument* doc, const Config& config) {
   _doc = doc;
+  _config = config;
+  _log = new Logger(config.wordsDetection.logLevel, config.wordsDetection.logPageFilter);
 }
 
 // _________________________________________________________________________________________________
@@ -115,7 +112,7 @@ void WordsDetector::detectWords(PdfPage* page) {
     // Check if the char starts a new word. If so, create a word from the characters of the
     // "active" word and start a new word.
     if (startsWord(currChar) && !_activeWord.characters.empty()) {
-      PdfWord* word = words_utils::createWord(_activeWord.characters, _doc);
+      PdfWord* word = words_utils::createWord(_activeWord.characters, _config.idLength, _doc);
       word->rank = page->words.size();
       page->words.push_back(word);
 
@@ -150,7 +147,7 @@ void WordsDetector::detectWords(PdfPage* page) {
 
   // Don't forget to process the last word.
   if (!_activeWord.characters.empty()) {
-    PdfWord* word = words_utils::createWord(_activeWord.characters, _doc);
+    PdfWord* word = words_utils::createWord(_activeWord.characters, _config.idLength, _doc);
     word->rank = page->words.size();
     page->words.push_back(word);
 
@@ -216,8 +213,8 @@ bool WordsDetector::startsWord(const PdfCharacter* currChar) const {
   _log->debug(p) << BLUE << "Is the maximum y-overlap ratio between the character and the active "
       << "word smaller than a threshold?" << endl;
   _log->debug(p) << " └─ maxYRatio: " << maxYOverlapRatio << endl;
-  _log->debug(p) << " └─ threshold: " << config::Y_OVERLAP_RATIO_THRESHOLD << endl;
-  if (smaller(maxYOverlapRatio, config::Y_OVERLAP_RATIO_THRESHOLD)) {
+  _log->debug(p) << " └─ threshold: " << _config.wordsDetection.yOverlapRatioThreshold << endl;
+  if (smaller(maxYOverlapRatio, _config.wordsDetection.yOverlapRatioThreshold)) {
     _log->debug(p) << BLUE << BOLD << " yes → starts word" << OFF << endl;
     return true;
   }
@@ -228,7 +225,7 @@ bool WordsDetector::startsWord(const PdfCharacter* currChar) const {
 
   double hGapLeft = element_utils::computeHorizontalGap(currChar, &_activeWord);
   double hGapRight = element_utils::computeHorizontalGap(&_activeWord, currChar);
-  double hGapThreshold = config::getHorizontalGapThreshold(_doc, &_activeWord);
+  double hGapThreshold = _config.wordsDetection.getHorizontalGapThreshold(_doc, &_activeWord);
 
   _log->debug(p) << BLUE << "Are the horizontal gaps between the character and the active word "
       << "larger than a threshold?" << OFF << endl;
@@ -254,7 +251,7 @@ void WordsDetector::mergeStackedMathSymbols(const PdfPage* page) const {
   assert(page);
 
   int p = page->pageNum;
-  double xOverlapRatioThreshold = config::STACKED_MATH_SYMBOL_X_OVERLAP_RATIO_THRESHOLD;
+  double xOverlapRatioThreshold = _config.wordsDetection.stackedMathSymbolXOverlapRatioThreshold;
 
   for (size_t i = 0; i < page->words.size(); i++) {
     PdfWord* word = page->words.at(i);
@@ -278,16 +275,16 @@ void WordsDetector::mergeStackedMathSymbols(const PdfPage* page) const {
     // Check if the word is the base word of a stacked math symbol.
     bool isBaseOfStackedMathSymbol = false;
     for (auto* ch : word->characters) {
-      if (config::STACKED_MATH_CHAR_TEXTS.count(ch->text) > 0) {
+      if (_config.wordsDetection.stackedMathCharTexts.count(ch->text) > 0) {
         isBaseOfStackedMathSymbol = true;
         break;
       }
-      if (config::STACKED_MATH_CHAR_NAMES.count(ch->name) > 0) {
+      if (_config.wordsDetection.stackedMathCharNames.count(ch->name) > 0) {
         isBaseOfStackedMathSymbol = true;
         break;
       }
     }
-    if (config::STACKED_MATH_WORDS.count(word->text) > 0) {
+    if (_config.wordsDetection.stackedMathWords.count(word->text) > 0) {
       isBaseOfStackedMathSymbol = true;
     }
     _log->debug(p) << " └─ word.isBaseOfStackedSymbol: " << isBaseOfStackedMathSymbol << endl;
@@ -330,7 +327,7 @@ void WordsDetector::mergeStackedMathSymbols(const PdfPage* page) const {
       // smaller than the font size of the base word.
       _log->debug(p) << " └─ prevWord.fontSize: " << prevWord->fontSize << endl;
       _log->debug(p) << " └─ word.fontSize:     " << word->fontSize << endl;
-      if (!smaller(prevWord->fontSize, word->fontSize, config::FSIZE_EQUAL_TOLERANCE)) {
+      if (!smaller(prevWord->fontSize, word->fontSize, _config.wordsDetection.fsEqualTolerance)) {
         _log->debug(p) << BOLD << "is *not* part of the stacked math symbol "
             << "(prevWord.fontSize >= word.fontSize)." << OFF << endl;
         break;
@@ -372,7 +369,7 @@ void WordsDetector::mergeStackedMathSymbols(const PdfPage* page) const {
       // smaller than the font size of the base word.
       _log->debug(p) << " └─ nextWord.fontSize: " << nextWord->fontSize << endl;
       _log->debug(p) << " └─ word.fontSize:     " << word->fontSize << endl;
-      if (!smaller(nextWord->fontSize, word->fontSize, config::FSIZE_EQUAL_TOLERANCE)) {
+      if (!smaller(nextWord->fontSize, word->fontSize, _config.wordsDetection.fsEqualTolerance)) {
         _log->debug(p) << BOLD << "is *not* part of the stacked math symbol "
             << "(nextWord.fontSize >= word.fontSize)." << OFF << endl;
         break;

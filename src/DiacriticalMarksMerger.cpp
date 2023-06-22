@@ -25,13 +25,11 @@ using std::max;
 using std::min;
 using std::vector;
 
-namespace config = diacritics_merger::config;
-
 // _________________________________________________________________________________________________
-DiacriticalMarksMerger::DiacriticalMarksMerger(const PdfDocument* doc, LogLevel logLevel,
-      int logPageFilter) {
-  _log = new Logger(logLevel, logPageFilter);
+DiacriticalMarksMerger::DiacriticalMarksMerger(PdfDocument* doc, const Config& config) {
   _doc = doc;
+  _config = config;
+  _log = new Logger(_config.diacriticsMerging.logLevel, _config.diacriticsMerging.logPageFilter);
 }
 
 // _________________________________________________________________________________________________
@@ -88,8 +86,8 @@ void DiacriticalMarksMerger::process() const {
       // Get the unicode of the character. If it is contained in combininMap, replace the unicode
       // by its combining equivalent.
       unsigned int unicode = currChar->unicodes[0];
-      if (config::COMBINING_MAP.count(unicode) > 0) {
-        unicode = config::COMBINING_MAP.at(unicode);
+      if (_config.diacriticsMerging.combiningMap.count(unicode) > 0) {
+        unicode = _config.diacriticsMerging.combiningMap.at(unicode);
       }
 
       // The character is a diacritic mark when its unicode falls into one of the categories:

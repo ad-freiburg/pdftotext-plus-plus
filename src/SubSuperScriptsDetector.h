@@ -10,29 +10,10 @@
 #define SUBSUPERSCRIPTSDETECTOR_H_
 
 #include "./utils/Log.h"
-
+#include "./Config.h"
 #include "./PdfDocument.h"
 
-// =================================================================================================
-// CONFIG
-
-namespace sub_super_scripts_detector::config {
-
-// A parameter that is used to detect sub- and superscripts. It denotes the maximum allowed
-// difference between the baseline of a character and the baseline of a text line, so that the
-// character "sit" on the same baseline. If the baseline of a character is larger than the baseline
-// of the text line (under consideration of the threshold), the character is considered to
-// be a superscript. If the baseline is smaller, the character is considered to be a subscript.
-const double BASE_EQUAL_TOLERANCE = 0.1;
-
-// A parameter that is used to detect sub- and superscripts. It denotes the maximum allowed
-// difference between the font size of a character and the most frequent font size in the document,
-// so that the font sizes are considered to be equal. If the font size of a character is smaller
-// than the most frequent font size (under consideration of the threshold), the character is
-// considered to be a sub- or superscript. Otherwise, it is not considered to be a sub-/superscript.
-const double FSIZE_EQUAL_TOLERANCE = 0.9;
-
-}  // namespace sub_super_scripts_detector::config
+using ppp::Config;
 
 // =================================================================================================
 
@@ -54,14 +35,10 @@ class SubSuperScriptsDetector {
    *
    * @param doc
    *   The PDF document to process.
-   * @param logLevel
-   *   The logging level.
-   * @param logPageFilter
-   *   If set to a value > 0, only the logging messages produced while processing the
-   *   <logPageFilter>-th page of the current PDF file will be printed to the console.
+   * @param config
+   *   The configuration to use.
    */
-  explicit SubSuperScriptsDetector(const PdfDocument* doc, LogLevel logLevel = ERROR,
-      int logPageFilter = -1);
+  explicit SubSuperScriptsDetector(PdfDocument* doc, const Config& config);
 
   /** The deconstructor. */
   ~SubSuperScriptsDetector();
@@ -78,10 +55,13 @@ class SubSuperScriptsDetector {
 
  private:
   // The PDF document to process.
-  const PdfDocument* _doc;
+  PdfDocument* _doc;
+
+  // The configuration to use.
+  Config _config;
 
   // The logger.
-  const Logger* _log;
+  Logger* _log;
 };
 
 // =================================================================================================

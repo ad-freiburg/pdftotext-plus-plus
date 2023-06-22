@@ -13,40 +13,11 @@
 
 #include "./utils/Log.h"
 #include "./utils/MathUtils.h"
-
+#include "./Config.h"
 #include "./PdfDocument.h"
 
+using ppp::Config;
 using std::vector;
-
-// =================================================================================================
-// CONFIG
-
-namespace text_lines_detector::config {
-
-// A parameter used for detecting text lines. It denotes the precision to use when rounding the
-// lowerY of a word for computing the cluster to which the word should be assigned.
-const double COORDS_PREC = global_config::COORDS_PREC;
-
-/**
- * This method returns a threshold to be used for detecting text lines. It denotes the maximum
- * vertical overlap ratio that two consecutive text lines must achieve so that the text lines are
- * merged. If the maximum vertical overlap ratio between two consecutive lines is larger or equal
- * to the returned threshold, the text lines are merged; otherwise the text lines are not merged.
- *
- * @param doc
- *    The currently processed PDF document.
- * @param xGap
- *    The horizontal gap between the two text lines for which it is to be decided whether or not
- *    they should be merged.
- *
- * @return
- *    The threshold.
- */
-constexpr double getYOverlapRatioThreshold(const PdfDocument* doc, double xGap) {
-  return xGap < 3 * doc->avgCharWidth ? 0.4 : 0.8;
-}
-
-}  // namespace text_lines_detector::config
 
 // =================================================================================================
 
@@ -70,14 +41,10 @@ class TextLinesDetector {
    *
    * @param doc
    *   The PDF document to process.
-   * @param logLevel
-   *   The logging level.
-   * @param logPageFilter
-   *   If set to a value > 0, only the logging messages produced while processing the
-   *   <logPageFilter>-th page of the current PDF file will be printed to the console.
+   * @param config
+   *   The configuration to use.
    */
-  explicit TextLinesDetector(const PdfDocument* doc, LogLevel logLevel = ERROR,
-      int logPageFilter = -1);
+  explicit TextLinesDetector(PdfDocument* doc, const Config& config);
 
   /** The deconstructor. */
   ~TextLinesDetector();
@@ -130,10 +97,13 @@ class TextLinesDetector {
   void computeTextLineProperties(PdfTextLine* line) const;
 
   // The PDF document to process.
-  const PdfDocument* _doc;
+  PdfDocument* _doc;
+
+  // The configuration to use.
+  Config _config;
 
   // The logger.
-  const Logger* _log;
+  Logger* _log;
 };
 
 #endif  // TEXTLINESDETECTOR_H_

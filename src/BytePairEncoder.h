@@ -16,6 +16,7 @@
 #include <vector>
 
 using std::pair;
+using std::string;
 using std::unordered_map;
 using std::unordered_set;
 using std::vector;
@@ -51,10 +52,13 @@ class BytePairEncoder {
    *   The text to encode.
    * @param targetLength
    *   The target length of the result list of tokens.
+   * @param wordDelimAlphabet
+   *   The characters to consider to be word delimiters.
    * @param result
    *   The vector to which the integer ids of the encoding should be added.
    */
-  void encode(const wstring& text, size_t targetLength, vector<int>* result);
+  void encode(const wstring& text, size_t targetLength, const string& wordDelimAlphabet,
+      vector<int>* result);
 
  private:
   /**

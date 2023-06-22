@@ -32,11 +32,12 @@ BytePairEncoder::BytePairEncoder(unordered_map<wstring, int>* vocabulary) {
 }
 
 // _________________________________________________________________________________________________
-void BytePairEncoder::encode(const wstring& text, size_t targetLength, vector<int>* res) {
+void BytePairEncoder::encode(const wstring& text, size_t targetLength,
+    const string& wordDelimAlphabet, vector<int>* res) {
   // Split the text into words. For example, split "This is some text" into
   // ["This", "is", "some", "text"].
   vector<wstring> words;
-  ppp::string_utils::splitIntoWords(text, &words);
+  ppp::string_utils::splitIntoWords(text, wordDelimAlphabet, &words);
 
   // Iterate through the words and encode each word using byte pair encoding.
   for (auto& word : words) {

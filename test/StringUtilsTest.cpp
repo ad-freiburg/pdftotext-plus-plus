@@ -20,19 +20,22 @@ using ppp::string_utils::splitIntoWords;
 
 // _________________________________________________________________________________________________
 TEST(StringUtils, splitStringIntoWords) {
+  // TODO(korzen): Read from config.
+  string wordDelimAlphabet = " \t\r\n\f\v";
+
   std::vector<std::string> words1;
-  splitIntoWords("", &words1);
+  splitIntoWords("", wordDelimAlphabet, &words1);
   ASSERT_EQ(words1.size(), size_t(0));
 
   std::vector<std::string> words2;
-  splitIntoWords("foo bar baz", &words2);
+  splitIntoWords("foo bar baz", wordDelimAlphabet, &words2);
   ASSERT_EQ(words2.size(), size_t(3));
   ASSERT_EQ(words2[0], "foo");
   ASSERT_EQ(words2[1], "bar");
   ASSERT_EQ(words2[2], "baz");
 
   std::vector<std::string> words3;
-  splitIntoWords("Monday Tuesday\tWednesday\n\nThursday", &words3);
+  splitIntoWords("Monday Tuesday\tWednesday\n\nThursday", wordDelimAlphabet, &words3);
   ASSERT_EQ(words3.size(), size_t(4));
   ASSERT_EQ(words3[0], "Monday");
   ASSERT_EQ(words3[1], "Tuesday");
@@ -42,14 +45,17 @@ TEST(StringUtils, splitStringIntoWords) {
 
 // _________________________________________________________________________________________________
 TEST(StringUtils, splitWStringIntoWords) {
+  // TODO(korzen): Read from config.
+  string wordDelimAlphabet = " \t\r\n\f\v";
+
   std::wstring string1 = L"";
   std::vector<std::wstring> words1;
-  splitIntoWords(string1, &words1);
+  splitIntoWords(string1, wordDelimAlphabet, &words1);
   ASSERT_EQ(words1.size(), size_t(0));
 
   std::wstring string2 = L"foo bar baz";
   std::vector<std::wstring> words2;
-  splitIntoWords(string2, &words2);
+  splitIntoWords(string2, wordDelimAlphabet, &words2);
   ASSERT_EQ(words2.size(), size_t(3));
   std::wstring word20 = L"foo";
   ASSERT_EQ(words2[0], word20);
@@ -60,7 +66,7 @@ TEST(StringUtils, splitWStringIntoWords) {
 
   std::wstring string3 = L"Januar Februar\tMärz\n\nApril";
   std::vector<std::wstring> words3;
-  splitIntoWords(string3, &words3);
+  splitIntoWords(string3, wordDelimAlphabet, &words3);
   ASSERT_EQ(words3.size(), size_t(4));
   std::wstring word30 = L"Januar";
   ASSERT_EQ(words3[0], word30);

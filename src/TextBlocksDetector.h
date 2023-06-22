@@ -16,119 +16,15 @@
 
 #include "./utils/Log.h"
 #include "./utils/Trool.h"
-
-#include "./Constants.h"
+#include "./Config.h"
 #include "./PdfDocument.h"
 
+using ppp::Config;
 using std::make_pair;
 using std::max;
 using std::pair;
 using std::string;
 using std::unordered_set;
-
-// =================================================================================================
-// CONFIG
-
-namespace text_blocks_detector::config {
-
-// A parameter that denotes the precision to use when rounding the font size of a line, before
-// looking up the expected line distance computed among the text lines with the same font size.
-const double FONT_SIZE_PREC = global_config::FONT_SIZE_PREC;
-
-// ----------
-// startsBlock_fontSize()
-
-// A parameter that denotes the maximum allowed difference between two font sizes in order to be
-// considered equal. If the font size of a text line is larger than the font size of the previous
-// line by this threshold, it is assumed that the text line introduces a new text block.
-const double FONT_SIZE_EQUAL_TOLERANCE = 1.0;
-
-// ----------
-// startsBlock_lineDistance()
-
-// A parameter that denotes the precision to use for rounding the vertical distance between two
-// text lines.
-const double LINE_DIST_PREC = global_config::LINE_DIST_PREC;
-
-/**
- * This method returns a threshold to be used for checking if the distance between two text lines
- * is larger than the given expected line distance. The line distance is only then considered to
- * be larger than the given expected line distance, when the difference between the two distances
- * is larger than the returned threshold.
- *
- * @param doc
- *    The PDF document currently processed.
- * @param expectedLineDistance
- *    The expected line distance.
- *
- * @return
- *    The threshold.
- */
-constexpr double getExpectedLineDistanceThreshold(const PdfDocument* doc, double expectedLineDist) {
-  return max(1.0, 0.1 * expectedLineDist);
-}
-
-// ----------
-// startsBlock_increasedLineDistance()
-
-/**
- * This method returns a threshold to be used for checking if the distance between the current
- * line and the next line (= "curr/next distance") is larger than the distance between the
- * current line and the previous line (= "curr/prev distance").
- * The curr/next distance is only then considered to be larger than the "curr/prev distance" if
- * the difference between the two distances is larger than the returned tolerance.
- *
- * @param doc
- *    The PDF document currently processed.
- *
- * @return
- *    The threshold.
- */
-constexpr double getPrevCurrNextLineDistanceTolerance(const PdfDocument* doc) {
-  return 0.5 * doc->mostFreqWordHeight;
-}
-
-// ----------
-// startsBlock_item()
-
-/**
- * This method returns an interval to be used for checking if the leftX-offset between a line and
- * its previous line falls into. If the offset falls into the returned interval, the line and the
- * previous line are considered to be part of the same block. Otherwise, the line is considered to
- * be the start of a new text block.
- *
- * @param doc
- *    The PDF document currently processed.
- *
- * @return
- *    A pair of doubles, with the first value denoting the start point of the interval and the
- *    second point denoting the end point of the interval.
- */
-constexpr pair<double, double> getLeftXOffsetToleranceInterval(const PdfDocument* doc) {
-  return make_pair(-1 * doc->avgCharWidth, 6 * doc->avgCharWidth);
-}
-
-// ----------
-// startsBlock_indent()
-
-/**
- * This method returns an interval to be used for checking if the left margin of a line falls into.
- * If the left margin of a line falls into the interval (and if the parent segment is not in
- * hanging indent format), the line is considered to be the indented first line of a text block.
- * Otherwise it is not considered to be the first line of a text block.
- *
- * @param doc
- *    The PDF document currently processed.
- *
- * @return
- *    A pair of doubles, with the first value denoting the start point of the interval and the
- *    second point denoting the end point of the interval.
- */
-constexpr pair<double, double> getIndentToleranceInterval(const PdfDocument* doc) {
-  return make_pair(1 * doc->avgCharWidth, 6 * doc->avgCharWidth);
-}
-
-}  // namespace text_blocks_detector::config
 
 // =================================================================================================
 
@@ -176,14 +72,10 @@ class TextBlocksDetector {
    *    segmented and that the text lines of each segment were already detected. The segments of
    *    the i-th page are expected to be stored in doc.pages[i].segments. The text lines of the
    *    j-th segment of the i-th page are expected to be stored in doc.pages[i].segments[j].lines.
-   * @param logLevel
-   *   The logging level.
-   * @param logPageFilter
-   *   If set to a value > 0, only the logging messages produced while processing the
-   *   <logPageFilter>-th page of the current PDF file will be printed to the console.
+   * @param config
+   *    The config to use.
    */
-  explicit TextBlocksDetector(const PdfDocument* doc, LogLevel logLevel = ERROR,
-      int logPageFilter = -1);
+  explicit TextBlocksDetector(PdfDocument* doc, const Config& config);
 
   /** The deconstructor. */
   ~TextBlocksDetector();
@@ -449,14 +341,17 @@ class TextBlocksDetector {
   Trool startsBlock_indent(const PdfTextLine* line) const;
 
   // The PDF document to process.
-  const PdfDocument* _doc;
+  PdfDocument* _doc;
+
+  // The configuration to use.
+  Config _config;
 
   // The potential footnote labels, that is: superscripted strings consisting of alphanumerical
   // characters.
   unordered_set<string> _potentFnLabels;
 
   // The logger.
-  const Logger* _log;
+  Logger* _log;
 
   // A string to prepend to each log message. Used to differ between log messages relating to
   // the detection of preliminary text blocks and the final text blocks.

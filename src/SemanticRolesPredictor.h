@@ -32,8 +32,8 @@ using std::unordered_map;
  */
 class SemanticRolesPredictor {
  public:
-  /** This constructor creates and initializes a new `SemanticRoles` object. */
-  explicit SemanticRolesPredictor(const ppp::Config* config);
+  /** This constructor creates and initializes a new `SemanticRolesPredictor` object. */
+  explicit SemanticRolesPredictor(const ppp::Config& config);
 
   /** The deconstructor. */
   ~SemanticRolesPredictor();
@@ -99,7 +99,7 @@ class SemanticRolesPredictor {
   bool _modelOk = false;
 
   // The configuration to use.
-  const ppp::Config* _config;
+  ppp::Config _config;
 };
 
 #endif  // SEMANTICROLESPREDICTOR_H_

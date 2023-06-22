@@ -21,12 +21,12 @@
 #include "./utils/PdfElementsUtils.h"
 #include "./utils/StringUtils.h"
 #include "./utils/TextLinesUtils.h"
-
+#include "./Config.h"
 #include "./PdfDocument.h"
 #include "./TextLinesDetector.h"
 
-using global_config::ID_LENGTH;
-
+using ppp::Config;
+using ppp::math_utils::round;
 using std::endl;
 using std::get;
 using std::max;
@@ -36,12 +36,11 @@ using std::tuple;
 using std::unordered_map;
 using std::vector;
 
-namespace config = text_lines_detector::config;
-
 // _________________________________________________________________________________________________
-TextLinesDetector::TextLinesDetector(const PdfDocument* doc, LogLevel logLevel, int logPageFilter) {
-  _log = new Logger(logLevel, logPageFilter);
+TextLinesDetector::TextLinesDetector(PdfDocument* doc, const Config& config) {
   _doc = doc;
+  _config = config;
+  _log = new Logger(config.linesDetection.logLevel, config.linesDetection.logPageFilter);
 }
 
 // _________________________________________________________________________________________________
@@ -118,7 +117,7 @@ void TextLinesDetector::process() {
         }
 
         double rotation = word->pos->rotation;
-        double lowerY = ppp::math_utils::round(word->pos->getRotLowerY(), config::COORDS_PREC);
+        double lowerY = round(word->pos->getRotLowerY(), _config.linesDetection.coordsPrec);
         clusters[rotation][lowerY].push_back(word);
         _log->debug(p) << q << "cluster: (" << rotation << ", " << lowerY << ")" << endl;
 
@@ -244,14 +243,14 @@ void TextLinesDetector::process() {
             // rationale behind is as follows: If the horizontal gap between two lines is small,
             // the threshold should be less restrictive. If the horizontal gap is large, the
             // threshold should be more restrictive.
-            double yOverlapRatioThreshold = config::getYOverlapRatioThreshold(_doc, xGap);
+            double threshold = _config.linesDetection.getYOverlapRatioThreshold(_doc, xGap);
 
             _log->debug(p) << qqq << "max y-overlap ratio: " << yOverlapRatio << endl;
-            _log->debug(p) << qqq << "threshold: " << yOverlapRatioThreshold << endl;
+            _log->debug(p) << qqq << "threshold: " << threshold << endl;
 
             // Merge the current line with the previous line when the vertical overlap between the
             // lines is larger or equal to the threshold.
-            if (ppp::math_utils::equalOrLarger(yOverlapRatio, yOverlapRatioThreshold)) {
+            if (ppp::math_utils::equalOrLarger(yOverlapRatio, threshold)) {
               mergeTextLines(currLine, prevLine);
 
               _log->debug(p) << qqq << BOLD << "merge currLine with prevLine" << OFF << endl;
@@ -296,7 +295,10 @@ void TextLinesDetector::process() {
       }
 
       // Compute the trim box of the segment.
-      tuple<double, double, double, double> trimBox = page_segment_utils::computeTrimBox(segment);
+      tuple<double, double, double, double> trimBox = page_segment_utils::computeTrimBox(
+        segment,
+        _config.pageSegmentation.trimBoxCoordsPrec,
+        _config.pageSegmentation.minPrecLinesSameRightX);
       segment->trimLeftX = get<0>(trimBox);
       segment->trimUpperY = get<1>(trimBox);
       segment->trimRightX = get<2>(trimBox);
@@ -314,7 +316,9 @@ void TextLinesDetector::process() {
     }
 
     // Compute the text lines hierarchies.
-    text_lines_utils::computeTextLineHierarchy(page);
+    text_lines_utils::computeTextLineHierarchy(page,
+      _config.linesDetection.textLineHierarchyLeftXOffsetThresholdFactor,
+      _config.linesDetection.lineHierarchyMaxLineDist, _config.linesDetection.coordsEqualTolerance);
   }
 }
 
@@ -329,7 +333,7 @@ PdfTextLine* TextLinesDetector::createTextLine(const vector<PdfWord*>& words,
   line->doc = _doc;
 
   // Create a (unique) id.
-  line->id = ppp::string_utils::createRandomString(ID_LENGTH, "line-");
+  line->id = ppp::string_utils::createRandomString(_config.idLength, "line-");
 
   // Set the words.
   line->words = words;

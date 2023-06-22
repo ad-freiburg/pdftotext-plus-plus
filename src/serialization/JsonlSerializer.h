@@ -34,8 +34,13 @@ namespace ppp::serialization {
  */
 class JsonlSerializer : public Serializer {
  public:
-  /** The default constructor. */
-  JsonlSerializer();
+  /**
+   * The default constructor.
+   *
+   * @param coordsPrecision
+   *    The precision with which this serializer should output the coordinates.
+   */
+  explicit JsonlSerializer(size_t coordsPrecision);
 
   /** The deconstructor. */
   ~JsonlSerializer();
@@ -161,6 +166,10 @@ class JsonlSerializer : public Serializer {
    */
   void serializeTextBlocks(const PdfDocument* doc, const unordered_set<SemanticRole>& roles,
       ostream& stream) const;
+
+ private:
+  // The precision with which this serializer should output the coordinates.
+  size_t _coordsPrecision;
 };
 
 }  // namespace ppp::serialization

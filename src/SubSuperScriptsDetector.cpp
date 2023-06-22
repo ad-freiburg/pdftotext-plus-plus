@@ -10,23 +10,22 @@
 
 #include "./utils/Log.h"
 #include "./utils/MathUtils.h"
-
+#include "./Config.h"
 #include "./PdfDocument.h"
 #include "./SubSuperScriptsDetector.h"
 
+using ppp::Config;
 using ppp::math_utils::larger;
 using ppp::math_utils::smaller;
 using std::endl;
 using std::max;
 using std::min;
 
-namespace config = sub_super_scripts_detector::config;
-
 // _________________________________________________________________________________________________
-SubSuperScriptsDetector::SubSuperScriptsDetector(const PdfDocument* doc, LogLevel logLevel,
-      int logPageFilter) {
-  _log = new Logger(logLevel, logPageFilter);
+SubSuperScriptsDetector::SubSuperScriptsDetector(PdfDocument* doc, const Config& config) {
   _doc = doc;
+  _config = config;
+  _log = new Logger(config.scriptsDetection.logLevel, config.scriptsDetection.logPageFilter);
 }
 
 // _________________________________________________________________________________________________
@@ -53,6 +52,9 @@ void SubSuperScriptsDetector::process() const {
 
         for (auto* word : line->words) {
           for (auto* character : word->characters) {
+            const double fsEqualTolerance = _config.scriptsDetection.fsEqualTolerance;
+            const double baseEqualTolerance = _config.scriptsDetection.baseEqualTolerance;
+
             // Consider a character to be superscripted, if its font size is smaller than the
             // most frequent font size (under consideration of the given tolerance) and its base
             // line is higher than the base line of the text line. Consider a character to be
@@ -60,20 +62,19 @@ void SubSuperScriptsDetector::process() const {
             _log->debug(p) << BOLD << "char: " << character->text << OFF << endl;
             _log->debug(p) << " └─ char.fontSize: " << character->fontSize << endl;
             _log->debug(p) << " └─ doc.mostFrequentFontSize: " << _doc->mostFreqFontSize << endl;
-            _log->debug(p) << " └─ tolerance font-size: " << config::FSIZE_EQUAL_TOLERANCE << endl;
+            _log->debug(p) << " └─ tolerance font-size: " << fsEqualTolerance << endl;
             _log->debug(p) << " └─ char.base: " << character->base << endl;
             _log->debug(p) << " └─ line.base: " << line->base << endl;
-            _log->debug(p) << " └─ tolerance base-line: " << config::BASE_EQUAL_TOLERANCE << endl;
+            _log->debug(p) << " └─ tolerance base-line: " << baseEqualTolerance << endl;
 
-            if (smaller(character->fontSize, _doc->mostFreqFontSize,
-                  config::FSIZE_EQUAL_TOLERANCE)) {
-              if (smaller(character->base, line->base, config::BASE_EQUAL_TOLERANCE)) {
+            if (smaller(character->fontSize, _doc->mostFreqFontSize, fsEqualTolerance)) {
+              if (smaller(character->base, line->base, baseEqualTolerance)) {
                 _log->debug(p) << BOLD << " superscript (char.base < line.base)" << OFF << endl;
                 character->isSuperscript = true;
                 continue;
               }
 
-              if (larger(character->base, line->base, config::BASE_EQUAL_TOLERANCE)) {
+              if (larger(character->base, line->base, baseEqualTolerance)) {
                 _log->debug(p) << BOLD << " subscript (char.base > line.base)" << OFF << endl;
                 character->isSubscript = true;
                 continue;

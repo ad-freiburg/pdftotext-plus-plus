@@ -31,8 +31,8 @@ class PageSegmentsUtilsTest : public ::testing::Test {
   // This method is called before the first test of this test suite.
   static void SetUpTestSuite() {
     ppp::Config config;
-    config.semanticRolesDetectionModelsDir = CONFIG_SEMANTIC_ROLES_DETECTION_MODELS_DIR;
-    PdfToTextPlusPlus engine(&config);
+    config.rolesPrediction.modelsDir = CONFIG_SEMANTIC_ROLES_DETECTION_MODELS_DIR;
+    PdfToTextPlusPlus engine(config);
 
     if (pdf1 == nullptr) {
       pdf1 = new PdfDocument();
@@ -116,7 +116,8 @@ TEST_F(PageSegmentsUtilsTest, computeTrimBoxPdf1) {
     segment->pos->rightX = std::max(segment->pos->rightX, line->pos->rightX);
     segment->pos->lowerY = std::max(segment->pos->lowerY, line->pos->lowerY);
   }
-  std::tuple<double, double, double, double> trimBox = page_segment_utils::computeTrimBox(segment);
+  std::tuple<double, double, double, double> trimBox =
+      page_segment_utils::computeTrimBox(segment, 0, 0.5);
 
   // The rightX of the trimBox (the third value) should be the largest rightX.
   ASSERT_NEAR(std::get<0>(trimBox), 312.3, TOL);
@@ -142,7 +143,7 @@ TEST_F(PageSegmentsUtilsTest, computeTrimBoxPdf1) {
     segment->pos->rightX = std::max(segment->pos->rightX, line->pos->rightX);
     segment->pos->lowerY = std::max(segment->pos->lowerY, line->pos->lowerY);
   }
-  trimBox = computeTrimBox(segment);
+  trimBox = computeTrimBox(segment, 0, 0.5);
 
   // The rightX of the trim box should be equal to the most frequent right X among the lines.
   ASSERT_NEAR(std::get<0>(trimBox), 310.6, TOL);

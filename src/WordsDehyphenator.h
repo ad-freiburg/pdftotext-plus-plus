@@ -9,20 +9,24 @@
 #ifndef WORDSDEHYPHENATOR_H_
 #define WORDSDEHYPHENATOR_H_
 
+#include "./Config.h"
 #include "./PdfDocument.h"
+
+using ppp::Config;
 
 // =================================================================================================
 
 class WordsDehyphenator {
  public:
-  explicit WordsDehyphenator(const PdfDocument* doc);
+  explicit WordsDehyphenator(PdfDocument* doc, const Config& config);
 
   ~WordsDehyphenator();
 
   void dehyphenate() const;
 
  private:
-  const PdfDocument* _doc;
+  PdfDocument* _doc;
+  Config _config;
 };
 
 #endif  // WORDSDEHYPHENATOR_H_

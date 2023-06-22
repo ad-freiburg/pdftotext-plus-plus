@@ -24,13 +24,13 @@ using std::vector;
 using std::wstring;
 
 // _________________________________________________________________________________________________
-void ppp::string_utils::splitIntoWords(const wstring& text, vector<wstring>* words) {
+void ppp::string_utils::splitIntoWords(const wstring& text, const string& wordDelimitersAlphabet,
+    vector<wstring>* words) {
   assert(words);
 
   size_t n = text.length();
-  const string delimiters = config::WORD_DELIMITERS_ALPHABET;
   // The following works because all characters are single-byte.
-  const wstring wdelimiters(delimiters.begin(), delimiters.end());
+  const wstring wdelimiters(wordDelimitersAlphabet.begin(), wordDelimitersAlphabet.end());
   size_t start = text.find_first_not_of(wdelimiters);
 
   while (start < n) {
@@ -42,18 +42,18 @@ void ppp::string_utils::splitIntoWords(const wstring& text, vector<wstring>* wor
 }
 
 // _________________________________________________________________________________________________
-void ppp::string_utils::splitIntoWords(const string& text, vector<string>* words) {
+void ppp::string_utils::splitIntoWords(const string& text, const string& wordDelimitersAlphabet,
+    vector<string>* words) {
   assert(words);
 
   size_t n = text.length();
-  const string delimiters = config::WORD_DELIMITERS_ALPHABET;
-  size_t start = text.find_first_not_of(delimiters);
+  size_t start = text.find_first_not_of(wordDelimitersAlphabet);
 
   while (start < n) {
-    size_t stop = text.find_first_of(delimiters, start);
+    size_t stop = text.find_first_of(wordDelimitersAlphabet, start);
     if (stop > n) { stop = n; }
     words->push_back(text.substr(start, stop - start));
-    start = text.find_first_not_of(delimiters, stop + 1);
+    start = text.find_first_not_of(wordDelimitersAlphabet, stop + 1);
   }
 }
 
@@ -64,9 +64,9 @@ string ppp::string_utils::createRandomString(size_t len, const string& prefix) {
   tmp_s.reserve(prefix.length() + len);
 
   // Append <len>-many random characters from our alphabet of alphanumerical characters.
-  int alphabetSize = strlen(config::ALPHA_NUM_ALPHABET);
+  int alphabetSize = strlen(ALPHA_NUM);
   for (size_t i = 0; i < len; i++) {
-    tmp_s += config::ALPHA_NUM_ALPHABET[rand() % (alphabetSize - 1)];
+    tmp_s += ALPHA_NUM[rand() % (alphabetSize - 1)];
   }
 
   return tmp_s;

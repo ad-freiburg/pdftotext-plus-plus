@@ -17,8 +17,6 @@
 #include "./PageSegmentsUtils.h"
 #include "./StringUtils.h"
 
-using global_config::ID_LENGTH;
-
 using std::make_tuple;
 using std::max;
 using std::min;
@@ -28,12 +26,12 @@ using std::unordered_map;
 
 // _________________________________________________________________________________________________
 PdfPageSegment* page_segment_utils::createPageSegment(const vector<PdfElement*>& elements,
-    const PdfDocument* doc) {
+    const PdfDocument* doc, size_t idLength) {
   PdfPageSegment* segment = new PdfPageSegment();
   segment->doc = doc;
 
   // Create a (unique) id.
-  segment->id = ppp::string_utils::createRandomString(ID_LENGTH, "segment-");
+  segment->id = ppp::string_utils::createRandomString(idLength, "segment-");
 
   // Set the page number.
   segment->pos->pageNum = !elements.empty() ? elements[0]->pos->pageNum : -1;
@@ -54,7 +52,7 @@ PdfPageSegment* page_segment_utils::createPageSegment(const vector<PdfElement*>&
 
 // _________________________________________________________________________________________________
 tuple<double, double, double, double> page_segment_utils::computeTrimBox(
-    const PdfPageSegment* segment) {
+    const PdfPageSegment* segment, int trimBoxCoordsPrec, double minPrecLinesSameRightX) {
   assert(segment);
 
   // Initialize the coordinates of the trim box with the respective coordinates of the bounding box.
@@ -66,7 +64,7 @@ tuple<double, double, double, double> page_segment_utils::computeTrimBox(
   // Compute the most frequent rightX among the text lines.
   DoubleCounter rightXCounter;
   for (auto* line : segment->lines) {
-    double rightX = ppp::math_utils::round(line->pos->getRotRightX(), config::TRIM_BOX_COORDS_PREC);
+    double rightX = ppp::math_utils::round(line->pos->getRotRightX(), trimBoxCoordsPrec);
     rightXCounter[rightX]++;
   }
   pair<double, double> mostFreqRightXPair = rightXCounter.mostFreqAndCount();
@@ -78,7 +76,7 @@ tuple<double, double, double, double> page_segment_utils::computeTrimBox(
   double mostFreqRightXRatio = nLines > 0 ? mostFreqRightXCount / static_cast<double>(nLines) : 0.0;
 
   // If the percentage is larger or equal to the given threshold, set trimRightX to this value.
-  if (ppp::math_utils::equalOrLarger(mostFreqRightXRatio, config::MIN_PERC_LINES_SAME_RIGHT_X)) {
+  if (ppp::math_utils::equalOrLarger(mostFreqRightXRatio, minPrecLinesSameRightX)) {
     trimRightX = mostFreqRightX;
   }
 

@@ -78,47 +78,12 @@ class PdfToTextPlusPlus {
    *   NOTE: This mode was introduced for the benchmark generator that needs information about the
    *   the contained characters (e.g., the position, text and color) for assembling the true words,
    *   text blocks, etc. based on the color of the characters.
-   * @param logLevelPdfParsing
-   *   The level for the logging messages, produced while parsing the content streams of the current
-   *   PDF file, to the console.
-   * @param logLevelStatisticsComputation
-   *   The level for the logging messages, produced while computing the statistics (about
-   *   characters, words, lines, etc.) to the console.
-   * @param logLevelDiacriticMarksMerging
-   *   The level for the logging messages, produced while merging diacritical marks with their base
-   *   characters, to the console.
-   * @param logLevelWordsDetection
-   *   The level for the logging messages, produced while detecting words, to the console.
-   * @param logLevelPageSegmentation
-   *   The level for the logging messages, produced while segmenting the pages, to the console.
-   * @param logLevelTextLinesDetection
-   *   The level for the logging messages, produced while detecting text lines, to the console.
-   * @param logLevelSubSuperScriptsDetection
-   *   The level for the logging messages, produced while detecting sub-/superscripts, to the
-   *   console.
-   * @param logLevelTextBlocksDetection
-   *   The level for the logging messages, produced while detecting text blocks, to the console.
-   * @param logPageFilter
-   *   If set to a value > 0, only the logging messages, produced while processing the
-   *   <logPageFilter>-th page of the current PDF file, will be printed to the console. If set to
-   *   a value <= 0, all logging messages will be printed to the console, no matter when (= for
-   *   which page) they were produced. Note that the page numbers are 1-based; so to print only the
-   *   messages produced while processing the first page, set this parameter to 1.
    */
   PdfToTextPlusPlus(
-    const ppp::Config* config,
+    const ppp::Config& config,
     bool noEmbeddedFontFilesParsing = false,
     bool noWordsDehyphenation = false,
-    bool parseMode = false,
-    LogLevel logLevelPdfParsing = ERROR,
-    LogLevel logLevelStatisticsComputation = ERROR,
-    LogLevel logLevelDiacriticMarksMerging = ERROR,
-    LogLevel logLevelWordsDetection = ERROR,
-    LogLevel logLevelPageSegmentation = ERROR,
-    LogLevel logLevelTextLinesDetection = ERROR,
-    LogLevel logLevelSubSuperScriptsDetection = ERROR,
-    LogLevel logLevelTextBlocksDetection = ERROR,
-    int logPageFilter = -1);
+    bool parseMode = false);
 
   /** The deconstructor */
   ~PdfToTextPlusPlus();
@@ -142,7 +107,7 @@ class PdfToTextPlusPlus {
 
  private:
   // The configuration to use.
-  const ppp::Config* _config;
+  ppp::Config _config;
   // Whether or not to parse the embedded font files of a PDF file.
   bool _noEmbeddedFontFilesParsing;
   // Whether or not to disable words dehyphenation.

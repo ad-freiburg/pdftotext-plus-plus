@@ -191,8 +191,8 @@ double element_utils::computeRightXOffset(const PdfElement* elem1, const PdfElem
 }
 
 // _________________________________________________________________________________________________
-PdfFigure* element_utils::computeOverlapsFigure(const PdfElement* element,
-      const vector<PdfFigure*>& figures) {
+PdfFigure* element_utils::computeOverlapsFigure(const PdfElement* element, double minXOverlapRatio,
+      double minYOverlapRatio, const vector<PdfFigure*>& figures) {
   assert(element);
 
   for (auto* figure : figures) {
@@ -200,8 +200,8 @@ PdfFigure* element_utils::computeOverlapsFigure(const PdfElement* element,
     pair<double, double> yOverlapRatios = element_utils::computeYOverlapRatios(element, figure);
 
     // Check if the figure overlaps the element by the required overlap ratios.
-    if (equalOrLarger(xOverlapRatios.first, config::FIGURE_X_OVERLAP_THRESHOLD)
-        && equalOrLarger(yOverlapRatios.first, config::FIGURE_Y_OVERLAP_THRESHOLD)) {
+    if (equalOrLarger(xOverlapRatios.first, minXOverlapRatio)
+        && equalOrLarger(yOverlapRatios.first, minYOverlapRatio)) {
       return figure;
     }
   }
@@ -220,21 +220,22 @@ bool text_element_utils::computeHasEqualFont(const PdfTextElement* e1, const Pdf
 
 // _________________________________________________________________________________________________
 bool text_element_utils::computeHasEqualFontSize(const PdfTextElement* e1,
-      const PdfTextElement* e2) {
+      const PdfTextElement* e2, double tolerance) {
   assert(e1);
   assert(e2);
-  return equal(e1->fontSize, e2->fontSize, config::FSIZE_EQUAL_TOLERANCE);
+  return equal(e1->fontSize, e2->fontSize, tolerance);
 }
 
 // _________________________________________________________________________________________________
-bool text_element_utils::computeEndsWithSentenceDelimiter(const PdfTextElement* element) {
+bool text_element_utils::computeEndsWithSentenceDelimiter(const PdfTextElement* element,
+    const string& delimAlphabet) {
   assert(element);
 
   if (element->text.empty()) {
     return false;
   }
 
-  return strchr(config::SENTENCE_DELIMITER_ALPHABET, element->text.back()) != nullptr;
+  return delimAlphabet.find(element->text.back()) != std::string::npos;
 }
 
 // _________________________________________________________________________________________________
@@ -249,7 +250,8 @@ bool text_element_utils::computeStartsWithUpper(const PdfTextElement* element) {
 }
 
 // _________________________________________________________________________________________________
-bool text_element_utils::computeIsEmphasized(const PdfTextElement* element) {
+bool text_element_utils::computeIsEmphasized(const PdfTextElement* element,
+    double fontSizeEqualTolerance, double fontWeightEqualTolerance) {
   assert(element);
   assert(element->doc);
 
@@ -268,20 +270,19 @@ bool text_element_utils::computeIsEmphasized(const PdfTextElement* element) {
   // The element is emphasized if...
 
   // ... its font size is larger than the most frequent font size in the document.
-  if (larger(element->fontSize, mostFreqFontSize, config::FSIZE_EQUAL_TOLERANCE)) {
+  if (larger(element->fontSize, mostFreqFontSize, fontSizeEqualTolerance)) {
     return true;
   }
 
   // ... its font weight is larger than the most frequent font weight (and its font size is not
   // smaller than the most frequent font size).
-  double fontWeightTolerance = config::FWEIGHT_EQUAL_TOLERANCE;
-  if (equalOrLarger(element->fontSize, mostFreqFontSize, config::FSIZE_EQUAL_TOLERANCE)
-      && larger(elemFontInfo->weight, docFontInfo->weight, fontWeightTolerance)) {
+  if (equalOrLarger(element->fontSize, mostFreqFontSize, fontSizeEqualTolerance)
+      && larger(elemFontInfo->weight, docFontInfo->weight, fontWeightEqualTolerance)) {
     return true;
   }
 
   // ... it is printed in italics (and its font size is not smaller than the most freq font size).
-  if (equalOrLarger(element->fontSize, mostFreqFontSize, config::FSIZE_EQUAL_TOLERANCE)
+  if (equalOrLarger(element->fontSize, mostFreqFontSize, fontSizeEqualTolerance)
       && elemFontInfo->isItalic) {
     return true;
   }

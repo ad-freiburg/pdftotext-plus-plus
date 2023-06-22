@@ -11,13 +11,12 @@
 #include <iostream>
 #include <vector>
 
-#include "../src/Constants.h"
 #include "../src/PdfToTextPlusPlus.h"
 #include "../src/utils/WordsUtils.h"
 
 using words_utils::createWord;
 
-// The allowed tolerance on comparing two float values.
+// The allowed tolerance on comparing two float values. TODO(korzen): Read from config.
 const double TOL = 0.1;
 
 // _________________________________________________________________________________________________
@@ -26,8 +25,8 @@ class WordsUtilsTest : public ::testing::Test {
   // This method is called before the first test of this test suite.
   static void SetUpTestSuite() {
     ppp::Config config;
-    config.semanticRolesDetectionModelsDir = CONFIG_SEMANTIC_ROLES_DETECTION_MODELS_DIR;
-    PdfToTextPlusPlus engine(&config);
+    config.rolesPrediction.modelsDir = CONFIG_SEMANTIC_ROLES_DETECTION_MODELS_DIR;
+    PdfToTextPlusPlus engine(config);
 
     if (pdf1 == nullptr) {
       pdf1 = new PdfDocument();
@@ -57,14 +56,16 @@ PdfDocument* WordsUtilsTest::pdf2 = nullptr;
 
 // _________________________________________________________________________________________________
 TEST_F(WordsUtilsTest, createWordPdf1) {
+  // TODO: Read from config.
+  int idLength = 8;
   PdfPage* page0 = pdf1->pages[0];
 
   // Test a word composed from the characters of "Introduction" (in the first line).
   std::vector<PdfCharacter*> characters;
   for (size_t i = 1; i < 13; i++) { characters.push_back(page0->characters[i]); }
-  PdfWord* word = createWord(characters, pdf1);
+  PdfWord* word = createWord(characters, idLength, pdf1);
   ASSERT_EQ(word->doc, pdf1);
-  ASSERT_EQ(word->id.size(), size_t(global_config::ID_LENGTH + 5));  // +5 for "word-"
+  ASSERT_EQ(word->id.size(), size_t(idLength + 5));  // +5 for "word-"
   ASSERT_EQ(word->pos->pageNum, page0->pageNum);
   ASSERT_NEAR(word->pos->leftX, 96.2, TOL);
   ASSERT_NEAR(word->pos->rightX, 185.0, TOL);
@@ -80,9 +81,9 @@ TEST_F(WordsUtilsTest, createWordPdf1) {
   // Test a word composed from the characters of "ipsum" (in the second line).
   characters.clear();
   for (size_t i = 18; i < 23; i++) { characters.push_back(page0->characters[i]); }
-  word = createWord(characters, pdf1);
+  word = createWord(characters, idLength, pdf1);
   ASSERT_EQ(word->doc, pdf1);
-  ASSERT_EQ(word->id.size(), size_t(global_config::ID_LENGTH + 5));  // +5 for "word-"
+  ASSERT_EQ(word->id.size(), size_t(idLength + 5));  // +5 for "word-"
   ASSERT_EQ(word->pos->pageNum, page0->pageNum);
   ASSERT_NEAR(word->pos->leftX, 103.8, TOL);
   ASSERT_NEAR(word->pos->rightX, 129.9, TOL);

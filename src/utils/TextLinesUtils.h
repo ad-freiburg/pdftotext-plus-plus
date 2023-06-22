@@ -12,125 +12,15 @@
 #include <regex>
 #include <string>
 #include <unordered_set>
+#include <vector>
 
-#include "../Constants.h"
 #include "../PdfDocument.h"
 
 using std::max;
 using std::regex;
 using std::string;
 using std::unordered_set;
-
-// =================================================================================================
-// CONFIG
-
-namespace text_lines_utils::config {
-
-// A parameter used for computing whether or not two coordinates are (approximately) equal. It
-// denotes the maximum allowed difference between two coordinates so that both coordinates are
-// considered to be equal.
-const double COORDS_EQUAL_TOLERANCE = global_config::COORDS_EQUAL_TOLERANCE;
-
-// -------
-// Config for computeHasPrevLineCapacity().
-
-/**
- * This method returns a threshold that is used for computing whether or not the previous text line
- * has capacity. If the difference between the right margin of the previous line and the width of
- * the first word of the current text line is larger than this threshold, the previous line is
- * considered to have capacity. Otherwise, the previous line is considered to have *no* capacity.
- *
- * @param doc
- *    The currently processed PDF document.
- *
- * @return
- *    The threshold.
- */
-constexpr double getPrevTextLineCapacityThreshold(const PdfDocument* doc) {
-  return 2.0 * doc->avgCharWidth;
-}
-
-// -------
-// Config for computeTextLineHierarchy().
-
-// A parameter that is used for computing the text line hierarchy. It denotes the maximum line
-// distance between two text lines so that the one text line is considered to be a candidate for
-// the parent text line (or a sibling text line) of the other text line.
-const double LINE_HIERARCHY_MAX_LINE_DIST = 10.0;
-
-/**
- * This method returns a threshold that is used for computing whether or not a text line is a
- * parent text line or a sibling text line of another text line. If the leftX value of a text line
- * L is larger than the leftX value of another text line M, M is considered to be the parent text
- * line of L. If the difference between the leftX values is smaller than this threshold, the text
- * lines are considered to be sibling text lines.
- *
- * @param doc
- *    The currently processed PDF document.
- *
- * @return
- *    The threshold.
- */
-constexpr double getTextLineHierarchyLeftXOffsetThreshold(const PdfDocument* doc) {
-  return 1.0 * doc->avgCharWidth;
-}
-
-// -------
-// Config for computeIsCentered().
-
-// A parameter used for computing whether or not a text line is centered compared to another
-// text line. It denotes the minimum ratio by which one of the text line must horizontally overlap
-// the the other text line, so that the text lines are considered to be centered to each other.
-// If the maximum x-overlap ratio between both text lines is smaller than this value, the
-// text lines are considered to be *not* centered.
-const double CENTERING_X_OVERLAP_RATIO_THRESHOLD = 0.99;
-
-/**
- * This method returns the maximum allowed difference between the left x-offset and right x-offset
- * of a text line (computed relatively to the previous text line), so that both offsets are
- * considered to be equal and that the text line is considered to be centered compared to the
- * previous text line.
- *
- * @param doc
- *    The currently processed PDF document.
- *
- * @return
- *    The maximum allowed difference between the left x-offset and right x-offset of a text line.
- */
-constexpr double getCenteringXOffsetEqualTolerance(const PdfDocument* doc) {
-  assert(doc);
-  return 2.0 * doc->avgCharWidth;
-}
-
-// -------
-// Config for computeIsPrefixedByItemLabel().
-
-// The regular expressions we use to detect enumeration item labels.
-const regex ITEM_LABEL_REGEXES[] = {
-  // A regex to find item labels of form "• ", or "- ", or "+ ", etc.
-  regex("^(•|-|–|\\+)\\s+"),
-  // A regex to find item labels of form "I. ", "II. ", "III. ", "IV. ", etc.
-  regex("^(X{0,1}(IX|IV|V?I{0,3}))\\.\\s+", std::regex_constants::icase),
-  // A regex to find item labels of form "(I)", "(II)", "(III)", "(IV) ", etc.
-  regex("^\\((X{0,1}(IX|IV|V?I{0,3}))\\)\\s+", std::regex_constants::icase),
-  // A regex to find item labels of form "a. ", "b. ", "c. ", etc.
-  regex("^([a-z])\\.\\s+"),
-  // A regex to find item labels of form "1. ", "2. ", "3. ", etc.
-  regex("^([0-9]+)\\.\\s+"),
-  // A regex to find item labels of form "(A) ", "(1) ", "(C1) ", "[1] ", "[2] ", etc.
-  regex("^(\\(|\\[)([a-z0-9][0-9]{0,2})(\\)|\\])\\s+", std::regex_constants::icase),
-  // A regex to find item labels of form "[Bu2] ", "[Ch] ", "[Enn2020] ", etc.
-  regex("^(\\[)([A-Z][a-zA-Z0-9]{0,5})(\\])\\s+"),
-  // A regex to find item labels of form "A) " or "1) " or "a1) ".
-  regex("^([a-z0-9][0-9]{0,1})\\)\\s+", std::regex_constants::icase),
-  // A regex to find item labels of form "PACS" (1011.5073).
-  regex("^PACS\\s+", std::regex_constants::icase)
-};
-
-// An alphabet of characters which we consider to be a valid part of a superscripted item label.
-const char* const SUPER_ITEM_LABEL_ALPHABET = "*∗abcdefghijklmnopqrstuvwxyz01234567890()";
-
-}  // namespace text_lines_utils::config
+using std::vector;
 
 // =================================================================================================
 
@@ -155,6 +45,10 @@ namespace text_lines_utils {
  *
  * @param line
  *    The text line to process.
+ * @param superItemLabelAlphabet
+ *    An alphabet of characters to consider to be a valid part of a superscripted item label.
+ * @param itemLabelRegexes
+ *    The regular expressions to use to detect enumeration item labels.
  * @param potentialFootnoteLabels
  *    A set of strings that is used to check if the line is the first line of a footnote. It
  *    contains strings that occur somewhere in the document as a superscript, meaning that each
@@ -167,7 +61,12 @@ namespace text_lines_utils {
  *    True if the given line is the first line of an enumeration item or of a footnote, false
  *    otherwise.
  */
+// TODO(korzen): Document the missing arguments.
 bool computeIsFirstLineOfItem(const PdfTextLine* line,
+    const char* superItemLabelAlphabet,
+    const vector<regex>* itemLabelRegexes,
+    double fontSizeEqualTolerance,
+    const string& sentenceDelimAlphabet,
     const unordered_set<string>* potentialFootnoteLabels = nullptr);
 
 /**
@@ -186,6 +85,8 @@ bool computeIsFirstLineOfItem(const PdfTextLine* line,
  *
  * @param line
  *    The line to process.
+ * @param superItemLabelAlphabet
+ *    An alphabet of characters to consider to be a valid part of a superscripted item label.
  * @param potentialFootnoteLabels
  *    The set of potential footnote labels, passed to the computeIsFirstLineOfItem() method. See
  *    the comment given for this method for more information about this parameter.
@@ -194,7 +95,12 @@ bool computeIsFirstLineOfItem(const PdfTextLine* line,
  *    True if the given line is a continuation line of an enumeration item or a footnote, false
  *    otherwise.
  */
+// TODO(korzen): Document the missing arguments.
 bool computeIsContinuationOfItem(const PdfTextLine* line,
+    const char* superItemLabelAlphabet,
+    const vector<regex>* itemLabelRegexes,
+    double fontSizeEqualTolerance,
+    const string& sentenceDelimAlphabet,
     const unordered_set<string>* potentialFootnoteLabels = nullptr);
 
 // =================================================================================================
@@ -207,11 +113,17 @@ bool computeIsContinuationOfItem(const PdfTextLine* line,
  *
  * @param line
  *    The line to process.
+ * @param superItemLabelAlphabet
+ *    An alphabet of characters to consider to be a valid part of a superscripted item label.
+ * @param itemLabelRegexes
+ *    The regular expressions to use to detect enumeration item labels.
  *
  * @return
  *    True if the line is prefixed by an enumeration label, false otherwise.
  */
-bool computeIsPrefixedByItemLabel(const PdfTextLine* line);
+bool computeIsPrefixedByItemLabel(const PdfTextLine* line,
+    const char* superItemLabelAlphabet,
+    const vector<regex>* itemLabelRegexes);
 
 /**
  * This method returns true if the given line is prefixed by a footnote label.
@@ -247,11 +159,18 @@ bool computeIsPrefixedByFootnoteLabel(const PdfTextLine* line, const unordered_s
  *
  * @param line
  *    The line to process.
- *
+ * @param prevTextLineCapacityThresholdFactor
+ *    A factor used to compute a threshold that is used for computing whether or not the previous
+ *    text line has capacity (the threshold is computed as <factor> * 'avg. character width of the
+ *    PDF document'). If the difference between the right margin of the previous line and the
+ *    width of the first word of the current text line is larger than this threshold, the previous
+ *    line is considered to have capacity. Otherwise, the previous line is considered to have *no*
+ *    capacity.
  * @return
  *    True if the previous line of the given line has capacity, false otherwise.
  */
-bool computeHasPrevLineCapacity(const PdfTextLine* line);
+bool computeHasPrevLineCapacity(const PdfTextLine* line,
+    double prevTextLineCapacityThresholdFactor);
 
 /**
  * This method computes the parent text line, the previous sibling text line and the next sibling
@@ -308,8 +227,23 @@ bool computeHasPrevLineCapacity(const PdfTextLine* line);
  *
  * @param page
  *    The page to process.
+ * @param leftXOffsetThresholdFactor
+ *    A factor that is used for computing a threshold for determining whether or not a text line
+ *    is a parent text line or a sibling text line of another text line. The threshold is
+ *    multiplied with the average character width in a PDF document. If the leftX value of a text
+ *    line L is larger than the leftX value of another text line M, M is considered to be the
+ *    parent text line of L. If the difference between the leftX values is smaller than this
+ *    threshold, the text lines are considered to be sibling text lines.
+ * @param lineHierarchyMaxLineDist
+ *    A parameter that is used for computing the text line hierarchy. It denotes the maximum line
+ *    distance between two text lines so that the one text line is considered to be a candidate for
+ *    the parent text line (or a sibling text line) of the other text line.
+ * @param coordsEqualTolerance
+ *    A parameter used for computing if two given coordinates are equal. It denotes the maximum
+ *    allowed difference between two coordinates so that they are considered to be equal.
  */
-void computeTextLineHierarchy(const PdfPage* page);
+void computeTextLineHierarchy(const PdfPage* page, double leftXOffsetThresholdFactor,
+    double lineHierarchyMaxLineDist, double coordsEqualTolerance);
 
 /**
  * This method computes potential footnote labels contained in the given line and appends it to
@@ -334,7 +268,9 @@ void computeTextLineHierarchy(const PdfPage* page);
  * @param result
  *    The set to which the detected potential footnote labels should be appended.
  */
-void computePotentialFootnoteLabels(const PdfTextLine* line, unordered_set<string>* result);
+// TODO(korzen): Document missing arguments.
+void computePotentialFootnoteLabels(const PdfTextLine* line,
+    const string& specialFootnoteLabelsAlphabet, unordered_set<string>* result);
 
 /**
  * This method returns true if the given lines are centered compared to each other.
@@ -351,12 +287,25 @@ void computePotentialFootnoteLabels(const PdfTextLine* line, unordered_set<strin
  *   The first line to process.
  * @param line2
  *   The second line to process.
+ * @param centeringXOverlapRatioThreshold
+ *   A parameter used for computing whether or not a text line is centered compared to another
+ *   text line. It denotes the minimum ratio by which one of the text line must horizontally
+ *   overlap the the other text line, so that the text lines are considered to be centered to each
+ *   other. If the maximum x-overlap ratio between both text lines is smaller than this value, the
+ *   text lines are considered to be *not* centered.
+ * @param centeringXOffsetEqualToleranceFactor
+ *   This method returns a factor that is used to compute a threshold (= <factor> *
+ *   'average character width in the PDF document') denoting the maximum allowed difference
+ *   between the left x-offset and right x-offset of a text line (computed relatively to the
+ *   previous text line), so that both offsets are considered to be equal and that the text line
+ *   is considered to be centered compared to the previous text line.
  *
  * @return
  *    True, if the two given lines are centered with respect to the requirements mentioned above,
  *    false otherwise.
  */
-bool computeIsCentered(const PdfTextLine* line1, const PdfTextLine* line2);
+bool computeIsCentered(const PdfTextLine* line1, const PdfTextLine* line2,
+    double centeringXOverlapRatioThreshold, double centeringXOffsetEqualToleranceFactor);
 
 }  // namespace text_lines_utils
 

@@ -36,13 +36,11 @@ using ppp::math_utils::round;
 using ppp::math_utils::smaller;
 using ppp::string_utils::shorten;
 
-namespace config = text_blocks_detector::config;
-
 // _________________________________________________________________________________________________
-TextBlocksDetector::TextBlocksDetector(const PdfDocument* doc, LogLevel logLevel,
-      int logPageFilter) {
-  _log = new Logger(logLevel, logPageFilter);
+TextBlocksDetector::TextBlocksDetector(PdfDocument* doc, const Config& config) {
   _doc = doc;
+  _config = config;
+  _log = new Logger(config.blocksDetection.logLevel, config.blocksDetection.logPageFilter);
 }
 
 // _________________________________________________________________________________________________
@@ -87,7 +85,26 @@ void TextBlocksDetector::process() {
         _log->debug(p) << "---------------------------------------" << endl;
 
         if (startsPreliminaryBlock(line) && !currentBlockLines.empty()) {
-          text_blocks_utils::createTextBlock(currentBlockLines, &segment->blocks);
+          // TODO(korzen): Remove the mix of different configs.
+          text_blocks_utils::createTextBlock(
+              currentBlockLines,
+              _config.idLength,
+              _config.formulaIdAlphabet,
+              _config.linesDetection.centeringXOverlapRatioThreshold,
+              _config.linesDetection.centeringXOffsetEqualToleranceFactor,
+              _config.blocksDetection.centeringMaxNumJustifiedLines,
+              _config.linesDetection.prevTextLineCapacityThresholdFactor,
+              _config.blocksDetection.LAST_NAME_PREFIXES,
+              _config.blocksDetection.hangIndentMinLengthLongLines,
+              _config.blocksDetection.hangIndentMinPercLinesSameLeftMargin,
+              _config.blocksDetection.hangIndentNumNonIndentedLinesThreshold,
+              _config.blocksDetection.hangIndentMarginThresholdFactor,
+              _config.blocksDetection.hangIndentNumLowerNonIndentedLinesThreshold,
+              _config.blocksDetection.hangIndentNumLongLinesThreshold,
+              _config.blocksDetection.hangIndentNumLowerIndentedLinesThreshold,
+              _config.fontSizeEqualTolerance,
+              _config.fontWeightEqualTolerance,
+              &segment->blocks);
           currentBlockLines.clear();
         }
 
@@ -95,7 +112,25 @@ void TextBlocksDetector::process() {
         _log->debug(p) << "=======================================" << endl;
       }
       if (!currentBlockLines.empty()) {
-        text_blocks_utils::createTextBlock(currentBlockLines, &segment->blocks);
+        text_blocks_utils::createTextBlock(
+            currentBlockLines,
+            _config.idLength,
+            _config.formulaIdAlphabet,
+            _config.linesDetection.centeringXOverlapRatioThreshold,
+            _config.linesDetection.centeringXOffsetEqualToleranceFactor,
+            _config.blocksDetection.centeringMaxNumJustifiedLines,
+            _config.linesDetection.prevTextLineCapacityThresholdFactor,
+            _config.blocksDetection.LAST_NAME_PREFIXES,
+            _config.blocksDetection.hangIndentMinLengthLongLines,
+            _config.blocksDetection.hangIndentMinPercLinesSameLeftMargin,
+            _config.blocksDetection.hangIndentNumNonIndentedLinesThreshold,
+            _config.blocksDetection.hangIndentMarginThresholdFactor,
+            _config.blocksDetection.hangIndentNumLowerNonIndentedLinesThreshold,
+            _config.blocksDetection.hangIndentNumLongLinesThreshold,
+            _config.blocksDetection.hangIndentNumLowerIndentedLinesThreshold,
+            _config.fontSizeEqualTolerance,
+            _config.fontWeightEqualTolerance,
+            &segment->blocks);
       }
     }
   }
@@ -137,17 +172,56 @@ void TextBlocksDetector::process() {
 
           // Detect potential footnote labels in the line (= superscripted characters). This is
           // needed to detect the start of footnotes (we want to detect each footnote separately).
-          text_lines_utils::computePotentialFootnoteLabels(line, &_potentFnLabels);
+          text_lines_utils::computePotentialFootnoteLabels(line,
+              _config.specialFootnoteLabelsAlphabet, &_potentFnLabels);
 
           if (startsBlock(block, line) && !currentBlockLines.empty()) {
-            text_blocks_utils::createTextBlock(currentBlockLines, &page->blocks);
+            // TODO(korzen): Remove the mix of different configs.
+            text_blocks_utils::createTextBlock(
+              currentBlockLines,
+              _config.idLength,
+              _config.formulaIdAlphabet,
+              _config.linesDetection.centeringXOverlapRatioThreshold,
+              _config.linesDetection.centeringXOffsetEqualToleranceFactor,
+              _config.blocksDetection.centeringMaxNumJustifiedLines,
+              _config.linesDetection.prevTextLineCapacityThresholdFactor,
+              _config.blocksDetection.LAST_NAME_PREFIXES,
+              _config.blocksDetection.hangIndentMinLengthLongLines,
+              _config.blocksDetection.hangIndentMinPercLinesSameLeftMargin,
+              _config.blocksDetection.hangIndentNumNonIndentedLinesThreshold,
+              _config.blocksDetection.hangIndentMarginThresholdFactor,
+              _config.blocksDetection.hangIndentNumLowerNonIndentedLinesThreshold,
+              _config.blocksDetection.hangIndentNumLongLinesThreshold,
+              _config.blocksDetection.hangIndentNumLowerIndentedLinesThreshold,
+              _config.fontSizeEqualTolerance,
+              _config.fontWeightEqualTolerance,
+              &page->blocks);
             currentBlockLines.clear();
           }
           currentBlockLines.push_back(line);
           _log->debug(p) << "=======================================" << endl;
         }
         if (!currentBlockLines.empty()) {
-          text_blocks_utils::createTextBlock(currentBlockLines, &page->blocks);
+          // TODO(korzen): Remove the mix of different configs.
+          text_blocks_utils::createTextBlock(
+            currentBlockLines,
+            _config.idLength,
+            _config.formulaIdAlphabet,
+            _config.linesDetection.centeringXOverlapRatioThreshold,
+            _config.linesDetection.centeringXOffsetEqualToleranceFactor,
+            _config.blocksDetection.centeringMaxNumJustifiedLines,
+            _config.linesDetection.prevTextLineCapacityThresholdFactor,
+            _config.blocksDetection.LAST_NAME_PREFIXES,
+            _config.blocksDetection.hangIndentMinLengthLongLines,
+            _config.blocksDetection.hangIndentMinPercLinesSameLeftMargin,
+            _config.blocksDetection.hangIndentNumNonIndentedLinesThreshold,
+            _config.blocksDetection.hangIndentMarginThresholdFactor,
+            _config.blocksDetection.hangIndentNumLowerNonIndentedLinesThreshold,
+            _config.blocksDetection.hangIndentNumLongLinesThreshold,
+            _config.blocksDetection.hangIndentNumLowerIndentedLinesThreshold,
+            _config.fontSizeEqualTolerance,
+            _config.fontWeightEqualTolerance,
+            &page->blocks);
         }
       }
     }
@@ -312,8 +386,16 @@ Trool TextBlocksDetector::startsBlock_sameFigure(const PdfTextLine* line) const 
 
   // Compute the figure overlapped by the previous and the current line.
   vector<PdfFigure*>& figures = _doc->pages[p - 1]->figures;
-  PdfFigure* prevLineOverlapsFigure = element_utils::computeOverlapsFigure(prevLine, figures);
-  PdfFigure* currLineOverlapsFigure = element_utils::computeOverlapsFigure(line, figures);
+  PdfFigure* prevLineOverlapsFigure = element_utils::computeOverlapsFigure(
+    prevLine,
+    _config.figureXOverlapThreshold,
+    _config.figureYOverlapThreshold,
+    figures);
+  PdfFigure* currLineOverlapsFigure = element_utils::computeOverlapsFigure(
+    line,
+    _config.figureXOverlapThreshold,
+    _config.figureYOverlapThreshold,
+    figures);
 
   _log->debug(p) << _q << BLUE << "Does it overlap the same fig as the prev line?" << OFF << endl;
   _log->debug(p) << _q << " └─ prevLine.overlapsFigure: " << prevLineOverlapsFigure << endl;
@@ -377,7 +459,7 @@ Trool TextBlocksDetector::startsBlock_fontSize(const PdfTextLine* line) const {
 
   int p = line->pos->pageNum;
   const PdfTextLine* prevLine = line->prevLine;
-  double tolerance = config::FONT_SIZE_EQUAL_TOLERANCE;
+  double tolerance = _config.blocksDetection.fsEqualTolerance;
 
   _log->debug(p) << _q << BLUE << "Does it have another font size than prev line?" << OFF << endl;
   _log->debug(p) << _q << " └─ prevLine.mostFreqFontSize: " << prevLine->fontSize << endl;
@@ -413,7 +495,7 @@ Trool TextBlocksDetector::startsBlock_lineDistance(const PdfTextLine* line) cons
   const PdfTextLine* prevLine = line->prevLine;
 
   // Compute the expected line distance.
-  double fontSize = round(line->fontSize, config::FONT_SIZE_PREC);
+  double fontSize = round(line->fontSize, _config.blocksDetection.fsPrec);
   double expectedLineDistance = 0;
   if (_doc->mostFreqLineDistancePerFontSize.count(fontSize) > 0) {
     double eld = _doc->mostFreqLineDistancePerFontSize.at(fontSize);
@@ -423,12 +505,13 @@ Trool TextBlocksDetector::startsBlock_lineDistance(const PdfTextLine* line) cons
 
   // Compute the actual line distance.
   double actualLineDistance = element_utils::computeVerticalGap(prevLine, line);
-  actualLineDistance = round(actualLineDistance, config::LINE_DIST_PREC);
+  actualLineDistance = round(actualLineDistance, _config.blocksDetection.lineDistPrec);
 
   double lineDistanceDiff = actualLineDistance - expectedLineDistance;
 
   // Compute the threshold.
-  double threshold = config::getExpectedLineDistanceThreshold(_doc, expectedLineDistance);
+  double threshold = _config.blocksDetection.getExpectedLineDistanceThreshold(
+      _doc, expectedLineDistance);
 
   _log->debug(p) << _q << BLUE << "Is the dist to prev line larger than expected?" << OFF << endl;
   _log->debug(p) << _q << " └─ actual line distance: " << actualLineDistance << endl;
@@ -467,14 +550,14 @@ Trool TextBlocksDetector::startsBlock_increasedLineDistance(const PdfTextLine* l
 
   // Compute the distance between the previous but one line and the previous line.
   double prevDistance = element_utils::computeVerticalGap(prevPrevLine, prevLine);
-  prevDistance = round(prevDistance, config::LINE_DIST_PREC);
+  prevDistance = round(prevDistance, _config.blocksDetection.lineDistPrec);
 
   // Compute the distance between the previous line and the current line.
   double distance = element_utils::computeVerticalGap(prevLine, line);
-  distance = round(distance, config::LINE_DIST_PREC);
+  distance = round(distance, _config.blocksDetection.lineDistPrec);
 
   // Compute the tolerance.
-  double threshold = config::getPrevCurrNextLineDistanceTolerance(_doc);
+  double threshold = _config.blocksDetection.getPrevCurrNextLineDistanceTolerance(_doc);
 
   _log->debug(p) << _q << BLUE << "Is curr+prev distance > prev+prevPrev distance?" << OFF << endl;
   _log->debug(p) << _q << " └─ curr+prev line distance: " << distance << endl;
@@ -498,7 +581,11 @@ Trool TextBlocksDetector::startsBlock_centered(const PdfTextBlock* pBlock, const
   assert(line);
 
   // Check if the line is the first line of an enumeration item.
-  bool isFirstLineOfItem = text_lines_utils::computeIsFirstLineOfItem(line);
+  bool isFirstLineOfItem = text_lines_utils::computeIsFirstLineOfItem(line,
+      _config.linesDetection.superItemLabelAlphabet,
+      &_config.linesDetection.itemLabelRegexes,
+      _config.fontSizeEqualTolerance,
+      _config.sentenceDelimiterAlphabet);
 
   int p = line->pos->pageNum;
   _log->debug(p) << _q << BLUE << "Is the line part of a centered block?" << OFF << endl;
@@ -528,15 +615,40 @@ Trool TextBlocksDetector::startsBlock_item(const PdfTextBlock* pBlock, const Pdf
   int p = line->pos->pageNum;
   const PdfTextLine* prevLine = line->prevLine;
 
-  bool isPrevFirstLine = text_lines_utils::computeIsFirstLineOfItem(prevLine, &_potentFnLabels);
-  bool isCurrFirstLine = text_lines_utils::computeIsFirstLineOfItem(line, &_potentFnLabels);
-  bool isPrevContLine = text_lines_utils::computeIsContinuationOfItem(prevLine, &_potentFnLabels);
-  bool isCurrContLine = text_lines_utils::computeIsContinuationOfItem(line, &_potentFnLabels);
+  bool isPrevFirstLine = text_lines_utils::computeIsFirstLineOfItem(prevLine,
+      _config.linesDetection.superItemLabelAlphabet,
+      &_config.linesDetection.itemLabelRegexes,
+      _config.fontSizeEqualTolerance,
+      _config.sentenceDelimiterAlphabet,
+      &_potentFnLabels);
+  bool isCurrFirstLine = text_lines_utils::computeIsFirstLineOfItem(
+      line,
+      _config.linesDetection.superItemLabelAlphabet,
+      &_config.linesDetection.itemLabelRegexes,
+      _config.fontSizeEqualTolerance,
+      _config.sentenceDelimiterAlphabet,
+      &_potentFnLabels);
+  bool isPrevContLine = text_lines_utils::computeIsContinuationOfItem(
+      prevLine,
+      _config.linesDetection.superItemLabelAlphabet,
+      &_config.linesDetection.itemLabelRegexes,
+      _config.fontSizeEqualTolerance,
+      _config.sentenceDelimiterAlphabet,
+      &_potentFnLabels);
+  bool isCurrContLine = text_lines_utils::computeIsContinuationOfItem(
+      line,
+      _config.linesDetection.superItemLabelAlphabet,
+      &_config.linesDetection.itemLabelRegexes,
+      _config.fontSizeEqualTolerance,
+      _config.sentenceDelimiterAlphabet,
+      &_potentFnLabels);
   bool isPrevPartOfItem = isPrevFirstLine || isPrevContLine;
   bool isCurrPartOfItem = isCurrFirstLine || isCurrContLine;
   double leftXOffset = element_utils::computeLeftXOffset(prevLine, line);
-  bool hasPrevLineCapacity = text_lines_utils::computeHasPrevLineCapacity(line);
-  pair<double, double> leftXOffsetTolInterval = config::getLeftXOffsetToleranceInterval(_doc);
+  bool hasPrevLineCapacity = text_lines_utils::computeHasPrevLineCapacity(line,
+      _config.linesDetection.prevTextLineCapacityThresholdFactor);
+  pair<double, double> leftXOffsetTolInterval =
+      _config.blocksDetection.getLeftXOffsetToleranceInterval(_doc);
   double leftXOffsetToleranceLow = leftXOffsetTolInterval.first;
   double leftXOffsetToleranceHigh = leftXOffsetTolInterval.second;
 
@@ -617,7 +729,8 @@ Trool TextBlocksDetector::startsBlock_item(const PdfTextBlock* pBlock, const Pdf
     // identify an item of the following form:
     //    (i) This is an item that continues in the next
     //  line. Note the smaller leftX of the second line.
-    if (!text_element_utils::computeEndsWithSentenceDelimiter(prevLine) &&
+    if (!text_element_utils::computeEndsWithSentenceDelimiter(prevLine,
+        _config.sentenceDelimiterAlphabet) &&
           !text_element_utils::computeStartsWithUpper(line)) {
       _log->debug(p) << _q << BLUE << BOLD << " + prev line does not end with sentence delimiter "
           << "+ curr line does not start with an uppercase → continues block" << OFF << endl;
@@ -636,10 +749,17 @@ Trool TextBlocksDetector::startsBlock_emphasized(const PdfTextLine* line) const 
   int p = line->pos->pageNum;
   const PdfTextLine* prevLine = line->prevLine;
 
-  bool isPrevLineEmphasized = text_element_utils::computeIsEmphasized(prevLine);
-  bool isCurrLineEmphasized = text_element_utils::computeIsEmphasized(line);
+  bool isPrevLineEmphasized = text_element_utils::computeIsEmphasized(
+    prevLine,
+    _config.fontSizeEqualTolerance,
+    _config.fontWeightEqualTolerance);
+  bool isCurrLineEmphasized = text_element_utils::computeIsEmphasized(
+    line,
+    _config.fontSizeEqualTolerance,
+    _config.fontWeightEqualTolerance);
   bool hasEqualFontName = text_element_utils::computeHasEqualFont(prevLine, line);
-  bool hasEqualFontSize = text_element_utils::computeHasEqualFontSize(prevLine, line);
+  bool hasEqualFontSize = text_element_utils::computeHasEqualFontSize(prevLine, line,
+      _config.fontSizeEqualTolerance);
 
   _log->debug(p) << _q << BLUE << "Is line and prevLine emphasized by same font?" << OFF << endl;
   _log->debug(p) << _q << " └─ prevLine.isEmphasized: " << isPrevLineEmphasized << endl;
@@ -679,8 +799,10 @@ Trool TextBlocksDetector::startsBlock_hangingIndent(const PdfTextBlock* pBlock,
   bool isPrevMoreIndented = larger(prevLeftMargin, hangingIndent, _doc->avgCharWidth);
   bool isCurrMoreIndented = larger(currLeftMargin, hangingIndent, _doc->avgCharWidth);
   double leftXOffset = element_utils::computeLeftXOffset(prevLine, line);
-  bool hasPrevLineCapacity = text_lines_utils::computeHasPrevLineCapacity(line);
-  pair<double, double> leftXOffsetTolInterval = config::getLeftXOffsetToleranceInterval(_doc);
+  bool hasPrevLineCapacity = text_lines_utils::computeHasPrevLineCapacity(line,
+      _config.linesDetection.prevTextLineCapacityThresholdFactor);
+  pair<double, double> leftXOffsetTolInterval =
+    _config.blocksDetection.getLeftXOffsetToleranceInterval(_doc);
   double leftXOffsetToleranceLow = leftXOffsetTolInterval.first;
   double leftXOffsetToleranceHigh = leftXOffsetTolInterval.second;
 
@@ -780,7 +902,8 @@ Trool TextBlocksDetector::startsBlock_indent(const PdfTextLine* line) const {
 
   double prevLeftMargin = prevLine->leftMargin;
   double currLeftMargin = line->leftMargin;
-  pair<double, double> indentToleranceInterval = config::getIndentToleranceInterval(_doc);
+  pair<double, double> indentToleranceInterval =
+    _config.blocksDetection.getIndentToleranceInterval(_doc);
   double indentTolLow = indentToleranceInterval.first;
   double indentTolHigh = indentToleranceInterval.second;
   bool isPrevIndented = between(prevLeftMargin, indentTolLow, indentTolHigh);
@@ -788,7 +911,8 @@ Trool TextBlocksDetector::startsBlock_indent(const PdfTextLine* line) const {
   bool isPrevMoreIndented = larger(prevLeftMargin, indentTolHigh);
   bool isCurrMoreIndented = larger(currLeftMargin, indentTolHigh);
   double absLeftXOffset = abs(element_utils::computeLeftXOffset(prevLine, line));
-  bool hasPrevLineCapacity = text_lines_utils::computeHasPrevLineCapacity(line);
+  bool hasPrevLineCapacity = text_lines_utils::computeHasPrevLineCapacity(line,
+      _config.linesDetection.prevTextLineCapacityThresholdFactor);
 
   _log->debug(p) << _q << BLUE <<  "Is the line indented?" << OFF << endl;
   _log->debug(p) << _q << " └─ prevLine.leftMargin:     " << prevLeftMargin << endl;

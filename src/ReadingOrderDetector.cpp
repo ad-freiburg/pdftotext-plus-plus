@@ -24,7 +24,7 @@ using std::numeric_limits;
 using std::vector;
 
 // _________________________________________________________________________________________________
-ReadingOrderDetector::ReadingOrderDetector(const PdfDocument* doc, const ppp::Config* config) {
+ReadingOrderDetector::ReadingOrderDetector(PdfDocument* doc, const Config& config) {
   _doc = doc;
   _config = config;
   _semanticRolesPredictor = new SemanticRolesPredictor(config);

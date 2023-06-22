@@ -11,6 +11,7 @@
 #include <algorithm>  // min
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>  // pair
 #include <vector>
 
@@ -32,10 +33,16 @@ using std::min;
 using std::pair;
 using std::string;
 using std::unordered_map;
+using std::unordered_set;
 using std::vector;
 
 // _________________________________________________________________________________________________
-bool text_blocks_utils::computeIsTextLinesCentered(const PdfTextBlock* block) {
+bool text_blocks_utils::computeIsTextLinesCentered(
+    const PdfTextBlock* block,
+    const string& formulaIdAlphabet,
+    double centeringXOverlapRatioThreshold,
+    double centeringXOffsetEqualToleranceFactor,
+    int centeringMaxNumJustifiedLines) {
   assert(block);
 
   // The lines in the block are not obviously not centered if the block does not contain any lines.
@@ -55,24 +62,24 @@ bool text_blocks_utils::computeIsTextLinesCentered(const PdfTextBlock* block) {
 
     // The lines in the block are not centered when there is at least one line which is not
     // centered compared to the previous line.
-    bool centered = text_lines_utils::computeIsCentered(prevLine, currLine);
+    bool centered = text_lines_utils::computeIsCentered(prevLine, currLine,
+        centeringXOverlapRatioThreshold, centeringXOffsetEqualToleranceFactor);
 
     if (!centered) {
       return false;
     }
 
     // Check if the line or the previous line contains a formula.
-    const char* c;
     bool prevLineContainsFormula = false;
-    for (c = config::FORMULA_ID_ALPHABET; *c != '\0'; c++) {
-      if (prevLine->text.find(*c) != string::npos) {
+    for (size_t i = 0; i < formulaIdAlphabet.size(); i++) {
+      if (prevLine->text.find(formulaIdAlphabet[i]) != string::npos) {
         prevLineContainsFormula = true;
         break;
       }
     }
     bool currLineContainsFormula = false;
-    for (c = config::FORMULA_ID_ALPHABET; *c != '\0'; c++) {
-      if (currLine->text.find(*c) != string::npos) {
+    for (size_t i = 0; i < formulaIdAlphabet.size(); i++) {
+      if (currLine->text.find(formulaIdAlphabet[i]) != string::npos) {
         currLineContainsFormula = true;
         break;
       }
@@ -82,7 +89,7 @@ bool text_blocks_utils::computeIsTextLinesCentered(const PdfTextBlock* block) {
     // Check if the line has a leftX offset (or rightX offset) larger than the threshold.
     double absLeftXOffset = abs(element_utils::computeLeftXOffset(prevLine, currLine));
     double absRightXOffset = abs(element_utils::computeRightXOffset(prevLine, currLine));
-    double xOffsetThreshold = config::getCenteringXOffsetThreshold(currLine->doc);
+    double xOffsetThreshold = centeringXOffsetEqualToleranceFactor * currLine->doc->avgCharWidth;
     bool isLargeLeftXOffset = larger(absLeftXOffset, xOffsetThreshold);
     bool isLargeRightXOffset = larger(absRightXOffset, xOffsetThreshold);
     bool isLargeXOffset = isLargeLeftXOffset || isLargeRightXOffset;
@@ -96,12 +103,21 @@ bool text_blocks_utils::computeIsTextLinesCentered(const PdfTextBlock* block) {
     }
   }
 
-  return hasNonFormulaWithLargeXOffset
-      && numJustifiedLines <= config::CENTERING_MAX_NUM_JUSTIFIED_LINES;
+  return hasNonFormulaWithLargeXOffset && numJustifiedLines <= centeringMaxNumJustifiedLines;
 }
 
 // _________________________________________________________________________________________________
-double text_blocks_utils::computeHangingIndent(const PdfTextBlock* block) {
+double text_blocks_utils::computeHangingIndent(
+    const PdfTextBlock* block,
+    const unordered_set<string>& lastNamePrefixes,
+    int hangIndentMinLengthLongLines,
+    double prevTextLineCapacityThresholdFactor,
+    double hangIndentMinPercLinesSameLeftMargin,
+    int hangIndentNumNonIndentedLinesThreshold,
+    double hangIndentMarginThresholdFactor,
+    int hangIndentNumLowerNonIndentedLinesThreshold,
+    int hangIndentNumLongLinesThreshold,
+    int hangIndentNumLowerIndentedLinesThreshold) {
   assert(block);
 
   // The number of lines with a length larger than the threshold.
@@ -130,11 +146,11 @@ double text_blocks_utils::computeHangingIndent(const PdfTextBlock* block) {
   // The number of indented lines.
   int numIndentedLines = 0;
 
-  double marginThreshold = config::getHangIndentMarginThreshold(block->doc);
+  double marginThreshold = hangIndentMarginThresholdFactor * block->doc->avgCharWidth;
 
   for (const auto* line : block->lines) {
     // Count the number of lines with a length >= the given threshold.
-    if (line->text.size() >= config::HANG_INDENT_MIN_LENGTH_LONG_LINES) {
+    if (line->text.size() >= hangIndentMinLengthLongLines) {
       numLongLines++;
     }
 
@@ -154,7 +170,7 @@ double text_blocks_utils::computeHangingIndent(const PdfTextBlock* block) {
   // The block is *not* in hanging indent format if the percentage of lines exhibiting the
   // most frequent left margin is smaller than a threshold.
   if (equalOrSmaller(mostFreqLargeLeftMarginCount,
-        config::HANG_INDENT_MIN_PERC_LINES_SAME_LEFT_MARGIN * numLargeLeftMarginLines)) {
+        hangIndentMinPercLinesSameLeftMargin * numLargeLeftMarginLines)) {
     return 0.0;
   }
 
@@ -163,7 +179,7 @@ double text_blocks_utils::computeHangingIndent(const PdfTextBlock* block) {
     const PdfTextLine* line = block->lines[i];
 
     // Ignore short lines.
-    if (line->text.size() < config::HANG_INDENT_MIN_LENGTH_LONG_LINES) {
+    if (line->text.size() < hangIndentMinLengthLongLines) {
       continue;
     }
 
@@ -195,7 +211,7 @@ double text_blocks_utils::computeHangingIndent(const PdfTextBlock* block) {
 
     // Count the number of non-indented lines that start with a lowercase and do not start with
     // a lowercase last name prefix.
-    bool startsWithLastNamePrefix = config::LAST_NAME_PREFIXES.count(line->words[0]->text) > 0;
+    bool startsWithLastNamePrefix = lastNamePrefixes.count(line->words[0]->text) > 0;
     if (isLower && !startsWithLastNamePrefix && isNonIndented) {
       numLowercasedNonIndentedLines++;
     }
@@ -207,7 +223,8 @@ double text_blocks_utils::computeHangingIndent(const PdfTextBlock* block) {
       isFirstLineIndented = isIndented;
     }
     if (i == 1) {
-      hasFirstLineCapacity = text_lines_utils::computeHasPrevLineCapacity(line);
+      hasFirstLineCapacity = text_lines_utils::computeHasPrevLineCapacity(line,
+          prevTextLineCapacityThresholdFactor);
     }
     if (i > 0) {
       isAllOtherLinesIndented &= isIndented;
@@ -221,7 +238,7 @@ double text_blocks_utils::computeHangingIndent(const PdfTextBlock* block) {
 
   // The block is *not* in hanging indent format if it contains at least one non-indented line
   // that starts with a lowercase character.
-  if (numLowercasedNonIndentedLines > config::HANG_INDENT_NUM_LOWER_NON_INDENTED_LINES_THRESHOLD) {
+  if (numLowercasedNonIndentedLines > hangIndentNumLowerNonIndentedLinesThreshold) {
     return 0.0;
   }
 
@@ -236,15 +253,15 @@ double text_blocks_utils::computeHangingIndent(const PdfTextBlock* block) {
 
   // The block is in hanging indent format if all non-indented lines start with an uppercase
   // character and if the number of non-indented lines exceed a certain threshold.
-  if (numNonIndentedLines >= config::HANG_INDENT_NUM_NON_INDENTED_LINES_THRESHOLD &&
-      numLowercasedNonIndentedLines <= config::HANG_INDENT_NUM_LOWER_NON_INDENTED_LINES_THRESHOLD) {
+  if (numNonIndentedLines >= hangIndentNumNonIndentedLinesThreshold &&
+      numLowercasedNonIndentedLines <= hangIndentNumLowerNonIndentedLinesThreshold) {
     return mostFreqLargeLeftMargin;
   }
 
   // The block is in hanging indent format if there is at least one indented line that start
   // with a lowercase character.
-  if (numLongLines >= config::HANG_INDENT_NUM_LONG_LINES_THRESHOLD
-        && numLowercasedIndentedLines >= config::HANG_INDENT_NUM_LOWER_INDENTED_LINES_THRESHOLD) {
+  if (numLongLines >= hangIndentNumLongLinesThreshold
+        && numLowercasedIndentedLines >= hangIndentNumLowerIndentedLinesThreshold) {
     return mostFreqLargeLeftMargin;
   }
 
@@ -279,13 +296,30 @@ void text_blocks_utils::computeTextLineMargins(const PdfTextBlock* block) {
 }
 
 // _________________________________________________________________________________________________
-void text_blocks_utils::createTextBlock(const vector<PdfTextLine*>& lines,
+void text_blocks_utils::createTextBlock(
+      const vector<PdfTextLine*>& lines,
+      int idLength,
+      const string& formulaIdAlphabet,
+      double centeringXOverlapRatioThreshold,
+      double centeringXOffsetEqualToleranceFactor,
+      int centeringMaxNumJustifiedLines,
+      double prevTextLineCapacityThresholdFactor,
+      const unordered_set<string>& lastNamePrefixes,
+      int hangIndentMinLengthLongLines,
+      double hangIndentMinPercLinesSameLeftMargin,
+      int hangIndentNumNonIndentedLinesThreshold,
+      double hangIndentMarginThresholdFactor,
+      int hangIndentNumLowerNonIndentedLinesThreshold,
+      int hangIndentNumLongLinesThreshold,
+      int hangIndentNumLowerIndentedLinesThreshold,
+      double fontSizeEqualTolerance,
+      double fontWeightEqualTolerance,
       vector<PdfTextBlock*>* blocks) {
   assert(!lines.empty());
   assert(blocks);
 
   PdfTextBlock* block = new PdfTextBlock();
-  block->id = ppp::string_utils::createRandomString(global_config::ID_LENGTH, "block-");
+  block->id = ppp::string_utils::createRandomString(idLength, "block-");
 
   // Set the reference to the document.
   block->doc = lines[0]->doc;
@@ -371,16 +405,32 @@ void text_blocks_utils::createTextBlock(const vector<PdfTextLine*>& lines,
   }
 
   // Compute and set the flag indicating whether or not the block is emphasized.
-  block->isEmphasized = text_element_utils::computeIsEmphasized(block);
+  block->isEmphasized = text_element_utils::computeIsEmphasized(block,
+      fontSizeEqualTolerance, fontWeightEqualTolerance);
 
   // Compute and set the flag indicating whether or not the text lines in the block are centered.
-  block->isLinesCentered = text_blocks_utils::computeIsTextLinesCentered(block);
+  block->isLinesCentered = text_blocks_utils::computeIsTextLinesCentered(
+    block,
+    formulaIdAlphabet,
+    centeringXOverlapRatioThreshold,
+    centeringXOffsetEqualToleranceFactor,
+    centeringMaxNumJustifiedLines);
 
   // Compute the margins of the text lines in the block.
   text_blocks_utils::computeTextLineMargins(block);
 
   // Compute and set the hanging indent.
-  block->hangingIndent = text_blocks_utils::computeHangingIndent(block);
+  block->hangingIndent = text_blocks_utils::computeHangingIndent(
+      block,
+      lastNamePrefixes,
+      hangIndentMinLengthLongLines,
+      prevTextLineCapacityThresholdFactor,
+      hangIndentMinPercLinesSameLeftMargin,
+      hangIndentNumNonIndentedLinesThreshold,
+      hangIndentMarginThresholdFactor,
+      hangIndentNumLowerNonIndentedLinesThreshold,
+      hangIndentNumLongLinesThreshold,
+      hangIndentNumLowerIndentedLinesThreshold);
 
   blocks->push_back(block);
 }

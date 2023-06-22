@@ -40,7 +40,7 @@ class TextOutputDev : public OutputDev {
    * @param config
    *    The configuration to use.
    */
-  TextOutputDev(PdfDocument* doc, const Config* config);
+  TextOutputDev(PdfDocument* doc, const Config& config);
 
   /** The deconstructor. */
   ~TextOutputDev() override;
@@ -242,7 +242,7 @@ class TextOutputDev : public OutputDev {
   // The PDF document to process.
   PdfDocument* _doc;
   // The configuration to use.
-  const Config* _config;
+  Config _config;
   // The current page.
   PdfPage* _page;
   // The current page number.
@@ -258,7 +258,7 @@ class TextOutputDev : public OutputDev {
   // An object that converts a std::string to std::wstring.
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> _wStringConverter;
   // The logger.
-  const Logger* _log;
+  Logger* _log;
 };
 
 #endif  // TEXTOUTPUTDEV_H_

@@ -15,6 +15,7 @@
 #include "./PdfDocument.h"
 #include "./SemanticRolesPredictor.h"
 
+using ppp::Config;
 using std::vector;
 
 // ==============================================================================================
@@ -53,7 +54,7 @@ class ReadingOrderDetector {
    * @param config
    *   The configuration to use.
    */
-  explicit ReadingOrderDetector(const PdfDocument* doc, const ppp::Config* config);
+  explicit ReadingOrderDetector(PdfDocument* doc, const Config& config);
 
   /** The deconstructor. */
   ~ReadingOrderDetector();
@@ -157,7 +158,9 @@ class ReadingOrderDetector {
   void chooseYCuts(const vector<Cut*>& cuts, const vector<PdfElement*>& elements, bool silent);
 
   // The document to process.
-  const PdfDocument* _doc;
+  PdfDocument* _doc;
+  // The configuration to use.
+  Config _config;
 
   double _minXCutGapWidth = 0;
   double _minYCutGapHeight = 0;
@@ -170,9 +173,6 @@ class ReadingOrderDetector {
   double _pageElementsMinY;
   double _pageElementsMaxX;
   double _pageElementsMaxY;
-
-  // The configuration to use.
-  const ppp::Config* _config;
 
   // The device for predicting the semantic roles of the text blocks.
   SemanticRolesPredictor* _semanticRolesPredictor;

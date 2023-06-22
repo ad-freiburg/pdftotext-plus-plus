@@ -9,10 +9,6 @@
 #ifndef UTILS_MATHUTILS_H_
 #define UTILS_MATHUTILS_H_
 
-#include "../Constants.h"
-
-using global_config::DOUBLE_EQUAL_TOLERANCE;
-
 // =================================================================================================
 
 /**
@@ -38,7 +34,8 @@ namespace ppp::math_utils {
  * @return
  *    True if d1 and d2 are (approximately) equal, false otherwise.
  */
-bool equal(double d1, double d2, double tolerance = DOUBLE_EQUAL_TOLERANCE);
+// TODO(korzen): Remove the 0.0001
+bool equal(double d1, double d2, double tolerance = 0.0001);
 
 /**
  * This method returns true, if the first value is larger than the second value by the given
@@ -56,7 +53,8 @@ bool equal(double d1, double d2, double tolerance = DOUBLE_EQUAL_TOLERANCE);
  * @return
  *    True if d1 is larger than d2 by the given tolerance, false otherwise.
  */
-bool larger(double d1, double d2, double tolerance = DOUBLE_EQUAL_TOLERANCE);
+// TODO(korzen): Remove the 0.0001
+bool larger(double d1, double d2, double tolerance = 0.0001);
 
 /**
  * This method returns true, if the first value is smaller than the second value by the given
@@ -74,7 +72,8 @@ bool larger(double d1, double d2, double tolerance = DOUBLE_EQUAL_TOLERANCE);
  * @return
  *    True if d1 is smaller than d2 by the given tolerance, false otherwise.
  */
-bool smaller(double d1, double d2, double tolerance = DOUBLE_EQUAL_TOLERANCE);
+// TODO(korzen): Remove the 0.0001
+bool smaller(double d1, double d2, double tolerance = 0.0001);
 
 /**
  * This method returns true, if the first value is (approximately) equal to the second value, or
@@ -92,7 +91,8 @@ bool smaller(double d1, double d2, double tolerance = DOUBLE_EQUAL_TOLERANCE);
  * @return
  *    True if d1 is equal or larger than d2 by the given tolerance, false otherwise.
  */
-bool equalOrLarger(double d1, double d2, double tolerance = DOUBLE_EQUAL_TOLERANCE);
+// TODO(korzen): Remove the 0.0001
+bool equalOrLarger(double d1, double d2, double tolerance = 0.0001);
 
 /**
  * This method returns true, if the first value is (approximately) equal to the second value, or
@@ -110,7 +110,8 @@ bool equalOrLarger(double d1, double d2, double tolerance = DOUBLE_EQUAL_TOLERAN
  * @return
  *    True if d1 is equal or smaller than d2 by the given tolerance; false otherwise.
  */
-bool equalOrSmaller(double d1, double d2, double tolerance = DOUBLE_EQUAL_TOLERANCE);
+// TODO(korzen): Remove the 0.0001
+bool equalOrSmaller(double d1, double d2, double tolerance = 0.0001);
 
 /**
  * This method returns true, if the given value is inside the given interval, under consideration
@@ -132,7 +133,8 @@ bool equalOrSmaller(double d1, double d2, double tolerance = DOUBLE_EQUAL_TOLERA
  * @return
  *    True if lower - tolerance <= d <= upper + tolerance, false otherwise.
  */
-bool between(double d, double lower, double upper, double tolerance = DOUBLE_EQUAL_TOLERANCE);
+// TODO(korzen): Remove the 0.0001
+bool between(double d, double lower, double upper, double tolerance = 0.0001);
 
 /**
  * This method rounds the given value to <numDecimals> precision after the decimal point.

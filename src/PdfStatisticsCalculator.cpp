@@ -30,10 +30,10 @@ using std::max;
 using std::unordered_map;
 
 // _________________________________________________________________________________________________
-PdfStatisticsCalculator::PdfStatisticsCalculator(PdfDocument* doc, const Config* config) {
+PdfStatisticsCalculator::PdfStatisticsCalculator(PdfDocument* doc, const Config& config) {
   _doc = doc;
   _config = config;
-  _log = new Logger(config->pdfStatisticsCalculator.logLevel, -1);
+  _log = new Logger(config.statisticsCalculation.logLevel, -1);
 }
 
 // _________________________________________________________________________________________________
@@ -97,8 +97,8 @@ void PdfStatisticsCalculator::computeCharacterStatistics() const {
 void PdfStatisticsCalculator::computeWordStatistics() const {
   assert(_doc);
 
-  double sameLineThreshold = _config->pdfStatisticsCalculator.sameLineYOverlapRatioThreshold;
-  double otherLineThreshold = _config->pdfStatisticsCalculator.otherLineYOverlapRatioThreshold;
+  double sameLineThreshold = _config.statisticsCalculation.sameLineYOverlapRatioThreshold;
+  double otherLineThreshold = _config.statisticsCalculation.otherLineYOverlapRatioThreshold;
 
   _log->info() << "Computing word statististics..." << endl;
   _log->debug() << "=======================================" << endl;
@@ -121,12 +121,12 @@ void PdfStatisticsCalculator::computeWordStatistics() const {
 
       // Skip the word if its font size is smaller than the most frequent font size.
       if (smaller(word->fontSize, _doc->mostFreqFontSize,
-          _config->pdfStatisticsCalculator.fsEqualTolerance)) {
+          _config.statisticsCalculation.fsEqualTolerance)) {
         continue;
       }
 
       // Count the word height.
-      double height = round(word->pos->getHeight(), _config->pdfStatisticsCalculator.coordsPrec);
+      double height = round(word->pos->getHeight(), _config.statisticsCalculation.coordsPrec);
       wordHeightCounter[height]++;
 
       // Skip to the next word if there is no previous word.
@@ -147,7 +147,7 @@ void PdfStatisticsCalculator::computeWordStatistics() const {
       // Skip to the next word if the font size of the previous word is not equal to the most
       // frequent font size.
       if (!equal(prevWord->fontSize, _doc->mostFreqFontSize,
-          _config->pdfStatisticsCalculator.fsEqualTolerance)) {
+          _config.statisticsCalculation.fsEqualTolerance)) {
         continue;
       }
 
@@ -157,7 +157,7 @@ void PdfStatisticsCalculator::computeWordStatistics() const {
       // when one word vertically overlaps at least the half of the height of the other word.
       if (equalOrLarger(maxYOverlapRatio, sameLineThreshold)) {
         double gap = element_utils::computeHorizontalGap(prevWord, word);
-        gap = round(gap, _config->pdfStatisticsCalculator.coordsPrec);
+        gap = round(gap, _config.statisticsCalculation.coordsPrec);
         horizontalGapCounter[gap]++;
       }
 
@@ -165,7 +165,7 @@ void PdfStatisticsCalculator::computeWordStatistics() const {
       // they do *not* vertically overlap.
       if (equalOrSmaller(maxYOverlapRatio, otherLineThreshold)) {
         double gap = element_utils::computeVerticalGap(prevWord, word);
-        gap = round(gap, _config->pdfStatisticsCalculator.coordsPrec);
+        gap = round(gap, _config.statisticsCalculation.coordsPrec);
         verticalGapCounter[gap]++;
       }
     }
@@ -220,15 +220,15 @@ void PdfStatisticsCalculator::computeTextLineStatistics() const {
         // when one or both lines contain sub- or superscripts. By our experience, computing the
         // line distance with sub- and superscripts ignored results in more accurate line distances.
         double dist = currLine->baseBBoxUpperY - prevLine->baseBBoxLowerY;
-        dist = max(0.0, round(dist, _config->pdfStatisticsCalculator.lineDistPrec));
+        dist = max(0.0, round(dist, _config.statisticsCalculation.lineDistPrec));
         lineDistanceCounter[dist]++;
 
         // If the font sizes of the text lines are equal, add the distance also to
         // lineDistanceCountersPerFontSize, for computing the most frequent line distances broken
         // down by font size.
-        double prevFontSize = round(prevLine->fontSize, _config->pdfStatisticsCalculator.fsPrec);
-        double currFontSize = round(currLine->fontSize, _config->pdfStatisticsCalculator.fsPrec);
-        if (equal(prevFontSize, currFontSize, _config->pdfStatisticsCalculator.fsEqualTolerance)) {
+        double prevFontSize = round(prevLine->fontSize, _config.statisticsCalculation.fsPrec);
+        double currFontSize = round(currLine->fontSize, _config.statisticsCalculation.fsPrec);
+        if (equal(prevFontSize, currFontSize, _config.statisticsCalculation.fsEqualTolerance)) {
           lineDistanceCountersPerFontSize[currFontSize][dist]++;
         }
       }

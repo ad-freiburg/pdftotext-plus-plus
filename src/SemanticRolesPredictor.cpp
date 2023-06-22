@@ -27,7 +27,7 @@ using std::vector;
 using std::wstring;
 
 // _________________________________________________________________________________________________
-SemanticRolesPredictor::SemanticRolesPredictor(const ppp::Config* config) {
+SemanticRolesPredictor::SemanticRolesPredictor(const ppp::Config& config) {
   _config = config;
 }
 
@@ -49,7 +49,7 @@ void SemanticRolesPredictor::readModel() {
 //   }
 
   // TODO(korzen): Parameterize the file names.
-  string modelsDirPath = _config->semanticRolesDetectionModelsDir;
+  string modelsDirPath = _config.rolesPrediction.modelsDir;
   string bpeVocabFilePath = modelsDirPath + "/bpe-vocab.tsv";
   string rolesVocabFilePath = modelsDirPath + "/roles-vocab.tsv";
 
@@ -377,7 +377,7 @@ cppflow::tensor SemanticRolesPredictor::createWordsInputTensor(const PdfDocument
 
       // Encode the text of each block using byte pair encoding.
       vector<int> encoding;
-      encoder.encode(wBlockText, yDim, &encoding);
+      encoder.encode(wBlockText, yDim, _config.wordDelimitersAlphabet, &encoding);
       for (int k = 0; k < yDim; k++) {
         wordsTensorValues.push_back(encoding[k]);
       }

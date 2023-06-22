@@ -16,7 +16,6 @@
 #include <string>
 #include <vector>
 
-#include "./Constants.h"  // C_DPI, H_DPI
 #include "./DiacriticalMarksMerger.h"
 #include "./PageSegmentator.h"
 #include "./PdfStatisticsCalculator.h"
@@ -40,32 +39,14 @@ using std::vector;
 
 // _________________________________________________________________________________________________
 PdfToTextPlusPlus::PdfToTextPlusPlus(
-      const ppp::Config* config,
+      const ppp::Config& config,
       bool noEmbeddedFontFilesParsing,
       bool noWordsDehyphenation,
-      bool parseMode,
-      LogLevel logLevelPdfParsing,
-      LogLevel logLevelStatisticsComputation,
-      LogLevel logLevelDiacriticMarksMerging,
-      LogLevel logLevelWordsDetection,
-      LogLevel logLevelPageSegmentation,
-      LogLevel logLevelTextLinesDetection,
-      LogLevel logLevelSubSuperScriptsDetection,
-      LogLevel logLevelTextBlocksDetection,
-      int logPageFilter) {
+      bool parseMode) {
   _config = config,
   _noEmbeddedFontFilesParsing = noEmbeddedFontFilesParsing;
   _noWordsDehyphenation = noWordsDehyphenation;
   _parseMode = parseMode;
-  _logLevelPdfParsing = logLevelPdfParsing;
-  _logLevelStatisticsComputation = logLevelStatisticsComputation;
-  _logLevelDiacMarksMerging = logLevelDiacriticMarksMerging;
-  _logLevelWordsDetection = logLevelWordsDetection;
-  _logLevelPageSegmentation = logLevelPageSegmentation;
-  _logLevelTextLinesDetection = logLevelTextLinesDetection;
-  _logLevelSubSuperScriptsDetection = logLevelSubSuperScriptsDetection;
-  _logLevelTextBlocksDetection = logLevelTextBlocksDetection;
-  _logPageFilter = logPageFilter;
 }
 
 // _________________________________________________________________________________________________
@@ -101,8 +82,8 @@ int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
     &out,
     1,  // firstPage
     pdfDoc->getNumPages(),  // lastPage
-    H_DPI,  // hDPI
-    V_DPI,  // vDPI
+    _config.hDPI,  // hDPI
+    _config.vDPI,  // vDPI
     0,  // rotation
     true,  // useMediaBox
     false,  // crop
@@ -125,7 +106,7 @@ int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
 
   // (4) Merge combining diacritical marks with their base characters.
   start = high_resolution_clock::now();
-  DiacriticalMarksMerger dmm(doc, _logLevelDiacMarksMerging, _logPageFilter);
+  DiacriticalMarksMerger dmm(doc, _config);
   dmm.process();
   end = high_resolution_clock::now();
   if (timings) {
@@ -141,7 +122,7 @@ int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
 
   // (5) Detect the words.
   start = high_resolution_clock::now();
-  WordsDetector wd(doc, _logLevelWordsDetection, _logPageFilter);
+  WordsDetector wd(doc, _config);
   wd.process();
   end = high_resolution_clock::now();
   if (timings) {
@@ -160,7 +141,7 @@ int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
 
   // (7) Segment the pages of the document (for identifying columns).
   start = high_resolution_clock::now();
-  PageSegmentator ps(doc, _logLevelPageSegmentation, _logPageFilter);
+  PageSegmentator ps(doc, _config);
   ps.process();
   end = high_resolution_clock::now();
   if (timings) {
@@ -170,7 +151,7 @@ int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
 
   // (8) Detect the text lines.
   start = high_resolution_clock::now();
-  TextLinesDetector tld(doc, _logLevelTextLinesDetection, _logPageFilter);
+  TextLinesDetector tld(doc, _config);
   tld.process();
   end = high_resolution_clock::now();
   if (timings) {
@@ -180,7 +161,7 @@ int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
 
   // (9) Detect subscripted and superscripted characters.
   start = high_resolution_clock::now();
-  SubSuperScriptsDetector ssd(doc, _logLevelSubSuperScriptsDetection, _logPageFilter);
+  SubSuperScriptsDetector ssd(doc, _config);
   ssd.process();
   end = high_resolution_clock::now();
   if (timings) {
@@ -199,7 +180,7 @@ int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
 
   // (11) Detect the text blocks.
   start = high_resolution_clock::now();
-  TextBlocksDetector tbd(doc, _logLevelTextBlocksDetection, _logPageFilter);
+  TextBlocksDetector tbd(doc, _config);
   tbd.process();
   end = high_resolution_clock::now();
   if (timings) {
@@ -220,7 +201,7 @@ int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
   // (13) Dehyphenate words, if not deactivated by the user.
   if (!_noWordsDehyphenation) {
     start = high_resolution_clock::now();
-    WordsDehyphenator wdh(doc);
+    WordsDehyphenator wdh(doc, _config);
     wdh.dehyphenate();
     end = high_resolution_clock::now();
     if (timings) {

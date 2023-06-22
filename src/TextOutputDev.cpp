@@ -43,16 +43,16 @@ using std::stringstream;
 using std::wstring;
 
 // _________________________________________________________________________________________________
-TextOutputDev::TextOutputDev(PdfDocument* doc, const Config* config) {
+TextOutputDev::TextOutputDev(PdfDocument* doc, const Config& config) {
   _doc = doc;
   _config = config;
-  _log = new Logger(_config->textOutputDev.logLevel, _config->textOutputDev.logPageFilter);
+  _log = new Logger(_config.pdfParsing.logLevel, _config.pdfParsing.logPageFilter);
 
   _log->info() << "Parsing PDF file..." << endl;
   _log->debug() << "=======================================" << endl;
   _log->debug() << BOLD << "DEBUG MODE" << OFF << endl;
   _log->debug() << " └─ parse embedded font files: "
-      << !_config->textOutputDev.noEmbeddedFontFilesParsing << endl;
+      << !_config.pdfParsing.noEmbeddedFontFilesParsing << endl;
 }
 
 // _________________________________________________________________________________________________
@@ -116,7 +116,7 @@ void TextOutputDev::updateFont(GfxState* state) {
 
   // Check if the info about the current font was already computed. If not, compute it.
   if (_doc->fontInfos.count(fontName) == 0) {
-    bool parseEmbeddedFontFiles = _config->textOutputDev.noEmbeddedFontFilesParsing == false;
+    bool parseEmbeddedFontFiles = _config.pdfParsing.noEmbeddedFontFilesParsing == false;
     _doc->fontInfos[fontName] = PdfFontInfo::create(state, _xref, parseEmbeddedFontFiles);
   }
   _fontInfo = _doc->fontInfos[fontName];
@@ -154,7 +154,7 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   // ----------------------------------
   // Create and set a (unique) id.
 
-  ch->id = ppp::string_utils::createRandomString(_config->idLength, "char-");
+  ch->id = ppp::string_utils::createRandomString(_config.idLength, "char-");
   _log->debug(_p) << " └─ char.id: \"" << ch->id << "\"" << endl;
 
   // ----------------------------------
@@ -446,7 +446,7 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   // ----------------------------------
   // Set the font size.
 
-  ch->fontSize = round(transformedFontSize, _config->textOutputDev.fsPrec);
+  ch->fontSize = round(transformedFontSize, _config.pdfParsing.fsPrec);
   _log->debug(_p) << " └─ char.fontSize: " << ch->fontSize << endl;
 
   // ----------------------------------
@@ -489,10 +489,10 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
       << "; rightX: " << clipRightX << "; lowerY: " << clipLowerY << endl;
 
   // Check if the clip box is equal to the page's clip box. If so, add the character to the page.
-  if (equal(clipLeftX, _page->clipLeftX, _config->textOutputDev.coordsEqualTolerance)
-        && equal(clipUpperY, _page->clipUpperY, _config->textOutputDev.coordsEqualTolerance)
-        && equal(clipRightX, _page->clipRightX, _config->textOutputDev.coordsEqualTolerance)
-        && equal(clipLowerY, _page->clipLowerY, _config->textOutputDev.coordsEqualTolerance)) {
+  if (equal(clipLeftX, _page->clipLeftX, _config.pdfParsing.coordsEqualTolerance)
+        && equal(clipUpperY, _page->clipUpperY, _config.pdfParsing.coordsEqualTolerance)
+        && equal(clipRightX, _page->clipRightX, _config.pdfParsing.coordsEqualTolerance)
+        && equal(clipLowerY, _page->clipLowerY, _config.pdfParsing.coordsEqualTolerance)) {
     _page->characters.push_back(ch);
     _log->debug(_p) << "Append to page " << _page->pageNum << "." << endl;
     return;
@@ -501,10 +501,10 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
   // Iterate through the figures to check if there is a figure with a clip box equal to the
   // current clip box. If so, append the character to this figure.
   for (auto* figure : _page->figures) {
-    if (equal(clipLeftX, figure->clipLeftX, _config->textOutputDev.coordsEqualTolerance)
-          && equal(clipUpperY, figure->clipUpperY, _config->textOutputDev.coordsEqualTolerance)
-          && equal(clipRightX, figure->clipRightX, _config->textOutputDev.coordsEqualTolerance)
-          && equal(clipLowerY, figure->clipLowerY, _config->textOutputDev.coordsEqualTolerance)) {
+    if (equal(clipLeftX, figure->clipLeftX, _config.pdfParsing.coordsEqualTolerance)
+          && equal(clipUpperY, figure->clipUpperY, _config.pdfParsing.coordsEqualTolerance)
+          && equal(clipRightX, figure->clipRightX, _config.pdfParsing.coordsEqualTolerance)
+          && equal(clipLowerY, figure->clipLowerY, _config.pdfParsing.coordsEqualTolerance)) {
       // Update the bounding box of the figure.
       figure->pos->leftX = min(figure->pos->leftX, ch->pos->leftX);
       figure->pos->upperY = min(figure->pos->upperY, ch->pos->upperY);
@@ -518,7 +518,7 @@ void TextOutputDev::drawChar(GfxState* state, double x, double y, double dx, dou
 
   // If there is no figure with a clip box equal to the current clip box, create one.
   PdfFigure* figure = new PdfFigure();
-  figure->id = ppp::string_utils::createRandomString(_config->idLength, "figure-");
+  figure->id = ppp::string_utils::createRandomString(_config.idLength, "figure-");
   figure->doc = _doc;
   figure->pos->pageNum = _page->pageNum;
   figure->pos->leftX = ch->pos->leftX;
@@ -576,10 +576,10 @@ void TextOutputDev::stroke(GfxState* state) {
       // example, when the first endpoint of a line lies left to the clip box and the second
       // endpoint lies right to the clip box (and the connecting line goes straight through the
       // clip box).
-      if (equalOrSmaller(x, clipLeftX, _config->textOutputDev.coordsEqualTolerance)
-          || equalOrSmaller(y, clipUpperY, _config->textOutputDev.coordsEqualTolerance)
-          || equalOrLarger(x, clipRightX, _config->textOutputDev.coordsEqualTolerance)
-          || equalOrLarger(y, clipLowerY, _config->textOutputDev.coordsEqualTolerance)) {
+      if (equalOrSmaller(x, clipLeftX, _config.pdfParsing.coordsEqualTolerance)
+          || equalOrSmaller(y, clipUpperY, _config.pdfParsing.coordsEqualTolerance)
+          || equalOrLarger(x, clipRightX, _config.pdfParsing.coordsEqualTolerance)
+          || equalOrLarger(y, clipLowerY, _config.pdfParsing.coordsEqualTolerance)) {
         continue;
       }
 
@@ -592,7 +592,7 @@ void TextOutputDev::stroke(GfxState* state) {
 
   // Store the information about the path in form of a `PdfShape`.
   PdfShape* shape = new PdfShape();
-  shape->id = ppp::string_utils::createRandomString(_config->idLength, "shape-");
+  shape->id = ppp::string_utils::createRandomString(_config.idLength, "shape-");
   shape->doc = _doc;
   shape->pos->pageNum = _page->pageNum;
   shape->pos->leftX = leftX;
@@ -622,10 +622,10 @@ void TextOutputDev::stroke(GfxState* state) {
   // box is "seen" for the first time.
 
   // Check if the clip box is equal to the page's clip box. If so, add the shape to the page.
-  if (equal(clipLeftX, _page->clipLeftX, _config->textOutputDev.coordsEqualTolerance)
-        && equal(clipUpperY, _page->clipUpperY, _config->textOutputDev.coordsEqualTolerance)
-        && equal(clipRightX, _page->clipRightX, _config->textOutputDev.coordsEqualTolerance)
-        && equal(clipLowerY, _page->clipLowerY, _config->textOutputDev.coordsEqualTolerance)) {
+  if (equal(clipLeftX, _page->clipLeftX, _config.pdfParsing.coordsEqualTolerance)
+        && equal(clipUpperY, _page->clipUpperY, _config.pdfParsing.coordsEqualTolerance)
+        && equal(clipRightX, _page->clipRightX, _config.pdfParsing.coordsEqualTolerance)
+        && equal(clipLowerY, _page->clipLowerY, _config.pdfParsing.coordsEqualTolerance)) {
     _page->shapes.push_back(shape);
     _log->debug(_p) << "Append to page " << _page->pageNum << "." << endl;
     return;
@@ -634,10 +634,10 @@ void TextOutputDev::stroke(GfxState* state) {
   // Iterate through the figures to check if there is a figure with a clip box equal to the current
   // clip box. If so, append the shape to this figure.
   for (auto* figure : _page->figures) {
-    if (equal(clipLeftX, figure->clipLeftX, _config->textOutputDev.coordsEqualTolerance)
-          && equal(clipUpperY, figure->clipUpperY, _config->textOutputDev.coordsEqualTolerance)
-          && equal(clipRightX, figure->clipRightX, _config->textOutputDev.coordsEqualTolerance)
-          && equal(clipLowerY, figure->clipLowerY, _config->textOutputDev.coordsEqualTolerance)) {
+    if (equal(clipLeftX, figure->clipLeftX, _config.pdfParsing.coordsEqualTolerance)
+          && equal(clipUpperY, figure->clipUpperY, _config.pdfParsing.coordsEqualTolerance)
+          && equal(clipRightX, figure->clipRightX, _config.pdfParsing.coordsEqualTolerance)
+          && equal(clipLowerY, figure->clipLowerY, _config.pdfParsing.coordsEqualTolerance)) {
       // Update the bounding box of the figure.
       figure->pos->leftX = min(figure->pos->leftX, shape->pos->leftX);
       figure->pos->upperY = min(figure->pos->upperY, shape->pos->upperY);
@@ -651,7 +651,7 @@ void TextOutputDev::stroke(GfxState* state) {
 
   // If there is no figure with a clip box equal to the current clip box, create one.
   PdfFigure* figure = new PdfFigure();
-  figure->id = ppp::string_utils::createRandomString(_config->idLength, "figure-");
+  figure->id = ppp::string_utils::createRandomString(_config.idLength, "figure-");
   figure->doc = _doc;
   figure->pos->pageNum = _page->pageNum;
   figure->pos->leftX = shape->pos->leftX;
@@ -731,16 +731,16 @@ void TextOutputDev::drawGraphic(GfxState* state) {
 
   // Ignore the graphic if it lies outside the clip box (since graphics outside the clip box are
   // not visible). Example PDF where a graphic lies outside the clip box: 1001.5159.
-  if (equalOrSmaller(leftX, clipLeftX, _config->textOutputDev.coordsEqualTolerance)
-      || equalOrSmaller(upperY, clipUpperY, _config->textOutputDev.coordsEqualTolerance)
-      || equalOrLarger(rightX, clipRightX, _config->textOutputDev.coordsEqualTolerance)
-      || equalOrLarger(lowerY, clipLowerY, _config->textOutputDev.coordsEqualTolerance)) {
+  if (equalOrSmaller(leftX, clipLeftX, _config.pdfParsing.coordsEqualTolerance)
+      || equalOrSmaller(upperY, clipUpperY, _config.pdfParsing.coordsEqualTolerance)
+      || equalOrLarger(rightX, clipRightX, _config.pdfParsing.coordsEqualTolerance)
+      || equalOrLarger(lowerY, clipLowerY, _config.pdfParsing.coordsEqualTolerance)) {
     return;
   }
 
   // Store the information about the graphic in form of a `PdfGraphic`.
   PdfGraphic* graphic = new PdfGraphic();
-  graphic->id = ppp::string_utils::createRandomString(_config->idLength, "graphic-");
+  graphic->id = ppp::string_utils::createRandomString(_config.idLength, "graphic-");
   graphic->doc = _doc;
   graphic->pos->pageNum = _page->pageNum;
   graphic->pos->leftX = max(min(leftX, rightX), clipLeftX);
@@ -770,10 +770,10 @@ void TextOutputDev::drawGraphic(GfxState* state) {
   // box is "seen" for the first time.
 
   // Check if the clip box is equal to the page's clip box. If so, add the graphic to the page.
-  if (equal(clipLeftX, _page->clipLeftX, _config->textOutputDev.coordsEqualTolerance)
-        && equal(clipUpperY, _page->clipUpperY, _config->textOutputDev.coordsEqualTolerance)
-        && equal(clipRightX, _page->clipRightX, _config->textOutputDev.coordsEqualTolerance)
-        && equal(clipLowerY, _page->clipLowerY, _config->textOutputDev.coordsEqualTolerance)) {
+  if (equal(clipLeftX, _page->clipLeftX, _config.pdfParsing.coordsEqualTolerance)
+        && equal(clipUpperY, _page->clipUpperY, _config.pdfParsing.coordsEqualTolerance)
+        && equal(clipRightX, _page->clipRightX, _config.pdfParsing.coordsEqualTolerance)
+        && equal(clipLowerY, _page->clipLowerY, _config.pdfParsing.coordsEqualTolerance)) {
     _page->graphics.push_back(graphic);
     _log->debug(_p) << "Append to page " << _page->pageNum << "." << endl;
     return;
@@ -782,10 +782,10 @@ void TextOutputDev::drawGraphic(GfxState* state) {
   // Iterate through the figures to check if there is a figure with a clip box equal to the current
   // clip box. If so, append the graphic to this figure.
   for (auto* figure : _page->figures) {
-    if (equal(clipLeftX, figure->clipLeftX, _config->textOutputDev.coordsEqualTolerance)
-          && equal(clipUpperY, figure->clipUpperY, _config->textOutputDev.coordsEqualTolerance)
-          && equal(clipRightX, figure->clipRightX, _config->textOutputDev.coordsEqualTolerance)
-          && equal(clipLowerY, figure->clipLowerY, _config->textOutputDev.coordsEqualTolerance)) {
+    if (equal(clipLeftX, figure->clipLeftX, _config.pdfParsing.coordsEqualTolerance)
+          && equal(clipUpperY, figure->clipUpperY, _config.pdfParsing.coordsEqualTolerance)
+          && equal(clipRightX, figure->clipRightX, _config.pdfParsing.coordsEqualTolerance)
+          && equal(clipLowerY, figure->clipLowerY, _config.pdfParsing.coordsEqualTolerance)) {
       // Update the bounding box of the figure.
       figure->pos->leftX = min(figure->pos->leftX, graphic->pos->leftX);
       figure->pos->upperY = min(figure->pos->upperY, graphic->pos->upperY);
@@ -799,7 +799,7 @@ void TextOutputDev::drawGraphic(GfxState* state) {
 
   // If there is no figure with a clip box equal to the current clip box, create one.
   PdfFigure* figure = new PdfFigure();
-  figure->id = ppp::string_utils::createRandomString(_config->idLength, "figure-");
+  figure->id = ppp::string_utils::createRandomString(_config.idLength, "figure-");
   figure->doc = _doc;
   figure->pos->pageNum = _page->pageNum;
   figure->pos->leftX = graphic->pos->leftX;

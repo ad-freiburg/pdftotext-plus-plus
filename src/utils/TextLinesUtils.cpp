@@ -7,13 +7,12 @@
  */
 
 #include <iostream>
+#include <functional>
 #include <regex>
 #include <stack>
 #include <string>
 #include <unordered_set>
 #include <vector>
-
-#include "../Constants.h"
 
 #include "./MathUtils.h"
 #include "./PdfElementsUtils.h"
@@ -24,6 +23,7 @@ using ppp::math_utils::equalOrLarger;
 using ppp::math_utils::equalOrSmaller;
 using ppp::math_utils::larger;
 using ppp::math_utils::smaller;
+using std::function;
 using std::smatch;
 using std::stack;
 using std::string;
@@ -31,7 +31,12 @@ using std::unordered_set;
 using std::vector;
 
 // _________________________________________________________________________________________________
-bool text_lines_utils::computeIsFirstLineOfItem(const PdfTextLine* line,
+bool text_lines_utils::computeIsFirstLineOfItem(
+      const PdfTextLine* line,
+      const char* superItemLabelAlphabet,
+      const vector<regex>* itemLabelRegexes,
+      double fontSizeEqualTolerance,
+      const string& sentenceDelimAlphabet,
       const unordered_set<string>* potentialFootnoteLabels) {
   assert(line);
 
@@ -41,9 +46,10 @@ bool text_lines_utils::computeIsFirstLineOfItem(const PdfTextLine* line,
   }
 
   // The line is not the first line of an item if it is not prefixed by an item label.
-  bool isPrefixedByItemLabel = text_lines_utils::computeIsPrefixedByItemLabel(line);
-  bool isPrefixedByFootnoteLabel = text_lines_utils::computeIsPrefixedByFootnoteLabel(line,
-      potentialFootnoteLabels);
+  bool isPrefixedByItemLabel = text_lines_utils::computeIsPrefixedByItemLabel(
+      line, superItemLabelAlphabet, itemLabelRegexes);
+  bool isPrefixedByFootnoteLabel = text_lines_utils::computeIsPrefixedByFootnoteLabel(
+      line, potentialFootnoteLabels);
   if (!isPrefixedByItemLabel && !isPrefixedByFootnoteLabel) {
     return false;
   }
@@ -61,12 +67,17 @@ bool text_lines_utils::computeIsFirstLineOfItem(const PdfTextLine* line,
   // This should avoid to detect lines that occasionally start with a footnote label, but that are
   // actually not part of a footnote, as a footnote. Example: 0901.4737, page 11 ("25Mg and 26Mg..")
   if (line->prevLine) {
-    bool isPrevPrefixedByLabel = text_lines_utils::computeIsPrefixedByItemLabel(line->prevLine);
+    bool isPrevPrefixedByLabel = text_lines_utils::computeIsPrefixedByItemLabel(
+        line->prevLine,
+        superItemLabelAlphabet,
+        itemLabelRegexes);
     bool hasEqualFont = text_element_utils::computeHasEqualFont(line->prevLine, line);
-    bool hasEqualFontSize = text_element_utils::computeHasEqualFontSize(line->prevLine, line);
+    bool hasEqualFontSize = text_element_utils::computeHasEqualFontSize(line->prevLine, line,
+        fontSizeEqualTolerance);
     double distance = element_utils::computeVerticalGap(line->prevLine, line);
     bool hasNegativeDistance = equalOrSmaller(distance, 0);
-    bool hasSentenceDelim = text_element_utils::computeEndsWithSentenceDelimiter(line->prevLine);
+    bool hasSentenceDelim = text_element_utils::computeEndsWithSentenceDelimiter(line->prevLine,
+        sentenceDelimAlphabet);
     bool hasEqualLeftX = element_utils::computeHasEqualLeftX(line->prevLine, line, avgCharWidth);
 
     if (!isPrevPrefixedByLabel && hasEqualFont && hasEqualFontSize && hasNegativeDistance
@@ -82,9 +93,13 @@ bool text_lines_utils::computeIsFirstLineOfItem(const PdfTextLine* line,
   if (prevSibling && !prevSibling->words.empty()) {
     PdfWord* firstWord = line->words[0];
     PdfWord* prevFirstWord = prevSibling->words[0];
-    bool prevIsPrefixedByItemLabel = text_lines_utils::computeIsPrefixedByItemLabel(prevSibling);
+    bool prevIsPrefixedByItemLabel = text_lines_utils::computeIsPrefixedByItemLabel(
+        prevSibling,
+        superItemLabelAlphabet,
+        itemLabelRegexes);
     bool hasEqualFont = text_element_utils::computeHasEqualFont(prevFirstWord, firstWord);
-    bool hasEqualFontSize = text_element_utils::computeHasEqualFontSize(prevFirstWord, firstWord);
+    bool hasEqualFontSize = text_element_utils::computeHasEqualFontSize(prevFirstWord, firstWord,
+        fontSizeEqualTolerance);
     if (prevIsPrefixedByItemLabel && hasEqualFont && hasEqualFontSize) {
       return true;
     }
@@ -97,9 +112,13 @@ bool text_lines_utils::computeIsFirstLineOfItem(const PdfTextLine* line,
   if (nextSibling && !nextSibling->words.empty()) {
     PdfWord* firstWord = line->words[0];
     PdfWord* nextFirstWord = nextSibling->words[0];
-    bool nextIsPrefixedByItemLabel = text_lines_utils::computeIsPrefixedByItemLabel(nextSibling);
+    bool nextIsPrefixedByItemLabel = text_lines_utils::computeIsPrefixedByItemLabel(
+        nextSibling,
+        superItemLabelAlphabet,
+        itemLabelRegexes);
     bool hasEqualFont = text_element_utils::computeHasEqualFont(nextFirstWord, firstWord);
-    bool hasEqualFontSize = text_element_utils::computeHasEqualFontSize(nextFirstWord, firstWord);
+    bool hasEqualFontSize = text_element_utils::computeHasEqualFontSize(nextFirstWord, firstWord,
+        fontSizeEqualTolerance);
     if (nextIsPrefixedByItemLabel && hasEqualFont && hasEqualFontSize) {
       return true;
     }
@@ -114,7 +133,12 @@ bool text_lines_utils::computeIsFirstLineOfItem(const PdfTextLine* line,
 }
 
 // _________________________________________________________________________________________________
-bool text_lines_utils::computeIsContinuationOfItem(const PdfTextLine* line,
+bool text_lines_utils::computeIsContinuationOfItem(
+      const PdfTextLine* line,
+      const char* superItemLabelAlphabet,
+      const vector<regex>* itemLabelRegexes,
+      double fontSizeEqualTolerance,
+      const string& sentenceDelimAlphabet,
       const unordered_set<string>* potentialFootnoteLabels) {
   assert(line);
 
@@ -126,12 +150,27 @@ bool text_lines_utils::computeIsContinuationOfItem(const PdfTextLine* line,
 
   // The line is a continuation of an item (a footnote) if the parent line is the first line or a
   // continuation of an item (a footnote).
-  return text_lines_utils::computeIsFirstLineOfItem(parentLine, potentialFootnoteLabels)
-      || text_lines_utils::computeIsContinuationOfItem(parentLine, potentialFootnoteLabels);
+  return text_lines_utils::computeIsFirstLineOfItem(
+        parentLine,
+        superItemLabelAlphabet,
+        itemLabelRegexes,
+        fontSizeEqualTolerance,
+        sentenceDelimAlphabet,
+        potentialFootnoteLabels) ||
+      text_lines_utils::computeIsContinuationOfItem(
+        parentLine,
+        superItemLabelAlphabet,
+        itemLabelRegexes,
+        fontSizeEqualTolerance,
+        sentenceDelimAlphabet,
+        potentialFootnoteLabels);
 }
 
 // _________________________________________________________________________________________________
-bool text_lines_utils::computeIsPrefixedByItemLabel(const PdfTextLine* line) {
+bool text_lines_utils::computeIsPrefixedByItemLabel(
+    const PdfTextLine* line,
+    const char* superItemLabelAlphabet,
+    const vector<regex>* itemLabelRegexes) {
   assert(line);
 
   // The line is not prefixed by an enumeration item label if it does not contain any words.
@@ -152,14 +191,14 @@ bool text_lines_utils::computeIsPrefixedByItemLabel(const PdfTextLine* line) {
   // This would identify also lines that are prefixed by something like "a)".
   PdfCharacter* ch = firstWordChars[0];
   string charStr = ch->text;
-  if (ch->isSuperscript && strstr(config::SUPER_ITEM_LABEL_ALPHABET, charStr.c_str()) != nullptr) {
+  if (ch->isSuperscript && strstr(superItemLabelAlphabet, charStr.c_str()) != nullptr) {
     return true;
   }
 
   // The line is prefixed by an enumeration item label if it matches one of our regexes we defined
   // for identifying item labels. The matching parts must not be superscripted.
   smatch m;
-  for (const auto& regex : config::ITEM_LABEL_REGEXES) {
+  for (const auto& regex : *itemLabelRegexes) {
     if (regex_search(line->text, m, regex)) {
       return true;
     }
@@ -200,7 +239,8 @@ bool text_lines_utils::computeIsPrefixedByFootnoteLabel(const PdfTextLine* line,
 }
 
 // _________________________________________________________________________________________________
-bool text_lines_utils::computeHasPrevLineCapacity(const PdfTextLine* line) {
+bool text_lines_utils::computeHasPrevLineCapacity(const PdfTextLine* line,
+    double prevTextLineCapacityThresholdFactor) {
   assert(line);
 
   // The previous line has of course no capacity if there is no previous line.
@@ -218,23 +258,21 @@ bool text_lines_utils::computeHasPrevLineCapacity(const PdfTextLine* line) {
 
   // The previous line has capacity if its right margin is larger than the width of the first word
   // of the given line, under consideration of the threshold.
-  double threshold = config::getPrevTextLineCapacityThreshold(line->doc);
+  double threshold = prevTextLineCapacityThresholdFactor * line->doc->avgCharWidth;
   return larger(line->prevLine->rightMargin, firstWordWidth, threshold);
 }
 
 
 // _________________________________________________________________________________________________
-void text_lines_utils::computeTextLineHierarchy(const PdfPage* page) {
+void text_lines_utils::computeTextLineHierarchy(const PdfPage* page,
+    double leftXOffsetThresholdFactor, double lineHierarchyMaxLineDist,
+    double coordsEqualTolerance) {
   assert(page);
 
   // Do nothing if the page does not contain any segments.
   if (page->segments.empty()) {
     return;
   }
-
-  const PdfDocument* doc = page->segments[0]->doc;
-  double leftXOffsetThreshold = config::getTextLineHierarchyLeftXOffsetThreshold(doc);
-  double maxLineDist = config::LINE_HIERARCHY_MAX_LINE_DIST;
 
   // Maintain a stack to keep track of the parent and sibling lines.
   stack<PdfTextLine*> lineStack;
@@ -251,12 +289,15 @@ void text_lines_utils::computeTextLineHierarchy(const PdfPage* page) {
         bool hasSameWMode = prevLine->pos->wMode == line->pos->wMode;
         if (hasSameRotation && hasSameWMode) {
           double absLineDistance = abs(element_utils::computeVerticalGap(prevLine, line));
-          if (larger(absLineDistance, maxLineDist, config::COORDS_EQUAL_TOLERANCE)) {
+          if (larger(absLineDistance, lineHierarchyMaxLineDist, coordsEqualTolerance)) {
             lineStack = stack<PdfTextLine*>();
           }
         }
       }
       prevLine = line;
+
+      const PdfDocument* doc = page->segments[0]->doc;
+      double leftXOffsetThreshold = leftXOffsetThresholdFactor * doc->avgCharWidth;
 
       // Remove all lines from the stack with a larger leftX than the current line, because
       // they can't be a parent line or any sibling line of the current line.
@@ -282,7 +323,7 @@ void text_lines_utils::computeTextLineHierarchy(const PdfPage* page) {
       // sibling line of a line in a different column.
       double topStackLowerY = lineStack.top()->pos->lowerY;
       double lineLowerY = line->pos->lowerY;
-      if (equalOrLarger(topStackLowerY, lineLowerY, config::COORDS_EQUAL_TOLERANCE)) {
+      if (equalOrLarger(topStackLowerY, lineLowerY, coordsEqualTolerance)) {
         continue;
       }
 
@@ -318,7 +359,7 @@ void text_lines_utils::computeTextLineHierarchy(const PdfPage* page) {
 
 // _________________________________________________________________________________________________
 void text_lines_utils::computePotentialFootnoteLabels(const PdfTextLine* line,
-      unordered_set<string>* result) {
+      const string& specialFootnoteLabelsAlphabet, unordered_set<string>* result) {
   assert(line);
   assert(result);
 
@@ -351,7 +392,7 @@ void text_lines_utils::computePotentialFootnoteLabels(const PdfTextLine* line,
 
       // The character is part of a potential footnote label when it occurs in our alphabet we
       // defined to identify special (= non-alphanumerical) footnote labels.
-      bool isLabel = strchr(SPECIAL_FOOTNOTE_LABELS_ALPHABET, ch->text[0]) != nullptr;
+      bool isLabel = specialFootnoteLabelsAlphabet.find(ch->text[0]) != std::string::npos;
 
       // The character is also a potential footnote label when it is a superscripted alphanumerical.
       if (ch->isSuperscript && isalnum(ch->text[0])) {
@@ -381,14 +422,15 @@ void text_lines_utils::computePotentialFootnoteLabels(const PdfTextLine* line,
 }
 
 // _________________________________________________________________________________________________
-bool text_lines_utils::computeIsCentered(const PdfTextLine* line1, const PdfTextLine* line2) {
+bool text_lines_utils::computeIsCentered(const PdfTextLine* line1, const PdfTextLine* line2,
+    double centeringXOverlapRatioThreshold, double centeringXOffsetEqualToleranceFactor) {
   assert(line1);
   assert(line2);
 
   // The lines are not centered when the maximum x-overlap ratio between the lines is smaller than
   // the threshold.
   double maxXOverlapRatio = element_utils::computeMaxXOverlapRatio(line1, line2);
-  if (smaller(maxXOverlapRatio, config::CENTERING_X_OVERLAP_RATIO_THRESHOLD)) {
+  if (smaller(maxXOverlapRatio, centeringXOverlapRatioThreshold)) {
     return false;
   }
 
@@ -396,7 +438,7 @@ bool text_lines_utils::computeIsCentered(const PdfTextLine* line1, const PdfText
   // are not equal.
   double absLeftXOffset = abs(element_utils::computeLeftXOffset(line1, line2));
   double absRightXOffset = abs(element_utils::computeRightXOffset(line1, line2));
-  double xOffsetTolerance = config::getCenteringXOffsetEqualTolerance(line1->doc);
+  double xOffsetTolerance = centeringXOffsetEqualToleranceFactor * line1->doc->avgCharWidth;
   if (!equal(absLeftXOffset, absRightXOffset, xOffsetTolerance)) {
     return false;
   }

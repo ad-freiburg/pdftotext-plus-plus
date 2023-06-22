@@ -13,110 +13,13 @@
 #include <unordered_set>
 #include <vector>
 
-#include "../Constants.h"
 #include "../PdfDocument.h"
 
+using std::string;
 using std::unordered_set;
 using std::vector;
 
 // =================================================================================================
-// CONFIG
-
-namespace text_blocks_utils::config {
-
-// An alphabet that is used for computing whether or not a text line is part of a formula.
-// It contains characters we consider to be part of a formula.
-const char* const FORMULA_ID_ALPHABET = global_config::FORMULA_ID_ALPHABET;
-
-// A set of common last name prefixes, e.g.: "van", "de", etc. It is used while computing whether
-// or not a text block is in hanging indent format. The motivation is the following: Normally,
-// all non-indented text lines of a text block must start with an uppercase character, so that the
-// text block is considered to be in hanging indent format. But there are references that start
-// with a last name prefix like "van" or "de", in which case the respective text block contains
-// non-indented text lines starting with a lowercase character. This alphabet is for allowing such
-// text lines in a hanging indent text block.
-const unordered_set<string> LAST_NAME_PREFIXES = global_config::LAST_NAME_PREFIXES;
-
-// ----------
-// Config for computeIsTextLinesCentered().
-
-// A parameter that is used for computing whether or not the text lines of a text block are
-// centered among each other. It denotes the maximum number of justified lines (= lines with a left
-// margin and right margin == 0) a text block is allowed to contain so that the text lines are
-// considered to be centered.
-const int CENTERING_MAX_NUM_JUSTIFIED_LINES = 5;
-
-/**
- * This method returns a threshold used for computing whether or not the text lines of a text
- * block are centered among each other. The text lines are not considered to be centered, when none
- * of the text lines has a leftX-offset and rightX-offset larger than this threshold.
- *
- * @param doc
- *    The currently processed PDF document.
- *
- * @return
- *    The threshold.
- */
-constexpr double getCenteringXOffsetThreshold(const PdfDocument* doc) {
-  return 2.0 * doc->avgCharWidth;
-}
-
-// ----------
-// Config for computeHangingIndent().
-
-// A parameter that is used for computing whether or not a text block is in hanging indent format.
-// It denotes the minimum length of a text line so that the line is considered to be a "long" text
-// line.
-const double HANG_INDENT_MIN_LENGTH_LONG_LINES = 3;
-
-// A parameter that is used for computing whether or not a text block is in hanging indent format.
-// If all non-indented lines of a text block start with an uppercase character and if the number
-// of non-indented lines is larger than this threshold, the block is considered to be in hanging
-// indent format.
-const int HANG_INDENT_NUM_NON_INDENTED_LINES_THRESHOLD = 10;
-
-// A parameter that is used for computing whether or not a text block is in hanging indent format.
-// If there is at least one indented line that starts with a lowercase character, and the number
-// of long lines is larger than this threshold, the text block is considered to be in hanging
-// indent format.
-const int HANG_INDENT_NUM_LONG_LINES_THRESHOLD = 4;
-
-// A parameter in [0, 1] that is used for computing whether or not a text block is in hanging
-// indent format. It denotes the minimum percentage of *indented* lines in a given text block that
-// must exhibit the most frequent left margin > 0. If the percentage of such lines is smaller than
-// this threshold, the text block is considered to be *not* in hanging indent format.
-const double HANG_INDENT_MIN_PERC_LINES_SAME_LEFT_MARGIN = 0.5;
-
-// A parameter that is used for computing whether or not a text block is in hanging indent format.
-// It denotes the maximum number of lowercased non-indented text lines a text block is allowed to
-// contain so that the text block is considered to be in hanging indent format.
-const int HANG_INDENT_NUM_LOWER_NON_INDENTED_LINES_THRESHOLD = 0;
-
-// A parameter that is used for computing whether or not a text block is in hanging indent format.
-// It denotes the minimum number of lowercased indented lines a text block is allowed to contain so
-// that the text block is considered to be in hanging indent format.
-const int HANG_INDENT_NUM_LOWER_INDENTED_LINES_THRESHOLD = 1;
-
-/**
- * This method returns a threshold for checking if the left margin of a text line is "large enough"
- * so that the text line is considered to be indented. If the left margin is larger than this
- * threshold, the text line is considered to be indented; otherwise it is considered to be not
- * indented.
- *
- * @param doc
- *    The currently processed PDF document.
- *
- * @return
- *    The threshold.
- */
-constexpr double getHangIndentMarginThreshold(const PdfDocument* doc) {
-  return 1.0 * doc->avgCharWidth;
-}
-
-}  // namespace text_blocks_utils::config
-
-// =================================================================================================
-
 
 /**
  * A collection of some useful and commonly used functions in context of text blocks.
@@ -141,12 +44,36 @@ namespace text_blocks_utils {
  *
  * @param block
  *    The text block to process.
- *
+ * @param formulaIdAlphabet
+ *    An alphabet that is used for computing whether or not a text line is part of a formula.
+ *    It contains characters we consider to be part of a formula.
+ * @param centeringXOverlapRatioThreshold
+ *    A parameter used for computing whether or not a text line is centered compared to another
+ *    text line. It denotes the minimum ratio by which one of the text line must horizontally
+ *    overlap the the other text line, so that the text lines are considered to be centered to each
+ *    other. If the maximum x-overlap ratio between both text lines is smaller than this value, the
+ *    text lines are considered to be *not* centered.
+ * @param centeringXOffsetEqualToleranceFactor
+ *    This method returns a factor that is used to compute a threshold (= <factor> *
+ *    'average character width in the PDF document') denoting the maximum allowed difference
+ *    between the left x-offset and right x-offset of a text line (computed relatively to the
+ *    previous text line), so that both offsets are considered to be equal and that the text line
+ *    is considered to be centered compared to the previous text line.
+ * @param centeringMaxNumJustifiedLines
+ *    A parameter that is used for computing whether or not the text lines of a text block are
+ *    centered among each other. It denotes the maximum number of justified lines (= lines with a
+ *    left margin and right margin == 0) a text block is allowed to contain so that the text lines
+ *    are considered to be centered.
  * @return
  *    True if the lines contained in the given text block are centered with regard to the
  *    requirements described above; false otherwise.
  */
-bool computeIsTextLinesCentered(const PdfTextBlock* block);
+bool computeIsTextLinesCentered(
+    const PdfTextBlock* block,
+    const string& formulaIdAlphabet,
+    double centeringXOverlapRatioThreshold,
+    double centeringXOffsetEqualToleranceFactor,
+    int centeringMaxNumJustifiedLines);
 
 /**
  * This method checks if the given block is in hanging indent format (meaning that the first line
@@ -179,11 +106,58 @@ bool computeIsTextLinesCentered(const PdfTextBlock* block);
  *
  * @param block
  *    The text block to process.
+ * @param lastNamePrefixes
+ *    A set of common last name prefixes, e.g.: "van", "de", etc.
+ * @param hangIndentMinLengthLongLines
+ *    The min length of a text line so that the line is considered to be a "long" text line.
+ * @param hangIndentMinPercLinesSameLeftMargin
+ *    A parameter in [0, 1] denoting the minimum percentage of *indented* lines in a given text
+ *    block that must exhibit the most frequent left margin > 0. If the percentage of such lines is
+ *    smaller than this threshold, the text block is considered to be *not* in hanging indent
+ *    format.
+ * @param hangIndentNumNonIndentedLinesThreshold
+ *    If all non-indented lines of a text block start with an uppercase character and if
+ *    the number of non-indented lines is larger than this threshold, the block is considered to
+ *    be in hanging indent format.
+ * @param hangIndentMarginThresholdFactor
+ *    A factor used to compute a threshold for checking if the left margin of a text line is
+ *    "large enough" so that the text line is considered to be indented. If the left margin is
+ *    larger than this threshold, the text line is considered to be indented; otherwise it is
+ *    considered to be not indented.
+ * @param hangIndentNumLowerNonIndentedLinesThreshold
+ *    A parameter that denotes the maximum number of lowercased non-indented text lines a text
+ *    block is allowed to contain so that the text block is considered to be in hanging indent
+ *    format.
+ * @param hangIndentNumLongLinesThreshold
+ *    If there is at least one indented line that starts with a lowercase character, and
+ *    the number of long lines is larger than this threshold, the text block is considered to be
+ *    in hanging indent format
+ * @param hangIndentNumLowerIndentedLinesThreshold
+ *    A parameter that is used for computing whether or not a text block is in hanging indent
+ *    format. It denotes the minimum number of lowercased indented lines a text block is allowed
+ *    to contain so that the text block is considered to be in hanging indent format.
+ * @param prevTextLineCapacityThresholdFactor
+ *    A factor used to compute a threshold that is used for computing whether or not the previous
+ *    text line has capacity (the threshold is computed as <factor> * 'avg. character width of the
+ *    PDF document'). If the difference between the right margin of the previous line and the
+ *    width of the first word of the current text line is larger than this threshold, the previous
+ *    line is considered to have capacity. Otherwise, the previous line is considered to have *no*
+ *    capacity.
  *
  * @return
  *    A value > 0 if the block is in hanging indent format, and 0.0 otherwise.
  */
-double computeHangingIndent(const PdfTextBlock* block);
+double computeHangingIndent(
+    const PdfTextBlock* block,
+    const unordered_set<string>& lastNamePrefixes,
+    int hangIndentMinLengthLongLines,
+    double prevTextLineCapacityThresholdFactor,
+    double hangIndentMinPercLinesSameLeftMargin,
+    int hangIndentNumNonIndentedLinesThreshold,
+    double hangIndentMarginThresholdFactor,
+    int hangIndentNumLowerNonIndentedLinesThreshold,
+    int hangIndentNumLongLinesThreshold,
+    int hangIndentNumLowerIndentedLinesThreshold);
 
 /**
  * This method iterates through the text lines of the given block (stored in block.lines),
@@ -221,10 +195,57 @@ void computeTextLineMargins(const PdfTextBlock* block);
  *
  * @param lines
  *    The text lines belonging to the text block to create.
+ * @param idLength
+ *    The length of the block's id to be created.
+ * @param formulaIdAlphabet
+ *    The characters to use as an identifier for formulas.
+ * @param centeringXOverlapRatioThreshold
+ *    A parameter used for computing whether or not a text line is centered compared to another
+ *    text line. It denotes the minimum ratio by which one of the text line must horizontally
+ *    overlap the the other text line, so that the text lines are considered to be centered to each
+ *    other. If the maximum x-overlap ratio between both text lines is smaller than this value, the
+ *    text lines are considered to be *not* centered.
+ * @param centeringXOffsetEqualToleranceFactor
+ *    This method returns a factor that is used to compute a threshold (= <factor> *
+ *    'average character width in the PDF document') denoting the maximum allowed difference
+ *    between the left x-offset and right x-offset of a text line (computed relatively to the
+ *    previous text line), so that both offsets are considered to be equal and that the text line
+ *    is considered to be centered compared to the previous text line.
+ * @param centeringMaxNumJustifiedLines
+ *    A parameter that is used for computing whether or not the text lines of a text block are
+ *    centered among each other. It denotes the maximum number of justified lines (= lines with a
+ *    left margin and right margin == 0) a text block is allowed to contain so that the text lines
+ *    are considered to be centered.
+ * @param prevTextLineCapacityThresholdFactor
+ *    A factor used to compute a threshold that is used for computing whether or not the previous
+ *    text line has capacity (the threshold is computed as <factor> * 'avg. character width of the
+ *    PDF document'). If the difference between the right margin of the previous line and the
+ *    width of the first word of the current text line is larger than this threshold, the previous
+ *    line is considered to have capacity. Otherwise, the previous line is considered to have *no*
+ *    capacity.
  * @param blocks
  *    The vector to which the created text block should be appended.
  */
-void createTextBlock(const vector<PdfTextLine*>& lines, vector<PdfTextBlock*>* blocks);
+// TODO: Document the missing parameters.
+void createTextBlock(
+    const vector<PdfTextLine*>& lines,
+    int idLength,
+    const string& formulaIdAlphabet,
+    double centeringXOverlapRatioThreshold,
+    double centeringXOffsetEqualToleranceFactor,
+    int centeringMaxNumJustifiedLines,
+    double prevTextLineCapacityThresholdFactor,
+    const unordered_set<string>& lastNamePrefixes,
+    int hangIndentMinLengthLongLines,
+    double hangIndentMinPercLinesSameLeftMargin,
+    int hangIndentNumNonIndentedLinesThreshold,
+    double hangIndentMarginThresholdFactor,
+    int hangIndentNumLowerNonIndentedLinesThreshold,
+    int hangIndentNumLongLinesThreshold,
+    int hangIndentNumLowerIndentedLinesThreshold,
+    double fontSizeEqualTolerance,
+    double fontWeightEqualTolerance,
+    vector<PdfTextBlock*>* blocks);
 
 }  // namespace text_blocks_utils
 

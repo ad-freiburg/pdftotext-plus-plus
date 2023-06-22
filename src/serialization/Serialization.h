@@ -30,7 +30,7 @@ namespace ppp::serialization {
 const unordered_map<SerializationFormat, Serializer*> SERIALIZERS {
   { SerializationFormat::TXT, new PlainTextSerializer() },
   { SerializationFormat::TXT_EXTENDED, new PlainTextExtendedSerializer() },
-  { SerializationFormat::JSONL, new JsonlSerializer() }
+  // { SerializationFormat::JSONL, new JsonlSerializer() }
 };
 
 /**

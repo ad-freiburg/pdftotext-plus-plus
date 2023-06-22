@@ -15,11 +15,8 @@
 #include "../utils/MathUtils.h"
 #include "../utils/StringUtils.h"
 
-#include "../Constants.h"
 #include "../PdfDocument.h"
 #include "../Types.h"
-
-using global_config::COORDS_PREC;
 
 using ppp::types::SemanticRole;
 using ppp::math_utils::round;
@@ -36,7 +33,9 @@ using std::unordered_set;
 namespace ppp::serialization {
 
 // _________________________________________________________________________________________________
-JsonlSerializer::JsonlSerializer() : Serializer() {}
+JsonlSerializer::JsonlSerializer(size_t coordsPrecision) : Serializer() {
+  _coordsPrecision = coordsPrecision;
+}
 
 // _________________________________________________________________________________________________
 JsonlSerializer::~JsonlSerializer() = default;
@@ -81,8 +80,8 @@ void JsonlSerializer::serializePages(const PdfDocument* doc,
     out << "{"
       << "\"type\": \"page\", "
       << "\"num\": " << page->pageNum << ", "
-      << "\"width\": " << round(page->getWidth(), COORDS_PREC) << ", "
-      << "\"height\": " << round(page->getHeight(), COORDS_PREC) << ", "
+      << "\"width\": " << round(page->getWidth(), _coordsPrecision) << ", "
+      << "\"height\": " << round(page->getHeight(), _coordsPrecision) << ", "
       << "\"origin\": \"pdftotext++\""
       << "}"
       << endl;
@@ -121,10 +120,10 @@ void JsonlSerializer::serializeCharacters(const PdfDocument* doc,
               << "\"id\": \"" << c->id << "\", "
               << "\"rank\": " << c->rank << ", "
               << "\"page\": " << c->pos->pageNum << ", "
-              << "\"minX\": " << round(c->pos->leftX, COORDS_PREC) << ", "
-              << "\"minY\": " << round(c->pos->upperY, COORDS_PREC) << ", "
-              << "\"maxX\": " << round(c->pos->rightX, COORDS_PREC) << ", "
-              << "\"maxY\": " << round(c->pos->lowerY, COORDS_PREC) << ", "
+              << "\"minX\": " << round(c->pos->leftX, _coordsPrecision) << ", "
+              << "\"minY\": " << round(c->pos->upperY, _coordsPrecision) << ", "
+              << "\"maxX\": " << round(c->pos->rightX, _coordsPrecision) << ", "
+              << "\"maxY\": " << round(c->pos->lowerY, _coordsPrecision) << ", "
               << "\"wMode\": " << c->pos->wMode << ", "
               << "\"rotation\": " << c->pos->rotation << ", "
               << "\"font\": \"" << c->fontName << "\", "
@@ -159,10 +158,10 @@ void JsonlSerializer::serializeFigures(const PdfDocument* doc,
         << "\"rank\": " << f->rank << ", "
         << "\"id\": \"" << f->id << "\", "
         << "\"page\": " << f->pos->pageNum << ", "
-        << "\"minX\": " << round(f->pos->leftX, COORDS_PREC) << ", "
-        << "\"minY\": " << round(f->pos->upperY, COORDS_PREC) << ", "
-        << "\"maxX\": " << round(f->pos->rightX, COORDS_PREC) << ", "
-        << "\"maxY\": " << round(f->pos->lowerY, COORDS_PREC) << ", "
+        << "\"minX\": " << round(f->pos->leftX, _coordsPrecision) << ", "
+        << "\"minY\": " << round(f->pos->upperY, _coordsPrecision) << ", "
+        << "\"maxX\": " << round(f->pos->rightX, _coordsPrecision) << ", "
+        << "\"maxY\": " << round(f->pos->lowerY, _coordsPrecision) << ", "
         << "\"origin\": \"pdftotext++\""
         << "}"
         << endl;
@@ -182,10 +181,10 @@ void JsonlSerializer::serializeShapes(const PdfDocument* doc,
         << "\"rank\": " << s->rank << ", "
         << "\"id\": \"" << s->id << "\", "
         << "\"page\": " << s->pos->pageNum << ", "
-        << "\"minX\": " << round(s->pos->leftX, COORDS_PREC) << ", "
-        << "\"minY\": " << round(s->pos->upperY, COORDS_PREC) << ", "
-        << "\"maxX\": " << round(s->pos->rightX, COORDS_PREC) << ", "
-        << "\"maxY\": " << round(s->pos->lowerY, COORDS_PREC) << ", "
+        << "\"minX\": " << round(s->pos->leftX, _coordsPrecision) << ", "
+        << "\"minY\": " << round(s->pos->upperY, _coordsPrecision) << ", "
+        << "\"maxX\": " << round(s->pos->rightX, _coordsPrecision) << ", "
+        << "\"maxY\": " << round(s->pos->lowerY, _coordsPrecision) << ", "
         << "\"origin\": \"pdftotext++\""
         << "}"
         << endl;
@@ -212,10 +211,10 @@ void JsonlSerializer::serializeWords(const PdfDocument* doc,
             << "\"id\": \"" << word->id << "\", "
             << "\"rank\": " << word->rank << ", "
             << "\"page\": " << word->pos->pageNum << ", "
-            << "\"minX\": " << round(word->pos->leftX, COORDS_PREC) << ", "
-            << "\"minY\": " << round(word->pos->upperY, COORDS_PREC) << ", "
-            << "\"maxX\": " << round(word->pos->rightX, COORDS_PREC) << ", "
-            << "\"maxY\": " << round(word->pos->lowerY, COORDS_PREC) << ", "
+            << "\"minX\": " << round(word->pos->leftX, _coordsPrecision) << ", "
+            << "\"minY\": " << round(word->pos->upperY, _coordsPrecision) << ", "
+            << "\"maxX\": " << round(word->pos->rightX, _coordsPrecision) << ", "
+            << "\"maxY\": " << round(word->pos->lowerY, _coordsPrecision) << ", "
             << "\"font\": \"" << word->fontName << "\", "
             << "\"fontSize\": " << word->fontSize << ", "
             << "\"text\": \"" << ppp::string_utils::escapeJson(word->text) << "\", "
@@ -246,10 +245,10 @@ void JsonlSerializer::serializeTextBlocks(const PdfDocument* doc,
         << "\"id\": \"" << block->id << "\", "
         << "\"rank\": " << block->rank << ", "
         << "\"page\": " << block->pos->pageNum << ", "
-        << "\"minX\": " << round(block->pos->leftX, COORDS_PREC) << ", "
-        << "\"minY\": " << round(block->pos->upperY, COORDS_PREC) << ", "
-        << "\"maxX\": " << round(block->pos->rightX, COORDS_PREC) << ", "
-        << "\"maxY\": " << round(block->pos->lowerY, COORDS_PREC) << ", "
+        << "\"minX\": " << round(block->pos->leftX, _coordsPrecision) << ", "
+        << "\"minY\": " << round(block->pos->upperY, _coordsPrecision) << ", "
+        << "\"maxX\": " << round(block->pos->rightX, _coordsPrecision) << ", "
+        << "\"maxY\": " << round(block->pos->lowerY, _coordsPrecision) << ", "
         << "\"font\": \"" << block->fontName << "\", "
         << "\"fontSize\": " << block->fontSize << ", "
         << "\"text\": \"" << string_utils::escapeJson(block->text) << "\", "

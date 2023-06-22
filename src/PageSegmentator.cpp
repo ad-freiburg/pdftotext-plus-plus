@@ -18,21 +18,21 @@
 #include "./utils/PdfElementsUtils.h"
 #include "./utils/StringUtils.h"
 #include "./utils/Trool.h"
-
+#include "./Config.h"
 #include "./PageSegmentator.h"
 #include "./PdfDocument.h"
 #include "./XYCut.h"
 
+using ppp::Config;
 using std::endl;
 using std::pair;
 using std::vector;
 
-namespace config = page_segmentator::config;
-
 // _________________________________________________________________________________________________
-PageSegmentator::PageSegmentator(const PdfDocument* doc, LogLevel logLevel, int logPageFilter) {
-  _log = new Logger(logLevel, logPageFilter);
+PageSegmentator::PageSegmentator(PdfDocument* doc, const Config& config) {
   _doc = doc;
+  _config = config;
+  _log = new Logger(config.pageSegmentation.logLevel, config.pageSegmentation.logPageFilter);
 }
 
 // _________________________________________________________________________________________________
@@ -87,13 +87,19 @@ void PageSegmentator::processPage(PdfPage* page, vector<PdfPageSegment*>* segmen
 
   // Segment the page using the XY-cut algorithm.
   vector<vector<PdfElement*>> groups;
-  xyCut(pageElements, config::getXCutMinGapWidth(_doc), config::getYCutMinGapHeight(_doc),
-      config::X_CUT_MAX_NUM_OVERLAPPING_ELEMENTS, chooseXCutsBind, chooseYCutsBind, false,
-      &groups, &page->blockDetectionCuts);
+  xyCut(pageElements,
+      _config.pageSegmentation.getXCutMinGapWidth(_doc),
+      _config.pageSegmentation.getYCutMinGapHeight(_doc),
+      _config.pageSegmentation.xCutMaxNumOverlappingElements,
+      chooseXCutsBind,
+      chooseYCutsBind,
+      false,
+      &groups,
+      &page->blockDetectionCuts);
 
   // Create a `PdfPageSegment` from each group and append it to the result vector.
   for (const auto& group : groups) {
-    PdfPageSegment* segment = page_segment_utils::createPageSegment(group, _doc);
+    PdfPageSegment* segment = page_segment_utils::createPageSegment(group, _doc, _config.idLength);
     segments->push_back(segment);
   }
 }
@@ -182,13 +188,14 @@ Trool PageSegmentator::chooseXCut_overlappingElements(const Cut* cut, const vect
   assert(cut);
 
   int p = cut->pageNum;
-  double marginThreshold = config::getOverlappingElementsMarginThreshold(_doc);
+  double marginThreshold = _config.pageSegmentation.getOverlappingElementsMarginThreshold(_doc);
 
   if (!silent) {
     _log->debug(p) << BLUE << "Are there overlapping elements at the top/bottom?" << OFF << endl;
     _log->debug(p) << " └─ #overlappingElements: " << cut->overlappingElements.size() << endl;
     _log->debug(p) << " └─ #elements: " << elements.size() << endl;
-    _log->debug(p) << " └─ numElementsThreshold: " << config::OVERLAPPING_MIN_NUM_ELEMENTS << endl;
+    _log->debug(p) << " └─ numElementsThreshold: "
+        << _config.pageSegmentation.overlappingMinNumElements << endl;
     _log->debug(p) << " └─ marginThreshold: " << marginThreshold << endl;
   }
 
@@ -198,7 +205,7 @@ Trool PageSegmentator::chooseXCut_overlappingElements(const Cut* cut, const vect
   }
 
   // Do not choose the cut when the number of elements is smaller than the threshold.
-  if (elements.size() < config::OVERLAPPING_MIN_NUM_ELEMENTS) {
+  if (elements.size() < _config.pageSegmentation.overlappingMinNumElements) {
     if (!silent) {
       _log->debug(p) << BLUE << BOLD << " #elements < threshold → do not choose" << OFF << endl;
     }
@@ -239,7 +246,7 @@ Trool PageSegmentator::chooseXCut_smallGapWidthHeight(const Cut* cut, bool silen
   assert(cut);
 
   int p = cut->pageNum;
-  pair<double, double> thresholds = config::getSmallGapWidthHeightThresholds(_doc);
+  pair<double, double> thresholds = _config.pageSegmentation.getSmallGapWidthHeightThresholds(_doc);
   double wThreshold = thresholds.first;
   double hThreshold = thresholds.second;
 
@@ -268,7 +275,7 @@ Trool PageSegmentator::chooseXCut_contiguousWords(const Cut* cut,
   // Determine the rightmost word to the left of the cut.
   int p = cut->pageNum;
   const PdfWord* leftWord = dynamic_cast<const PdfWord*>(cut->elementBefore);
-  double yOverlapRatioThreshold = config::CONTIGUOUS_WORDS_Y_OVERLAP_RATIO_THRESHOLD;
+  double yOverlapRatioThreshold = _config.pageSegmentation.contiguousWordsYOverlapRatioThreshold;
 
   if (!silent) {
     _log->debug(p) << BLUE << "Does the cut divide contiguous words?" << OFF << endl;
@@ -327,7 +334,7 @@ Trool PageSegmentator::chooseXCut_slimGroups(const Cut* prevChosenCut, const Cut
   }
 
   int p = cut->pageNum;
-  double widthThreshold = config::getSlimGroupWidthThreshold(_doc);
+  double widthThreshold = _config.pageSegmentation.getSlimGroupWidthThreshold(_doc);
 
   // Compute the width of the resulting left group.
   const PdfElement* leftGroupFirstElem = prevChosenCut ? prevChosenCut->elementAfter : elements[0];
@@ -431,8 +438,11 @@ void PageSegmentator::chooseYCuts(const vector<Cut*>& cuts, const vector<PdfElem
       size_t endPos = otherCut->posInElements;
       vector<PdfElement*> elems(elements.begin() + beginPos, elements.begin() + endPos);
 
-      bool cutOk = xCut(elems, config::getXCutMinGapWidth(_doc),
-          config::X_CUT_MAX_NUM_OVERLAPPING_ELEMENTS, chooseXCutsBind, true);
+      bool cutOk = xCut(elems,
+          _config.pageSegmentation.getXCutMinGapWidth(_doc),
+          _config.pageSegmentation.xCutMaxNumOverlappingElements,
+          chooseXCutsBind,
+          true);
 
       if (!silent) {
         _log->debug(p) << " other y-cut #" << (otherIdx + 1)

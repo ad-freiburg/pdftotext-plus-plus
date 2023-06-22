@@ -14,82 +14,13 @@
 #include <vector>
 
 #include "./utils/Log.h"
-
-#include "./Constants.h"
+#include "./Config.h"
 #include "./PdfDocument.h"
 
+using ppp::Config;
 using std::string;
 using std::unordered_set;
 using std::vector;
-
-// =================================================================================================
-// CONFIG.
-
-namespace words_detector::config {
-
-// ----------
-// startsWord()
-
-// A parameter that is used for detecting words. It denotes a threshold for the vertical overlap
-// between the current character and the active word. If the maximum y-overlap ratio between the
-// active word and the current character is larger or equal to this threshold, the character is
-// considered to be a part of the active word; otherwise it is considered to be not a part.
-const double Y_OVERLAP_RATIO_THRESHOLD = 0.5;
-
-/**
- * This method returns a threshold to be used for checking if the horizontal gap between the given
- * active word and a character is large enough in order to be considered as a word delimiter. If
- * the horizontal gap between the word and the character is larger than this threshold, it is
- * considered to be a word delimiter.
- *
- * @param doc
- *    The currently processed document.
- * @param activeWord
- *    The active word.
- *
- * @return
- *    The threshold.
- */
-constexpr double getHorizontalGapThreshold(const PdfDocument* doc, const PdfWord* activeWord) {
-  return 0.15 * activeWord->fontSize;
-}
-
-// ----------
-// mergeStackedMathSymbols()
-
-// A PDF can contain "stacked math symbols", which we want to merge to a single word (see the
-// preliminary comment of the `WordsDetector` class below for more information about how stacked
-// math symbols are defined). The following three sets are used to identify the base word of a
-// stacked math symbol.
-// The first set contains the *text* of characters that are likely to be part of a base word of a
-// stacked math symbol. If a word indeed contains a character that is part of this set, it is
-// considered to be the base word of a stacked math symbol.
-// The second set contains the *names* of characters that are likely to be part of a base word of a
-// stacked math symbol. If a word contains a character with a name that is part of this set, it is
-// considered to be the base word of a stacked math symbol (NOTE: this set was introduced because,
-// in some PDFs, the text of summation symbols does not contain a summation symbol, but some
-// weird symbols (e.g., a "?"), most typically because of a missing encoding. The names of the
-// characters are simply an additional indicator for identifying the base word of a stacked math
-// symbol).
-// The third set contains *words* that are likely to be a base word of a stacked math symbol.
-const unordered_set<string> STACKED_MATH_CHAR_TEXTS = { "∑", "∏", "∫", "⊗" };
-const unordered_set<string> STACKED_MATH_CHAR_NAMES = { "summationdisplay",
-    "productdisplay", "integraldisplay", "circlemultiplydisplay" };
-const unordered_set<string> STACKED_MATH_WORDS = { "sup", "lim" };
-
-// A parameter that is used for detecting words that are part of a stacked math symbol.
-// It denotes the maximum allowed difference between two font sizes so that the font sizes are
-// considered to be equal. A word is only then considered to be part of a stacked math symbol if
-// its font size is smaller than the base word of the stacked math symbol (under consideration
-// of a small threshold).
-const double FSIZE_EQUAL_TOLERANCE = global_config::FS_EQUAL_TOLERANCE;
-
-// A parameter that is used for detecting words that are part of a stacked math symbol. It denotes
-// the minimum x-overlap ratio between a word w and the base word of the stacked math symbol, so
-// that w is considered to be a part of the stacked math symbol.
-const double STACKED_MATH_SYMBOL_X_OVERLAP_RATIO_THRESHOLD = 0.5;
-
-}  // namespace words_detector::config
 
 // =================================================================================================
 
@@ -113,13 +44,10 @@ class WordsDetector {
    *
    * @param doc
    *   The PDF document to process.
-   * @param logLevel
-   *   The logging level.
-   * @param logPageFilter
-   *   If set to a value > 0, only the logging messages produced while processing the
-   *   <logPageFilter>-th page of the current PDF file will be printed to the console.
+   * @param config
+   *   The configuration to use.
    */
-  explicit WordsDetector(const PdfDocument* doc, LogLevel level = ERROR, int logPageFilter = -1);
+  explicit WordsDetector(PdfDocument* doc, const Config& config);
 
   /** The deconstructor. */
   ~WordsDetector();
@@ -181,13 +109,16 @@ class WordsDetector {
   void mergeStackedMathSymbols(const PdfPage* page) const;
 
   // The document to process.
-  const PdfDocument* _doc;
+  PdfDocument* _doc;
+
+  // The configuration to use.
+  Config _config;
 
   // The active word.
   PdfWord _activeWord;
 
   // The logger.
-  const Logger* _log;
+  Logger* _log;
 };
 
 #endif  // WORDSDETECTOR_H_
