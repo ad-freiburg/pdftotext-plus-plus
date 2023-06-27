@@ -17,6 +17,8 @@ using std::make_pair;
 using std::numeric_limits;
 using std::pair;
 
+using ppp::utils::math::larger;
+
 // =================================================================================================
 // DoubleCounter
 
@@ -49,7 +51,7 @@ pair<double, int> DoubleCounter::mostFreqAndCount() const {
 double DoubleCounter::max() const {
   double max = numeric_limits<double>::min();
   for (auto it = begin(); it != end(); ++it) {
-    if (ppp::math_utils::larger(it->first, max)) {
+    if (larger(it->first, max)) {
       max = it->first;
     }
   }

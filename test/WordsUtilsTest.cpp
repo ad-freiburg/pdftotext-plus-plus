@@ -56,7 +56,7 @@ PdfDocument* WordsUtilsTest::pdf2 = nullptr;
 
 // _________________________________________________________________________________________________
 TEST_F(WordsUtilsTest, createWordPdf1) {
-  // TODO: Read from config.
+  // TODO(korzen): Read from config.
   int idLength = 8;
   PdfPage* page0 = pdf1->pages[0];
 

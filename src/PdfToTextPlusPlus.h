@@ -1,5 +1,5 @@
 /**
- * Copyright 2022, University of Freiburg,
+ * Copyright 2023, University of Freiburg,
  * Chair of Algorithms and Data Structures.
  * Author: Claudius Korzen <korzen@cs.uni-freiburg.de>.
  *
@@ -17,11 +17,15 @@
 #include "./PdfDocument.h"
 #include "./Types.h"
 
-using ppp::types::Timing;
 using std::string;
 using std::vector;
 
+using ppp::config::Config;
+using ppp::types::Timing;
+
 // =================================================================================================
+
+namespace ppp {
 
 /**
  * This class is the core class of pdftotext++. It is responsible for processing a given PDF file
@@ -52,19 +56,6 @@ class PdfToTextPlusPlus {
    *
    * @param config
    *   The configuration to use.
-   * @param noEmbeddedFontFilesParsing
-   *   A boolean flag indicating whether or not to parse the font files, embedded into the current
-   *   PDF file, while parsing the content streams. Setting this parameter to true disables the
-   *   parsing; setting it to false enables the parsing. Parsing the font files can enable more
-   *   accurate bounding boxes of the characters (in particular, when the characters represent
-   *   mathematical symbols). It also can enable more correct information about the style of a font
-   *   (for example, whether or not the font is a bold font), for the following reason: actually,
-   *   the PDF standard specifies several font flags that describe the style of a font. These flags
-   *   are however often not set, even if they are supposed to be (for example, there is an isBold
-   *   flag for a font, but this flag is often not set, even if the font is actually a bold font).
-   *   Instead, the missing information is often stored in the embedded font file (if the font is
-   *   actually embedded). The consequence of disabling the parsing of the font files is a faster
-   *   extraction process, but a lower accuracy of the extracted text.
    * @param noWordsDehyphenation
    *   A boolean flag indicating whether or not to disable words dehyphenation. Setting this
    *   parameter to true disables words dehpyhenation; setting it to false enables it. Disabling
@@ -80,8 +71,7 @@ class PdfToTextPlusPlus {
    *   text blocks, etc. based on the color of the characters.
    */
   PdfToTextPlusPlus(
-    const ppp::Config& config,
-    bool noEmbeddedFontFilesParsing = false,
+    const Config& config,
     bool noWordsDehyphenation = false,
     bool parseMode = false);
 
@@ -107,7 +97,7 @@ class PdfToTextPlusPlus {
 
  private:
   // The configuration to use.
-  ppp::Config _config;
+  Config _config;
   // Whether or not to parse the embedded font files of a PDF file.
   bool _noEmbeddedFontFilesParsing;
   // Whether or not to disable words dehyphenation.
@@ -133,5 +123,7 @@ class PdfToTextPlusPlus {
   // The page filter for the logging messages.
   int _logPageFilter;
 };
+
+}
 
 #endif  // PDFTOTEXTPLUSPLUS_H_

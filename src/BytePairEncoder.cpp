@@ -21,6 +21,8 @@ using std::unordered_set;
 using std::vector;
 using std::wstring;
 
+using ppp::utils::text::splitIntoWords;
+
 // _________________________________________________________________________________________________
 BytePairEncoder::BytePairEncoder(unordered_map<wstring, int>* vocabulary) {
   _vocabulary = *vocabulary;
@@ -37,7 +39,7 @@ void BytePairEncoder::encode(const wstring& text, size_t targetLength,
   // Split the text into words. For example, split "This is some text" into
   // ["This", "is", "some", "text"].
   vector<wstring> words;
-  ppp::string_utils::splitIntoWords(text, wordDelimAlphabet, &words);
+  splitIntoWords(text, wordDelimAlphabet, &words);
 
   // Iterate through the words and encode each word using byte pair encoding.
   for (auto& word : words) {

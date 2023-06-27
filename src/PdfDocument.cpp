@@ -15,6 +15,8 @@
 using std::string;
 using std::stringstream;
 
+using ppp::utils::math::round;
+
 // =================================================================================================
 // Cut
 
@@ -143,10 +145,10 @@ string PdfPosition::toString() const {
   stringstream ss;
   ss << "PdfPosition("
      << "page=" << pageNum << "; "
-     << "leftX=" << ppp::math_utils::round(leftX, 1) << "; "
-     << "upperY=" << ppp::math_utils::round(upperY, 1) << "; "
-     << "rightX=" << ppp::math_utils::round(rightX, 1) << "; "
-     << "lowerY=" << ppp::math_utils::round(lowerY, 1) << "; "
+     << "leftX=" << round(leftX, 1) << "; "
+     << "upperY=" << round(upperY, 1) << "; "
+     << "rightX=" << round(rightX, 1) << "; "
+     << "lowerY=" << round(lowerY, 1) << "; "
      << "rotation=" << rotation << "; "
      << "wMode=" << wMode << ")";
   return ss.str();
@@ -156,10 +158,10 @@ string PdfPosition::toString() const {
 string PdfPosition::toShortString() const {
   stringstream ss;
   ss << "p=" << pageNum
-     << "; leftX=" << ppp::math_utils::round(leftX, 1)
-     << "; upperY=" << ppp::math_utils::round(upperY, 1)
-     << "; rightX=" << ppp::math_utils::round(rightX, 1)
-     << "; lowerY=" << ppp::math_utils::round(lowerY, 1);
+     << "; leftX=" << round(leftX, 1)
+     << "; upperY=" << round(upperY, 1)
+     << "; rightX=" << round(rightX, 1)
+     << "; lowerY=" << round(lowerY, 1);
   return ss.str();
 }
 

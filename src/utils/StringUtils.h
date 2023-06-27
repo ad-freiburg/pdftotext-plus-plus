@@ -12,16 +12,12 @@
 #include <string>
 #include <vector>
 
-using std::string;
-using std::vector;
-using std::wstring;
-
 // =================================================================================================
 
 /**
  * A collection of some useful and commonly used functions in context of strings.
  */
-namespace ppp::string_utils {
+namespace ppp::utils::text {
 
 // The alphabet that is used for creating random strings.
 const char* const ALPHA_NUM = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -37,8 +33,8 @@ const char* const ALPHA_NUM = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklm
  * @param words
  *   The vector to which the computed words should be appended.
  */
-void splitIntoWords(const wstring& text, const string& wordDelimitersAlphabet,
-    vector<wstring>* words);
+void splitIntoWords(const std::wstring& text, const std::string& wordDelimitersAlphabet,
+    std::vector<std::wstring>* words);
 
 /**
  * This method splits the given text (given as a string) into words and appends the words to the
@@ -51,8 +47,8 @@ void splitIntoWords(const wstring& text, const string& wordDelimitersAlphabet,
  * @param words
  *   The vector to which the computed words should be appended.
  */
-void splitIntoWords(const string& text, const string& wordDelimitersAlphabet,
-    vector<string>* words);
+void splitIntoWords(const std::string& text, const std::string& wordDelimitersAlphabet,
+    std::vector<std::string>* words);
 
 /**
  * This method creates a random string of the given length, consisting of alpha-numerical
@@ -68,7 +64,7 @@ void splitIntoWords(const string& text, const string& wordDelimitersAlphabet,
  * @return
  *    The created string.
  */
-string createRandomString(size_t len, const string& prefix = "");
+std::string createRandomString(size_t len, const std::string& prefix = "");
 
 /**
  * This method escapes the given string to a valid JSON string. For example, it escapes double-
@@ -80,7 +76,7 @@ string createRandomString(size_t len, const string& prefix = "");
  * @return
  *    The escaped string.
  */
-string escapeJson(const string& str);
+std::string escapeJson(const std::string& str);
 
 /**
  * If the given string is longer than the given length, this method shortens the string to the
@@ -95,7 +91,7 @@ string escapeJson(const string& str);
  * @return
  *    The shortened string.
  */
-string shorten(const string& str, size_t len = 40);  // TODO(korzen): Parameterize.
+std::string shorten(const std::string& str, size_t len = 40);  // TODO(korzen): Parameterize.
 
 /**
  * This method removes all leading and trailing whitespaces from the given string.
@@ -106,7 +102,7 @@ string shorten(const string& str, size_t len = 40);  // TODO(korzen): Parameteri
  * @return
  *   The string without leading and trailing whitespaces.
  */
-string strip(const string& str);
+std::string strip(const std::string& str);
 
 /**
  * This method wraps the specified string so that every line is indented by <indent>-many
@@ -123,7 +119,7 @@ string strip(const string& str);
  *    A string containing <str> wrapped into lines, with each lines separated by a single newline
  *    character.
  */
-string wrap(const string& str, size_t width = 100, size_t indent = 0);
+std::string wrap(const std::string& str, size_t width = 100, size_t indent = 0);
 
 /**
  * This method concatenates all strings in the specified vector, using the specified character(s)
@@ -137,8 +133,8 @@ string wrap(const string& str, size_t width = 100, size_t indent = 0);
  * @return
  *    The string containing all strings in the specified vector concatenated.
  */
-string join(const vector<string>& strings, const string& separator = ", ");
+std::string join(const std::vector<std::string>& strings, const std::string& separator = ", ");
 
-}  // namespace ppp::string_utils
+}  // namespace ppp::utils::text
 
 #endif  // UTILS_STRINGUTILS_H_

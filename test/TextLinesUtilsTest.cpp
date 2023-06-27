@@ -88,7 +88,7 @@ vector<regex> ITEM_LABEL_REGEXES = {
 
 // _________________________________________________________________________________________________
 TEST_F(TextLinesUtilsTest, computeIsFirstLineOfItemPdf1) {
-  // TODO: Read from the config.
+  // TODO(korzen): Read from the config.
   double fontSizeEqualTolerance = 1.0;
   const string& sentenceDelimAlphabet = "?!.);";
 
@@ -202,7 +202,7 @@ TEST_F(TextLinesUtilsTest, computeIsFirstLineOfItemPdf1) {
 
 // _________________________________________________________________________________________________
 TEST_F(TextLinesUtilsTest, computeIsFirstLineOfItemPdf2) {
-  // TODO: Read from the config.
+  // TODO(korzen): Read from the config.
   double fontSizeEqualTolerance = 1.0;
   const string& sentenceDelimAlphabet = "?!.);";
   const string& specialFootnoteLabelsAlphabet = "*∗†‡§‖¶?";
@@ -227,7 +227,7 @@ TEST_F(TextLinesUtilsTest, computeIsFirstLineOfItemPdf2) {
 
 // _________________________________________________________________________________________________
 TEST_F(TextLinesUtilsTest, computeIsContinuationOfItemPdf1) {
-  // TODO: Read from the config.
+  // TODO(korzen): Read from the config.
   double fontSizeEqualTolerance = 1.0;
   const string& sentenceDelimAlphabet = "?!.);";
 

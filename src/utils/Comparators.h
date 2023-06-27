@@ -10,8 +10,10 @@
 #define UTILS_COMPARATORS_H_
 
 #include "./MathUtils.h"
-
 #include "../PdfDocument.h"
+
+using ppp::utils::math::larger;
+using ppp::utils::math::smaller;
 
 // =================================================================================================
 
@@ -26,7 +28,7 @@ class LeftXAscComparator {
   bool operator() (const PdfElement* e1, const PdfElement* e2) const {
     assert(e1);
     assert(e2);
-    return ppp::math_utils::smaller(e1->pos->leftX, e2->pos->leftX);
+    return smaller(e1->pos->leftX, e2->pos->leftX);
   }
 };
 
@@ -39,7 +41,7 @@ class RotLeftXAscComparator {
   bool operator() (const PdfElement* e1, const PdfElement* e2) const {
     assert(e1);
     assert(e2);
-    return ppp::math_utils::smaller(e1->pos->getRotLeftX(), e2->pos->getRotLeftX());
+    return smaller(e1->pos->getRotLeftX(), e2->pos->getRotLeftX());
   }
 };
 
@@ -52,7 +54,7 @@ class RotLeftXDescComparator {
   bool operator() (const PdfElement* e1, const PdfElement* e2) const {
     assert(e1);
     assert(e2);
-    return ppp::math_utils::larger(e1->pos->getRotLeftX(), e2->pos->getRotLeftX());
+    return larger(e1->pos->getRotLeftX(), e2->pos->getRotLeftX());
   }
 };
 
@@ -65,7 +67,7 @@ class RightXAscComparator {
   bool operator() (const PdfElement* e1, const PdfElement* e2) const {
     assert(e1);
     assert(e2);
-    return ppp::math_utils::smaller(e1->pos->rightX, e2->pos->rightX);
+    return smaller(e1->pos->rightX, e2->pos->rightX);
   }
 };
 
@@ -78,7 +80,7 @@ class RightXDescComparator {
   bool operator() (const PdfElement* e1, const PdfElement* e2) const {
     assert(e1);
     assert(e2);
-    return ppp::math_utils::larger(e1->pos->rightX, e2->pos->rightX);
+    return larger(e1->pos->rightX, e2->pos->rightX);
   }
 };
 
@@ -91,7 +93,7 @@ class UpperYAscComparator {
   bool operator() (const PdfElement* e1, const PdfElement* e2) const {
     assert(e1);
     assert(e2);
-    return ppp::math_utils::smaller(e1->pos->upperY, e2->pos->upperY);
+    return smaller(e1->pos->upperY, e2->pos->upperY);
   }
 };
 
@@ -104,7 +106,7 @@ class RotLowerYAscComparator {
   bool operator() (const PdfElement* e1, const PdfElement* e2) const {
     assert(e1);
     assert(e2);
-    return ppp::math_utils::smaller(e1->pos->getRotLowerY(), e2->pos->getRotLowerY());
+    return smaller(e1->pos->getRotLowerY(), e2->pos->getRotLowerY());
   }
 };
 
@@ -117,7 +119,7 @@ class RotLowerYDescComparator {
   bool operator() (const PdfElement* e1, const PdfElement* e2) const {
     assert(e1);
     assert(e2);
-    return ppp::math_utils::larger(e1->pos->getRotLowerY(), e2->pos->getRotLowerY());
+    return larger(e1->pos->getRotLowerY(), e2->pos->getRotLowerY());
   }
 };
 

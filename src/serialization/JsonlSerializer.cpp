@@ -19,8 +19,8 @@
 #include "../Types.h"
 
 using ppp::types::SemanticRole;
-using ppp::math_utils::round;
-using ppp::string_utils::escapeJson;
+using ppp::utils::math::round;
+using ppp::utils::text::escapeJson;
 using std::cout;
 using std::cerr;
 using std::endl;
@@ -217,7 +217,7 @@ void JsonlSerializer::serializeWords(const PdfDocument* doc,
             << "\"maxY\": " << round(word->pos->lowerY, _coordsPrecision) << ", "
             << "\"font\": \"" << word->fontName << "\", "
             << "\"fontSize\": " << word->fontSize << ", "
-            << "\"text\": \"" << ppp::string_utils::escapeJson(word->text) << "\", "
+            << "\"text\": \"" << escapeJson(word->text) << "\", "
             << "\"block\": \"" << block->id << "\", "
             << "\"origin\": \"pdftotext++\""
             << "}"
@@ -251,7 +251,7 @@ void JsonlSerializer::serializeTextBlocks(const PdfDocument* doc,
         << "\"maxY\": " << round(block->pos->lowerY, _coordsPrecision) << ", "
         << "\"font\": \"" << block->fontName << "\", "
         << "\"fontSize\": " << block->fontSize << ", "
-        << "\"text\": \"" << string_utils::escapeJson(block->text) << "\", "
+        << "\"text\": \"" << escapeJson(block->text) << "\", "
         << "\"role\": \"" << ppp::types::getName(block->role) << "\", "
         << "\"origin\": \"pdftotext++\""
         << "}"

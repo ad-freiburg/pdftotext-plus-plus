@@ -23,7 +23,7 @@
 #include "./utils/MathUtils.h"
 #include "./utils/StringUtils.h"
 #include "./Config.h"
-#include "./PdfDocumentVisualizer.h"
+#include "./PdfDocumentVisualization.h"
 #include "./PdfToTextPlusPlus.h"
 #include "./Types.h"
 #include "./Validators.h"
@@ -52,15 +52,17 @@ using boost::program_options::store;
 using boost::program_options::value;
 using boost::program_options::variables_map;
 
-using ppp::Config;
-using ppp::math_utils::round;
+using ppp::PdfDocumentVisualization;
+using ppp::PdfToTextPlusPlus;
+using ppp::config::Config;
+using ppp::serialization::Serializer;
 using ppp::types::DocumentUnit;
 using ppp::types::SemanticRole;
 using ppp::types::SerializationFormat;
 using ppp::types::Timing;
-using ppp::serialization::Serializer;
-using ppp::string_utils::wrap;
-using ppp::string_utils::strip;
+using ppp::utils::math::round;
+using ppp::utils::text::wrap;
+using ppp::utils::text::strip;
 
 namespace po = boost::program_options;
 
@@ -174,14 +176,14 @@ int main(int argc, char* argv[]) {
   string visualizeFilePath = "";
   string verbosity = "error";
   bool debugPdfParsing = false;  // TODO(korzen): Introduce advanced logging.
-  bool debugStatisticsComputation = false;
+  bool debugStatisticsCalculation = false;
   bool debugDiacriticMarksMerging = false;
   bool debugWordsDetection = false;
   bool debugPageSegmentation = false;
   bool debugTextLinesDetection = false;
   bool debugSubSuperScriptsDetection = false;
   bool debugTextBlocksDetection = false;
-  int debugPageFilter = -1;
+  int logPageFilter = -1;
   bool printRunningTimes = false;
   bool printVersion = false;
   bool printHelp = false;
@@ -202,7 +204,7 @@ int main(int argc, char* argv[]) {
       (string("Only output text from text blocks with the specified roles. Use the syntax\n")
         + string("'--role <value1> --role <value2> ...' to specify multiple roles.\nValid roles: ")
         + ppp::types::getSemanticRolesStr() + string(".\n")).c_str()
-        // TODO: Rename to getSemanticRolesChoicesStr?
+        // TODO(korzen): Rename to getSemanticRolesChoicesStr?
     )
     (
       "unit",
@@ -212,7 +214,7 @@ int main(int argc, char* argv[]) {
         + string("NOTE: This option does not have an effect when used together with the ")
         + string("'--format txt' or '--format txt-extended' option.\n")
         + string("Valid units: ") + ppp::types::getDocumentUnitsStr() + string(".\n")).c_str()
-        // TODO: Rename to getDocumentUnitsStr?
+        // TODO(korzen): Rename to getDocumentUnitsStr?
     )
     (
       "control-characters",
@@ -384,8 +386,8 @@ int main(int argc, char* argv[]) {
     )
     (
       "debug-statistics",
-      bool_switch(&debugStatisticsComputation),
-      "Print the debug messages produced while computing the statistics."
+      bool_switch(&debugStatisticsCalculation),
+      "Print the debug messages produced while calculating the statistics."
     )
     (
       "debug-diacritic-marks-merging",
@@ -419,12 +421,12 @@ int main(int argc, char* argv[]) {
       "Print the debug messages produced while detecting text blocks."
     )
     (
-      "debug-page-filter",
-      value<int>(&debugPageFilter),
-      "When one or more of the '--debug-*' options are used, print only the debug messages that "
-      "are produced while processing the specified page. "
-      "NOTE: the page numbers are 1-based; so to print the debug messages produced while "
-      "processing the first page, type \"--debug-page-filter 1\". "
+      "log-page-filter",
+      value<int>(&logPageFilter),
+      "When specified, only the logging messages that are produced while processing the specified "
+      "page is printed to the console. "
+      "NOTE: the page numbers are 1-based; so to print the logging messages produced while "
+      "processing the first page, type \"--log-page-filter 1\". "
     )
     (
       "print-running-times",
@@ -503,28 +505,60 @@ int main(int argc, char* argv[]) {
   if (verbosity == "info" || verbosity == "INFO") { logLevel = INFO; }
   if (verbosity == "warn" || verbosity == "WARN") { logLevel = WARN; }
 
+  // Config config;
+  // config.pdfParsing.logLevel = debugPdfParsing ? DEBUG : logLevel;
+  // config.pdfParsing.logPageFilter = logPageFilter;
+  // config.pdfParsing.noEmbeddedFontFilesParsing = noEmbeddedFontFiles;
+  // config.statisticsCalculation.logLevel = debugStatisticsCalculation ? DEBUG : logLevel;
+  // config.diacriticsMerging.logLevel = debugDiacriticMarksMerging ? DEBUG : logLevel;
+  // config.diacriticsMerging.logPageFilter = logPageFilter;
+  // config.wordsDetection.logLevel = debugWordsDetection ? DEBUG : logLevel;
+  // config.wordsDetection.logPageFilter = logPageFilter;
+  // config.pageSegmentation.logLevel = debugPageSegmentation ? DEBUG : logLevel;
+  // config.pageSegmentation.logPageFilter = logPageFilter;
+  // config.linesDetection.logLevel = debugTextLinesDetection ? DEBUG : logLevel;
+  // config.linesDetection.logPageFilter = logPageFilter;
+  // config.scriptsDetection.logLevel = debugSubSuperScriptsDetection ? DEBUG : logLevel;
+  // config.scriptsDetection.logPageFilter = logPageFilter;
+  // config.blocksDetection.logLevel = debugTextBlocksDetection ? DEBUG : logLevel;
+  // config.blocksDetection.logPageFilter = logPageFilter;
+  // config.rolesPrediction.modelsDir = CONFIG_SEMANTIC_ROLES_DETECTION_MODELS_DIR;
+
   Config config;
+  // Configure pdf parsing.
   config.pdfParsing.logLevel = debugPdfParsing ? DEBUG : logLevel;
-  config.pdfParsing.logPageFilter = debugPageFilter;
-  config.pdfParsing.noEmbeddedFontFilesParsing = noEmbeddedFontFiles;
-  config.statisticsCalculation.logLevel = debugStatisticsComputation ? DEBUG : logLevel;
-  config.diacriticsMerging.logLevel = debugDiacriticMarksMerging ? DEBUG : logLevel;
-  config.diacriticsMerging.logPageFilter = debugPageFilter;
+  config.pdfParsing.logPageFilter = logPageFilter;
+  config.pdfParsing.disableParsingEmbeddedFontFiles = noEmbeddedFontFiles;
+  // Configure statistics calculation.
+  config.statisticsCalculation.logLevel = debugStatisticsCalculation ? DEBUG : logLevel;
+  config.statisticsCalculation.logPageFilter = logPageFilter;
+  // Configure diacritics merging.
+  config.diacriticalMarksMerging.logLevel = debugDiacriticMarksMerging ? DEBUG : logLevel;
+  config.diacriticalMarksMerging.logPageFilter = logPageFilter;
+  // Configure words detection.
   config.wordsDetection.logLevel = debugWordsDetection ? DEBUG : logLevel;
-  config.wordsDetection.logPageFilter = debugPageFilter;
-  config.pageSegmentation.logLevel = debugPageSegmentation ? DEBUG : logLevel;
-  config.pageSegmentation.logPageFilter = debugPageFilter;
-  config.linesDetection.logLevel = debugTextLinesDetection ? DEBUG : logLevel;
-  config.linesDetection.logPageFilter = debugPageFilter;
-  config.scriptsDetection.logLevel = debugSubSuperScriptsDetection ? DEBUG : logLevel;
-  config.scriptsDetection.logPageFilter = debugPageFilter;
-  config.blocksDetection.logLevel = debugTextBlocksDetection ? DEBUG : logLevel;
-  config.blocksDetection.logPageFilter = debugPageFilter;
-  config.rolesPrediction.modelsDir = CONFIG_SEMANTIC_ROLES_DETECTION_MODELS_DIR;
+  config.wordsDetection.logPageFilter = logPageFilter;
+  // Configure text lines detection.
+  config.textLinesDetection.logLevel = debugTextLinesDetection ? DEBUG : logLevel;
+  config.textLinesDetection.logPageFilter = logPageFilter;
+  // Configure sub-/super scripts detection.
+  config.subSuperScriptsDetection.logLevel = debugSubSuperScriptsDetection ? DEBUG : logLevel;
+  config.subSuperScriptsDetection.logPageFilter = logPageFilter;
+  // Configure text blocks detection.
+  config.textBlocksDetection.logLevel = debugSubSuperScriptsDetection ? DEBUG : logLevel;
+  config.textBlocksDetection.logPageFilter = logPageFilter;
+  // Configure reading order detection.
+  config.readingOrderDetection.logLevel = logLevel;
+  config.readingOrderDetection.logPageFilter = logPageFilter;
+  config.semanticRolesPrediction.logLevel = logLevel;
+  config.semanticRolesPrediction.logPageFilter = logPageFilter;
+  config.semanticRolesPrediction.modelsDir = CONFIG_SEMANTIC_ROLES_DETECTION_MODELS_DIR;
+  // Configure words dehyphenation.
+  config.wordsDehyphenation.logLevel = logLevel;
+  config.wordsDehyphenation.logPageFilter = logPageFilter;
 
   PdfToTextPlusPlus engine(
     config,
-    noEmbeddedFontFiles,
     noDehyphenation,
     parseMode);
 
@@ -579,41 +613,41 @@ int main(int argc, char* argv[]) {
   const string visualizeFilePathStr(visualizeFilePath);
   if (!visualizeFilePathStr.empty()) {
     auto start = high_resolution_clock::now();
-    PdfDocumentVisualizer visualizer(pdfFilePath, config);
+    PdfDocumentVisualization pdv(pdfFilePath, config.pdfDocumentVisualization);
     if (visualizeChars) {
-      visualizer.visualizeCharacters(doc, visualizer::color_schemes::blue);
+      pdv.visualizeCharacters(doc, visualizer::color_schemes::blue);
     }
     if (visualizeFigures) {
-      visualizer.visualizeFigures(doc, visualizer::color_schemes::blue);
+      pdv.visualizeFigures(doc, visualizer::color_schemes::blue);
     }
     if (visualizeShapes) {
-      visualizer.visualizeShapes(doc, visualizer::color_schemes::blue);
+      pdv.visualizeShapes(doc, visualizer::color_schemes::blue);
     }
     if (visualizeGraphics) {
-      visualizer.visualizeGraphics(doc, visualizer::color_schemes::blue);
+      pdv.visualizeGraphics(doc, visualizer::color_schemes::blue);
     }
     if (visualizeWords) {
-      visualizer.visualizeWords(doc, visualizer::color_schemes::blue);
+      pdv.visualizeWords(doc, visualizer::color_schemes::blue);
     }
     if (visualizeTextLines) {
-      visualizer.visualizeTextLines(doc, visualizer::color_schemes::blue);
+      pdv.visualizeTextLines(doc, visualizer::color_schemes::blue);
     }
     if (visualizeTextBlocks) {
-      visualizer.visualizeTextBlocks(doc, visualizer::color_schemes::red);
+      pdv.visualizeTextBlocks(doc, visualizer::color_schemes::red);
     }
     if (visualizePageSegments) {
-      visualizer.visualizePageSegments(doc, visualizer::color_schemes::blue);
+      pdv.visualizePageSegments(doc, visualizer::color_schemes::blue);
     }
     if (visualizeReadingOrder) {
-      visualizer.visualizeReadingOrder(doc, visualizer::color_schemes::blue);
+      pdv.visualizeReadingOrder(doc, visualizer::color_schemes::blue);
     }
     if (visualizeSegmentCuts) {
-      visualizer.visualizeSegmentCuts(doc, visualizer::color_schemes::blue);
+      pdv.visualizeSegmentCuts(doc, visualizer::color_schemes::blue);
     }
     if (visualizeReadingOrderCuts) {
-      visualizer.visualizeReadingOrderCuts(doc, visualizer::color_schemes::blue);
+      pdv.visualizeReadingOrderCuts(doc, visualizer::color_schemes::blue);
     }
-    visualizer.save(visualizeFilePathStr);
+    pdv.save(visualizeFilePathStr);
     auto end = high_resolution_clock::now();
     Timing timingVisualizing("Visualize", duration_cast<milliseconds>(end - start).count());
     timings.push_back(timingVisualizing);

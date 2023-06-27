@@ -1,5 +1,5 @@
 /**
- * Copyright 2022, University of Freiburg,
+ * Copyright 2023, University of Freiburg,
  * Chair of Algorithms and Data Structures.
  * Author: Claudius Korzen <korzen@cs.uni-freiburg.de>.
  *
@@ -16,20 +16,19 @@
 #include <string>
 #include <vector>
 
-#include "./DiacriticalMarksMerger.h"
-#include "./PageSegmentator.h"
-#include "./PdfStatisticsCalculator.h"
+#include "./DiacriticalMarksMerging.h"
+#include "./PageSegmentation.h"
+#include "./PdfParsing.h"
+#include "./StatisticsCalculation.h"
 #include "./PdfToTextPlusPlus.h"
-#include "./ReadingOrderDetector.h"
-#include "./SubSuperScriptsDetector.h"
-#include "./TextBlocksDetector.h"
-#include "./TextLinesDetector.h"
-#include "./TextOutputDev.h"
+#include "./ReadingOrderDetection.h"
+#include "./SubSuperScriptsDetection.h"
+#include "./TextBlocksDetection.h"
+#include "./TextLinesDetection.h"
 #include "./Types.h"
-#include "./WordsDehyphenator.h"
-#include "./WordsDetector.h"
+#include "./WordsDehyphenation.h"
+#include "./WordsDetection.h"
 
-using ppp::types::Timing;
 using std::chrono::duration_cast;
 using std::chrono::high_resolution_clock;
 using std::chrono::milliseconds;
@@ -37,14 +36,28 @@ using std::string;
 using std::unique_ptr;
 using std::vector;
 
+using ppp::DiacriticalMarksMerging;
+using ppp::PdfParsing;
+using ppp::ReadingOrderDetection;
+using ppp::StatisticsCalculation;
+using ppp::SubSuperScriptsDetection;
+using ppp::TextLinesDetection;
+using ppp::WordsDehyphenation;
+using ppp::WordsDetection;
+
+using ppp::config::Config;
+using ppp::types::Timing;
+
+// =================================================================================================
+
+namespace ppp {
+
 // _________________________________________________________________________________________________
 PdfToTextPlusPlus::PdfToTextPlusPlus(
-      const ppp::Config& config,
-      bool noEmbeddedFontFilesParsing,
+      const Config& config,
       bool noWordsDehyphenation,
       bool parseMode) {
-  _config = config,
-  _noEmbeddedFontFilesParsing = noEmbeddedFontFilesParsing;
+  _config = config;
   _noWordsDehyphenation = noWordsDehyphenation;
   _parseMode = parseMode;
 }
@@ -76,14 +89,14 @@ int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
   }
 
   // (2) Parse the content streams of the PDF file for characters, graphics and shapes.
-  TextOutputDev out(doc, _config);
+  PdfParsing pp(doc, _config.pdfParsing);
   start = high_resolution_clock::now();
   pdfDoc->displayPages(
-    &out,
+    &pp,
     1,  // firstPage
     pdfDoc->getNumPages(),  // lastPage
-    _config.hDPI,  // hDPI
-    _config.vDPI,  // vDPI
+    _config.pdfParsing.hDPI,  // hDPI
+    _config.pdfParsing.vDPI,  // vDPI
     0,  // rotation
     true,  // useMediaBox
     false,  // crop
@@ -95,9 +108,9 @@ int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
   }
 
   // (3) Compute some statistics about the characters, for example: the most frequent font size.
-  PdfStatisticsCalculator psc(doc, _config);
+  StatisticsCalculation sc(doc, _config.statisticsCalculation);
   start = high_resolution_clock::now();
-  psc.computeCharacterStatistics();
+  sc.computeGlyphStatistics();
   end = high_resolution_clock::now();
   if (timings) {
     Timing timing("Computing character stats", duration_cast<milliseconds>(end - start).count());
@@ -106,7 +119,7 @@ int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
 
   // (4) Merge combining diacritical marks with their base characters.
   start = high_resolution_clock::now();
-  DiacriticalMarksMerger dmm(doc, _config);
+  DiacriticalMarksMerging dmm(doc, _config.diacriticalMarksMerging);
   dmm.process();
   end = high_resolution_clock::now();
   if (timings) {
@@ -122,7 +135,7 @@ int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
 
   // (5) Detect the words.
   start = high_resolution_clock::now();
-  WordsDetector wd(doc, _config);
+  WordsDetection wd(doc, _config.wordsDetection);
   wd.process();
   end = high_resolution_clock::now();
   if (timings) {
@@ -132,7 +145,7 @@ int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
 
   // (6) Compute some statistics about the words, for example: the most frequent word height.
   start = high_resolution_clock::now();
-  psc.computeWordStatistics();
+  sc.computeWordStatistics();
   end = high_resolution_clock::now();
   if (timings) {
     Timing timing("Computing word stats", duration_cast<milliseconds>(end - start).count());
@@ -141,7 +154,7 @@ int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
 
   // (7) Segment the pages of the document (for identifying columns).
   start = high_resolution_clock::now();
-  PageSegmentator ps(doc, _config);
+  PageSegmentation ps(doc, _config.pageSegmentation);
   ps.process();
   end = high_resolution_clock::now();
   if (timings) {
@@ -151,7 +164,7 @@ int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
 
   // (8) Detect the text lines.
   start = high_resolution_clock::now();
-  TextLinesDetector tld(doc, _config);
+  TextLinesDetection tld(doc, _config.textLinesDetection);
   tld.process();
   end = high_resolution_clock::now();
   if (timings) {
@@ -161,7 +174,7 @@ int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
 
   // (9) Detect subscripted and superscripted characters.
   start = high_resolution_clock::now();
-  SubSuperScriptsDetector ssd(doc, _config);
+  SubSuperScriptsDetection ssd(doc, _config.subSuperScriptsDetection);
   ssd.process();
   end = high_resolution_clock::now();
   if (timings) {
@@ -171,7 +184,7 @@ int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
 
   // (10) Compute some statistics about the text lines, for example: the most frequent indentation.
   start = high_resolution_clock::now();
-  psc.computeTextLineStatistics();
+  sc.computeTextLineStatistics();
   end = high_resolution_clock::now();
   if (timings) {
     Timing timing("Computing line statistics", duration_cast<milliseconds>(end - start).count());
@@ -180,7 +193,7 @@ int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
 
   // (11) Detect the text blocks.
   start = high_resolution_clock::now();
-  TextBlocksDetector tbd(doc, _config);
+  TextBlocksDetection tbd(doc, _config.textBlocksDetection);
   tbd.process();
   end = high_resolution_clock::now();
   if (timings) {
@@ -190,7 +203,7 @@ int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
 
   // (12) Detect the reading order of the text blocks.
   start = high_resolution_clock::now();
-  ReadingOrderDetector rod(doc, _config);
+  ReadingOrderDetection rod(doc, _config.readingOrderDetection, _config.semanticRolesPrediction);
   rod.detect();
   end = high_resolution_clock::now();
   if (timings) {
@@ -201,7 +214,7 @@ int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
   // (13) Dehyphenate words, if not deactivated by the user.
   if (!_noWordsDehyphenation) {
     start = high_resolution_clock::now();
-    WordsDehyphenator wdh(doc, _config);
+    WordsDehyphenation wdh(doc, _config.wordsDehyphenation);
     wdh.dehyphenate();
     end = high_resolution_clock::now();
     if (timings) {
@@ -212,3 +225,5 @@ int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
 
   return 0;
 }
+
+}  // namespace ppp

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022, University of Freiburg,
+ * Copyright 2023, University of Freiburg,
  * Chair of Algorithms and Data Structures.
  * Author: Claudius Korzen <korzen@cs.uni-freiburg.de>.
  *
@@ -12,37 +12,37 @@
 #include "./MathUtils.h"
 
 // _________________________________________________________________________________________________
-bool ppp::math_utils::equal(double d1, double d2, double tolerance) {
+bool ppp::utils::math::equal(double d1, double d2, double tolerance) {
   return fabs(d1 - d2) <= tolerance;
 }
 
 // _________________________________________________________________________________________________
-bool ppp::math_utils::larger(double d1, double d2, double tolerance) {
+bool ppp::utils::math::larger(double d1, double d2, double tolerance) {
   return d1 > d2 + tolerance;
 }
 
 // _________________________________________________________________________________________________
-bool ppp::math_utils::smaller(double d1, double d2, double tolerance) {
+bool ppp::utils::math::smaller(double d1, double d2, double tolerance) {
   return d1 < d2 - tolerance;
 }
 
 // _________________________________________________________________________________________________
-bool ppp::math_utils::equalOrLarger(double d1, double d2, double tolerance) {
+bool ppp::utils::math::equalOrLarger(double d1, double d2, double tolerance) {
   return d1 >= d2 - tolerance;
 }
 
 // _________________________________________________________________________________________________
-bool ppp::math_utils::equalOrSmaller(double d1, double d2, double tolerance) {
+bool ppp::utils::math::equalOrSmaller(double d1, double d2, double tolerance) {
   return d1 <= d2 + tolerance;
 }
 
 // _________________________________________________________________________________________________
-bool ppp::math_utils::between(double d, double low, double up, double tol) {
-  return ppp::math_utils::equalOrLarger(d, low, tol) && ppp::math_utils::equalOrSmaller(d, up, tol);
+bool ppp::utils::math::between(double d, double low, double up, double tol) {
+  return equalOrLarger(d, low, tol) && equalOrSmaller(d, up, tol);
 }
 
 // _________________________________________________________________________________________________
-double ppp::math_utils::round(double d, int numDecimals) {
+double ppp::utils::math::round(double d, int numDecimals) {
   assert(numDecimals >= 0);
 
   if (numDecimals == 0) {

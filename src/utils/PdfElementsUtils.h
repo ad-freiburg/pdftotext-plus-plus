@@ -1,5 +1,5 @@
 /**
- * Copyright 2022, University of Freiburg,
+ * Copyright 2023, University of Freiburg,
  * Chair of Algorithms and Data Structures.
  * Author: Claudius Korzen <korzen@cs.uni-freiburg.de>.
  *
@@ -9,24 +9,22 @@
 #ifndef UTILS_PDFELEMENTSUTILS_H_
 #define UTILS_PDFELEMENTSUTILS_H_
 
-#include <utility>  // pair
-#include <vector>
+#include <utility>  // std::pair
 
+#include "../Config.h"
 #include "../PdfDocument.h"
 
 using std::pair;
-using std::vector;
 
 // =================================================================================================
-
 
 /**
  * A collection of some useful and commonly used functions in context of PDF elements.
  */
-namespace element_utils {
+namespace ppp::utils::elements {
 
 /**
- * This method computes the horizontal gap between the two given elements.
+ * This method computes the horizontal gap between two given elements.
  *
  * It first checks which of the two elements is the leftmost element, that is: which of the
  * elements has the minimum leftX. Let e1 be the leftmost element. The horizontal gap is then
@@ -204,8 +202,7 @@ double computeMaxYOverlapRatio(const PdfElement* elem1, const PdfElement* elem2)
  * @return
  *    True if the leftX values of the two elements are (approximately) equal, false otherwise.
  */
-// TODO(korzen): Read the 0.1 from config.
-bool computeHasEqualLeftX(const PdfElement* elem1, const PdfElement* elem2, double tolerance=0.1);
+bool computeHasEqualLeftX(const PdfElement* elem1, const PdfElement* elem2, double tolerance);
 
 /**
  * This method returns true, if the upperY values of the two given elements are (approximately)
@@ -224,8 +221,7 @@ bool computeHasEqualLeftX(const PdfElement* elem1, const PdfElement* elem2, doub
  * @return
  *    True if the upperY values of the two elements are (approximately) equal, false otherwise.
  */
-// TODO(korzen): Read the 0.1 from config.
-bool computeHasEqualUpperY(const PdfElement* elem1, const PdfElement* elem2, double tolerance=0.1);
+bool computeHasEqualUpperY(const PdfElement* elem1, const PdfElement* elem2, double tolerance);
 
 /**
  * This method returns true, if the rightX values of the two given elements are (approximately)
@@ -244,8 +240,7 @@ bool computeHasEqualUpperY(const PdfElement* elem1, const PdfElement* elem2, dou
  * @return
  *    True if the rightX values of the two elements are (approximately) equal, false otherwise.
  */
-// TODO(korzen): Read the 0.1 from config.
-bool computeHasEqualRightX(const PdfElement* elem1, const PdfElement* elem2, double tolerance=0.1);
+bool computeHasEqualRightX(const PdfElement* elem1, const PdfElement* elem2, double tolerance);
 
 /**
  * This method returns true, if the lowerY values of the two given elements are (approximately)
@@ -264,7 +259,7 @@ bool computeHasEqualRightX(const PdfElement* elem1, const PdfElement* elem2, dou
  * @return
  *    True if the lowerY values of the two elements are (approximately) equal, false otherwise.
  */
-bool computeHasEqualLowerY(const PdfElement* elem1, const PdfElement* elem2, double tolerance=0.1);
+bool computeHasEqualLowerY(const PdfElement* elem1, const PdfElement* elem2);
 
 // =================================================================================================
 
@@ -301,37 +296,6 @@ double computeLeftXOffset(const PdfElement* elem1, const PdfElement* elem2);
 double computeRightXOffset(const PdfElement* elem1, const PdfElement* elem2);
 
 /**
- * This method iterates through the given figures and returns the first figure which horizontally
- * overlaps the given element by a ratio larger than minXOverlapRatio and that vertically overlaps
- * the given element by a ratio larger than minYOverlapRatio.
- *
- * This method is primarily used by the text block detector, for determining whether or not two
- * text lines are part of the same figure (because they are overlapped by the same figure) and for
- * deciding whether or not both text lines belond to different text blocks.
- *
- * @param element
- *    The element which should be checked whether or not it is overlapped by a figure.
- * @param minXOverlapRatio
- *    The minimum ratio by which the figure must overlap the element horizontally.
- * @param minYOverlapRatio
- *    The minimum ratio by which the figure must overlap the element vertically.
- * @param figures
- *    The vector of figures.
- *
- * @return
- *    The first figure in the given vector which fulfills the given minimum overlap ratios, or
- *    nullptr if there is no such figure.
- */
-PdfFigure* computeOverlapsFigure(const PdfElement* element, double minXOverlapRatio,
-    double minYOverlapRatio, const vector<PdfFigure*>& figures);
-
-}  // namespace element_utils
-
-// =================================================================================================
-
-namespace text_element_utils {
-
-/**
  * This method returns true if the given elements exhibit the same font name.
  *
  * @param element1
@@ -361,22 +325,8 @@ bool computeHasEqualFont(const PdfTextElement* element1, const PdfTextElement* e
  * @return
  *    True if the given elements exhibit (approximately) the same font size, false otherwise.
  */
-bool computeHasEqualFontSize(const PdfTextElement* element1, const PdfTextElement* element2, double tolerance);
-
-/**
- * This method returns true if the text of the given element ends with a sentence delimiter (that
- * is: a symbol contained in SENTENCE_DELIMITER_ALPHABET).
- *
- * @param element
- *    The element to process.
- * @param delimAlphabet
- *    The symbols to consider as a sentence delimiter.
- *
- * @return
- *    True if the text of the given element ends with a sentence delimiter, false otherwise.
- */
-bool computeEndsWithSentenceDelimiter(const PdfTextElement* element,
-    const string& delimAlphabet);
+bool computeHasEqualFontSize(const PdfTextElement* element1, const PdfTextElement* element2,
+    double tolerance);
 
 /**
  * This method returns true if the text of the given element starts with an uppercase.
@@ -389,34 +339,7 @@ bool computeEndsWithSentenceDelimiter(const PdfTextElement* element,
  */
 bool computeStartsWithUpper(const PdfTextElement* element);
 
-/**
- * This method returns true if the text of the given element is emphasized compared to the majority
- * of the rest of the text in the document.
- *
- * An element is considered to be emphasized when one of the following requirements is fulfilled:
- *  (1) The font size of the element is larger than the most frequent font size in the document;
- *  (2) The font weight of the element is larger than the most frequent font weight in the
- *      document, and the font size of the element is not smaller than the most frequent font size;
- *  (3) The text of the element is printed in italics, and the font size of the element is not
- *      smaller than the most frequent font size;
- *  (4) The text of the element contains at least one alphabetic character and all alphabetic
- *      characters are in uppercase.
- *
- * @param element
- *    The element to process.
- * @param fontSizeEqualTolerance
- *    The maximum allowed difference between the font size of the element and the most frequent
- *    font size so that the element is considered to be emphasized.
- * @param fontWeightEqualTolerance
- *    The maximum allowed difference between the font weight of the element and the most frequent
- *    font weight so that the element is considered to be emphasized.
- *
- * @return
- *    True if the text of the given element is emphasized, false otherwise.
- */
-bool computeIsEmphasized(const PdfTextElement* element,
-    double fontSizeEqualTolerance, double fontWeightEqualTolerance);
 
-}  // namespace text_element_utils
+}  // namespace ppp::utils::elements
 
 #endif  // UTILS_PDFELEMENTSUTILS_H_
