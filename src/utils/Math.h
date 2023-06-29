@@ -6,12 +6,12 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#ifndef UTILS_MATHUTILS_H_
-#define UTILS_MATHUTILS_H_
+#ifndef UTILS_MATH_H_
+#define UTILS_MATH_H_
 
 #include "../Config.h"
 
-static constexpr double DEFAULT_TOLERANCE = ppp::config::DEFAULT_DOUBLE_EQUAL_TOLERANCE;
+static const double DEFAULT_TOLERANCE = ppp::config::DEFAULT_DOUBLE_EQUAL_TOLERANCE;
 
 // =================================================================================================
 
@@ -115,13 +115,13 @@ bool equalOrSmaller(double d1, double d2, double tolerance = DEFAULT_TOLERANCE);
 /**
  * This method returns true, if the given value is inside the given interval, under consideration
  * of the given tolerance. To be more precise, it returns true if the value is equal or larger than
- * the given lower bound by the given tolerance, or if it is equal or smaller than the given upper
+ * the given lower bound by the given tolerance, and if it is equal or smaller than the given upper
  * bound by the given tolerance.
  *
  * Formally, this method returns true if: lower - tolerance <= d <= upper + tolerance.
  *
  * @param d
- *    The value to check if it is inside the interval.
+ *    The value to check if it falls into the interval.
  * @param lower
  *    The lower bound of the interval.
  * @param upper
@@ -135,7 +135,7 @@ bool equalOrSmaller(double d1, double d2, double tolerance = DEFAULT_TOLERANCE);
 bool between(double d, double lower, double upper, double tolerance = DEFAULT_TOLERANCE);
 
 /**
- * This method rounds the given value to <numDecimals> precision after the decimal point.
+ * This method rounds the given value to <numDecimals> decimal points after the decimal point.
  *
  * @param d
  *    The value to round.
@@ -149,4 +149,4 @@ double round(double d, int numDecimals = 0);
 
 }  // namespace ppp::utils::math
 
-#endif  // UTILS_MATHUTILS_H_
+#endif  // UTILS_MATH_H_

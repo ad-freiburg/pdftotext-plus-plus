@@ -13,9 +13,9 @@
 
 #include "./utils/Counter.h"
 #include "./utils/Log.h"
-#include "./utils/MathUtils.h"
+#include "./utils/Math.h"
 #include "./utils/PdfElementsUtils.h"
-#include "./utils/StringUtils.h"
+#include "./utils/Text.h"
 #include "./utils/WordsDetectionUtils.h"
 #include "./PdfDocument.h"
 #include "./WordsDetection.h"
@@ -33,6 +33,10 @@ using ppp::utils::elements::computeMaxYOverlapRatio;
 using ppp::utils::WordsDetectionUtils;
 using ppp::utils::math::larger;
 using ppp::utils::math::smaller;
+using ppp::utils::log::Logger;
+using ppp::utils::log::BLUE;
+using ppp::utils::log::BOLD;
+using ppp::utils::log::OFF;
 
 // =================================================================================================
 

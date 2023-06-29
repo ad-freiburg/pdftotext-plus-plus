@@ -24,6 +24,7 @@ using std::vector;
 
 using ppp::config::WordsDetectionConfig;
 using ppp::utils::WordsDetectionUtils;
+using ppp::utils::log::Logger;
 
 // =================================================================================================
 

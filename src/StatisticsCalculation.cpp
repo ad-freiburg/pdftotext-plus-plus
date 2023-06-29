@@ -11,7 +11,7 @@
 
 #include "./utils/Counter.h"
 #include "./utils/Log.h"
-#include "./utils/MathUtils.h"
+#include "./utils/Math.h"
 #include "./utils/PdfElementsUtils.h"
 #include "./PdfDocument.h"
 #include "./StatisticsCalculation.h"
@@ -21,9 +21,14 @@ using std::max;
 using std::unordered_map;
 
 using ppp::config::StatisticsCalculationConfig;
+using ppp::utils::counter::DoubleCounter;
+using ppp::utils::counter::StringCounter;
 using ppp::utils::elements::computeHorizontalGap;
 using ppp::utils::elements::computeMaxYOverlapRatio;
 using ppp::utils::elements::computeVerticalGap;
+using ppp::utils::log::Logger;
+using ppp::utils::log::BOLD;
+using ppp::utils::log::OFF;
 using ppp::utils::math::equal;
 using ppp::utils::math::equalOrLarger;
 using ppp::utils::math::equalOrSmaller;

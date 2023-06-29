@@ -14,9 +14,9 @@
 #include <vector>
 
 #include "./Counter.h"
-#include "./MathUtils.h"
+#include "./Math.h"
 #include "./PdfElementsUtils.h"
-#include "./StringUtils.h"
+#include "./Text.h"
 #include "./TextBlocksDetectionUtils.h"
 
 using std::max;
@@ -27,6 +27,8 @@ using std::string;
 using std::unordered_set;
 using std::vector;
 
+using ppp::utils::counter::DoubleCounter;
+using ppp::utils::counter::StringCounter;
 using ppp::utils::elements::computeHasEqualFont;
 using ppp::utils::elements::computeHasEqualFontSize;
 using ppp::utils::elements::computeHasEqualLeftX;

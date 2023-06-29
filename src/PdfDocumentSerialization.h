@@ -6,17 +6,17 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#ifndef SERIALIZATION_SERIALIZATION_H_
-#define SERIALIZATION_SERIALIZATION_H_
+#ifndef PDFDOCUMENTSERIALIZATION_H_
+#define PDFDOCUMENTSERIALIZATION_H_
 
 #include <string>
 #include <unordered_map>
 
-#include "../Types.h"
-#include "./Serializer.h"
-#include "./PlainTextSerializer.h"
-#include "./PlainTextExtendedSerializer.h"
-#include "./JsonlSerializer.h"
+#include "./Types.h"
+#include "./serializers/Serializer.h"
+#include "./serializers/PlainTextSerializer.h"
+#include "./serializers/PlainTextExtendedSerializer.h"
+#include "./serializers/JsonlSerializer.h"
 
 using ppp::types::SerializationFormat;
 using std::string;
@@ -56,4 +56,4 @@ Serializer* getSerializer(SerializationFormat format);
 
 }  // namespace ppp::serialization
 
-#endif  // SERIALIZATION_SERIALIZATION_H_
+#endif  // PDFDOCUMENTSERIALIZATION_H_

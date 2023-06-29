@@ -53,12 +53,8 @@ using ppp::types::Timing;
 namespace ppp {
 
 // _________________________________________________________________________________________________
-PdfToTextPlusPlus::PdfToTextPlusPlus(
-      const Config& config,
-      bool noWordsDehyphenation,
-      bool parseMode) {
+PdfToTextPlusPlus::PdfToTextPlusPlus(const Config& config, bool parseMode) {
   _config = config;
-  _noWordsDehyphenation = noWordsDehyphenation;
   _parseMode = parseMode;
 }
 
@@ -109,110 +105,131 @@ int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
 
   // (3) Compute some statistics about the characters, for example: the most frequent font size.
   StatisticsCalculation sc(doc, _config.statisticsCalculation);
-  start = high_resolution_clock::now();
-  sc.computeGlyphStatistics();
-  end = high_resolution_clock::now();
-  if (timings) {
-    Timing timing("Computing character stats", duration_cast<milliseconds>(end - start).count());
-    timings->push_back(timing);
+  if (!_config.statisticsCalculation.disable) {
+    start = high_resolution_clock::now();
+    sc.computeGlyphStatistics();
+    end = high_resolution_clock::now();
+    if (timings) {
+      Timing timing("Computing character stats", duration_cast<milliseconds>(end - start).count());
+      timings->push_back(timing);
+    }
   }
 
   // (4) Merge combining diacritical marks with their base characters.
-  start = high_resolution_clock::now();
-  DiacriticalMarksMerging dmm(doc, _config.diacriticalMarksMerging);
-  dmm.process();
-  end = high_resolution_clock::now();
-  if (timings) {
-    Timing timing("Merging diacritics", duration_cast<milliseconds>(end - start).count());
-    timings->push_back(timing);
+  if (!_config.diacriticalMarksMerging.disable) {
+    start = high_resolution_clock::now();
+    DiacriticalMarksMerging dmm(doc, _config.diacriticalMarksMerging);
+    dmm.process();
+    end = high_resolution_clock::now();
+    if (timings) {
+      Timing timing("Merging diacritics", duration_cast<milliseconds>(end - start).count());
+      timings->push_back(timing);
+    }
   }
 
   // Stop here when the parsing mode is activated (since it is supposed to extract only the
   // characters, graphics and shapes from the PDF file).
+  // TODO(korzen): Replace the parse mode with the new disable flags in the different configs.
   if (_parseMode) {
     return 0;
   }
 
   // (5) Detect the words.
-  start = high_resolution_clock::now();
-  WordsDetection wd(doc, _config.wordsDetection);
-  wd.process();
-  end = high_resolution_clock::now();
-  if (timings) {
-    Timing timing("Detecting words", duration_cast<milliseconds>(end - start).count());
-    timings->push_back(timing);
+  if (!_config.wordsDetection.disable) {
+    start = high_resolution_clock::now();
+    WordsDetection wd(doc, _config.wordsDetection);
+    wd.process();
+    end = high_resolution_clock::now();
+    if (timings) {
+      Timing timing("Detecting words", duration_cast<milliseconds>(end - start).count());
+      timings->push_back(timing);
+    }
   }
 
   // (6) Compute some statistics about the words, for example: the most frequent word height.
-  start = high_resolution_clock::now();
-  sc.computeWordStatistics();
-  end = high_resolution_clock::now();
-  if (timings) {
-    Timing timing("Computing word stats", duration_cast<milliseconds>(end - start).count());
-    timings->push_back(timing);
+  if (!_config.statisticsCalculation.disable) {
+    start = high_resolution_clock::now();
+    sc.computeWordStatistics();
+    end = high_resolution_clock::now();
+    if (timings) {
+      Timing timing("Computing word stats", duration_cast<milliseconds>(end - start).count());
+      timings->push_back(timing);
+    }
   }
 
   // (7) Segment the pages of the document (for identifying columns).
-  start = high_resolution_clock::now();
-  PageSegmentation ps(doc, _config.pageSegmentation);
-  ps.process();
-  end = high_resolution_clock::now();
-  if (timings) {
-    Timing timing("Segmenting pages", duration_cast<milliseconds>(end - start).count());
-    timings->push_back(timing);
+  if (!_config.pageSegmentation.disable) {
+    start = high_resolution_clock::now();
+    PageSegmentation ps(doc, _config.pageSegmentation);
+    ps.process();
+    end = high_resolution_clock::now();
+    if (timings) {
+      Timing timing("Segmenting pages", duration_cast<milliseconds>(end - start).count());
+      timings->push_back(timing);
+    }
   }
 
   // (8) Detect the text lines.
-  start = high_resolution_clock::now();
-  TextLinesDetection tld(doc, _config.textLinesDetection);
-  tld.process();
-  end = high_resolution_clock::now();
-  if (timings) {
-    Timing timing("Detecting text lines", duration_cast<milliseconds>(end - start).count());
-    timings->push_back(timing);
+  if (!_config.textLinesDetection.disable) {
+    start = high_resolution_clock::now();
+    TextLinesDetection tld(doc, _config.textLinesDetection);
+    tld.process();
+    end = high_resolution_clock::now();
+    if (timings) {
+      Timing timing("Detecting text lines", duration_cast<milliseconds>(end - start).count());
+      timings->push_back(timing);
+    }
   }
 
   // (9) Detect subscripted and superscripted characters.
-  start = high_resolution_clock::now();
-  SubSuperScriptsDetection ssd(doc, _config.subSuperScriptsDetection);
-  ssd.process();
-  end = high_resolution_clock::now();
-  if (timings) {
-    Timing timing("Detecting sub-/superscripts", duration_cast<milliseconds>(end - start).count());
-    timings->push_back(timing);
+  if (!_config.subSuperScriptsDetection.disable) {
+    start = high_resolution_clock::now();
+    SubSuperScriptsDetection ssd(doc, _config.subSuperScriptsDetection);
+    ssd.process();
+    end = high_resolution_clock::now();
+    if (timings) {
+      Timing timing("Detecting sub-/superscripts", duration_cast<milliseconds>(end - start).count());
+      timings->push_back(timing);
+    }
   }
 
   // (10) Compute some statistics about the text lines, for example: the most frequent indentation.
-  start = high_resolution_clock::now();
-  sc.computeTextLineStatistics();
-  end = high_resolution_clock::now();
-  if (timings) {
-    Timing timing("Computing line statistics", duration_cast<milliseconds>(end - start).count());
-    timings->push_back(timing);
+  if (!_config.statisticsCalculation.disable) {
+    start = high_resolution_clock::now();
+    sc.computeTextLineStatistics();
+    end = high_resolution_clock::now();
+    if (timings) {
+      Timing timing("Computing line statistics", duration_cast<milliseconds>(end - start).count());
+      timings->push_back(timing);
+    }
   }
 
   // (11) Detect the text blocks.
-  start = high_resolution_clock::now();
-  TextBlocksDetection tbd(doc, _config.textBlocksDetection);
-  tbd.process();
-  end = high_resolution_clock::now();
-  if (timings) {
-    Timing timing("Detecting text blocks", duration_cast<milliseconds>(end - start).count());
-    timings->push_back(timing);
+  if (!_config.textBlocksDetection.disable) {
+    start = high_resolution_clock::now();
+    TextBlocksDetection tbd(doc, _config.textBlocksDetection);
+    tbd.process();
+    end = high_resolution_clock::now();
+    if (timings) {
+      Timing timing("Detecting text blocks", duration_cast<milliseconds>(end - start).count());
+      timings->push_back(timing);
+    }
   }
 
   // (12) Detect the reading order of the text blocks.
-  start = high_resolution_clock::now();
-  ReadingOrderDetection rod(doc, _config.readingOrderDetection, _config.semanticRolesPrediction);
-  rod.detect();
-  end = high_resolution_clock::now();
-  if (timings) {
-    Timing timing("Detecting reading order", duration_cast<milliseconds>(end - start).count());
-    timings->push_back(timing);
+  if (!_config.readingOrderDetection.disable) {
+    start = high_resolution_clock::now();
+    ReadingOrderDetection rod(doc, _config.readingOrderDetection, _config.semanticRolesPrediction);
+    rod.detect();
+    end = high_resolution_clock::now();
+    if (timings) {
+      Timing timing("Detecting reading order", duration_cast<milliseconds>(end - start).count());
+      timings->push_back(timing);
+    }
   }
 
   // (13) Dehyphenate words, if not deactivated by the user.
-  if (!_noWordsDehyphenation) {
+  if (!_config.wordsDehyphenation.disable) {
     start = high_resolution_clock::now();
     WordsDehyphenation wdh(doc, _config.wordsDehyphenation);
     wdh.dehyphenate();

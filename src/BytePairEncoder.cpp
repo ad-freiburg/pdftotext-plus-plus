@@ -13,7 +13,7 @@
 #include <vector>
 
 #include "./BytePairEncoder.h"
-#include "./utils/StringUtils.h"
+#include "./utils/Text.h"
 
 using std::pair;
 using std::unordered_map;
@@ -34,12 +34,13 @@ BytePairEncoder::BytePairEncoder(unordered_map<wstring, int>* vocabulary) {
 }
 
 // _________________________________________________________________________________________________
+// TODO (korzen): wordDelimAlphabet is not used anymore.
 void BytePairEncoder::encode(const wstring& text, size_t targetLength,
     const string& wordDelimAlphabet, vector<int>* res) {
   // Split the text into words. For example, split "This is some text" into
   // ["This", "is", "some", "text"].
   vector<wstring> words;
-  splitIntoWords(text, wordDelimAlphabet, &words);
+  splitIntoWords(text, &words);
 
   // Iterate through the words and encode each word using byte pair encoding.
   for (auto& word : words) {

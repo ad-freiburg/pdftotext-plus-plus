@@ -8,8 +8,8 @@
 
 #include <string>
 
-#include "../Types.h"
-#include "./Serialization.h"
+#include "./Types.h"
+#include "./PdfDocumentSerialization.h"
 
 using ppp::types::SerializationFormat;
 using std::string;

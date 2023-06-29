@@ -11,7 +11,7 @@
 #include <vector>
 
 #include "../PdfDocument.h"
-#include "./MathUtils.h"
+#include "./Math.h"
 #include "./PdfElementsUtils.h"
 
 using std::make_pair;

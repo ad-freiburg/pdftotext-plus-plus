@@ -11,7 +11,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include "./MathUtils.h"
+#include "./Math.h"
 #include "./PdfElementsUtils.h"
 #include "./TextLinesDetectionUtils.h"
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022, University of Freiburg,
+ * Copyright 2023, University of Freiburg,
  * Chair of Algorithms and Data Structures.
  * Author: Claudius Korzen <korzen@cs.uni-freiburg.de>.
  *
@@ -12,12 +12,14 @@
 
 #include "../PdfDocument.h"
 #include "./Counter.h"
-#include "./StringUtils.h"
+#include "./Text.h"
 #include "./WordsDetectionUtils.h"
 
 using std::max;
 using std::min;
 
+using ppp::utils::counter::DoubleCounter;
+using ppp::utils::counter::StringCounter;
 using ppp::utils::text::createRandomString;
 
 // =================================================================================================
@@ -40,6 +42,9 @@ PdfWord* WordsDetectionUtils::createWord(const vector<PdfCharacter*>& characters
 
   // Create a (unique) id.
   word->id = createRandomString(_config.idLength, "word-");
+
+  // Set the page number.
+  word->pos->pageNum = characters[0]->pos->pageNum;
 
   // Iterative through the characters and compute the text, the x,y-coordinates of the
   // bounding box, and the font info.
@@ -76,9 +81,6 @@ PdfWord* WordsDetectionUtils::createWord(const vector<PdfCharacter*>& characters
   // Set the most frequent font name and font size.
   word->fontName = fontNameCounter.mostFreq();
   word->fontSize = fontSizeCounter.mostFreq();
-
-  // Set the page number.
-  word->pos->pageNum = characters[0]->pos->pageNum;
 
   // Set the writing mode.
   word->pos->wMode = characters[0]->pos->wMode;

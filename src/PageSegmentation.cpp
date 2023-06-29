@@ -10,7 +10,7 @@
 #include <vector>
 
 #include "./utils/Log.h"
-#include "./utils/MathUtils.h"
+#include "./utils/Math.h"
 #include "./utils/PageSegmentationUtils.h"
 #include "./utils/PdfElementsUtils.h"
 #include "./utils/Trool.h"
@@ -26,6 +26,10 @@ using std::vector;
 
 using ppp::config::PageSegmentationConfig;
 using ppp::utils::elements::computeMaxYOverlapRatio;
+using ppp::utils::log::Logger;
+using ppp::utils::log::BLUE;
+using ppp::utils::log::BOLD;
+using ppp::utils::log::OFF;
 using ppp::utils::math::smaller;
 using ppp::utils::PageSegmentationUtils;
 

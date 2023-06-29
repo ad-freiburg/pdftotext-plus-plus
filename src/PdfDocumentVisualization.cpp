@@ -18,7 +18,7 @@
 #include <utility>  // std::move
 #include <vector>
 
-#include "./utils/MathUtils.h"
+#include "./utils/Math.h"
 
 #include "./Config.h"
 #include "./PdfDocument.h"
@@ -92,7 +92,8 @@ void PdfDocumentVisualization::visualizeCharacters(const vector<PdfCharacter*>& 
 }
 
 // _________________________________________________________________________________________________
-void PdfDocumentVisualization::visualizeFigures(const PdfDocument& doc, const ColorScheme& cs) const {
+void PdfDocumentVisualization::visualizeFigures(const PdfDocument& doc,
+    const ColorScheme& cs) const {
   for (const auto* page : doc.pages) {
     drawFigureBoundingBoxes(page->figures, cs);
   }
@@ -105,7 +106,8 @@ void PdfDocumentVisualization::visualizeFigures(const vector<PdfFigure*>& figure
 }
 
 // _________________________________________________________________________________________________
-void PdfDocumentVisualization::visualizeShapes(const PdfDocument& doc, const ColorScheme& cs) const {
+void PdfDocumentVisualization::visualizeShapes(const PdfDocument& doc,
+    const ColorScheme& cs) const {
   for (const auto* page : doc.pages) {
     drawShapeBoundingBoxes(page->shapes, cs);
   }
@@ -118,7 +120,8 @@ void PdfDocumentVisualization::visualizeShapes(const vector<PdfShape*>& shapes,
 }
 
 // _________________________________________________________________________________________________
-void PdfDocumentVisualization::visualizeGraphics(const PdfDocument& doc, const ColorScheme& cs) const {
+void PdfDocumentVisualization::visualizeGraphics(const PdfDocument& doc,
+    const ColorScheme& cs) const {
   for (const auto* page : doc.pages) {
     drawGraphicBoundingBoxes(page->graphics, cs);
   }

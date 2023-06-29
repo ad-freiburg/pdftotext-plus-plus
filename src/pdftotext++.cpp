@@ -13,16 +13,15 @@
 #include <iomanip>   // std::setw, std::setprecision
 #include <iostream>  // std::cout
 #include <locale>    // imbue
-#include <memory>    // std::make_unique
 #include <string>
 #include <unordered_set>
 #include <vector>
 
-#include "./serialization/Serialization.h"
 #include "./utils/Log.h"
-#include "./utils/MathUtils.h"
-#include "./utils/StringUtils.h"
+#include "./utils/Math.h"
+#include "./utils/Text.h"
 #include "./Config.h"
+#include "./PdfDocumentSerialization.h"
 #include "./PdfDocumentVisualization.h"
 #include "./PdfToTextPlusPlus.h"
 #include "./Types.h"
@@ -55,7 +54,7 @@ using boost::program_options::variables_map;
 using ppp::PdfDocumentVisualization;
 using ppp::PdfToTextPlusPlus;
 using ppp::config::Config;
-using ppp::serialization::Serializer;
+using ppp::serialization::Serializer;  // TODO(korzen)
 using ppp::types::DocumentUnit;
 using ppp::types::SemanticRole;
 using ppp::types::SerializationFormat;
@@ -64,38 +63,39 @@ using ppp::utils::math::round;
 using ppp::utils::text::wrap;
 using ppp::utils::text::strip;
 
-namespace po = boost::program_options;
-
 // =================================================================================================
 // Global parameters.
-// NOTE: The variables in uppercase (for example: PROGRAM_NAME) need to be specified at compile
-// time, in form of a preprocessor variable which is part of the g++ command. For example, to
-// define the variable 'PROGRAM_NAME', type the following: "g++ -DPROGRAM_NAME='pdftotext++' ..."
+// NOTE: The variables in uppercase (for example: PROGRAM_NAME or VERSION) need to be specified at
+// compile time, in form of preprocessor variables which are part of the g++ command. For example,
+// to define the variable 'PROGRAM_NAME', type the following: "g++ -DPROGRAM_NAME='pdftotext++'..."
 
-const char* programName = PROGRAM_NAME;
-const char* programDescription = PROGRAM_DESCRIPTION;
-const char* programUsage = PROGRAM_USAGE;
-const char* version = VERSION;
+static const char* programName = PROGRAM_NAME;
+static const char* programDescription = PROGRAM_DESCRIPTION;
+static const char* programUsage = PROGRAM_USAGE;
+static const char* version = VERSION;
 
 // =================================================================================================
 // Helper methods.
 
 /**
- * This method prints the help message - including the program name, the program version, a
- * general program description and a description of the command-line options.
+ * This method prints the help message to stdout - including the program name, the program version,
+ * a general program description and a description of the command-line options.
  *
- * @param pubOpts
+ * @param publicOpts
  *    The definition of the public command-line options.
- * @param privOpts
+ * @param privateOpts
  *    The definition of the non-public command-line options.
- *    NOTE: Can be omitted, when the non-public options should not appear in the help message.
+ *    NOTE: When omitted, the non-public options do not appear in the help message.
  * @param maxLineLength
- *    The maximum line length in the help message.
+ *    The maximum length of lines in the help message.
  * @param optionDescIndent
  *    The amount by which the description of a single command line option should be indented.
  */
-void printHelpMessage(const options_description* pubOpts, const options_description* privOpts = 0,
-    int maxLineLength = 100, int optionDescIndent = 4) {
+void printHelpMessage(
+    const options_description* publicOpts,
+    const options_description* privateOpts = 0,
+    int maxLineLength = 100,
+    int optionDescIndent = 4) {
   cout << BBLUE << "NAME" << OFF << endl;
   cout << wrap(strip(programName), maxLineLength) << endl;
   cout << endl;
@@ -113,15 +113,15 @@ void printHelpMessage(const options_description* pubOpts, const options_descript
   cout << endl;
 
   cout << BBLUE << "OPTIONS" << OFF << endl;
-  for (const auto& opt : pubOpts->options()) {
+  for (const auto& opt : publicOpts->options()) {
     cout << opt->format_name() << endl;
     cout << wrap(strip(opt->description()), maxLineLength, optionDescIndent) << endl;
   }
   cout << endl;
 
-  if (privOpts) {
+  if (privateOpts) {
     cout << BBLUE << "NON-PUBLIC OPTIONS" << OFF << endl;
-    for (const auto& opt : privOpts->options()) {
+    for (const auto& opt : privateOpts->options()) {
       cout << opt->format_name() << endl;
       cout << wrap(strip(opt->description()), maxLineLength, optionDescIndent) << endl;
     }
@@ -130,7 +130,7 @@ void printHelpMessage(const options_description* pubOpts, const options_descript
 }
 
 /**
- * This method prints the version message.
+ * This method prints the version message to stdout.
  */
 void printVersionMessage() {
   cout << programName << ", version " << version << endl;
@@ -190,31 +190,30 @@ int main(int argc, char* argv[]) {
   bool printFullHelp = false;
 
   // Specify the public options (= options that will be shown to the user when printing the help).
-  options_description pubOpts;
-  pubOpts.add_options()
+  options_description publicOpts;
+  publicOpts.add_options()
     (
       "format",
       value<SerializationFormat>(&format),
-      (string("Output the extracted text in the specified format.\nValid formats: ")
-        + ppp::serialization::getSerializationFormatChoicesStr() + string(".\n")).c_str()
+      // TODO(korzen): Add an description for each serializer.
+      ("Output the extracted text in the specified format.\n"
+       "Valid formats: " + ppp::serialization::getSerializationFormatChoicesStr() + ".\n").c_str()
     )
     (
       "role",
       value<vector<SemanticRole>>(&roles),
-      (string("Only output text from text blocks with the specified roles. Use the syntax\n")
-        + string("'--role <value1> --role <value2> ...' to specify multiple roles.\nValid roles: ")
-        + ppp::types::getSemanticRolesStr() + string(".\n")).c_str()
-        // TODO(korzen): Rename to getSemanticRolesChoicesStr?
+      ("Only output text from text blocks with the specified roles. Use the syntax "
+       "'--role <value1> --role <value2> ...' to specify multiple roles.\n"
+       "Valid roles: " + ppp::types::getSemanticRolesStr() + ".\n").c_str()
     )
     (
       "unit",
       value<vector<DocumentUnit>>(&units),
-      (string("Output semantic and layout information about the specified document unit(s). Use\n")
-        + string("the syntax '--unit <value1> --unit <value2> ...' to specify multiple units.\n")
-        + string("NOTE: This option does not have an effect when used together with the ")
-        + string("'--format txt' or '--format txt-extended' option.\n")
-        + string("Valid units: ") + ppp::types::getDocumentUnitsStr() + string(".\n")).c_str()
-        // TODO(korzen): Rename to getDocumentUnitsStr?
+      ("Output semantic and layout information about the specified document unit(s). Use "
+       "the syntax '--unit <value1> --unit <value2> ...' to specify multiple units."
+       "Valid units: " + ppp::types::getDocumentUnitsStr() + ".\n"
+       "NOTE: This option does not have an effect when used together with the "
+       "'--format txt' or '--format txt-extended' option.").c_str()
     )
     (
       "control-characters",
@@ -358,8 +357,8 @@ int main(int argc, char* argv[]) {
   // Specify the private options (= options that will not be shown in the help message).
   // NOTE: these options *must* include an entry for each positional option (defined below), this
   // is a restriction of the boost library.
-  options_description privOpts("");
-  privOpts.add_options()
+  options_description privateOpts("");
+  privateOpts.add_options()
     (
       "pdf-file",
       value<string>(&pdfFilePath)->required(),
@@ -445,7 +444,7 @@ int main(int argc, char* argv[]) {
 
   // Parse the command-line options.
   options_description opts;
-  opts.add(pubOpts).add(privOpts);
+  opts.add(publicOpts).add(privateOpts);
   variables_map vm;
   try {
     store(command_line_parser(argc, argv).options(opts).positional(positional).run(), vm);
@@ -453,12 +452,12 @@ int main(int argc, char* argv[]) {
   } catch (const exception& e) {
     bool showFullHelp = vm.count("full-help") ? vm["full-help"].as<bool>() : false;
     if (showFullHelp) {
-      printHelpMessage(&pubOpts, &privOpts);
+      printHelpMessage(&publicOpts, &privateOpts);
       return EXIT_SUCCESS;
     }
     bool showHelp = vm.count("help") ? vm["help"].as<bool>() : false;
     if (showHelp) {
-      printHelpMessage(&pubOpts);
+      printHelpMessage(&publicOpts);
       return EXIT_SUCCESS;
     }
     bool showVersion = vm.count("version") ? vm["version"].as<bool>() : false;
@@ -473,13 +472,13 @@ int main(int argc, char* argv[]) {
 
   // Print the full help info if explicitly requested by the user.
   if (printFullHelp) {
-    printHelpMessage(&pubOpts, &privOpts);
+    printHelpMessage(&publicOpts, &privateOpts);
     return EXIT_SUCCESS;
   }
 
   // Print the help info if explicitly requested by the user.
   if (printHelp) {
-    printHelpMessage(&pubOpts);
+    printHelpMessage(&publicOpts);
     return EXIT_SUCCESS;
   }
 
@@ -504,25 +503,6 @@ int main(int argc, char* argv[]) {
   if (verbosity == "debug" || verbosity == "DEBUG") { logLevel = DEBUG; }
   if (verbosity == "info" || verbosity == "INFO") { logLevel = INFO; }
   if (verbosity == "warn" || verbosity == "WARN") { logLevel = WARN; }
-
-  // Config config;
-  // config.pdfParsing.logLevel = debugPdfParsing ? DEBUG : logLevel;
-  // config.pdfParsing.logPageFilter = logPageFilter;
-  // config.pdfParsing.noEmbeddedFontFilesParsing = noEmbeddedFontFiles;
-  // config.statisticsCalculation.logLevel = debugStatisticsCalculation ? DEBUG : logLevel;
-  // config.diacriticsMerging.logLevel = debugDiacriticMarksMerging ? DEBUG : logLevel;
-  // config.diacriticsMerging.logPageFilter = logPageFilter;
-  // config.wordsDetection.logLevel = debugWordsDetection ? DEBUG : logLevel;
-  // config.wordsDetection.logPageFilter = logPageFilter;
-  // config.pageSegmentation.logLevel = debugPageSegmentation ? DEBUG : logLevel;
-  // config.pageSegmentation.logPageFilter = logPageFilter;
-  // config.linesDetection.logLevel = debugTextLinesDetection ? DEBUG : logLevel;
-  // config.linesDetection.logPageFilter = logPageFilter;
-  // config.scriptsDetection.logLevel = debugSubSuperScriptsDetection ? DEBUG : logLevel;
-  // config.scriptsDetection.logPageFilter = logPageFilter;
-  // config.blocksDetection.logLevel = debugTextBlocksDetection ? DEBUG : logLevel;
-  // config.blocksDetection.logPageFilter = logPageFilter;
-  // config.rolesPrediction.modelsDir = CONFIG_SEMANTIC_ROLES_DETECTION_MODELS_DIR;
 
   Config config;
   // Configure pdf parsing.
@@ -556,11 +536,9 @@ int main(int argc, char* argv[]) {
   // Configure words dehyphenation.
   config.wordsDehyphenation.logLevel = logLevel;
   config.wordsDehyphenation.logPageFilter = logPageFilter;
+  config.wordsDehyphenation.disable = noDehyphenation;
 
-  PdfToTextPlusPlus engine(
-    config,
-    noDehyphenation,
-    parseMode);
+  PdfToTextPlusPlus engine(config, parseMode);
 
   PdfDocument doc;
   vector<Timing> timings;

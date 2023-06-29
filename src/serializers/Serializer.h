@@ -6,8 +6,8 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#ifndef SERIALIZATION_SERIALIZER_H_
-#define SERIALIZATION_SERIALIZER_H_
+#ifndef SERIALIZERS_SERIALIZER_H_
+#define SERIALIZERS_SERIALIZER_H_
 
 #include <ostream>
 #include <string>
@@ -73,4 +73,4 @@ class Serializer {
 
 }  // namespace ppp::serialization
 
-#endif  // SERIALIZATION_SERIALIZER_H_
+#endif  // SERIALIZERS_SERIALIZER_H_

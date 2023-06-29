@@ -21,6 +21,7 @@ using std::vector;
 
 using ppp::config::PageSegmentationConfig;
 using ppp::utils::PageSegmentationUtils;
+using ppp::utils::log::Logger;
 
 // =================================================================================================
 

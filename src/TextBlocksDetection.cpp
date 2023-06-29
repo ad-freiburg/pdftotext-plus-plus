@@ -12,9 +12,9 @@
 #include <vector>
 
 #include "./utils/Log.h"
-#include "./utils/MathUtils.h"
+#include "./utils/Math.h"
 #include "./utils/PdfElementsUtils.h"
-#include "./utils/StringUtils.h"
+#include "./utils/Text.h"
 #include "./utils/TextBlocksDetectionUtils.h"
 #include "./utils/Trool.h"
 #include "./Config.h"
@@ -33,6 +33,10 @@ using ppp::utils::elements::computeHasEqualFontSize;
 using ppp::utils::elements::computeLeftXOffset;
 using ppp::utils::elements::computeStartsWithUpper;
 using ppp::utils::elements::computeVerticalGap;
+using ppp::utils::log::Logger;
+using ppp::utils::log::BLUE;
+using ppp::utils::log::BOLD;
+using ppp::utils::log::OFF;
 using ppp::utils::math::between;
 using ppp::utils::math::equal;
 using ppp::utils::math::equalOrLarger;

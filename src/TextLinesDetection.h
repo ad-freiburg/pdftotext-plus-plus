@@ -12,7 +12,7 @@
 #include <vector>
 
 #include "./utils/Log.h"
-#include "./utils/MathUtils.h"
+#include "./utils/Math.h"
 #include "./utils/TextLinesDetectionUtils.h"
 #include "./Config.h"
 #include "./PdfDocument.h"
@@ -21,6 +21,7 @@ using std::vector;
 
 using ppp::config::TextLinesDetectionConfig;
 using ppp::utils::TextLinesDetectionUtils;
+using ppp::utils::log::Logger;
 
 // =================================================================================================
 

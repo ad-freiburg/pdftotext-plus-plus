@@ -14,9 +14,9 @@
 
 #include "../Config.h"
 #include "./Counter.h"
-#include "./MathUtils.h"
+#include "./Math.h"
 #include "./PageSegmentationUtils.h"
-#include "./StringUtils.h"
+#include "./Text.h"
 
 using std::make_tuple;
 using std::max;

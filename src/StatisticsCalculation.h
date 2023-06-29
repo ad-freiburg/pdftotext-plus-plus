@@ -14,6 +14,7 @@
 #include "./PdfDocument.h"
 
 using ppp::config::StatisticsCalculationConfig;
+using ppp::utils::log::Logger;
 
 // =================================================================================================
 

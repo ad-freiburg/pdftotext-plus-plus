@@ -12,8 +12,8 @@
 
 #include "./JsonlSerializer.h"
 
-#include "../utils/MathUtils.h"
-#include "../utils/StringUtils.h"
+#include "../utils/Math.h"
+#include "../utils/Text.h"
 
 #include "../PdfDocument.h"
 #include "../Types.h"

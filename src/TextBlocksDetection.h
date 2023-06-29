@@ -28,6 +28,7 @@ using std::unordered_set;
 
 using ppp::config::TextBlocksDetectionConfig;
 using ppp::utils::TextBlocksDetectionUtils;
+using ppp::utils::log::Logger;
 
 // =================================================================================================
 

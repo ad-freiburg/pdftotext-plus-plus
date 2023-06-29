@@ -383,7 +383,7 @@ cppflow::tensor SemanticRolesPrediction::createWordsInputTensor(const PdfDocumen
 
       // Encode the text of each block using byte pair encoding.
       vector<int> encoding;
-      encoder.encode(wBlockText, yDim, _config.wordDelimitersAlphabet, &encoding);
+      encoder.encode(wBlockText, yDim, "", &encoding);
       for (int k = 0; k < yDim; k++) {
         wordsTensorValues.push_back(encoding[k]);
       }

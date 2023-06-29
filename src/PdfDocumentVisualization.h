@@ -6,8 +6,8 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#ifndef PDFDOCUMENTVISUALIZER_H_
-#define PDFDOCUMENTVISUALIZER_H_
+#ifndef PDFDOCUMENTVISUALIZATION_H_
+#define PDFDOCUMENTVISUALIZATION_H_
 
 #include <poppler/Annot.h>
 #include <poppler/PDFDoc.h>
@@ -365,4 +365,4 @@ class PdfDocumentVisualization {
 
 }  // namespace ppp
 
-#endif  // PDFDOCUMENTVISUALIZER_H_
+#endif  // PDFDOCUMENTVISUALIZATION_H_

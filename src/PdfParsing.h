@@ -20,6 +20,7 @@
 #include "./PdfDocument.h"
 
 using ppp::config::PdfParsingConfig;
+using ppp::utils::log::Logger;
 
 // =================================================================================================
 

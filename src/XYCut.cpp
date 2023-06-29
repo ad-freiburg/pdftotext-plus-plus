@@ -11,17 +11,21 @@
 #include <vector>
 
 #include "./utils/Comparators.h"
-#include "./utils/FixedPriorityQueue.h"
+#include "./utils/FixedCapacityPriorityQueue.h"
 #include "./utils/PdfElementsUtils.h"
-#include "./utils/StringUtils.h"
+#include "./utils/Text.h"
 
 #include "./PdfDocument.h"
 #include "./XYCut.h"
 
-using comparators::LeftXAscComparator;
-using comparators::RightXDescComparator;
-using comparators::UpperYAscComparator;
+using std::max;
+using std::min;
+using std::numeric_limits;
+using std::vector;
 
+using ppp::utils::comparators::LeftXAscComparator;
+using ppp::utils::comparators::RightXDescComparator;
+using ppp::utils::comparators::UpperYAscComparator;
 using ppp::utils::elements::computeHorizontalGap;
 using ppp::utils::elements::computeVerticalGap;
 using ppp::utils::math::equal;
@@ -29,10 +33,6 @@ using ppp::utils::math::equalOrLarger;
 using ppp::utils::math::larger;
 using ppp::utils::math::smaller;
 using ppp::utils::text::createRandomString;
-using std::max;
-using std::min;
-using std::numeric_limits;
-using std::vector;
 
 // _________________________________________________________________________________________________
 void xyCut(const vector<PdfElement*>& elements,
@@ -130,7 +130,7 @@ bool xCut(const vector<PdfElement*>& elements, double minGapWidth, int maxNumOve
   // in the queue the gap width (E.leftX - Q.rightX) is computed. If the gap width between E and Q
   // is >= minGapWidth, a cut candidate dividing the elements between Q and E is created.
   int queueSize = maxNumOverlappingElements + 1;
-  FixedPriorityQueue<PdfElement*, RightXDescComparator> elementsLargestRightXQueue(queueSize);
+  FixedCapacityPriorityQueue<PdfElement*, RightXDescComparator> elementsLargestRightXQueue(queueSize);
   elementsLargestRightXQueue.push(sElements[0]);
 
   // Iterate through the elements from left to right and compute the cut candidates.

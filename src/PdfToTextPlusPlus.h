@@ -22,6 +22,7 @@ using std::vector;
 
 using ppp::config::Config;
 using ppp::types::Timing;
+using ppp::utils::log::LogLevel;
 
 // =================================================================================================
 
@@ -56,11 +57,6 @@ class PdfToTextPlusPlus {
    *
    * @param config
    *   The configuration to use.
-   * @param noWordsDehyphenation
-   *   A boolean flag indicating whether or not to disable words dehyphenation. Setting this
-   *   parameter to true disables words dehpyhenation; setting it to false enables it. Disabling
-   *   words dehyphenation has the consequence that each part, into which a hyphenated word is
-   *   split, will appear as a separate word in the extracted text.
    * @param parseMode
    *   A boolean flag indicating whether or not to activate the parsing mode, that is: a mode that
    *   parses the content streams of the PDF file for characters, figures, and shapes, and stops
@@ -70,10 +66,7 @@ class PdfToTextPlusPlus {
    *   the contained characters (e.g., the position, text and color) for assembling the true words,
    *   text blocks, etc. based on the color of the characters.
    */
-  PdfToTextPlusPlus(
-    const Config& config,
-    bool noWordsDehyphenation = false,
-    bool parseMode = false);
+  PdfToTextPlusPlus(const Config& config, bool parseMode = false);
 
   /** The deconstructor */
   ~PdfToTextPlusPlus();
@@ -100,8 +93,6 @@ class PdfToTextPlusPlus {
   Config _config;
   // Whether or not to parse the embedded font files of a PDF file.
   bool _noEmbeddedFontFilesParsing;
-  // Whether or not to disable words dehyphenation.
-  bool _noWordsDehyphenation;
   // Whether or not to activate the parsing mode.
   bool _parseMode;
   // The level for the logging messages produced while parsing the content streams.
@@ -124,6 +115,6 @@ class PdfToTextPlusPlus {
   int _logPageFilter;
 };
 
-}
+}  // namespace ppp
 
 #endif  // PDFTOTEXTPLUSPLUS_H_

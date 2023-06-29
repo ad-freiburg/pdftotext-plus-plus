@@ -1,14 +1,11 @@
 /**
- * Copyright 2022, University of Freiburg,
+ * Copyright 2023, University of Freiburg,
  * Chair of Algorithms and Data Structures.
  * Author: Claudius Korzen <korzen@cs.uni-freiburg.de>.
  *
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include <string.h>
-
-#include <iostream>
 #include <cassert>  // assert
 #include <iomanip>  // std::setw, std::setfill
 #include <sstream>
@@ -16,64 +13,68 @@
 #include <utility>  // std::move
 #include <vector>
 
-#include "./StringUtils.h"
+#include "./Text.h"
+#include "../Config.h"
 
+using std::hex;
+using std::isspace;
+using std::move;
+using std::setfill;
+using std::setw;
 using std::string;
 using std::stringstream;
 using std::vector;
 using std::wstring;
+
+using ppp::config::ALPHA_NUM;
+using ppp::config::WORD_DELIMITERS_ALPHABET;
 
 // =================================================================================================
 
 namespace ppp::utils::text {
 
 // _________________________________________________________________________________________________
-void splitIntoWords(const wstring& text, const string& wordDelimitersAlphabet,
-    vector<wstring>* words) {
+void splitIntoWords(const wstring& text, vector<wstring>* words) {
   assert(words);
 
-  size_t n = text.length();
   // The following works because all characters are single-byte.
-  const wstring wdelimiters(wordDelimitersAlphabet.begin(), wordDelimitersAlphabet.end());
-  size_t start = text.find_first_not_of(wdelimiters);
+  const wstring wdelimiters(WORD_DELIMITERS_ALPHABET.begin(), WORD_DELIMITERS_ALPHABET.end());
 
-  while (start < n) {
+  size_t start = text.find_first_not_of(wdelimiters);
+  while (start < text.length()) {
     size_t stop = text.find_first_of(wdelimiters, start);
-    if (stop > n) { stop = n; }
+    if (stop > text.length()) { stop = text.length(); }
     words->push_back(text.substr(start, stop - start));
     start = text.find_first_not_of(wdelimiters, stop + 1);
   }
 }
 
 // _________________________________________________________________________________________________
-void splitIntoWords(const string& text, const string& wordDelimitersAlphabet,
-    vector<string>* words) {
+void splitIntoWords(const string& text, vector<string>* words) {
   assert(words);
 
-  size_t n = text.length();
-  size_t start = text.find_first_not_of(wordDelimitersAlphabet);
-
-  while (start < n) {
-    size_t stop = text.find_first_of(wordDelimitersAlphabet, start);
-    if (stop > n) { stop = n; }
+  size_t start = text.find_first_not_of(WORD_DELIMITERS_ALPHABET);
+  while (start < text.length()) {
+    size_t stop = text.find_first_of(WORD_DELIMITERS_ALPHABET, start);
+    if (stop > text.length()) { stop = text.length(); }
     words->push_back(text.substr(start, stop - start));
-    start = text.find_first_not_of(wordDelimitersAlphabet, stop + 1);
+    start = text.find_first_not_of(WORD_DELIMITERS_ALPHABET, stop + 1);
   }
 }
 
 // _________________________________________________________________________________________________
-string createRandomString(size_t len, const string& prefix) {
+string createRandomString(unsigned int len, const string& prefix) {
   // Append the prefix.
-  string tmp_s = prefix;
-  tmp_s.reserve(prefix.length() + len);
+  string str = prefix;
+  str.reserve(prefix.length() + len);
 
-  // Append <len>-many random characters from our alphabet of alphanumerical characters.
+  // Append <len>-many random alphanumerical characters.
   int alphabetSize = strlen(ALPHA_NUM);
   for (size_t i = 0; i < len; i++) {
-    tmp_s += ALPHA_NUM[rand() % (alphabetSize - 1)];
+    str += ALPHA_NUM[rand() % (alphabetSize - 1)];
   }
 
-  return tmp_s;
+  return str;
 }
 
 // =================================================================================================
@@ -107,17 +108,17 @@ string escapeJson(const string& str) {
         break;
       default:
         if ('\x00' <= str[i] && str[i] <= '\x1f') {
-          o << "\\u" << std::hex << std::setw(4) << std::setfill('0') << static_cast<int>(str[i]);
+          o << "\\u" << hex << setw(4) << setfill('0') << static_cast<int>(str[i]);
         } else {
           o << str[i];
         }
     }
   }
-  return std::move(o).str();
+  return move(o).str();
 }
 
 // _________________________________________________________________________________________________
-string shorten(const string& str, size_t len) {
+string shorten(const string& str, unsigned int len) {
   if (str.size() <= len) {
     return str;
   }
@@ -130,15 +131,15 @@ string strip(const string& str) {
   auto start_it = str.begin();
   auto end_it = str.rbegin();
 
-  while (std::isspace(*start_it)) { ++start_it; }
-  while (std::isspace(*end_it)) { ++end_it; }
+  while (isspace(*start_it)) { start_it++; }
+  while (isspace(*end_it)) { end_it++; }
 
-  return std::string(start_it, end_it.base());
+  return string(start_it, end_it.base());
 }
 
 // _________________________________________________________________________________________________
-string wrap(const string& str, size_t width, size_t indent) {
-  std::string result = "";
+string wrap(const string& str, unsigned int width, unsigned int indent) {
+  string result = "";
 
   // Split the string into lines.
   size_t lineStart = 0;
@@ -177,8 +178,8 @@ string wrap(const string& str, size_t width, size_t indent) {
 }
 
 // _________________________________________________________________________________________________
-std::string join(const vector<string>& strings, const string& sep) {
-  std::string resultStr = "";
+string join(const vector<string>& strings, const string& sep) {
+  string resultStr = "";
   for (const auto& s : strings) {
       if (resultStr.size() > 0) {
         resultStr += sep;
@@ -188,4 +189,4 @@ std::string join(const vector<string>& strings, const string& sep) {
   return resultStr;
 }
 
-}  // ppp::utils::text
+}  // namespace ppp::utils::text

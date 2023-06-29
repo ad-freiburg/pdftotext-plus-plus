@@ -9,7 +9,7 @@
 #include <algorithm>  // std::min, std::max
 
 #include "./utils/Log.h"
-#include "./utils/MathUtils.h"
+#include "./utils/Math.h"
 #include "./Config.h"
 #include "./PdfDocument.h"
 #include "./SubSuperScriptsDetection.h"
@@ -19,6 +19,9 @@ using std::max;
 using std::min;
 
 using ppp::config::SubSuperScriptsDetectionConfig;
+using ppp::utils::log::Logger;
+using ppp::utils::log::BOLD;
+using ppp::utils::log::OFF;
 using ppp::utils::math::larger;
 using ppp::utils::math::smaller;
 

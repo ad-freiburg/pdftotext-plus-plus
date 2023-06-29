@@ -14,6 +14,7 @@
 #include "./PdfDocument.h"
 
 using ppp::config::SubSuperScriptsDetectionConfig;
+using ppp::utils::log::Logger;
 
 // =================================================================================================
 

@@ -6,8 +6,8 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#ifndef SERIALIZATION_PLAINTEXTEXTENDEDSERIALIZER_H_
-#define SERIALIZATION_PLAINTEXTEXTENDEDSERIALIZER_H_
+#ifndef SERIALIZERS_PLAINTEXTSERIALIZER_H_
+#define SERIALIZERS_PLAINTEXTSERIALIZER_H_
 
 #include <ostream>
 #include <string>
@@ -28,17 +28,15 @@ namespace ppp::serialization {
 
 /**
  * This class outputs the text extracted from a PDF in plain text and writes it to a given file or
- * stdout. Compared to PlainTextSerializer, this serializer adds some control characters and the
- * semantic roles of the text blocks to the text, see the comment of the serializeToStream() method
- * for more details.
+ * stdout. The format is one text block per line, with the text blocks separated by blank lines.
  */
-class PlainTextExtendedSerializer : public Serializer {
+class PlainTextSerializer : public Serializer {
  public:
   /** The default constructor. */
-  PlainTextExtendedSerializer();
+  PlainTextSerializer();
 
   /** The deconstructor. */
-  ~PlainTextExtendedSerializer();
+  ~PlainTextSerializer();
 
  protected:
   /**
@@ -62,5 +60,4 @@ class PlainTextExtendedSerializer : public Serializer {
 
 }  // namespace ppp::serialization
 
-#endif  // SERIALIZATION_PLAINTEXTEXTENDEDSERIALIZER_H_
-
+#endif  // SERIALIZERS_PLAINTEXTSERIALIZER_H_

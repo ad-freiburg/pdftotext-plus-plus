@@ -1,5 +1,5 @@
 /**
- * Copyright 2022, University of Freiburg,
+ * Copyright 2023, University of Freiburg,
  * Chair of Algorithms and Data Structures.
  * Author: Claudius Korzen <korzen@cs.uni-freiburg.de>.
  *
@@ -8,21 +8,24 @@
 
 #include <gtest/gtest.h>
 
-#include "../src/utils/MathUtils.h"
+#include "../../src/Config.h"
+#include "../../src/utils/Math.h"
 
-using ppp::math_utils::between;
-using ppp::math_utils::equal;
-using ppp::math_utils::equalOrLarger;
-using ppp::math_utils::equalOrSmaller;
-using ppp::math_utils::larger;
-using ppp::math_utils::round;
-using ppp::math_utils::smaller;
+using ppp::utils::math::between;
+using ppp::utils::math::equal;
+using ppp::utils::math::equalOrLarger;
+using ppp::utils::math::equalOrSmaller;
+using ppp::utils::math::larger;
+using ppp::utils::math::round;
+using ppp::utils::math::smaller;
 
 // The allowed tolerance on comparing two float values.
-const double TOL = 0.0001;
+static const double TOLERANCE = ppp::config::DEFAULT_DOUBLE_EQUAL_TOLERANCE;
+
+// =================================================================================================
 
 // _________________________________________________________________________________________________
-TEST(MathUtils, equal) {
+TEST(Math, equal) {
   ASSERT_TRUE(equal(0.0, 0.0));
   ASSERT_TRUE(equal(2.3, 2.3));
   ASSERT_TRUE(equal(1.1, 1.5, 0.4));
@@ -35,7 +38,7 @@ TEST(MathUtils, equal) {
 }
 
 // _________________________________________________________________________________________________
-TEST(MathUtils, larger) {
+TEST(Math, larger) {
   ASSERT_TRUE(larger(0.1, 0.0));
   ASSERT_TRUE(larger(3.3, 2.3));
   ASSERT_TRUE(larger(1.8, 1.5, 0.2));
@@ -48,7 +51,7 @@ TEST(MathUtils, larger) {
 }
 
 // _________________________________________________________________________________________________
-TEST(MathUtils, smaller) {
+TEST(Math, smaller) {
   ASSERT_TRUE(smaller(0.0, 0.01));
   ASSERT_TRUE(smaller(3.3, 4.2));
   ASSERT_TRUE(smaller(1.3, 1.8, 0.2));
@@ -61,7 +64,7 @@ TEST(MathUtils, smaller) {
 }
 
 // _________________________________________________________________________________________________
-TEST(MathUtils, equalOrLarger) {
+TEST(Math, equalOrLarger) {
   ASSERT_TRUE(equalOrLarger(1.0, 1.0));
   ASSERT_TRUE(equalOrLarger(3.3, 0.2));
   ASSERT_TRUE(equalOrLarger(1.3, 1.3, 0.2));
@@ -74,7 +77,7 @@ TEST(MathUtils, equalOrLarger) {
 }
 
 // _________________________________________________________________________________________________
-TEST(MathUtils, equalOrSmaller) {
+TEST(Math, equalOrSmaller) {
   ASSERT_TRUE(equalOrSmaller(1.0, 1.0));
   ASSERT_TRUE(equalOrSmaller(0.3, 2.2));
   ASSERT_TRUE(equalOrSmaller(1.3, 1.3, 0.2));
@@ -87,7 +90,7 @@ TEST(MathUtils, equalOrSmaller) {
 }
 
 // _________________________________________________________________________________________________
-TEST(MathUtils, between) {
+TEST(Math, between) {
   ASSERT_TRUE(between(0.0, 0.0, 1.0));
   ASSERT_TRUE(between(0.5, 0.0, 1.0));
   ASSERT_TRUE(between(1.7, 1.5, 1.6, 0.1));
@@ -100,12 +103,12 @@ TEST(MathUtils, between) {
 }
 
 // _________________________________________________________________________________________________
-TEST(MathUtils, round) {
-  ASSERT_NEAR(round(1.46731, 0), 1.0, TOL);
-  ASSERT_NEAR(round(1.56731, 0), 2.0, TOL);
-  ASSERT_NEAR(round(1.56731, 1), 1.6, TOL);
-  ASSERT_NEAR(round(1.56731, 2), 1.57, TOL);
-  ASSERT_NEAR(round(1.56731, 3), 1.567, TOL);
-  ASSERT_NEAR(round(1.56731, 4), 1.5673, TOL);
-  ASSERT_NEAR(round(1.56731, 5), 1.56731, TOL);
+TEST(Math, round) {
+  ASSERT_NEAR(round(1.46731, 0), 1.0, TOLERANCE);
+  ASSERT_NEAR(round(1.56731, 0), 2.0, TOLERANCE);
+  ASSERT_NEAR(round(1.56731, 1), 1.6, TOLERANCE);
+  ASSERT_NEAR(round(1.56731, 2), 1.57, TOLERANCE);
+  ASSERT_NEAR(round(1.56731, 3), 1.567, TOLERANCE);
+  ASSERT_NEAR(round(1.56731, 4), 1.5673, TOLERANCE);
+  ASSERT_NEAR(round(1.56731, 5), 1.56731, TOLERANCE);
 }

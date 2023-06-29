@@ -6,8 +6,8 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#ifndef SERIALIZATION_JSONLSERIALIZER_H_
-#define SERIALIZATION_JSONLSERIALIZER_H_
+#ifndef SERIALIZERS_JSONLSERIALIZER_H_
+#define SERIALIZERS_JSONLSERIALIZER_H_
 
 #include <ostream>
 #include <string>
@@ -174,5 +174,5 @@ class JsonlSerializer : public Serializer {
 
 }  // namespace ppp::serialization
 
-#endif  // SERIALIZATION_JSONLSERIALIZER_H_
+#endif  // SERIALIZERS_JSONLSERIALIZER_H_
 

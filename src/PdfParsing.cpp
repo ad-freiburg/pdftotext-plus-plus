@@ -20,8 +20,8 @@
 
 #include "./utils/CharMap.h"
 #include "./utils/Log.h"
-#include "./utils/MathUtils.h"
-#include "./utils/StringUtils.h"
+#include "./utils/Math.h"
+#include "./utils/Text.h"
 #include "./PdfDocument.h"
 #include "./PdfParsing.h"
 
@@ -39,6 +39,9 @@ using std::stringstream;
 using std::wstring;
 
 using ppp::config::PdfParsingConfig;
+using ppp::utils::log::Logger;
+using ppp::utils::log::BOLD;
+using ppp::utils::log::OFF;
 using ppp::utils::math::equal;
 using ppp::utils::math::equalOrLarger;
 using ppp::utils::math::equalOrSmaller;

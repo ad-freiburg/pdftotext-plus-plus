@@ -16,9 +16,9 @@
 #include "./utils/Comparators.h"
 #include "./utils/Counter.h"
 #include "./utils/Log.h"
-#include "./utils/MathUtils.h"
+#include "./utils/Math.h"
 #include "./utils/PdfElementsUtils.h"
-#include "./utils/StringUtils.h"
+#include "./utils/Text.h"
 #include "./utils/TextLinesDetectionUtils.h"
 #include "./Config.h"
 #include "./PdfDocument.h"
@@ -34,12 +34,23 @@ using std::unordered_map;
 using std::vector;
 
 using ppp::config::TextLinesDetectionConfig;
+using ppp::utils::counter::DoubleCounter;
+using ppp::utils::counter::StringCounter;
 using ppp::utils::text::createRandomString;
 using ppp::utils::TextLinesDetectionUtils;
-using ppp::utils::math::equalOrLarger;
-using ppp::utils::math::round;
+using ppp::utils::comparators::LeftXAscComparator;
+using ppp::utils::comparators::RotLeftXAscComparator;
+using ppp::utils::comparators::RotLeftXDescComparator;
+using ppp::utils::comparators::RotLowerYAscComparator;
+using ppp::utils::comparators::RotLowerYDescComparator;
 using ppp::utils::elements::computeHorizontalGap;
 using ppp::utils::elements::computeMaxYOverlapRatio;
+using ppp::utils::log::Logger;
+using ppp::utils::log::BOLD;
+using ppp::utils::log::GRAY;
+using ppp::utils::log::OFF;
+using ppp::utils::math::equalOrLarger;
+using ppp::utils::math::round;
 
 // =================================================================================================
 
@@ -185,9 +196,9 @@ void TextLinesDetection::process() {
         _log->debug(p) << "=========================================================" << endl;
 
         if (rot == 0 || rot == 1) {
-          sort(lines.begin(), lines.end(), comparators::RotLowerYAscComparator());
+          sort(lines.begin(), lines.end(), RotLowerYAscComparator());
         } else {
-          sort(lines.begin(), lines.end(), comparators::RotLowerYDescComparator());
+          sort(lines.begin(), lines.end(), RotLowerYDescComparator());
         }
 
         for (const auto* line : lines) {
@@ -389,9 +400,9 @@ void TextLinesDetection::computeTextLineProperties(PdfTextLine* line) const {
   // Sort the words by their leftX-coordinates, in ascending or descending order, depending
   // on the rotation.
   if (rotation == 0 || rotation == 1) {
-    sort(line->words.begin(), line->words.end(), comparators::RotLeftXAscComparator());
+    sort(line->words.begin(), line->words.end(), RotLeftXAscComparator());
   } else {
-    sort(line->words.begin(), line->words.end(), comparators::RotLeftXDescComparator());
+    sort(line->words.begin(), line->words.end(), RotLeftXDescComparator());
   }
 
   // Iterate through the words from left to right and compute the text, the x,y-coordinates of the
