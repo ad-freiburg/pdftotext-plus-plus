@@ -40,9 +40,9 @@ void splitIntoWords(const wstring& text, vector<wstring>* words) {
   // The following works because all characters are single-byte.
   const wstring wdelimiters(WORD_DELIMITERS_ALPHABET.begin(), WORD_DELIMITERS_ALPHABET.end());
 
-  size_t start = text.find_first_not_of(wdelimiters);
+  unsigned int start = text.find_first_not_of(wdelimiters);
   while (start < text.length()) {
-    size_t stop = text.find_first_of(wdelimiters, start);
+    unsigned int stop = text.find_first_of(wdelimiters, start);
     if (stop > text.length()) { stop = text.length(); }
     words->push_back(text.substr(start, stop - start));
     start = text.find_first_not_of(wdelimiters, stop + 1);
@@ -53,9 +53,9 @@ void splitIntoWords(const wstring& text, vector<wstring>* words) {
 void splitIntoWords(const string& text, vector<string>* words) {
   assert(words);
 
-  size_t start = text.find_first_not_of(WORD_DELIMITERS_ALPHABET);
+  unsigned int start = text.find_first_not_of(WORD_DELIMITERS_ALPHABET);
   while (start < text.length()) {
-    size_t stop = text.find_first_of(WORD_DELIMITERS_ALPHABET, start);
+    unsigned int stop = text.find_first_of(WORD_DELIMITERS_ALPHABET, start);
     if (stop > text.length()) { stop = text.length(); }
     words->push_back(text.substr(start, stop - start));
     start = text.find_first_not_of(WORD_DELIMITERS_ALPHABET, stop + 1);
@@ -70,7 +70,7 @@ string createRandomString(unsigned int len, const string& prefix) {
 
   // Append <len>-many random alphanumerical characters.
   int alphabetSize = strlen(ALPHA_NUM);
-  for (size_t i = 0; i < len; i++) {
+  for (unsigned int i = 0; i < len; i++) {
     str += ALPHA_NUM[rand() % (alphabetSize - 1)];
   }
 
@@ -83,7 +83,7 @@ string createRandomString(unsigned int len, const string& prefix) {
 string escapeJson(const string& str) {
   // Disclaimer: this code is stolen from https://stackoverflow.com/questions/7724448
   stringstream o;
-  for (size_t i = 0; i < str.size(); i++) {
+  for (unsigned int i = 0; i < str.size(); i++) {
     switch (str[i]) {
       case '"':
         o << "\\\"";
@@ -142,13 +142,13 @@ string wrap(const string& str, unsigned int width, unsigned int indent) {
   string result = "";
 
   // Split the string into lines.
-  size_t lineStart = 0;
-  size_t lineEnd = 0;
+  unsigned int lineStart = 0;
+  unsigned int lineEnd = 0;
   while (true) {
     // Check if the string needs to be wrapped because it contains an explicit newline character.
     lineEnd = str.rfind("\n", lineStart + width - indent);
     if (lineEnd >= lineStart && lineEnd <= str.size()) {
-      for (size_t i = 0; i < indent; i++) { result += " "; }
+      for (unsigned int i = 0; i < indent; i++) { result += " "; }
       result += str.substr(lineStart, lineEnd - lineStart);
       result += "\n";
       lineStart = lineEnd + 1;
@@ -165,13 +165,13 @@ string wrap(const string& str, unsigned int width, unsigned int indent) {
       break;
     }
     // Append the indent and the line to the result.
-    for (size_t i = 0; i < indent; i++) { result += " "; }
+    for (unsigned int i = 0; i < indent; i++) { result += " "; }
     result += str.substr(lineStart, lineEnd - lineStart);
     result += "\n";
     lineStart = lineEnd + 1;
   }
   // Append the indent and the rest of the string to the result.
-  for (size_t i = 0; i < indent; i++) { result += " "; }
+  for (unsigned int i = 0; i < indent; i++) { result += " "; }
   result += str.substr(lineStart, str.size() - lineStart);
 
   return result;

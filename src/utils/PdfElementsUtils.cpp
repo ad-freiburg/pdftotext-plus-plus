@@ -8,7 +8,6 @@
 
 #include <algorithm>  // std::min, std::max
 #include <utility>  // std::pair
-#include <vector>
 
 #include "../PdfDocument.h"
 #include "./Math.h"
@@ -18,68 +17,67 @@ using std::make_pair;
 using std::max;
 using std::min;
 using std::pair;
-using std::vector;
 
 using ppp::utils::math::equal;
-using ppp::utils::math::equalOrLarger;
-using ppp::utils::math::larger;
 using ppp::utils::math::smaller;
+
+// =================================================================================================
 
 namespace ppp::utils::elements {
 
 // _________________________________________________________________________________________________
-double computeHorizontalGap(const PdfElement* e1, const PdfElement* e2) {
-  assert(e1);
-  assert(e2);
+double computeHorizontalGap(const PdfElement* elem1, const PdfElement* elem2) {
+  assert(elem1);
+  assert(elem2);
 
   // Determine the leftmost element, that is: the element with the minimum leftX.
-  const PdfElement* leftElement;
-  const PdfElement* rightElement;
-  if (smaller(e1->pos->leftX, e2->pos->leftX)) {
-    leftElement = e1;
-    rightElement = e2;
+  const PdfElement* left;
+  const PdfElement* right;
+  if (smaller(elem1->pos->leftX, elem2->pos->leftX)) {
+    left = elem1;
+    right = elem2;
   } else {
-    leftElement = e2;
-    rightElement = e1;
+    left = elem2;
+    right = elem1;
   }
 
   // Compute the horizontal gap between the elements, under consideration of the rotation.
-  switch (leftElement->pos->rotation) {
+  switch (left->pos->rotation) {
     case 0:
     case 1:
     default:
-      return rightElement->pos->leftX - leftElement->pos->rightX;
+      return right->pos->leftX - left->pos->rightX;
     case 2:
     case 3:
-      return leftElement->pos->rightX - rightElement->pos->leftX;
+      return left->pos->rightX - right->pos->leftX;
   }
 }
 
 // _________________________________________________________________________________________________
-double computeVerticalGap(const PdfElement* e1, const PdfElement* e2) {
-  assert(e1);
-  assert(e2);
+double computeVerticalGap(const PdfElement* elem1, const PdfElement* elem2) {
+  assert(elem1);
+  assert(elem2);
 
-  // Determine the upper element, that is: the element with the minimum upperY.
-  const PdfElement* upperElement;
-  const PdfElement* lowerElement;
-  if (smaller(e1->pos->upperY, e2->pos->upperY)) {
-    upperElement = e1;
-    lowerElement = e2;
+  // Determine the uppermost element, that is: the element with the minimum upperY.
+  const PdfElement* upper;
+  const PdfElement* lower;
+  if (smaller(elem1->pos->upperY, elem2->pos->upperY)) {
+    upper = elem1;
+    lower = elem2;
   } else {
-    upperElement = e2;
-    lowerElement = e1;
+    upper = elem2;
+    lower = elem1;
   }
 
   // Compute the vertical gap between the elements, under consideration of the rotation.
-  switch (upperElement->pos->rotation) {
+  switch (upper->pos->rotation) {
     case 0:
     case 1:
     default:
-      return lowerElement->pos->upperY - upperElement->pos->lowerY;
+      return lower->pos->upperY - upper->pos->lowerY;
     case 2:
     case 3:
-      return upperElement->pos->lowerY - lowerElement->pos->upperY;
+      return upper->pos->lowerY - lower->pos->upperY;
   }
 }
 
@@ -95,28 +93,27 @@ pair<double, double> computeOverlapRatios(double s1, double e1, double s2, doubl
   double max2 = max(s2, e2);
   double length2 = max2 - min2;
 
-  // Compute the length of the overlap.
+  // Compute the length of the overlap between the two intervals.
   double minMax = min(max1, max2);
   double maxMin = max(min1, min2);
   double overlapLength = max(0.0, minMax - maxMin);
 
   // Compute the overlap ratios.
-  double overlapRatio1 = length1 > 0 ? overlapLength / length1 : 0;
-  double overlapRatio2 = length2 > 0 ? overlapLength / length2 : 0;
+  double ratio1 = length1 > 0 ? overlapLength / length1 : 0;
+  double ratio2 = length2 > 0 ? overlapLength / length2 : 0;
 
-  return make_pair(overlapRatio1, overlapRatio2);
+  return make_pair(ratio1, ratio2);
 }
 
 // _________________________________________________________________________________________________
-pair<double, double> computeXOverlapRatios(const PdfElement* element1, const PdfElement* element2) {
-  assert(element1);
-  assert(element2);
+pair<double, double> computeXOverlapRatios(const PdfElement* elem1, const PdfElement* elem2) {
+  assert(elem1);
+  assert(elem2);
 
-  double s1 = element1->pos->leftX;
-  double e1 = element1->pos->rightX;
-  double s2 = element2->pos->leftX;
-  double e2 = element2->pos->rightX;
-
+  double s1 = elem1->pos->leftX;
+  double e1 = elem1->pos->rightX;
+  double s2 = elem2->pos->leftX;
+  double e2 = elem2->pos->rightX;
   return computeOverlapRatios(s1, e1, s2, e2);
 }
 
@@ -129,7 +126,6 @@ pair<double, double> computeYOverlapRatios(const PdfElement* element1, const Pdf
   double e1 = element1->pos->lowerY;
   double s2 = element2->pos->upperY;
   double e2 = element2->pos->lowerY;
-
   return computeOverlapRatios(s1, e1, s2, e2);
 }
 
