@@ -34,11 +34,13 @@ using ppp::config::WORD_DELIMITERS_ALPHABET;
 namespace ppp::utils::text {
 
 // _________________________________________________________________________________________________
-void splitIntoWords(const wstring& text, vector<wstring>* words) {
+void splitIntoWords(const wstring& text, vector<wstring>* words, const char* wordDelimiters) {
   assert(words);
 
-  // The following works because all characters are single-byte.
-  const wstring wdelimiters(WORD_DELIMITERS_ALPHABET.begin(), WORD_DELIMITERS_ALPHABET.end());
+  // TODO(korzen): Is there a more elegant solution for converting char* to wstring?
+  // Do we need to convert it at all, or is there another solution?
+  const string delimiters = string(wordDelimiters);
+  const wstring wdelimiters(delimiters.begin(), delimiters.end());
 
   unsigned int start = text.find_first_not_of(wdelimiters);
   while (start < text.length()) {
@@ -50,15 +52,19 @@ void splitIntoWords(const wstring& text, vector<wstring>* words) {
 }
 
 // _________________________________________________________________________________________________
-void splitIntoWords(const string& text, vector<string>* words) {
+void splitIntoWords(const string& text, vector<string>* words, const char* wordDelimiters) {
   assert(words);
 
-  unsigned int start = text.find_first_not_of(WORD_DELIMITERS_ALPHABET);
+  // TODO(korzen): Is there a more elegant solution for converting char* to string?
+  // Do we need to convert it at all, or is there another solution?
+  const string delimiters = string(wordDelimiters);
+
+  unsigned int start = text.find_first_not_of(delimiters);
   while (start < text.length()) {
-    unsigned int stop = text.find_first_of(WORD_DELIMITERS_ALPHABET, start);
+    unsigned int stop = text.find_first_of(delimiters, start);
     if (stop > text.length()) { stop = text.length(); }
     words->push_back(text.substr(start, stop - start));
-    start = text.find_first_not_of(WORD_DELIMITERS_ALPHABET, stop + 1);
+    start = text.find_first_not_of(delimiters, stop + 1);
   }
 }
 

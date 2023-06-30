@@ -37,13 +37,13 @@ namespace ppp::config {
 
 // A parameter specifying the maximum allowed difference between two double values so that they
 // are considered equal when compared.
-static constexpr double DEFAULT_DOUBLE_EQUAL_TOLERANCE = 0.0001;
+static const double DEFAULT_DOUBLE_EQUAL_TOLERANCE = 0.0001;
 
 // All alphanumerical characters.
-static const char* ALPHA_NUM = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+static const char* const ALPHA_NUM = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";  // NOLINT
 
 // All characters denoting a word delimiter.
-static string WORD_DELIMITERS_ALPHABET = " \t\r\n\f\v";
+static const char* const WORD_DELIMITERS_ALPHABET = " \t\r\n\f\v";
 
 
 struct BaseConfig {

@@ -8,6 +8,7 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>  // std::sort
 #include <vector>
 
 #include "../../src/utils/Comparators.h"

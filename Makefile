@@ -94,7 +94,7 @@ checkstyle:
 	python3 cpplint.py --repository="$(SRC_DIR)" "$(SRC_DIR)"/*.cpp "$(SRC_DIR)"/**/*.cpp
 
 	@echo "$(INFO_STYLE)[$@] Checking style of test files ...$(N)"
-	python3 cpplint.py --repository="$(TEST_DIR)" "$(TEST_DIR)"/*.cpp
+	python3 cpplint.py --repository="$(TEST_DIR)" "$(TEST_DIR)"/*.cpp "$(TEST_DIR)"/**/*.cpp
 
 # --------------------------------------------------------------------------------------------------
 # Compiling.

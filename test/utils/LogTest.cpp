@@ -9,6 +9,7 @@
 #include <gtest/gtest.h>
 
 #include <regex>
+#include <string>
 
 #include "../../src/utils/Log.h"
 
@@ -16,6 +17,7 @@ using std::cout;
 using std::regex;
 using std::regex_match;
 using std::smatch;
+using std::string;
 
 using ppp::utils::log::Logger;
 using ppp::utils::log::LogLevel;

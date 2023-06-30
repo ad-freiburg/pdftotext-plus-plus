@@ -8,12 +8,14 @@
 
 #include <gtest/gtest.h>
 
+#include <string>
 #include <utility>
 
 #include "../../src/utils/Counter.h"
 #include "../../src/Config.h"
 
 using std::pair;
+using std::string;
 
 using ppp::utils::counter::DoubleCounter;
 using ppp::utils::counter::StringCounter;

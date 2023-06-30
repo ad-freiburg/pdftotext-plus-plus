@@ -129,8 +129,8 @@ bool xCut(const vector<PdfElement*>& elements, double minGapWidth, int maxNumOve
   // reversed order (starting at the element with the largest rightX value). For each element Q
   // in the queue the gap width (E.leftX - Q.rightX) is computed. If the gap width between E and Q
   // is >= minGapWidth, a cut candidate dividing the elements between Q and E is created.
-  int queueSize = maxNumOverlappingElements + 1;
-  FixedCapacityPriorityQueue<PdfElement*, RightXDescComparator> elementsLargestRightXQueue(queueSize);
+  int qSize = maxNumOverlappingElements + 1;
+  FixedCapacityPriorityQueue<PdfElement*, RightXDescComparator> elementsLargestRightXQueue(qSize);
   elementsLargestRightXQueue.push(sElements[0]);
 
   // Iterate through the elements from left to right and compute the cut candidates.

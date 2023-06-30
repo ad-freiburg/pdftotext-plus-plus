@@ -66,7 +66,7 @@ class PdfToTextPlusPlus {
    *   the contained characters (e.g., the position, text and color) for assembling the true words,
    *   text blocks, etc. based on the color of the characters.
    */
-  PdfToTextPlusPlus(const Config& config, bool parseMode = false);
+  explicit PdfToTextPlusPlus(const Config& config, bool parseMode = false);
 
   /** The deconstructor */
   ~PdfToTextPlusPlus();

@@ -19,6 +19,7 @@ using std::vector;
 using std::wstring;
 
 using ppp::config::ALPHA_NUM;
+using ppp::config::WORD_DELIMITERS_ALPHABET;
 
 // =================================================================================================
 
@@ -35,8 +36,11 @@ namespace ppp::utils::text {
  *   The text to split into words.
  * @param words
  *   The vector to which the computed words should be appended.
+ * @param wordDelimiters
+ *   The characters to consider as a word delimiter.
  */
-void splitIntoWords(const wstring& text, vector<wstring>* words);
+void splitIntoWords(const wstring& text, vector<wstring>* words,
+    const char* wordDelimiters = WORD_DELIMITERS_ALPHABET);
 
 /**
  * This method splits the given text (given as a string) into words and appends the words to the
@@ -46,8 +50,11 @@ void splitIntoWords(const wstring& text, vector<wstring>* words);
  *   The text to split into words.
  * @param words
  *   The vector to which the computed words should be appended.
+ * @param wordDelimiters
+ *   The characters to consider as a word delimiter.
  */
-void splitIntoWords(const string& text, vector<string>* words);
+void splitIntoWords(const string& text, vector<string>* words,
+    const char* wordDelimiters = WORD_DELIMITERS_ALPHABET);
 
 /**
  * This method creates a random string of the given length, consisting of alpha-numerical

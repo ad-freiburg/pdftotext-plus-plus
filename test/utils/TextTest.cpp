@@ -68,6 +68,22 @@ TEST(Text, splitStringIntoWords) {
   ASSERT_EQ(words3[1], "Tuesday");
   ASSERT_EQ(words3[2], "Wednesday");
   ASSERT_EQ(words3[3], "Thursday");
+
+  vector<string> words4;
+  splitIntoWords("Monday Tuesday\t\tWednesday\n \nThursday\tFriday", &words4, "\t");
+  ASSERT_EQ(words4.size(), size_t(3));
+  ASSERT_EQ(words4[0], "Monday Tuesday");
+  ASSERT_EQ(words4[1], "Wednesday\n \nThursday");
+  ASSERT_EQ(words4[2], "Friday");
+
+  vector<string> words5;
+  splitIntoWords("Monday Tuesday\t\tWednesday\n \nThursday\tFriday", &words5, " \t");
+  ASSERT_EQ(words5.size(), size_t(5));
+  ASSERT_EQ(words5[0], "Monday");
+  ASSERT_EQ(words5[1], "Tuesday");
+  ASSERT_EQ(words5[2], "Wednesday\n");
+  ASSERT_EQ(words5[3], "\nThursday");
+  ASSERT_EQ(words5[4], "Friday");
 }
 
 // _________________________________________________________________________________________________

@@ -188,7 +188,7 @@ int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
     ssd.process();
     end = high_resolution_clock::now();
     if (timings) {
-      Timing timing("Detecting sub-/superscripts", duration_cast<milliseconds>(end - start).count());
+      Timing timing("Detecting sub/superscripts", duration_cast<milliseconds>(end - start).count());
       timings->push_back(timing);
     }
   }

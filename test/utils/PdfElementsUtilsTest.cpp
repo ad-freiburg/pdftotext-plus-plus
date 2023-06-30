@@ -9,12 +9,15 @@
 #include <gtest/gtest.h>
 
 #include <string>
+#include <utility>  // std::pair
 #include <vector>
 
 #include "../../src/Config.h"
 #include "../../src/PdfDocument.h"
 #include "../../src/PdfToTextPlusPlus.h"
 #include "../../src/utils/PdfElementsUtils.h"
+
+using std::pair;
 
 using ppp::utils::elements::computeHasEqualFont;
 using ppp::utils::elements::computeHasEqualFontSize;
@@ -489,7 +492,7 @@ TEST(PdfElementsUtilsTest, computeStartsWithUpper) {
   ASSERT_FALSE(computeStartsWithUpper(&word4));
 }
 
-// // _________________________________________________________________________________________________
+// _________________________________________________________________________________________________
 // TEST_F(PdfElementsUtilsTest, computeOverlapsFigurePdf1) {
 //   // TODO(korzen): Read from config
 //   double minXOverlapRatio = 0.5;
@@ -524,29 +527,7 @@ TEST(PdfElementsUtilsTest, computeStartsWithUpper) {
 //       << "Character: " << ch->toString();
 // }
 
-
-
-// // _________________________________________________________________________________________________
-// TEST_F(PdfElementsUtilsTest, computeHasEqualFontSizePdf1) {
-//   // TODO(korzen): Read from config.
-//   double fontSizeEqualTolerance = 1.0;
-
-//   PdfPage* page0 = pdf1->pages[0];
-
-//   // Test "Introduction" (in the first line) and "Lorem" (in the second line).
-//   PdfWord* w1 = page0->words[1];
-//   PdfWord* w2 = page0->words[2];
-//   ASSERT_FALSE(computeHasEqualFontSize(w1, w2, fontSizeEqualTolerance))
-//       << "W1: " << w1->toString() << "\nW2: " << w2->toString();
-
-//   // Test "Lorem" and "ipsum" (in the second line).
-//   w1 = page0->words[2];
-//   w2 = page0->words[3];
-//   ASSERT_TRUE(computeHasEqualFontSize(w1, w2, fontSizeEqualTolerance))
-//       << "W1: " << w1->toString() << "\nW2: " << w2->toString();
-// }
-
-// // _________________________________________________________________________________________________
+// _________________________________________________________________________________________________
 // TEST_F(PdfElementsUtilsTest, computeEndsWithSentenceDelimiterPdf1) {
 //   // TODO(korzen): Read from config.
 //   string delimAlphabet = "?!.);";
@@ -574,24 +555,7 @@ TEST(PdfElementsUtilsTest, computeStartsWithUpper) {
 //   ASSERT_TRUE(computeEndsWithSentenceDelimiter(w, delimAlphabet)) << "Word: " << w->toString();
 // }
 
-// // _________________________________________________________________________________________________
-// TEST_F(PdfElementsUtilsTest, computeStartsWithUpperPdf1) {
-//   PdfPage* page0 = pdf1->pages[0];
-
-//   // Test "Introduction" (in the first line).
-//   PdfWord* w = page0->words[1];
-//   ASSERT_TRUE(computeStartsWithUpper(w)) << "Word: " << w->toString();
-
-//   // Test "Lorem" (in the second line).
-//   w = page0->words[2];
-//   ASSERT_TRUE(computeStartsWithUpper(w)) << "Word: " << w->toString();
-
-//   // Test "ipsum" (in the second line).
-//   w = page0->words[3];
-//   ASSERT_FALSE(computeStartsWithUpper(w)) << "Word: " << w->toString();
-// }
-
-// // _________________________________________________________________________________________________
+// _________________________________________________________________________________________________
 // TEST_F(PdfElementsUtilsTest, computeIsEmphasizedPdf1) {
 //   // TODO(korzen): Read from config
 //   double fontSizeEqualTolerance = 0.1;
@@ -620,7 +584,7 @@ TEST(PdfElementsUtilsTest, computeStartsWithUpper) {
 //   ASSERT_TRUE(computeIsEmphasized(w, fontSizeEqualTolerance, fontWeightEqualTolerance))
 //       << "Word: " << w->toString();
 
-//   // Test "uti deleniti..." (the fifth text line of the second page, printed in larger font size).
+//  // Test "uti deleniti..." (the fifth text line of the second page, printed in larger font size).
 //   line = page1->segments[0]->lines[4];
 //   ASSERT_TRUE(computeIsEmphasized(line, fontSizeEqualTolerance, fontWeightEqualTolerance))
 //       << "Line: " << line->toString();

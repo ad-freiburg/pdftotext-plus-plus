@@ -34,7 +34,7 @@ BytePairEncoder::BytePairEncoder(unordered_map<wstring, int>* vocabulary) {
 }
 
 // _________________________________________________________________________________________________
-// TODO (korzen): wordDelimAlphabet is not used anymore.
+// TODO(korzen): wordDelimAlphabet is not used anymore.
 void BytePairEncoder::encode(const wstring& text, size_t targetLength,
     const string& wordDelimAlphabet, vector<int>* res) {
   // Split the text into words. For example, split "This is some text" into
