@@ -12,9 +12,9 @@
 #include <vector>
 
 #include "./utils/Log.h"
-#include "./utils/Math.h"
+#include "./utils/MathUtils.h"
 #include "./utils/PdfElementsUtils.h"
-#include "./utils/Text.h"
+#include "./utils/TextUtils.h"
 #include "./utils/TextBlocksDetectionUtils.h"
 #include "./utils/Trool.h"
 #include "./Config.h"
@@ -45,6 +45,7 @@ using ppp::utils::math::larger;
 using ppp::utils::math::round;
 using ppp::utils::math::smaller;
 using ppp::utils::text::shorten;
+using ppp::utils::text::endsWithSentenceDelimiter;
 
 // =================================================================================================
 
@@ -548,7 +549,7 @@ Trool TextBlocksDetection::startsBlock_item(const PdfTextBlock* pBlock, const Pd
   bool isPrevPartOfItem = isPrevFirstLine || isPrevContLine;
   bool isCurrPartOfItem = isCurrFirstLine || isCurrContLine;
   double leftXOffset = computeLeftXOffset(prevLine, line);
-  bool hasPrevLineCapacity = _utils->computeHasPrevLineCapacity(line);
+  bool hasPrevLineCapacity = _utils->computeHasPrevLineCapacity(line->prevLine, line);
   pair<double, double> leftXOffsetTolInterval = _config.getLeftXOffsetToleranceInterval(_doc);
   double leftXOffsetToleranceLow = leftXOffsetTolInterval.first;
   double leftXOffsetToleranceHigh = leftXOffsetTolInterval.second;
@@ -630,7 +631,7 @@ Trool TextBlocksDetection::startsBlock_item(const PdfTextBlock* pBlock, const Pd
     // identify an item of the following form:
     //    (i) This is an item that continues in the next
     //  line. Note the smaller leftX of the second line.
-    if (!_utils->computeEndsWithSentenceDelimiter(prevLine) && !computeStartsWithUpper(line)) {
+    if (!endsWithSentenceDelimiter(prevLine->text) && !computeStartsWithUpper(line)) {
       _log->debug(p) << _q << BLUE << BOLD << " + prev line does not end with sentence delimiter "
           << "+ curr line does not start with an uppercase → continues block" << OFF << endl;
       return Trool::False;
@@ -692,7 +693,7 @@ Trool TextBlocksDetection::startsBlock_hangingIndent(const PdfTextBlock* pBlock,
   bool isPrevMoreIndented = larger(prevLeftMargin, hangingIndent, _doc->avgCharWidth);
   bool isCurrMoreIndented = larger(currLeftMargin, hangingIndent, _doc->avgCharWidth);
   double leftXOffset = computeLeftXOffset(prevLine, line);
-  bool hasPrevLineCapacity = _utils->computeHasPrevLineCapacity(line);
+  bool hasPrevLineCapacity = _utils->computeHasPrevLineCapacity(line->prevLine, line);
   pair<double, double> leftXOffsetTolInterval = _config.getLeftXOffsetToleranceInterval(_doc);
   double leftXOffsetToleranceLow = leftXOffsetTolInterval.first;
   double leftXOffsetToleranceHigh = leftXOffsetTolInterval.second;
@@ -801,7 +802,7 @@ Trool TextBlocksDetection::startsBlock_indent(const PdfTextLine* line) const {
   bool isPrevMoreIndented = larger(prevLeftMargin, indentTolHigh);
   bool isCurrMoreIndented = larger(currLeftMargin, indentTolHigh);
   double absLeftXOffset = abs(computeLeftXOffset(prevLine, line));
-  bool hasPrevLineCapacity = _utils->computeHasPrevLineCapacity(line);
+  bool hasPrevLineCapacity = _utils->computeHasPrevLineCapacity(line->prevLine, line);
 
   _log->debug(p) << _q << BLUE <<  "Is the line indented?" << OFF << endl;
   _log->debug(p) << _q << " └─ prevLine.leftMargin:     " << prevLeftMargin << endl;

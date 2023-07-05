@@ -13,7 +13,7 @@
 #include <vector>
 
 #include "./BytePairEncoder.h"
-#include "./utils/Text.h"
+#include "./utils/TextUtils.h"
 
 using std::pair;
 using std::unordered_map;

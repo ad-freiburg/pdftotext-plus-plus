@@ -6,8 +6,8 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#ifndef UTILS_TEXT_H_
-#define UTILS_TEXT_H_
+#ifndef UTILS_TEXTUTILS_H_
+#define UTILS_TEXTUTILS_H_
 
 #include <string>
 #include <vector>
@@ -20,6 +20,7 @@ using std::wstring;
 
 using ppp::config::ALPHA_NUM;
 using ppp::config::WORD_DELIMITERS_ALPHABET;
+using ppp::config::SENTENCE_DELIMITERS_ALPHABET;
 
 // =================================================================================================
 
@@ -40,7 +41,7 @@ namespace ppp::utils::text {
  *   The characters to consider as a word delimiter.
  */
 void splitIntoWords(const wstring& text, vector<wstring>* words,
-    const char* wordDelimiters = WORD_DELIMITERS_ALPHABET);
+    const char* const wordDelimiters = WORD_DELIMITERS_ALPHABET);
 
 /**
  * This method splits the given text (given as a string) into words and appends the words to the
@@ -54,7 +55,21 @@ void splitIntoWords(const wstring& text, vector<wstring>* words,
  *   The characters to consider as a word delimiter.
  */
 void splitIntoWords(const string& text, vector<string>* words,
-    const char* wordDelimiters = WORD_DELIMITERS_ALPHABET);
+    const char* const wordDelimiters = WORD_DELIMITERS_ALPHABET);
+
+/**
+ * This method returns true if the given text ends with a sentence delimiter.
+ *
+ * @param text
+ *    The text to process.
+ * @param wordDelimiters
+ *   The characters to consider as a sentence delimiter.
+ *
+ * @return
+ *    True if the given text ends with a sentence delimiter, false otherwise.
+ */
+bool endsWithSentenceDelimiter(const string& text,
+    const char* const sentenceDelimiters = SENTENCE_DELIMITERS_ALPHABET);
 
 /**
  * This method creates a random string of the given length, consisting of alpha-numerical
@@ -143,4 +158,4 @@ string join(const vector<string>& strings, const string& separator = ", ");
 
 }  // namespace ppp::utils::text
 
-#endif  // UTILS_TEXT_H_
+#endif  // UTILS_TEXTUTILS_H_

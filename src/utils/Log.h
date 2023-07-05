@@ -251,12 +251,12 @@ class Logger {
   // The page filter.
   int _pageFilter = -1;
 
-  friend class Log_constructor_Test;
-  friend class Log_setLogLevel_Test;
-  friend class Log_setPageFilter_Test;
-  friend class Log_getostream_Test;
-  friend class Log_createLogMessagePrefix_Test;
-  friend class Log_getTimeStamp_Test;
+  friend class LogTest_constructor_Test;
+  friend class LogTest_setLogLevel_Test;
+  friend class LogTest_setPageFilter_Test;
+  friend class LogTest_getostream_Test;
+  friend class LogTest_createLogMessagePrefix_Test;
+  friend class LogTest_getTimeStamp_Test;
 };
 
 }  // namespace ppp::utils::log

@@ -9,7 +9,7 @@
 #ifndef UTILS_COMPARATORS_H_
 #define UTILS_COMPARATORS_H_
 
-#include "./Math.h"
+#include "./MathUtils.h"
 #include "../PdfDocument.h"
 
 using ppp::utils::math::larger;

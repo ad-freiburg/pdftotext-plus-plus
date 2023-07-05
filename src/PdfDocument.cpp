@@ -9,7 +9,7 @@
 #include <sstream>  // std::stringstream
 #include <string>
 
-#include "./utils/Math.h"
+#include "./utils/MathUtils.h"
 #include "./PdfDocument.h"
 
 using std::string;
@@ -311,6 +311,43 @@ PdfTextLine::PdfTextLine(int pageNum, double leftX, double upperY, double rightX
   pos->lowerY = lowerY;
   pos->rotation = rotation;
   pos->wMode = wMode;
+}
+
+// _________________________________________________________________________________________________
+PdfTextLine::PdfTextLine(const PdfTextLine& line) {
+  id = line.id;
+  pos->leftX = line.pos->leftX;
+  pos->upperY = line.pos->upperY;
+  pos->rightX = line.pos->rightX;
+  pos->lowerY = line.pos->lowerY;
+  pos->rotation = line.pos->rotation;
+  pos->wMode = line.pos->wMode;
+  pos->pageNum = line.pos->pageNum;
+  rank = line.rank;
+  doc = line.doc;
+  text = line.text;
+  fontSize = line.fontSize;
+  fontName = line.fontName;
+  color[0] = line.color[0];
+  color[1] = line.color[1];
+  color[2] = line.color[2];
+  opacity = line.opacity;
+  words = line.words;
+  segment = line.segment;
+  block = line.block;
+  baseBBoxLeftX = line.baseBBoxLeftX;
+  baseBBoxUpperY = line.baseBBoxUpperY;
+  baseBBoxRightX = line.baseBBoxRightX;
+  baseBBoxLowerY = line.baseBBoxLowerY;
+  maxFontSize = line.maxFontSize;
+  base = line.base;
+  leftMargin = line.leftMargin;
+  rightMargin = line.rightMargin;
+  prevLine = line.prevLine;
+  nextLine = line.nextLine;
+  prevSiblingLine = line.prevSiblingLine;
+  nextSiblingLine = line.nextSiblingLine;
+  parentLine = line.parentLine;
 }
 
 // _________________________________________________________________________________________________

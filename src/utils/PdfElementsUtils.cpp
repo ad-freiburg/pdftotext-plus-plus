@@ -10,7 +10,7 @@
 #include <utility>  // std::pair
 
 #include "../PdfDocument.h"
-#include "./Math.h"
+#include "./MathUtils.h"
 #include "./PdfElementsUtils.h"
 
 using std::make_pair;

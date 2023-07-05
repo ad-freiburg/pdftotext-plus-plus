@@ -111,23 +111,25 @@ class TextBlocksDetectionUtils {
   bool computeIsEmphasized(const PdfTextElement* element);
 
   /**
-   * This method returns true if the previous line of the given line has capacity, that is: if the
-   * first word of the given line would have enough space to be placed at the end of the previous
-   * line (or: if the right margin of the previous line is larger than the width of the first word
-   * of the given line + some extra space for an additional whitespace).
+   * This method returns true if the first of the two given lines has capacity, that is: if the
+   * first word of second given line would have enough space to be placed at the end of the first
+   * line (or: if the right margin of the first line is larger than the width of the first word
+   * of the second line + some extra space for an additional whitespace).
    *
    * This method is primarily used to detect text block boundaries and forced line breaks. If this
-   * method returns true, it is assumed that the given line and its previous line do not belong to
-   * the same text block, because otherwise the first word of the given line could have been placed
-   * at the end of the previous line.
+   * method returns true, it is assumed that the two given lines do not belong to the same text
+   * block, because otherwise the first word of the second line could have been placed at the end
+   * of the first line.
    *
+   * @param prevLine
+   *    The first line.
    * @param line
-   *    The line to process.
+   *    The second line.
    *
    * @return
-   *    True if the previous line of the given line has capacity, false otherwise.
+   *    True if the first given given line has capacity, false otherwise.
    */
-  bool computeHasPrevLineCapacity(const PdfTextLine* line);
+  bool computeHasPrevLineCapacity(const PdfTextLine* prevLine, const PdfTextLine* line);
 
   /**
    * This method checks if the given block is in hanging indent format (meaning that the first line
@@ -334,18 +336,6 @@ class TextBlocksDetectionUtils {
    *    nullptr if there is no such figure.
    */
   PdfFigure* computeOverlapsFigure(const PdfElement* element, const vector<PdfFigure*>& figures);
-
-  /**
-   * This method returns true if the text of the given text line ends with a sentence delimiter.
-   * TODO(korzen): This is a duplicate of TextLinesDetectionUtils::computeEndsWithSentenceDelimiter.
-   *
-   * @param line
-   *    The text line to process.
-   *
-   * @return
-   *    True if the text of the given text line ends with a sentence delimiter, false otherwise.
-   */
-  bool computeEndsWithSentenceDelimiter(const PdfTextLine* line);
 
   /**
    * This method creates a new `PdfTextBlock` instance consisting of the given text lines, computes

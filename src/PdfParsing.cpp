@@ -20,8 +20,8 @@
 
 #include "./utils/CharMap.h"
 #include "./utils/Log.h"
-#include "./utils/Math.h"
-#include "./utils/Text.h"
+#include "./utils/MathUtils.h"
+#include "./utils/TextUtils.h"
 #include "./PdfDocument.h"
 #include "./PdfParsing.h"
 

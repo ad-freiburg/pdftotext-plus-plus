@@ -13,10 +13,9 @@
 #include <vector>
 
 #include "../Config.h"
-#include "./Counter.h"
-#include "./Math.h"
+#include "./MathUtils.h"
 #include "./PageSegmentationUtils.h"
-#include "./Text.h"
+#include "./TextUtils.h"
 
 using std::make_tuple;
 using std::max;
@@ -67,38 +66,5 @@ PdfPageSegment* PageSegmentationUtils::createPageSegment(
 
   return segment;
 }
-
-// _________________________________________________________________________________________________
-// tuple<double, double, double, double> ppp::utils::PageSegmentationUtils::computeTrimBox(
-//     const PdfPageSegment* segment) {
-//   assert(segment);
-
-// Initialize the coordinates of the trim box with the respective coordinates of the bounding box.
-//   double trimLeftX = segment->pos->leftX;
-//   double trimUpperY = segment->pos->upperY;
-//   double trimRightX = segment->pos->rightX;
-//   double trimLowerY = segment->pos->lowerY;
-
-//   // Compute the most frequent rightX among the text lines.
-//   DoubleCounter rightXCounter;
-//   for (auto* line : segment->lines) {
-//     double rightX = round(line->pos->getRotRightX(), _trimBoxCoordinatesPrecision);
-//     rightXCounter[rightX]++;
-//   }
-//   pair<double, double> mostFreqRightXPair = rightXCounter.mostFreqAndCount();
-//   double mostFreqRightX = mostFreqRightXPair.first;
-//   int mostFreqRightXCount = mostFreqRightXPair.second;
-
-//   // Compute the percentage of lines exhibiting the most frequent rightX.
-//   size_t nLines = segment->lines.size();
-// double mostFreqRightXRatio = nLines > 0 ? mostFreqRightXCount / static_cast<double>(nLines): 0.0;
-
-//   // If the percentage is larger or equal to the given threshold, set trimRightX to this value.
-//   if (equalOrLarger(mostFreqRightXRatio, _minPercentLinesSameRightX)) {
-//     trimRightX = mostFreqRightX;
-//   }
-
-//   return make_tuple(trimLeftX, trimUpperY, trimRightX, trimLowerY);
-// }
 
 }  // namespace ppp::utils

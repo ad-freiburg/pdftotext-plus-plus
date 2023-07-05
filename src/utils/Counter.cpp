@@ -11,7 +11,7 @@
 #include <utility>  // std::make_pair, std::pair
 
 #include "./Counter.h"
-#include "./Math.h"
+#include "./MathUtils.h"
 
 using std::make_pair;
 using std::numeric_limits;
@@ -73,6 +73,17 @@ double DoubleCounter::max() const {
   return max;
 }
 
+// _________________________________________________________________________________________________
+unsigned int DoubleCounter::sumCounts() const {
+  unsigned int sum = 0;
+
+  for (auto it = begin(); it != end(); it++) {
+    sum += it->second;
+  }
+
+  return sum;
+}
+
 // =================================================================================================
 // StringCounter
 
@@ -105,6 +116,17 @@ pair<string, unsigned int> StringCounter::mostFreqAndCount() const {
   }
 
   return make_pair(mostFreq, mostFreqCount);
+}
+
+// _________________________________________________________________________________________________
+unsigned int StringCounter::sumCounts() const {
+  unsigned int sum = 0;
+
+  for (auto it = begin(); it != end(); it++) {
+    sum += it->second;
+  }
+
+  return sum;
 }
 
 }  // namespace ppp::utils::counter

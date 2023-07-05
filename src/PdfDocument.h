@@ -564,6 +564,8 @@ class PdfTextLine : public PdfTextElement {
   PdfTextLine(int pageNum, double leftX, double upperY, double rightX, double lowerY,
       int rotation, int wMode);
 
+  PdfTextLine(const PdfTextLine& line);
+
   /** The deconstructor. */
   ~PdfTextLine();
 

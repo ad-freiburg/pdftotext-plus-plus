@@ -6,8 +6,8 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#ifndef UTILS_MATH_H_
-#define UTILS_MATH_H_
+#ifndef UTILS_MATHUTILS_H_
+#define UTILS_MATHUTILS_H_
 
 #include "../Config.h"
 
@@ -149,4 +149,4 @@ double round(double d, int numDecimals = 0);
 
 }  // namespace ppp::utils::math
 
-#endif  // UTILS_MATH_H_
+#endif  // UTILS_MATHUTILS_H_

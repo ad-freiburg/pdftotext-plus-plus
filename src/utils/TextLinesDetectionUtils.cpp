@@ -8,18 +8,23 @@
 
 #include <stack>
 #include <string>
+#include <tuple>
 #include <unordered_set>
+#include <utility>  // std::pair
 #include <vector>
 
-#include "./Math.h"
+#include "./Counter.h"
+#include "./MathUtils.h"
 #include "./PdfElementsUtils.h"
 #include "./TextLinesDetectionUtils.h"
 
+using std::make_tuple;
 using std::stack;
 using std::string;
 using std::unordered_set;
 using std::vector;
 
+using ppp::utils::counter::DoubleCounter;
 using ppp::utils::elements::computeHasEqualFont;
 using ppp::utils::elements::computeHasEqualFontSize;
 using ppp::utils::elements::computeHasEqualLeftX;
@@ -31,6 +36,7 @@ using ppp::utils::math::equal;
 using ppp::utils::math::equalOrLarger;
 using ppp::utils::math::equalOrSmaller;
 using ppp::utils::math::larger;
+using ppp::utils::math::round;
 using ppp::utils::math::smaller;
 
 // =================================================================================================
@@ -141,14 +147,36 @@ void TextLinesDetectionUtils::computeTextLineHierarchy(const PdfPage* page) {
 }
 
 // _________________________________________________________________________________________________
-bool TextLinesDetectionUtils::computeEndsWithSentenceDelimiter(const PdfTextLine* line) {
-  assert(line);
+tuple<double, double, double, double> TextLinesDetectionUtils::computeTrimBox(
+    const PdfPageSegment* segment) {
+  assert(segment);
 
-  if (line->text.empty()) {
-    return false;
+  // Initialize the coordinates of the trim box with the respective coordinates of the bounding box.
+  double trimLeftX = segment->pos->leftX;
+  double trimUpperY = segment->pos->upperY;
+  double trimRightX = segment->pos->rightX;
+  double trimLowerY = segment->pos->lowerY;
+
+  // Compute the most frequent rightX among the text lines.
+  DoubleCounter rightXCounter;
+  for (auto* line : segment->lines) {
+    double rightX = round(line->pos->getRotRightX(), _config.trimBoxCoordsPrec);
+    rightXCounter[rightX]++;
+  }
+  pair<double, double> mostFreqRightXPair = rightXCounter.mostFreqAndCount();
+  double mostFreqRightX = mostFreqRightXPair.first;
+  int mostFreqRightXCount = mostFreqRightXPair.second;
+
+  // Compute the percentage of lines exhibiting the most frequent rightX.
+  size_t nLines = segment->lines.size();
+  double mostFreqRightXRatio = nLines > 0 ? mostFreqRightXCount / static_cast<double>(nLines): 0.0;
+
+  // If the percentage is larger or equal to the given threshold, set trimRightX to this value.
+  if (equalOrLarger(mostFreqRightXRatio, _config.minPrecLinesSameRightX)) {
+    trimRightX = mostFreqRightX;
   }
 
-  return _config.sentenceDelimiterAlphabet.find(line->text.back()) != std::string::npos;
+  return make_tuple(trimLeftX, trimUpperY, trimRightX, trimLowerY);
 }
 
 }  // namespace ppp::utils

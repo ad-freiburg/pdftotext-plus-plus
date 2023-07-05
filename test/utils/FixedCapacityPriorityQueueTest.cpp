@@ -17,7 +17,7 @@ using std::string;
 using std::vector;
 
 // =================================================================================================
-// The comparators needed to test FixedCapacityPriorityQueue.
+// Define some comparators needed to test FixedCapacityPriorityQueue.
 
 // A comparator for sorting int values in ascending order.
 class IntAscComparator {
@@ -47,7 +47,7 @@ class StringAscComparator {
 };
 
 // _________________________________________________________________________________________________
-TEST(FixedCapacityPriorityQueue, constructor) {
+TEST(FixedCapacityPriorityQueueTest, constructor) {
   FixedCapacityPriorityQueue<string, StringAscComparator> queue1(1);
   ASSERT_EQ(queue1._capacity, static_cast<unsigned int>(1));
   ASSERT_EQ(queue1.size(), static_cast<unsigned int>(0));
@@ -58,7 +58,7 @@ TEST(FixedCapacityPriorityQueue, constructor) {
 }
 
 // _________________________________________________________________________________________________
-TEST(FixedCapacityPriorityQueue, pushPopInt) {
+TEST(FixedCapacityPriorityQueueTest, pushPopInt) {
   // Create a priority queue with capacity 3.
   FixedCapacityPriorityQueue<int, IntDescComparator> queue(3);
 
@@ -123,7 +123,7 @@ TEST(FixedCapacityPriorityQueue, pushPopInt) {
 }
 
 // _________________________________________________________________________________________________
-TEST(FixedCapacityPriorityQueue, pushPopString) {
+TEST(FixedCapacityPriorityQueueTest, pushPopString) {
   string abc = "abc";
   string bcd = "bcd";
   string ghi = "ghi";
@@ -178,17 +178,19 @@ TEST(FixedCapacityPriorityQueue, pushPopString) {
   ASSERT_EQ(queue.top(), abc);
 
   queue.pop();
+  // PQ: abc
   ASSERT_EQ(queue._capacity, static_cast<unsigned int>(4));
   ASSERT_EQ(queue.size(), static_cast<unsigned int>(1));
   ASSERT_EQ(queue.top(), abc);
 
   queue.pop();
+  // PQ: <empty>
   ASSERT_EQ(queue._capacity, static_cast<unsigned int>(4));
   ASSERT_EQ(queue.size(), static_cast<unsigned int>(0));
 }
 
 // _________________________________________________________________________________________________
-TEST(FixedCapacityPriorityQueue, sort) {
+TEST(FixedCapacityPriorityQueueTest, sort) {
   // Create a priority queue with capacity 4.
   FixedCapacityPriorityQueue<int, IntDescComparator> queue(4);
 

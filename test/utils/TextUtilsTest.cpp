@@ -1,5 +1,5 @@
 /**
- * Copyright 2022, University of Freiburg,
+ * Copyright 2023, University of Freiburg,
  * Chair of Algorithms and Data Structures.
  * Author: Claudius Korzen <korzen@cs.uni-freiburg.de>.
  *
@@ -11,9 +11,14 @@
 #include <string>
 #include <vector>
 
-#include "../../src/utils/Text.h"
+#include "../../src/utils/TextUtils.h"
+
+using std::string;
+using std::vector;
+using std::wstring;
 
 using ppp::utils::text::createRandomString;
+using ppp::utils::text::endsWithSentenceDelimiter;
 using ppp::utils::text::escapeJson;
 using ppp::utils::text::join;
 using ppp::utils::text::shorten;
@@ -21,18 +26,20 @@ using ppp::utils::text::splitIntoWords;
 using ppp::utils::text::strip;
 using ppp::utils::text::wrap;
 
+// =================================================================================================
+
 // _________________________________________________________________________________________________
-TEST(StringUtils, splitWStringIntoWords) {
-  // Test the empty string.
+TEST(TextUtilsTest, splitWStringIntoWords) {
+  // Input: empty string.
   wstring string1 = L"";
   vector<wstring> words1;
   splitIntoWords(string1, &words1);
-  ASSERT_EQ(words1.size(), size_t(0));
+  ASSERT_EQ(words1.size(), static_cast<unsigned int>(0));
 
   wstring string2 = L"foo bar baz";
   vector<wstring> words2;
   splitIntoWords(string2, &words2);
-  ASSERT_EQ(words2.size(), size_t(3));
+  ASSERT_EQ(words2.size(), static_cast<unsigned int>(3));
   ASSERT_EQ(words2[0], L"foo");
   ASSERT_EQ(words2[1], L"bar");
   ASSERT_EQ(words2[2], L"baz");
@@ -40,7 +47,7 @@ TEST(StringUtils, splitWStringIntoWords) {
   wstring string3 = L"Januar Februar\tMärz\n\nApril";
   vector<wstring> words3;
   splitIntoWords(string3, &words3);
-  ASSERT_EQ(words3.size(), size_t(4));
+  ASSERT_EQ(words3.size(), static_cast<unsigned int>(4));
   ASSERT_EQ(words3[0], L"Januar");
   ASSERT_EQ(words3[1], L"Februar");
   ASSERT_EQ(words3[2], L"März");
@@ -48,22 +55,22 @@ TEST(StringUtils, splitWStringIntoWords) {
 }
 
 // _________________________________________________________________________________________________
-TEST(Text, splitStringIntoWords) {
-  // Test the empty string.
+TEST(TextUtilsTest, splitStringIntoWords) {
+  // Input: empty string.
   vector<string> words1;
   splitIntoWords("", &words1);
   ASSERT_EQ(words1.size(), static_cast<unsigned int>(0));
 
   vector<string> words2;
   splitIntoWords("foo bar baz", &words2);
-  ASSERT_EQ(words2.size(), size_t(3));
+  ASSERT_EQ(words2.size(), static_cast<unsigned int>(3));
   ASSERT_EQ(words2[0], "foo");
   ASSERT_EQ(words2[1], "bar");
   ASSERT_EQ(words2[2], "baz");
 
   vector<string> words3;
   splitIntoWords("Monday Tuesday\tWednesday\n \nThursday", &words3);
-  ASSERT_EQ(words3.size(), size_t(4));
+  ASSERT_EQ(words3.size(), static_cast<unsigned int>(4));
   ASSERT_EQ(words3[0], "Monday");
   ASSERT_EQ(words3[1], "Tuesday");
   ASSERT_EQ(words3[2], "Wednesday");
@@ -71,14 +78,14 @@ TEST(Text, splitStringIntoWords) {
 
   vector<string> words4;
   splitIntoWords("Monday Tuesday\t\tWednesday\n \nThursday\tFriday", &words4, "\t");
-  ASSERT_EQ(words4.size(), size_t(3));
+  ASSERT_EQ(words4.size(), static_cast<unsigned int>(3));
   ASSERT_EQ(words4[0], "Monday Tuesday");
   ASSERT_EQ(words4[1], "Wednesday\n \nThursday");
   ASSERT_EQ(words4[2], "Friday");
 
   vector<string> words5;
   splitIntoWords("Monday Tuesday\t\tWednesday\n \nThursday\tFriday", &words5, " \t");
-  ASSERT_EQ(words5.size(), size_t(5));
+  ASSERT_EQ(words5.size(), static_cast<unsigned int>(5));
   ASSERT_EQ(words5[0], "Monday");
   ASSERT_EQ(words5[1], "Tuesday");
   ASSERT_EQ(words5[2], "Wednesday\n");
@@ -87,7 +94,21 @@ TEST(Text, splitStringIntoWords) {
 }
 
 // _________________________________________________________________________________________________
-TEST(Text, createRandomString) {
+TEST(TextUtilsTest, endsWithSentenceDelimiter) {
+  ASSERT_FALSE(endsWithSentenceDelimiter(""));
+  ASSERT_FALSE(endsWithSentenceDelimiter("The Fantastic Four"));
+  ASSERT_FALSE(endsWithSentenceDelimiter("The Fantastic Four:"));
+  ASSERT_FALSE(endsWithSentenceDelimiter("\"The Fantastic Four\""));
+  ASSERT_TRUE(endsWithSentenceDelimiter("The Fantastic Four."));
+  ASSERT_TRUE(endsWithSentenceDelimiter("The Fantastic Four?"));
+  ASSERT_TRUE(endsWithSentenceDelimiter("The Fantastic Four!"));
+  ASSERT_TRUE(endsWithSentenceDelimiter("The Fantastic Four.", ".!"));
+  ASSERT_TRUE(endsWithSentenceDelimiter("The Fantastic Four!", ".!"));
+  ASSERT_FALSE(endsWithSentenceDelimiter("The Fantastic Four?", ".!"));
+}
+
+// _________________________________________________________________________________________________
+TEST(TextUtilsTest, createRandomString) {
   string s1 = createRandomString(0);
   ASSERT_EQ(s1, "");
 
@@ -99,11 +120,11 @@ TEST(Text, createRandomString) {
 
   string s4 = createRandomString(6, "foo-");
   ASSERT_EQ(s4.size(), static_cast<unsigned int>(10));
-  ASSERT_EQ(s4.find("foo-"), static_cast<unsigned int>(0));
+  ASSERT_TRUE(s4.starts_with("foo-"));
 }
 
 // _________________________________________________________________________________________________
-TEST(Text, escapeJson) {
+TEST(TextUtilsTest, escapeJson) {
   string s1 = escapeJson("");
   ASSERT_EQ(s1, "");
 
@@ -121,7 +142,7 @@ TEST(Text, escapeJson) {
 }
 
 // _________________________________________________________________________________________________
-TEST(Text, shorten) {
+TEST(TextUtilsTest, shorten) {
   string s1 = shorten("", 0);
   ASSERT_EQ(s1, "");
 
@@ -145,7 +166,7 @@ TEST(Text, shorten) {
 }
 
 // _________________________________________________________________________________________________
-TEST(Text, strip) {
+TEST(TextUtilsTest, strip) {
   string s1 = strip("");
   ASSERT_EQ(s1, "");
 
@@ -166,7 +187,7 @@ TEST(Text, strip) {
 }
 
 // _________________________________________________________________________________________________
-TEST(Text, wrap) {
+TEST(TextUtilsTest, wrap) {
   string s1 = wrap("", 100, 0);
   ASSERT_EQ(s1, "");
 
@@ -181,7 +202,7 @@ TEST(Text, wrap) {
 }
 
 // _________________________________________________________________________________________________
-TEST(Text, join) {
+TEST(TextUtilsTest, join) {
   string s1 = join({}, ", ");
   ASSERT_EQ(s1, "");
 
@@ -193,4 +214,7 @@ TEST(Text, join) {
 
   string s4 = join({ "one", "two", "three" }, "+-");
   ASSERT_EQ(s4, "one+-two+-three");
+
+  string s5 = join({ "one", "two", "three" }, " ");
+  ASSERT_EQ(s5, "one two three");
 }

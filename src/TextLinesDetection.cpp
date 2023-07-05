@@ -16,9 +16,9 @@
 #include "./utils/Comparators.h"
 #include "./utils/Counter.h"
 #include "./utils/Log.h"
-#include "./utils/Math.h"
+#include "./utils/MathUtils.h"
 #include "./utils/PdfElementsUtils.h"
-#include "./utils/Text.h"
+#include "./utils/TextUtils.h"
 #include "./utils/TextLinesDetectionUtils.h"
 #include "./Config.h"
 #include "./PdfDocument.h"
@@ -316,26 +316,23 @@ void TextLinesDetection::process() {
         }
       }
 
-      // TODO(korzen): Is the following still needed?
       // Compute the trim box of the segment.
-      // tuple<double, double, double, double> trimBox = page_segment_utils::computeTrimBox(
-      //   segment,
-      //   _config.pageSegmentation.trimBoxCoordsPrec,
-      //   _config.pageSegmentation.minPrecLinesSameRightX);
-      // segment->trimLeftX = get<0>(trimBox);
-      // segment->trimUpperY = get<1>(trimBox);
-      // segment->trimRightX = get<2>(trimBox);
-      // segment->trimLowerY = get<3>(trimBox);
+      // TODO(korzen): This should not be computed here.
+      tuple<double, double, double, double> trimBox = _utils->computeTrimBox(segment);
+      segment->trimLeftX = get<0>(trimBox);
+      segment->trimUpperY = get<1>(trimBox);
+      segment->trimRightX = get<2>(trimBox);
+      segment->trimLowerY = get<3>(trimBox);
 
-      // _log->debug(p) << "---------------------------------------------------------" << endl;
+      _log->debug(p) << "---------------------------------------------------------" << endl;
 
-      // _log->debug(p) << q << BOLD << "Computed trim box" << OFF << endl;
-      // _log->debug(p) << q << " └─ segment.trimLeftX: " << segment->trimLeftX << endl;
-      // _log->debug(p) << q << " └─ segment.trimUpperY: " << segment->trimUpperY << endl;
-      // _log->debug(p) << q << " └─ segment.trimRightX: " << segment->trimRightX << endl;
-      // _log->debug(p) << q << " └─ segment.trimLowerY: " << segment->trimLowerY << endl;
+      _log->debug(p) << q << BOLD << "Computed trim box" << OFF << endl;
+      _log->debug(p) << q << " └─ segment.trimLeftX: " << segment->trimLeftX << endl;
+      _log->debug(p) << q << " └─ segment.trimUpperY: " << segment->trimUpperY << endl;
+      _log->debug(p) << q << " └─ segment.trimRightX: " << segment->trimRightX << endl;
+      _log->debug(p) << q << " └─ segment.trimLowerY: " << segment->trimLowerY << endl;
 
-      // _log->debug(p) << "=========================================================" << endl;
+      _log->debug(p) << "=========================================================" << endl;
     }
 
     // Compute the text lines hierarchies.

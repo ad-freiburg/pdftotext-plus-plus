@@ -12,7 +12,7 @@
 #include <vector>
 
 #include "./utils/Log.h"
-#include "./utils/Math.h"
+#include "./utils/MathUtils.h"
 #include "./utils/TextLinesDetectionUtils.h"
 #include "./Config.h"
 #include "./PdfDocument.h"

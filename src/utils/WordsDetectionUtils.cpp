@@ -12,7 +12,7 @@
 
 #include "../PdfDocument.h"
 #include "./Counter.h"
-#include "./Text.h"
+#include "./TextUtils.h"
 #include "./WordsDetectionUtils.h"
 
 using std::max;

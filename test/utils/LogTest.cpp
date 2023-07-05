@@ -24,10 +24,16 @@ using ppp::utils::log::LogLevel;
 
 // =================================================================================================
 
+// TODO(korzen): Why is the namespace needed here?
 namespace ppp::utils::log {
 
+static const regex tsRegex("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}.\\d{3}");
+static const regex prefixRegexInfo("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}.\\d{3}\t-.*INFO.*");
+static const regex prefixRegexWarn("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}.\\d{3}\t-.*WARN.*");
+static const regex prefixRegexError("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}.\\d{3}\t-.*ERROR.*");
+
 // _________________________________________________________________________________________________
-TEST(Log, constructor) {
+TEST(LogTest, constructor) {
   Logger log(LogLevel::DEBUG);
   ASSERT_EQ(log._logLevel, LogLevel::DEBUG);
   ASSERT_EQ(log._pageFilter, -1);
@@ -38,7 +44,7 @@ TEST(Log, constructor) {
 }
 
 // _________________________________________________________________________________________________
-TEST(Log, setLogLevel) {
+TEST(LogTest, setLogLevel) {
   Logger log(LogLevel::DEBUG);
   ASSERT_EQ(log._logLevel, LogLevel::DEBUG);
 
@@ -50,7 +56,7 @@ TEST(Log, setLogLevel) {
 }
 
 // _________________________________________________________________________________________________
-TEST(Log, setPageFilter) {
+TEST(LogTest, setPageFilter) {
   Logger log(LogLevel::DEBUG);
   ASSERT_EQ(log._pageFilter, -1);
 
@@ -62,7 +68,7 @@ TEST(Log, setPageFilter) {
 }
 
 // _________________________________________________________________________________________________
-TEST(Log, getostream) {
+TEST(LogTest, getostream) {
   // The rdbuf() method is used to compare the returned output stream with std::cout, see
   // https://stackoverflow.com/questions/3318714/.
   Logger logger(TRACE);
@@ -110,33 +116,29 @@ TEST(Log, getostream) {
 }
 
 // _________________________________________________________________________________________________
-TEST(Log, createLogMessagePrefix) {
+TEST(LogTest, createLogMessagePrefix) {
   Logger logger(INFO);
 
-  // Check if the string returned by formatLogPrefix has format "2023-06-29 15:04:53.856 - <LEVEL>".
-  smatch match1;
-  string prefix1 = logger.createLogMessagePrefix(INFO);
-  const regex logPrefixRegex1("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}.\\d{3}\t-.*INFO.*");
-  ASSERT_TRUE(regex_match(prefix1, match1, logPrefixRegex1));
+  // Check if the returned string has format "2023-06-29 15:04:53.856 - <LEVEL>".
+  smatch matchInfo;
+  string prefixInfo = logger.createLogMessagePrefix(INFO);
+  ASSERT_TRUE(regex_match(prefixInfo, matchInfo, prefixRegexInfo));
 
-  smatch match2;
-  string prefix2 = logger.createLogMessagePrefix(WARN);
-  const regex logPrefixRegex2("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}.\\d{3}\t-.*WARN.*");
-  ASSERT_TRUE(regex_match(prefix2, match2, logPrefixRegex2));
+  smatch matchWarn;
+  string prefixWarn = logger.createLogMessagePrefix(WARN);
+  ASSERT_TRUE(regex_match(prefixWarn, matchWarn, prefixRegexWarn));
 
-  smatch match3;
-  string prefix3 = logger.createLogMessagePrefix(ERROR);
-  const regex logPrefixRegex3("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}.\\d{3}\t-.*ERROR.*");
-  ASSERT_TRUE(regex_match(prefix3, match3, logPrefixRegex3));
+  smatch matchError;
+  string prefixError = logger.createLogMessagePrefix(ERROR);
+  ASSERT_TRUE(regex_match(prefixError, matchError, prefixRegexError));
 }
 
 // _________________________________________________________________________________________________
-TEST(Log, getTimeStamp) {
-  // Check if the string returned by getTimeStamp has format "2023-06-29 15:04:53.856".
-  smatch match1;
+TEST(LogTest, getTimeStamp) {
+  // Check if the returned string has format "2023-06-29 15:04:53.856".
+  smatch match;
   string ts = Logger::getTimeStamp();
-  const regex logPrefixRegex1("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}.\\d{3}");
-  ASSERT_TRUE(regex_match(ts, match1, logPrefixRegex1));
+  ASSERT_TRUE(regex_match(ts, match, tsRegex));
 }
 
 }  // namespace ppp::utils::log

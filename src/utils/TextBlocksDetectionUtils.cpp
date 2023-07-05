@@ -6,6 +6,8 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
+#include <iostream>
+
 #include <algorithm>  // std::max, std::min
 #include <regex>
 #include <string>
@@ -14,9 +16,9 @@
 #include <vector>
 
 #include "./Counter.h"
-#include "./Math.h"
+#include "./MathUtils.h"
 #include "./PdfElementsUtils.h"
-#include "./Text.h"
+#include "./TextUtils.h"
 #include "./TextBlocksDetectionUtils.h"
 
 using std::max;
@@ -45,6 +47,7 @@ using ppp::utils::math::larger;
 using ppp::utils::math::round;
 using ppp::utils::math::smaller;
 using ppp::utils::text::createRandomString;
+using ppp::utils::text::endsWithSentenceDelimiter;
 
 // =================================================================================================
 
@@ -74,8 +77,8 @@ bool TextBlocksDetectionUtils::computeIsCentered(const PdfTextLine* l1, const Pd
   // are not equal.
   double absLeftXOffset = abs(computeLeftXOffset(l1, l2));
   double absRightXOffset = abs(computeRightXOffset(l1, l2));
-  // TODO(korzen): Move the following computation into config?
-  double xOffsetTolerance = _config.centeringXOffsetEqualToleranceFactor * l1->doc->avgCharWidth;
+
+  double xOffsetTolerance = _config.getCenteringXOffsetEqualTolerance(l1);
   if (!equal(absLeftXOffset, absRightXOffset, xOffsetTolerance)) {
     return false;
   }
@@ -130,9 +133,7 @@ bool TextBlocksDetectionUtils::computeIsTextLinesCentered(const PdfTextBlock* bl
     // Check if the line has a leftX offset (or rightX offset) larger than the threshold.
     double absLeftXOffset = abs(computeLeftXOffset(prevLine, currLine));
     double absRightXOffset = abs(computeRightXOffset(prevLine, currLine));
-    // TODO(korzen): Move the following computation into config?
-    double xOffsetThreshold =
-        _config.centeringXOffsetEqualToleranceFactor * currLine->doc->avgCharWidth;
+    double xOffsetThreshold = _config.getCenteringXOffsetEqualTolerance(currLine);
     bool isLargeLeftXOffset = larger(absLeftXOffset, xOffsetThreshold);
     bool isLargeRightXOffset = larger(absRightXOffset, xOffsetThreshold);
     bool isLargeXOffset = isLargeLeftXOffset || isLargeRightXOffset;
@@ -148,70 +149,6 @@ bool TextBlocksDetectionUtils::computeIsTextLinesCentered(const PdfTextBlock* bl
 
   return hasNonFormulaWithLargeXOffset
       && numJustifiedLines <= _config.centeringMaxNumJustifiedLines;
-}
-
-// _________________________________________________________________________________________________
-void TextBlocksDetectionUtils::computePotentialFootnoteLabels(const PdfTextLine* line,
-      unordered_set<string>* result) {
-  assert(line);
-  assert(result);
-
-  // Iterate through the characters of the word. For each character, check if it is a label that
-  // potentially reference a footnote, that is: if it is a superscipted alphanumerical or if it
-  // occurs in our alphabet we defined to identify special footnote labels. Merge each consecutive
-  // character that is part of such a label and that are positioned behind the word (we don't want
-  // to consider labels that are positioned in front of a word, since footnote labels are usually
-  // positioned behind words).
-  // TODO(korzen): We do not store the info about whether a superscript is positioned before or
-  // after a word. As a workaround, consider a superscript as part of a potential footnote marker
-  // only when a non-subscript and non-superscript was already seen.
-  for (const auto* word : line->words) {
-    string label;
-    bool nonSubSuperscriptSeen = false;
-    for (const auto* ch : word->characters) {
-      // Ignore sub- and superscripts that are positioned before the word.
-      if (!nonSubSuperscriptSeen && !ch->isSubscript && !ch->isSuperscript) {
-        nonSubSuperscriptSeen = true;
-        continue;
-      }
-      // Ignore the character when no subscript and superscript was seen yet.
-      if (!nonSubSuperscriptSeen) {
-        continue;
-      }
-      // Ignore the character when it does not contain any text.
-      if (ch->text.empty()) {
-        continue;
-      }
-
-      // The character is part of a potential footnote label when it occurs in our alphabet we
-      // defined to identify special (= non-alphanumerical) footnote labels.
-      bool isLabel = _config.specialFootnoteLabelsAlphabet.find(ch->text[0]) != std::string::npos;
-
-      // The character is also a potential footnote label when it is a superscripted alphanumerical.
-      if (ch->isSuperscript && isalnum(ch->text[0])) {
-        isLabel = true;
-      }
-
-      // When the character is part of a potential footnote label, add it to the current label
-      // string.
-      if (isLabel) {
-        label += ch->text;
-        continue;
-      }
-
-      // Otherwise the end of a potential label is reached. When the current label string is not
-      // empty, append it to the result vector.
-      if (!label.empty()) {
-        result->insert(label);
-        label.clear();
-      }
-    }
-
-    // Don't forget to add the last label string to the result vector (if it is not empty).
-    if (!label.empty()) {
-      result->insert(label);
-    }
-  }
 }
 
 // _________________________________________________________________________________________________
@@ -269,11 +206,12 @@ bool TextBlocksDetectionUtils::computeIsEmphasized(const PdfTextElement* element
 }
 
 // _________________________________________________________________________________________________
-bool TextBlocksDetectionUtils::computeHasPrevLineCapacity(const PdfTextLine* line) {
+bool TextBlocksDetectionUtils::computeHasPrevLineCapacity(const PdfTextLine* prevLine,
+    const PdfTextLine* line) {
   assert(line);
 
   // The previous line has of course no capacity if there is no previous line.
-  if (!line->prevLine) {
+  if (!prevLine) {
     return false;
   }
 
@@ -289,7 +227,7 @@ bool TextBlocksDetectionUtils::computeHasPrevLineCapacity(const PdfTextLine* lin
   // of the given line, under consideration of the threshold.
   // TODO(korzen): Move this computation into config?
   double threshold = _config.prevTextLineCapacityThresholdFactor * line->doc->avgCharWidth;
-  return larger(line->prevLine->rightMargin, firstWordWidth, threshold);
+  return larger(prevLine->rightMargin, firstWordWidth, threshold);
 }
 
 // _________________________________________________________________________________________________
@@ -340,9 +278,11 @@ double TextBlocksDetectionUtils::computeHangingIndent(const PdfTextBlock* block)
   }
 
   // Compute the most freq left margin among the lines with a left margin larger than the threshold.
-  pair<double, double> mostFreqLargeLeftMarginPair = largeLeftMarginCounter.mostFreqAndCount();
-  mostFreqLargeLeftMargin = mostFreqLargeLeftMarginPair.first;
-  mostFreqLargeLeftMarginCount = mostFreqLargeLeftMarginPair.second;
+  if (largeLeftMarginCounter.sumCounts() > 0) {
+    pair<double, double> mostFreqLargeLeftMarginPair = largeLeftMarginCounter.mostFreqAndCount();
+    mostFreqLargeLeftMargin = mostFreqLargeLeftMarginPair.first;
+    mostFreqLargeLeftMarginCount = mostFreqLargeLeftMarginPair.second;
+  }
 
   // The block is *not* in hanging indent format if the percentage of lines exhibiting the
   // most frequent left margin is smaller than a threshold.
@@ -400,7 +340,7 @@ double TextBlocksDetectionUtils::computeHangingIndent(const PdfTextBlock* block)
       isFirstLineIndented = isIndented;
     }
     if (i == 1) {
-      hasFirstLineCapacity = computeHasPrevLineCapacity(line);
+      hasFirstLineCapacity = computeHasPrevLineCapacity(line->prevLine, line);
     }
     if (i > 0) {
       isAllOtherLinesIndented &= isIndented;
@@ -469,6 +409,221 @@ void TextBlocksDetectionUtils::computeTextLineMargins(const PdfTextBlock* block)
     line->leftMargin = round(line->pos->leftX - block->trimLeftX);
     line->rightMargin = round(blockTrimRightX - line->pos->rightX);
   }
+}
+
+// _________________________________________________________________________________________________
+bool TextBlocksDetectionUtils::computeIsFirstLineOfItem(const PdfTextLine* line,
+      const unordered_set<string>* potentialFootnoteLabels) {
+  assert(line);
+
+  // The line is not the first line of an item if it does not contain any words.
+  if (line->words.empty()) {
+    return false;
+  }
+
+  // The line is not the first line of an item if it is not prefixed by an item label.
+  bool isPrefixedByItemLabel = computeIsPrefixedByItemLabel(line);
+  bool isPrefixedByFootnoteLabel = computeIsPrefixedByFootnoteLabel(line, potentialFootnoteLabels);
+  if (!isPrefixedByItemLabel && !isPrefixedByFootnoteLabel) {
+    return false;
+  }
+
+  double avgCharWidth = line->doc->avgCharWidth;
+
+  // EXPERIMENTAL: The line is not the first line of a footnote when all of the following
+  // requirements are fulfilled:
+  // (1) the previous line is not prefixed by an item label;
+  // (2) the previous line and the current line have the same font;
+  // (3) the previous line and the current line have the same font size;
+  // (4) the distance between the previous and current line is <= 0;
+  // (5) the previous line does not end with a sentence delimiter;
+  // (6) the previous and current line have the same leftX.
+  // This should avoid to detect lines that occasionally start with a footnote label, but that are
+  // actually not part of a footnote, as a footnote. Example: 0901.4737, page 11 ("25Mg and 26Mg..")
+  if (line->prevLine) {
+    bool isPrevPrefixedByLabel = computeIsPrefixedByItemLabel(line->prevLine);
+    bool hasEqualFont = computeHasEqualFont(line->prevLine, line);
+    bool hasEqualFontSize = computeHasEqualFontSize(line->prevLine, line, _config.fsEqualTolerance);
+    double distance = computeVerticalGap(line->prevLine, line);
+    bool hasNegativeDistance = equalOrSmaller(distance, 0);
+    bool hasSentenceDelim = endsWithSentenceDelimiter(line->prevLine->text);
+    bool hasEqualLeftX = computeHasEqualLeftX(line->prevLine, line, avgCharWidth);
+
+    if (!isPrevPrefixedByLabel && hasEqualFont && hasEqualFontSize && hasNegativeDistance
+          && !hasSentenceDelim && hasEqualLeftX) {
+      return false;
+    }
+  }
+
+  // Check if there is a previous sibling line. The current line is the first line of an item
+  // if the previous sibling line is also prefixed by an item label and if it exhibits the same
+  // font and font size as the given line.
+  const PdfTextLine* prevSibling = line->prevSiblingLine;
+  if (prevSibling && !prevSibling->words.empty()) {
+    PdfWord* firstWord = line->words[0];
+    PdfWord* prevFirstWord = prevSibling->words[0];
+    bool prevIsPrefixedByItemLabel = computeIsPrefixedByItemLabel(prevSibling);
+    bool hasEqualFont = computeHasEqualFont(prevFirstWord, firstWord);
+    bool hasEqualFs = computeHasEqualFontSize(prevFirstWord, firstWord, _config.fsEqualTolerance);
+    if (prevIsPrefixedByItemLabel && hasEqualFont && hasEqualFs) {
+      return true;
+    }
+  }
+
+  // Check if there is a next sibling line. The current line is the first line of an item if the
+  // next sibling line is also prefixed by an item label and if it exhibits the same font and font
+  // size as the current line.
+  const PdfTextLine* nextSibling = line->nextSiblingLine;
+  if (nextSibling && !nextSibling->words.empty()) {
+    PdfWord* firstWord = line->words[0];
+    PdfWord* nextFirstWord = nextSibling->words[0];
+    bool nextIsPrefixedByItemLabel = computeIsPrefixedByItemLabel(nextSibling);
+    bool hasEqualFont = computeHasEqualFont(nextFirstWord, firstWord);
+    bool hasEqualFs = computeHasEqualFontSize(nextFirstWord, firstWord, _config.fsEqualTolerance);
+    if (nextIsPrefixedByItemLabel && hasEqualFont && hasEqualFs) {
+      return true;
+    }
+  }
+
+  // The line is the first line of an item if it starts with a footnote label.
+  if (isPrefixedByFootnoteLabel) {
+    return true;
+  }
+
+  return false;
+}
+
+// _________________________________________________________________________________________________
+void TextBlocksDetectionUtils::computePotentialFootnoteLabels(const PdfTextLine* line,
+      unordered_set<string>* result) {
+  assert(line);
+  assert(result);
+
+  // Iterate through the characters of the word. For each character, check if it is a label that
+  // potentially reference a footnote, that is: if it is a superscipted alphanumerical or if it
+  // occurs in our alphabet we defined to identify special footnote labels. Merge each consecutive
+  // character that is part of such a label and that are positioned behind the word (we don't want
+  // to consider labels that are positioned in front of a word, since footnote labels are usually
+  // positioned behind words).
+  // TODO(korzen): We do not store the info about whether a superscript is positioned before or
+  // after a word. As a workaround, consider a superscript as part of a potential footnote marker
+  // only when a non-subscript and non-superscript was already seen.
+  for (const auto* word : line->words) {
+    string label;
+    bool nonSubSuperscriptSeen = false;
+    for (const auto* ch : word->characters) {
+      // Ignore sub- and superscripts that are positioned before the word.
+      if (!nonSubSuperscriptSeen && !ch->isSubscript && !ch->isSuperscript) {
+        nonSubSuperscriptSeen = true;
+        continue;
+      }
+      // Ignore the character when no subscript and superscript was seen yet.
+      if (!nonSubSuperscriptSeen) {
+        continue;
+      }
+      // Ignore the character when it does not contain any text.
+      if (ch->text.empty()) {
+        continue;
+      }
+
+      // The character is part of a potential footnote label when it occurs in our alphabet we
+      // defined to identify special (= non-alphanumerical) footnote labels.
+      bool isLabel = _config.specialFootnoteLabelsAlphabet.find(ch->text[0]) != std::string::npos;
+
+      // The character is also a potential footnote label when it is a superscripted alphanumerical.
+      if (ch->isSuperscript && isalnum(ch->text[0])) {
+        isLabel = true;
+      }
+
+      // When the character is part of a potential footnote label, add it to the current label
+      // string.
+      if (isLabel) {
+        label += ch->text;
+        continue;
+      }
+
+      // Otherwise the end of a potential label is reached. When the current label string is not
+      // empty, append it to the result vector.
+      if (!label.empty()) {
+        result->insert(label);
+        label.clear();
+      }
+    }
+
+    // Don't forget to add the last label string to the result vector (if it is not empty).
+    if (!label.empty()) {
+      result->insert(label);
+    }
+  }
+}
+
+// _________________________________________________________________________________________________
+bool TextBlocksDetectionUtils::computeIsPrefixedByItemLabel(const PdfTextLine* line) {
+  assert(line);
+
+  // The line is not prefixed by an enumeration item label if it does not contain any words.
+  const vector<PdfWord*>& words = line->words;
+  if (words.empty()) {
+    return false;
+  }
+
+  // The line is not prefixed by an enumeration item label if the first word is empty.
+  const vector<PdfCharacter*>& firstWordChars = words[0]->characters;
+  if (firstWordChars.empty()) {
+    return false;
+  }
+
+  // The line is prefixed by an enumeration item label if the first char is superscripted and if
+  // it is contained in our alphabet we defined for identifying superscripted item labels.
+  // TODO(korzen): Instead of analyzing only the first char, we should analyze the first *word*.
+  // This would identify also lines that are prefixed by something like "a)".
+  PdfCharacter* ch = firstWordChars[0];
+  string charStr = ch->text;
+  if (ch->isSuperscript && strstr(_config.superItemLabelAlphabet, charStr.c_str()) != nullptr) {
+    return true;
+  }
+
+  // The line is prefixed by an enumeration item label if it matches one of our regexes we defined
+  // for identifying item labels. The matching parts must not be superscripted.
+  smatch m;
+  for (const auto& regex : _config.itemLabelRegexes) {
+    if (regex_search(line->text, m, regex)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+// _________________________________________________________________________________________________
+bool TextBlocksDetectionUtils::computeIsPrefixedByFootnoteLabel(const PdfTextLine* line,
+      const unordered_set<string>* potentialFootnoteLabels) {
+  assert(line);
+
+  // The line is not prefixed by a footnote label if it does not contain any words.
+  const vector<PdfWord*>& words = line->words;
+  if (words.empty()) {
+    return false;
+  }
+
+  // Compute the superscripted prefix of the line, that is: the concatenation of all superscripted
+  // characters in front of the line.
+  const PdfWord* firstWord = words[0];
+  string superScriptPrefix;
+  for (const auto* ch : firstWord->characters) {
+    if (!ch->isSuperscript) {
+      break;
+    }
+    superScriptPrefix += ch->text;
+  }
+
+  // If potentialFootnoteLabels is specified, it must contain the superscripted prefix.
+  if (potentialFootnoteLabels) {
+    return potentialFootnoteLabels->count(superScriptPrefix) > 0;
+  }
+
+  // The superscripted prefix must not be empty.
+  return !superScriptPrefix.empty();
 }
 
 // _________________________________________________________________________________________________
@@ -599,87 +754,7 @@ void TextBlocksDetectionUtils::createTextBlock(const vector<PdfTextLine*>& lines
   blocks->push_back(block);
 }
 
-// _________________________________________________________________________________________________
-bool TextBlocksDetectionUtils::computeIsFirstLineOfItem(const PdfTextLine* line,
-      const unordered_set<string>* potentialFootnoteLabels) {
-  assert(line);
 
-  // The line is not the first line of an item if it does not contain any words.
-  if (line->words.empty()) {
-    return false;
-  }
-
-  // The line is not the first line of an item if it is not prefixed by an item label.
-  bool isPrefixedByItemLabel = computeIsPrefixedByItemLabel(line);
-  bool isPrefixedByFootnoteLabel = computeIsPrefixedByFootnoteLabel(line, potentialFootnoteLabels);
-  if (!isPrefixedByItemLabel && !isPrefixedByFootnoteLabel) {
-    return false;
-  }
-
-  double avgCharWidth = line->doc->avgCharWidth;
-
-  // EXPERIMENTAL: The line is not the first line of a footnote when all of the following
-  // requirements are fulfilled:
-  // (1) the previous line is not prefixed by an item label;
-  // (2) the previous line and the current line have the same font;
-  // (3) the previous line and the current line have the same font size;
-  // (4) the distance between the previous and current line is <= 0;
-  // (5) the previous line does not end with a sentence delimiter;
-  // (6) the previous and current line have the same leftX.
-  // This should avoid to detect lines that occasionally start with a footnote label, but that are
-  // actually not part of a footnote, as a footnote. Example: 0901.4737, page 11 ("25Mg and 26Mg..")
-  if (line->prevLine) {
-    bool isPrevPrefixedByLabel = computeIsPrefixedByItemLabel(line->prevLine);
-    bool hasEqualFont = computeHasEqualFont(line->prevLine, line);
-    bool hasEqualFontSize = computeHasEqualFontSize(line->prevLine, line, _config.fsEqualTolerance);
-    double distance = computeVerticalGap(line->prevLine, line);
-    bool hasNegativeDistance = equalOrSmaller(distance, 0);
-    bool hasSentenceDelim = computeEndsWithSentenceDelimiter(line->prevLine);
-    bool hasEqualLeftX = computeHasEqualLeftX(line->prevLine, line, avgCharWidth);
-
-    if (!isPrevPrefixedByLabel && hasEqualFont && hasEqualFontSize && hasNegativeDistance
-          && !hasSentenceDelim && hasEqualLeftX) {
-      return false;
-    }
-  }
-
-  // Check if there is a previous sibling line. The current line is the first line of an item
-  // if the previous sibling line is also prefixed by an item label and if it exhibits the same
-  // font and font size as the given line.
-  const PdfTextLine* prevSibling = line->prevSiblingLine;
-  if (prevSibling && !prevSibling->words.empty()) {
-    PdfWord* firstWord = line->words[0];
-    PdfWord* prevFirstWord = prevSibling->words[0];
-    bool prevIsPrefixedByItemLabel = computeIsPrefixedByItemLabel(prevSibling);
-    bool hasEqualFont = computeHasEqualFont(prevFirstWord, firstWord);
-    bool hasEqualFs = computeHasEqualFontSize(prevFirstWord, firstWord, _config.fsEqualTolerance);
-    if (prevIsPrefixedByItemLabel && hasEqualFont && hasEqualFs) {
-      return true;
-    }
-  }
-
-  // Check if there is a next sibling line. The current line is the first line of an item if the
-  // next sibling line is also prefixed by an item label and if it exhibits the same font and font
-  // size as the current line.
-  const PdfTextLine* nextSibling = line->nextSiblingLine;
-  if (nextSibling && !nextSibling->words.empty()) {
-    PdfWord* firstWord = line->words[0];
-    PdfWord* nextFirstWord = nextSibling->words[0];
-    bool nextIsPrefixedByItemLabel = computeIsPrefixedByItemLabel(nextSibling);
-    bool hasEqualFont = computeHasEqualFont(nextFirstWord, firstWord);
-    bool hasEqualFs = computeHasEqualFontSize(nextFirstWord, firstWord, _config.fsEqualTolerance);
-    if (nextIsPrefixedByItemLabel && hasEqualFont && hasEqualFs) {
-      return true;
-    }
-  }
-
-  // The line is the first line of an item if it starts with a footnote label.
-  if (isPrefixedByFootnoteLabel) {
-    return true;
-  }
-
-  return false;
-}
 
 // _________________________________________________________________________________________________
 bool TextBlocksDetectionUtils::computeIsContinuationOfItem(
@@ -698,86 +773,5 @@ bool TextBlocksDetectionUtils::computeIsContinuationOfItem(
   return computeIsFirstLineOfItem(parentLine, potentialFootnoteLabels) ||
          computeIsContinuationOfItem(parentLine, potentialFootnoteLabels);
 }
-
-// _________________________________________________________________________________________________
-bool TextBlocksDetectionUtils::computeIsPrefixedByItemLabel(const PdfTextLine* line) {
-  assert(line);
-
-  // The line is not prefixed by an enumeration item label if it does not contain any words.
-  const vector<PdfWord*>& words = line->words;
-  if (words.empty()) {
-    return false;
-  }
-
-  // The line is not prefixed by an enumeration item label if the first word is empty.
-  const vector<PdfCharacter*>& firstWordChars = words[0]->characters;
-  if (firstWordChars.empty()) {
-    return false;
-  }
-
-  // The line is prefixed by an enumeration item label if the first char is superscripted and if
-  // it is contained in our alphabet we defined for identifying superscripted item labels.
-  // TODO(korzen): Instead of analyzing only the first char, we should analyze the first *word*.
-  // This would identify also lines that are prefixed by something like "a)".
-  PdfCharacter* ch = firstWordChars[0];
-  string charStr = ch->text;
-  if (ch->isSuperscript && strstr(_config.superItemLabelAlphabet, charStr.c_str()) != nullptr) {
-    return true;
-  }
-
-  // The line is prefixed by an enumeration item label if it matches one of our regexes we defined
-  // for identifying item labels. The matching parts must not be superscripted.
-  smatch m;
-  for (const auto& regex : _config.itemLabelRegexes) {
-    if (regex_search(line->text, m, regex)) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-// _________________________________________________________________________________________________
-bool TextBlocksDetectionUtils::computeIsPrefixedByFootnoteLabel(const PdfTextLine* line,
-      const unordered_set<string>* potentialFootnoteLabels) {
-  assert(line);
-
-  // The line is not prefixed by a footnote label if it does not contain any words.
-  const vector<PdfWord*>& words = line->words;
-  if (words.empty()) {
-    return false;
-  }
-
-  // Compute the superscripted prefix of the line, that is: the concatenation of all superscripted
-  // characters in front of the line.
-  const PdfWord* firstWord = words[0];
-  string superScriptPrefix;
-  for (const auto* ch : firstWord->characters) {
-    if (!ch->isSuperscript) {
-      break;
-    }
-    superScriptPrefix += ch->text;
-  }
-
-  // If potentialFootnoteLabels is specified, it must contain the superscripted prefix.
-  if (potentialFootnoteLabels) {
-    return potentialFootnoteLabels->count(superScriptPrefix) > 0;
-  }
-
-  // The superscripted prefix must not be empty.
-  return !superScriptPrefix.empty();
-}
-
-// _________________________________________________________________________________________________
-bool TextBlocksDetectionUtils::computeEndsWithSentenceDelimiter(const PdfTextLine* line) {
-  assert(line);
-
-  if (line->text.empty()) {
-    return false;
-  }
-
-  return _config.sentenceDelimiterAlphabet.find(line->text.back()) != std::string::npos;
-}
-
 
 }  // namespace ppp::utils

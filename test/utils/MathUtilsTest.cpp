@@ -9,7 +9,7 @@
 #include <gtest/gtest.h>
 
 #include "../../src/Config.h"
-#include "../../src/utils/Math.h"
+#include "../../src/utils/MathUtils.h"
 
 using ppp::utils::math::between;
 using ppp::utils::math::equal;
@@ -19,13 +19,13 @@ using ppp::utils::math::larger;
 using ppp::utils::math::round;
 using ppp::utils::math::smaller;
 
-// The allowed tolerance on comparing two float values.
-static const double TOLERANCE = ppp::config::DEFAULT_DOUBLE_EQUAL_TOLERANCE;
-
 // =================================================================================================
 
+// The allowed tolerance on comparing two float values.
+static const double TOL = ppp::config::DEFAULT_DOUBLE_EQUAL_TOLERANCE;
+
 // _________________________________________________________________________________________________
-TEST(Math, equal) {
+TEST(MathUtilsTest, equal) {
   ASSERT_TRUE(equal(0.0, 0.0));
   ASSERT_TRUE(equal(2.3, 2.3));
   ASSERT_TRUE(equal(1.1, 1.5, 0.4));
@@ -38,7 +38,7 @@ TEST(Math, equal) {
 }
 
 // _________________________________________________________________________________________________
-TEST(Math, larger) {
+TEST(MathUtilsTest, larger) {
   ASSERT_TRUE(larger(0.1, 0.0));
   ASSERT_TRUE(larger(3.3, 2.3));
   ASSERT_TRUE(larger(1.8, 1.5, 0.2));
@@ -51,7 +51,7 @@ TEST(Math, larger) {
 }
 
 // _________________________________________________________________________________________________
-TEST(Math, smaller) {
+TEST(MathUtilsTest, smaller) {
   ASSERT_TRUE(smaller(0.0, 0.01));
   ASSERT_TRUE(smaller(3.3, 4.2));
   ASSERT_TRUE(smaller(1.3, 1.8, 0.2));
@@ -64,7 +64,7 @@ TEST(Math, smaller) {
 }
 
 // _________________________________________________________________________________________________
-TEST(Math, equalOrLarger) {
+TEST(MathUtilsTest, equalOrLarger) {
   ASSERT_TRUE(equalOrLarger(1.0, 1.0));
   ASSERT_TRUE(equalOrLarger(3.3, 0.2));
   ASSERT_TRUE(equalOrLarger(1.3, 1.3, 0.2));
@@ -77,7 +77,7 @@ TEST(Math, equalOrLarger) {
 }
 
 // _________________________________________________________________________________________________
-TEST(Math, equalOrSmaller) {
+TEST(MathUtilsTest, equalOrSmaller) {
   ASSERT_TRUE(equalOrSmaller(1.0, 1.0));
   ASSERT_TRUE(equalOrSmaller(0.3, 2.2));
   ASSERT_TRUE(equalOrSmaller(1.3, 1.3, 0.2));
@@ -90,7 +90,7 @@ TEST(Math, equalOrSmaller) {
 }
 
 // _________________________________________________________________________________________________
-TEST(Math, between) {
+TEST(MathUtilsTest, between) {
   ASSERT_TRUE(between(0.0, 0.0, 1.0));
   ASSERT_TRUE(between(0.5, 0.0, 1.0));
   ASSERT_TRUE(between(1.7, 1.5, 1.6, 0.1));
@@ -103,12 +103,12 @@ TEST(Math, between) {
 }
 
 // _________________________________________________________________________________________________
-TEST(Math, round) {
-  ASSERT_NEAR(round(1.46731, 0), 1.0, TOLERANCE);
-  ASSERT_NEAR(round(1.56731, 0), 2.0, TOLERANCE);
-  ASSERT_NEAR(round(1.56731, 1), 1.6, TOLERANCE);
-  ASSERT_NEAR(round(1.56731, 2), 1.57, TOLERANCE);
-  ASSERT_NEAR(round(1.56731, 3), 1.567, TOLERANCE);
-  ASSERT_NEAR(round(1.56731, 4), 1.5673, TOLERANCE);
-  ASSERT_NEAR(round(1.56731, 5), 1.56731, TOLERANCE);
+TEST(MathUtilsTest, round) {
+  ASSERT_NEAR(round(1.46731, 0), 1.0, TOL);
+  ASSERT_NEAR(round(1.56731, 0), 2.0, TOL);
+  ASSERT_NEAR(round(1.56731, 1), 1.6, TOL);
+  ASSERT_NEAR(round(1.56731, 2), 1.57, TOL);
+  ASSERT_NEAR(round(1.56731, 3), 1.567, TOL);
+  ASSERT_NEAR(round(1.56731, 4), 1.5673, TOL);
+  ASSERT_NEAR(round(1.56731, 5), 1.56731, TOL);
 }

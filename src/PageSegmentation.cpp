@@ -10,7 +10,7 @@
 #include <vector>
 
 #include "./utils/Log.h"
-#include "./utils/Math.h"
+#include "./utils/MathUtils.h"
 #include "./utils/PageSegmentationUtils.h"
 #include "./utils/PdfElementsUtils.h"
 #include "./utils/Trool.h"

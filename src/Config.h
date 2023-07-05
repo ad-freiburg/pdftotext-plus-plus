@@ -45,6 +45,9 @@ static const char* const ALPHA_NUM = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef
 // All characters denoting a word delimiter.
 static const char* const WORD_DELIMITERS_ALPHABET = " \t\r\n\f\v";
 
+// All characters denoting a dentence delimiter.
+static const char* const SENTENCE_DELIMITERS_ALPHABET = "?!.);";
+
 
 struct BaseConfig {
   // A parameter specifying the verbosity of logging messages.
@@ -91,10 +94,6 @@ struct BaseConfig {
 
   // The characters to consider to be alphanumerical.
   string alphaNumAlphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-
-  // An alphabet used for computing whether or not a text element ends with a sentence delimiter.
-  // It contains all characters we consider to be a sentence delimiter.
-  string sentenceDelimiterAlphabet = "?!.);";
 
   // The characters to consider to be a valid footnote label (in addition to alphanumerical
   // symbols). This is used by, for example, the text_lines_utils::computePotentialFootnoteLabels().
@@ -384,16 +383,6 @@ struct PageSegmentationConfig : BaseConfig {
   constexpr static double getSlimGroupWidthThreshold(const PdfDocument* doc) {
     return 10 * doc->avgCharWidth;
   }
-
-  // A parameter used for computing the trim box of a segment. It denotes the precision to use
-  // when rounding the rightX values of the text lines of the segment before computing the most
-  // frequent rightX value.
-  double trimBoxCoordsPrec = 0;
-
-  // A parameter in [0, 1] used for computing the trim box of a segment. It denotes the minimum
-  // percentage of text lines in a given segment that must exhibit the most frequent rightX so
-  // that this rightX is considered to be the rightX of the trim box of the segment.
-  double minPrecLinesSameRightX = 0.5;
 };
 
 // =================================================================================================
@@ -437,6 +426,16 @@ struct TextLinesDetectionConfig : BaseConfig {
   constexpr static double getYOverlapRatioThreshold(const PdfDocument* doc, double xGap) {
     return xGap < 3 * doc->avgCharWidth ? 0.4 : 0.8;
   }
+
+  // A parameter in [0, 1] used for computing the trim box of a segment. It denotes the minimum
+  // percentage of text lines in a given segment that must exhibit the most frequent rightX so
+  // that this rightX is considered to be the rightX of the trim box of the segment.
+  double minPrecLinesSameRightX = 0.5;
+
+  // A parameter used for computing the trim box of a segment. It denotes the precision to use
+  // when rounding the rightX values of the text lines of the segment before computing the most
+  // frequent rightX value.
+  double trimBoxCoordsPrec = 0;
 };
 
 // =================================================================================================
@@ -567,12 +566,21 @@ struct TextBlocksDetectionConfig : BaseConfig {
   // the text lines are considered to be *not* centered.
   double centeringXOverlapRatioThreshold = 0.99;
 
-  // This method returns a factor that is used to compute a threshold (= <factor> *
-  // 'average character width in the PDF document') denoting the maximum allowed difference
-  // between the left x-offset and right x-offset of a text line (computed relatively to the
-  // previous text line), so that both offsets are considered to be equal and that the text line
-  // is considered to be centered compared to the previous text line.
-  double centeringXOffsetEqualToleranceFactor = 2.0;
+  /**
+   * This method returns a double value denoting the maximum allowed difference between the left
+   * x-offset and right x-offset of a text line (computed relatively to the previous text line), so
+   * that both offsets are considered to be equal and that the text line is considered to be
+   * centered compared to the previous text line.
+   *
+   * @param line
+   *    The text line to process.
+   *
+   * @return
+   *    The threshold.
+   */
+  constexpr double getCenteringXOffsetEqualTolerance(const PdfTextLine* line) {
+    return line->doc ? 2.0 * line->doc->avgCharWidth : 0.0;
+  }
 
   // ----------
   // Config for computeIsTextLinesCentered().

@@ -59,12 +59,12 @@ class PdfFontInfo {
   /**
    * The ascent of the font, that is: the maximum extent above the base line.
    */
-  double ascent;
+  double ascent = 0.0;
 
   /**
    * The descent of the font, that is: the maximum extent below the base line.
    */
-  double descent;
+  double descent = 0.0;
 
   /**
    * The font name as it is provided by PDF, for example: "LTSL+Nimbus12-Bold".
@@ -86,22 +86,22 @@ class PdfFontInfo {
   /**
    * The boolean flag indicating whether or not this font is a fixed width font.
    */
-  bool isFixedWidth;
+  bool isFixedWidth = false;
 
   /**
    * The boolean flag indicating whether or not the font is a serif font.
    */
-  bool isSerif;
+  bool isSerif = false;
 
   /**
    * The boolean flag indicating whether or not the font is a symbolic font.
    */
-  bool isSymbolic;
+  bool isSymbolic = false;
 
   /**
    * The boolean flag indicating whether or not the font is an italic font.
    */
-  bool isItalic;
+  bool isItalic = false;
 
 
   /**
@@ -126,7 +126,7 @@ class PdfFontInfo {
   /**
    * The boolean flag indicating whether or not the font is a type-3 font.
    */
-  bool isType3;
+  bool isType3 = false;
 
   /** The font matrix. */
   double fontMatrix[6];

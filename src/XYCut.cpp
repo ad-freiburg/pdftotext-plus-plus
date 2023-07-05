@@ -13,7 +13,7 @@
 #include "./utils/Comparators.h"
 #include "./utils/FixedCapacityPriorityQueue.h"
 #include "./utils/PdfElementsUtils.h"
-#include "./utils/Text.h"
+#include "./utils/TextUtils.h"
 
 #include "./PdfDocument.h"
 #include "./XYCut.h"

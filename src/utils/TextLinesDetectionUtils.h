@@ -11,6 +11,7 @@
 
 #include <regex>
 #include <string>
+#include <tuple>
 #include <unordered_set>
 
 #include "../Config.h"
@@ -104,15 +105,53 @@ class TextLinesDetectionUtils {
   void computeTextLineHierarchy(const PdfPage* page);
 
   /**
-   * This method returns true if the text of the given text line ends with a sentence delimiter.
+   * This method computes the trim box of the given page segment, that is: the bounding box around
+   * the lines of the segment that do not extend beyond the actual segment boundaries. Here is an
+   * example for illustration purposes:
    *
-   * @param line
-   *    The text line to process.
+   * AAAAAAA   BBBBBBB
+   * AAAAAAA   XXXXXXXXXX
+   * AAAAAAA   BBBBBBB
+   * AAAAAAA   BBBBBBB
+   * AAAAAAA   BBBBBBB
+   *
+   * This should illustrate two segments, both contained in two different columns: the first
+   * segment is build by the "AAA..." lines, the second segment is built by the "BBB..." and
+   * "XXX..." lines. Note that the "XXX..." line extends beyond the actual boundary of the second
+   * segment, as all other lines in the second segment are actually justified and the "XXX..." line
+   * is longer than the other lines. The trim box of the second segment is the bounding box around
+   * all "BBB..." lines.
+   *
+   * The motivation behind computing the trim box is to compute the right margins of text lines
+   * more accurately (the right margin is needed by, for example, the computeHasPrevLineCapacity()
+   * method). Initially, for a segment S and a text line L, we computed the right margin of L by
+   * computing the gap between the right boundary of the L and the right boundary of S (that is:
+   * S.position.rightX - L.position.rightX). This however resulted in inaccurately computed right
+   * margins when there was a text line L' that extended beyond the actual boundaries of S. The
+   * reason was that the bounding box of S was broader than expected because of L' and thus, the
+   * computed right margin were usually too large. Our new approach is to compute the trim box of
+   * S and to compute the right margin of L by computing S.trimRightX - L.position.rightX, where
+   * S.trimRightX is the rightX coordinate of the trim box of S.
+   *
+   * NOTE 1: the decision whether or not a line extends beyond an actual segment boundary can be
+   * challenging. For example, in the illustration above, the lines in the second segment could
+   * also be left-aligned, with all "BBB..." lines occassionally having the same width and the
+   * "XXX..." *not* extending the segment boundary. Our approach is to compute the most frequent
+   * rightX among the text lines in the segment. If at least half of the lines of the segment
+   * exhibit the most frequent rightX, we assume that this value represents the rightX of the
+   * segment's trim box.
+   *
+   * NOTE 2: Until now, only the rightX of the trim box is actually computed. The returned leftX,
+   * upperY and lowerY are equal to those of the bounding box of the segment. This is because
+   * text lines usually extend only beyond the right boundary of a segment.
+   *
+   * @param segment
+   *    The segment for which to compute the trim box.
    *
    * @return
-   *    True if the text of the given text line ends with a sentence delimiter, false otherwise.
+   *    The leftX, upperY, rightX, and lowerY of the computed trim box.
    */
-  bool computeEndsWithSentenceDelimiter(const PdfTextLine* line);
+  tuple<double, double, double, double> computeTrimBox(const PdfPageSegment* segment);
 
  private:
   // The configuration to use.

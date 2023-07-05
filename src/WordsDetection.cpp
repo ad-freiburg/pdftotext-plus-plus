@@ -13,9 +13,9 @@
 
 #include "./utils/Counter.h"
 #include "./utils/Log.h"
-#include "./utils/Math.h"
+#include "./utils/MathUtils.h"
 #include "./utils/PdfElementsUtils.h"
-#include "./utils/Text.h"
+#include "./utils/TextUtils.h"
 #include "./utils/WordsDetectionUtils.h"
 #include "./PdfDocument.h"
 #include "./WordsDetection.h"

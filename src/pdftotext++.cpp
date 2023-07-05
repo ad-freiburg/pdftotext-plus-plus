@@ -18,8 +18,8 @@
 #include <vector>
 
 #include "./utils/Log.h"
-#include "./utils/Math.h"
-#include "./utils/Text.h"
+#include "./utils/MathUtils.h"
+#include "./utils/TextUtils.h"
 #include "./Config.h"
 #include "./PdfDocumentSerialization.h"
 #include "./PdfDocumentVisualization.h"
@@ -59,6 +59,14 @@ using ppp::types::DocumentUnit;
 using ppp::types::SemanticRole;
 using ppp::types::SerializationFormat;
 using ppp::types::Timing;
+using ppp::utils::log::BBLUE;
+using ppp::utils::log::BOLD;
+using ppp::utils::log::DEBUG;
+using ppp::utils::log::ERROR;
+using ppp::utils::log::INFO;
+using ppp::utils::log::OFF;
+using ppp::utils::log::TRACE;
+using ppp::utils::log::WARN;
 using ppp::utils::math::round;
 using ppp::utils::text::wrap;
 using ppp::utils::text::strip;

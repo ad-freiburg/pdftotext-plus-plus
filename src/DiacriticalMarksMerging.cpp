@@ -13,7 +13,7 @@
 #include <vector>
 
 #include "./utils/Log.h"
-#include "./utils/Math.h"
+#include "./utils/MathUtils.h"
 #include "./utils/PdfElementsUtils.h"
 #include "./DiacriticalMarksMerging.h"
 

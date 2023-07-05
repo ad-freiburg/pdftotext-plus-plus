@@ -18,7 +18,7 @@
 #include <utility>  // std::move
 #include <vector>
 
-#include "./utils/Math.h"
+#include "./utils/MathUtils.h"
 
 #include "./Config.h"
 #include "./PdfDocument.h"

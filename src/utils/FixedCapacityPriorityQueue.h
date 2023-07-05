@@ -75,9 +75,9 @@ class FixedCapacityPriorityQueue : public priority_queue<T, vector<T>, Comparato
   // The capacity of this priority queue.
   unsigned int _capacity;
 
-  friend class FixedCapacityPriorityQueue_constructor_Test;
-  friend class FixedCapacityPriorityQueue_pushPopInt_Test;
-  friend class FixedCapacityPriorityQueue_pushPopString_Test;
+  friend class FixedCapacityPriorityQueueTest_constructor_Test;
+  friend class FixedCapacityPriorityQueueTest_pushPopInt_Test;
+  friend class FixedCapacityPriorityQueueTest_pushPopString_Test;
 };
 
 #endif  // UTILS_FIXEDCAPACITYPRIORITYQUEUE_H_

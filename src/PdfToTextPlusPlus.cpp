@@ -240,6 +240,15 @@ int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
     }
   }
 
+  // TODO(korzen): Maybe move this to somewhere else, it is currenlty needed only for testing.
+  for (auto* page : doc->pages) {
+    for (auto* block : page->blocks) {
+      for (auto* line : block->lines) {
+        page->textLines.push_back(line);
+      }
+    }
+  }
+
   return 0;
 }
 

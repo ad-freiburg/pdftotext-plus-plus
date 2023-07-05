@@ -9,7 +9,7 @@
 #include <algorithm>  // std::min, std::max
 
 #include "./utils/Log.h"
-#include "./utils/Math.h"
+#include "./utils/MathUtils.h"
 #include "./Config.h"
 #include "./PdfDocument.h"
 #include "./SubSuperScriptsDetection.h"

@@ -79,6 +79,14 @@ class DoubleCounter : public unordered_map<double, unsigned int> {
    *    When the counter is empty or all counts are <= 0.
    */
   double max() const;
+
+  /**
+   * This method returns the sum of all counts stored in this counter.
+   *
+   * @return
+   *    The sum of all counts stored in this counter.
+   */
+  unsigned int sumCounts() const;
 };
 
 // =================================================================================================
@@ -130,6 +138,14 @@ class StringCounter : public unordered_map<string, unsigned int> {
    *    When the counter is empty or all counts are <= 0.
    */
   pair<string, unsigned int> mostFreqAndCount() const;
+
+  /**
+   * This method returns the sum of all counts stored in this counter.
+   *
+   * @return
+   *    The sum of all counts stored in this counter.
+   */
+  unsigned int sumCounts() const;
 };
 
 }  // namespace ppp::utils::counter

@@ -64,9 +64,9 @@ CXX_MACROS      = -DCONFIG_SEMANTIC_ROLES_DETECTION_MODELS_DIR="\"$(SEMANTIC_ROL
 CXX_MACROS_MAIN = -DPROGRAM_NAME="\"$(PROGRAM_NAME)\"" -DPROGRAM_DESCRIPTION="\"$(DESCRIPTION)\"" -DPROGRAM_USAGE="\"$(USAGE)\"" -DVERSION="\"$(VERSION)\""
 CXX_LIBS        = -I$(USR_DIR)/include -L$(USR_DIR)/lib -ltensorflow_framework -ltensorflow -lpoppler -lutf8proc -lboost_program_options
 CXX_LIBS_TEST   = $(CXX_LIBS) -lgtest -lgtest_main -lpthread
-CXX_DEBUG       = g++ -std=c++17 -Wall -g $(CXX_MACROS)
-CXX_PROD        = g++ -std=c++17 -Wall -O3 $(CXX_MACROS)
-CXX_TEST        = g++ -std=c++17 -Wall -g $(CXX_MACROS)
+CXX_DEBUG       = g++ -std=c++20 -Wall -g $(CXX_MACROS)
+CXX_PROD        = g++ -std=c++20 -Wall -O3 $(CXX_MACROS)
+CXX_TEST        = g++ -std=c++20 -Wall -g $(CXX_MACROS)
 CXX							= $(CXX_PROD)
 
 # ==================================================================================================

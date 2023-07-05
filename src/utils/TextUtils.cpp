@@ -13,7 +13,7 @@
 #include <utility>  // std::move
 #include <vector>
 
-#include "./Text.h"
+#include "./TextUtils.h"
 #include "../Config.h"
 
 using std::hex;
@@ -34,7 +34,7 @@ using ppp::config::WORD_DELIMITERS_ALPHABET;
 namespace ppp::utils::text {
 
 // _________________________________________________________________________________________________
-void splitIntoWords(const wstring& text, vector<wstring>* words, const char* wordDelimiters) {
+void splitIntoWords(const wstring& text, vector<wstring>* words, const char* const wordDelimiters) {
   assert(words);
 
   // TODO(korzen): Is there a more elegant solution for converting char* to wstring?
@@ -52,7 +52,7 @@ void splitIntoWords(const wstring& text, vector<wstring>* words, const char* wor
 }
 
 // _________________________________________________________________________________________________
-void splitIntoWords(const string& text, vector<string>* words, const char* wordDelimiters) {
+void splitIntoWords(const string& text, vector<string>* words, const char* const wordDelimiters) {
   assert(words);
 
   // TODO(korzen): Is there a more elegant solution for converting char* to string?
@@ -66,6 +66,19 @@ void splitIntoWords(const string& text, vector<string>* words, const char* wordD
     words->push_back(text.substr(start, stop - start));
     start = text.find_first_not_of(delimiters, stop + 1);
   }
+}
+
+// _________________________________________________________________________________________________
+bool endsWithSentenceDelimiter(const string& text, const char* const sentenceDelimiters) {
+  if (text.empty()) {
+    return false;
+  }
+
+  // TODO(korzen): Is there a more elegant solution for converting char* to string?
+  // Do we need to convert it at all, or is there another solution?
+  const string delimiters = string(sentenceDelimiters);
+
+  return delimiters.find(text.back()) != std::string::npos;
 }
 
 // _________________________________________________________________________________________________
