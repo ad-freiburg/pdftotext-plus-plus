@@ -43,15 +43,13 @@ class TextBlocksDetectionUtils {
   ~TextBlocksDetectionUtils();
 
   /**
-   * This method returns true if the given lines are centered compared to each other.
+   * This method returns true if the two given lines are centered compared to each other.
    *
    * For the returned value to be true, all of the following requirements must be fulfilled:
    * (1) One of the lines must completely overlap the respective other line horizontally, that is:
-   *     one of the values returned by element_utils::computeXOverlapRatios(line.prevLine, line)
-   *     must be equal to 1.
+   *     one of the values returned by computeXOverlapRatios(line.prevLine, line) must be == 1.
    * (2) The leftX offset (= line1.leftX - line2.leftX) and the rightX offset (= line1.rightX -
-   *     line2.rightX) must be equal, under consideration of a tolerance computed by using the
-   *     given factor.
+   *     line2.rightX) must be equal, under consideration of a (small) tolerance.
    *
    * @param line1
    *   The first line to process.
@@ -65,8 +63,8 @@ class TextBlocksDetectionUtils {
   bool computeIsCentered(const PdfTextLine* line1, const PdfTextLine* line2);
 
   /**
-   * This method returns true if the lines contained in the given text block are centered; false
-   * otherwise.
+   * This method returns true if the lines in the given text block are centered compared to each
+   * other; false otherwise.
    *
    * For the returned value to be true, all of the following requirements must be fulfilled:
    * (1) Each line in the block is centered compared to the respective previous line.
@@ -74,7 +72,7 @@ class TextBlocksDetectionUtils {
    *      (a) the leftX offset (= L.leftX - M.leftX) is equal to the rightX offset
    *          (= L.rightX - M.rightX)
    *      (b) one line completely overlaps the other line horizontally, that is: one of the values
-   *          returned by element_utils::computeXOverlapRatios(line.prevLine, line) is equal to 1;
+   *          returned by computeXOverlapRatios(line.prevLine, line) is equal to 1.
    * (2) There is at least one line (which does not represent a display formula) for which the
    *     leftX offset (resp. rightX offset) is larger than a given threshold;
    * (3) The number of justified text lines (i.e.: lines with leftX offset == rightX offset == 0)
@@ -84,8 +82,8 @@ class TextBlocksDetectionUtils {
    *    The text block to process.
    *
    * @return
-   *    True if the lines contained in the given text block are centered with regard to the
-   *    requirements described above; false otherwise.
+   *    True if the lines in the given text block are centered with respect to the requirements
+   *    described above; false otherwise.
    */
   bool computeIsTextLinesCentered(const PdfTextBlock* block);
 
@@ -111,10 +109,10 @@ class TextBlocksDetectionUtils {
   bool computeIsEmphasized(const PdfTextElement* element);
 
   /**
-   * This method returns true if the first of the two given lines has capacity, that is: if the
-   * first word of second given line would have enough space to be placed at the end of the first
-   * line (or: if the right margin of the first line is larger than the width of the first word
-   * of the second line + some extra space for an additional whitespace).
+   * This method returns true if the first line has capacity, that is: if the first word of the
+   * second line would have enough space to be placed at the end of the first line (or: if the
+   * right margin of the first line is larger than the width of the first word of the second line +
+   * some extra space for an additional whitespace).
    *
    * This method is primarily used to detect text block boundaries and forced line breaks. If this
    * method returns true, it is assumed that the two given lines do not belong to the same text
@@ -127,7 +125,7 @@ class TextBlocksDetectionUtils {
    *    The second line.
    *
    * @return
-   *    True if the first given given line has capacity, false otherwise.
+   *    True if the first line has capacity, false otherwise.
    */
   bool computeHasPrevLineCapacity(const PdfTextLine* prevLine, const PdfTextLine* line);
 
@@ -156,8 +154,8 @@ class TextBlocksDetectionUtils {
    * (c) There is at least one indented line that start with an uppercase character, and the number
    *     of lines exceeds a given threshold.
    *
-   * NOTE: The given text block may be a preliminary text block (computed by the text block
-   * detector), meaning that it could contain multiple text blocks, which need to be split further
+   * NOTE: The given text block may be a preliminary text block (computed while detecting text
+   * blocks), meaning that it could contain multiple text blocks, which need to be split further
    * in a subsequent step.
    *
    * @param block
@@ -169,7 +167,7 @@ class TextBlocksDetectionUtils {
   double computeHangingIndent(const PdfTextBlock* block);
 
   /**
-   * This method iterates through the text lines of the given block (stored in block.lines),
+   * This method iterates through the text lines of the given block (stored in block.lines) and
    * computes the left and right margins of each. Writes the computed left margin of text line L to
    * L.leftMargin and the computed right margin to L.rightMargin.
    *
@@ -179,7 +177,7 @@ class TextBlocksDetectionUtils {
    * of B, that is: abs(B.trimRightX - L.rightX).
    *
    * TODO: The right margin of a text line is primarily used to check if the text line has capacity
-   * (see the comment of text_lines_utils::computeHasPrevLineCapacity() for information about how
+   * (see the comment of computeHasPrevLineCapacity() for information about how
    * the capacity of a line is defined). There are text blocks that consists of only short lines
    * (meaning that they are shorter than the lines in the same column). See the second block on
    * page 2 in hep-ex0205091 for an example. For such blocks, the computed right margins of the
@@ -226,8 +224,7 @@ class TextBlocksDetectionUtils {
    *    True if the given line is the first line of an enumeration item or of a footnote, false
    *    otherwise.
    */
-  bool computeIsFirstLineOfItem(
-      const PdfTextLine* line,
+  bool computeIsFirstLineOfItem(const PdfTextLine* line,
       const unordered_set<string>* potentialFootnoteLabels = nullptr);
 
   /**
@@ -254,8 +251,7 @@ class TextBlocksDetectionUtils {
    *    True if the given line is a continuation line of an enumeration item or a footnote, false
    *    otherwise.
    */
-  bool computeIsContinuationOfItem(
-      const PdfTextLine* line,
+  bool computeIsContinuationOfItem(const PdfTextLine* line,
       const unordered_set<string>* potentialFootnoteLabels = nullptr);
 
   /**
@@ -285,9 +281,9 @@ class TextBlocksDetectionUtils {
 
   /**
    * This method returns true if the given line is prefixed by an enumeration item label, that is:
-   * if it starts with a *superscripted* character that occurs in SUPER_ITEM_LABEL_ALPHABET or if
-   * it matches one of the regular expressions in ITEM_LABEL_REGEXES (note that the matching parts
-   * must *not* be superscripted).
+   * if it starts with a *superscripted* character that occurs in _config.superItemLabelAlphabet
+   * or if it matches one of the regular expressions in _config.itemLabelRegexes (note that the
+   * matching parts must *not* be superscripted).
    *
    * @param line
    *    The line to process.
@@ -313,8 +309,7 @@ class TextBlocksDetectionUtils {
    * @return
    *    True if the line is prefixed by an enumeration label, false otherwise.
    */
-  bool computeIsPrefixedByFootnoteLabel(
-      const PdfTextLine* line,
+  bool computeIsPrefixedByFootnoteLabel(const PdfTextLine* line,
       const unordered_set<string>* potentialFootnoteLabels = nullptr);
 
   /**

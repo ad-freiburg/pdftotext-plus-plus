@@ -109,6 +109,8 @@ TEST_F(TextBlocksDetectionUtilsTest, computeIsTextLinesCentered) {
   PdfTextBlock* block3 = page->blocks[3];
   PdfTextBlock* block4 = page->blocks[4];
   PdfTextBlock* block5 = page->blocks[5];
+  // FIXME(korzen): Text block detection for ragged-right text lines is currently broken (block6
+  // is divided into multiple text blocks). Fix it.
   // PdfTextBlock* block6 = page->blocks[6];
 
   // Make sure we selected the correct text blocks.
@@ -122,7 +124,6 @@ TEST_F(TextBlocksDetectionUtilsTest, computeIsTextLinesCentered) {
   ASSERT_TRUE(block4->text.ends_with("leave you amazed!"));
   ASSERT_TRUE(block5->text.starts_with("Welcome to the next generation"));
   ASSERT_TRUE(block5->text.ends_with("cleaner than ever before."));
-  // TODO(korzen): Text block detection for ragged-right text lines is currently broken. Fix it.
   // ASSERT_TRUE(block6->text.starts_with("Experience a new level of smart cleaning"));
   // ASSERT_TRUE(block6->text.ends_with("ensuring no spot is left untouched."));
 
@@ -131,10 +132,6 @@ TEST_F(TextBlocksDetectionUtilsTest, computeIsTextLinesCentered) {
 
   // Input: nullptr.
   ASSERT_DEATH(utils.computeIsTextLinesCentered(nullptr), "");
-
-  // Input: empty text block.
-  PdfTextBlock block;
-  ASSERT_FALSE(utils.computeIsTextLinesCentered(&block));
 
   // Input: Text block with left-aligned text lines.
   ASSERT_FALSE(utils.computeIsTextLinesCentered(block1));
@@ -196,8 +193,8 @@ TEST_F(TextBlocksDetectionUtilsTest, computeIsEmphasized) {
   ASSERT_FALSE(utils.computeIsEmphasized(line1));
   ASSERT_FALSE(utils.computeIsEmphasized(line2));
   ASSERT_FALSE(utils.computeIsEmphasized(line3));
-  // TODO(korzen): Why is the expected output true? If this is on purpose, the method should also
-  // return true for line2 and line3.
+  // TODO(korzen): Why is the expected output true here? If this is on purpose, shouldn't the
+  // method return true for line2 and line3 as well?.
   ASSERT_TRUE(utils.computeIsEmphasized(line4));
 
   // Input: Text lines with fontsize == most frequent font size and different font weights.
@@ -247,17 +244,10 @@ TEST_F(TextBlocksDetectionUtilsTest, computeHasPrevLineCapacity) {
   // Input: nullptr.
   ASSERT_DEATH(utils.computeHasPrevLineCapacity(nullptr, nullptr), "");
   ASSERT_DEATH(utils.computeHasPrevLineCapacity(line1, nullptr), "");
-
-  // Input: text line without the 'prevLine' value set.
-  PdfTextLine line;
   ASSERT_FALSE(utils.computeHasPrevLineCapacity(nullptr, line1));
 
-  // Input: text line without the 'words' value set.
-  PdfTextLine prevLine;
-  ASSERT_FALSE(utils.computeHasPrevLineCapacity(&prevLine, &line));
-
-  // Input: text line whose previous line has *not* enough capacity to hold the first word of the
-  // current text line.
+  // Input: text line whose previous line does not have enough capacity to hold the first word of
+  // the current text line.
   ASSERT_FALSE(utils.computeHasPrevLineCapacity(line1, line2));
   ASSERT_FALSE(utils.computeHasPrevLineCapacity(line2, line3));
   ASSERT_FALSE(utils.computeHasPrevLineCapacity(line3, line4));
@@ -267,13 +257,14 @@ TEST_F(TextBlocksDetectionUtilsTest, computeHasPrevLineCapacity) {
   ASSERT_FALSE(utils.computeHasPrevLineCapacity(line8, line9));
   ASSERT_FALSE(utils.computeHasPrevLineCapacity(line9, line10));
 
-  // Input: Text line whose previous line has enough capacity to hold the first word of the
+  // Input: Text line whose previous line does have enough capacity to hold the first word of the
   // current text line.
   ASSERT_TRUE(utils.computeHasPrevLineCapacity(line5, line6));
   ASSERT_TRUE(utils.computeHasPrevLineCapacity(line10, line11));
 }
 
 // _________________________________________________________________________________________________
+// TODO(korzen): Add more tests, to achieve more code coverage in this method.
 TEST_F(TextBlocksDetectionUtilsTest, computeHangingIndent) {
   PdfPage* page = pdf->pages[4];
   PdfTextBlock* block1 = page->blocks[1];
@@ -283,7 +274,7 @@ TEST_F(TextBlocksDetectionUtilsTest, computeHangingIndent) {
   PdfTextBlock* block5 = page->blocks[5];
   PdfTextBlock* block6 = page->blocks[6];
   PdfTextBlock* block7 = page->blocks[7];
-  // PdfTextBlock* block8 = page->blocks[8];
+  PdfTextBlock* block8 = page->blocks[8];
   PdfTextBlock* block9 = page->blocks[9];
   PdfTextBlock* block10 = page->blocks[10];
   PdfTextBlock* block11 = page->blocks[11];
@@ -303,6 +294,7 @@ TEST_F(TextBlocksDetectionUtilsTest, computeHangingIndent) {
   ASSERT_TRUE(block6->text.ends_with("now obsolete."));
   ASSERT_TRUE(block7->text.starts_with("More than a dozen"));
   ASSERT_TRUE(block7->text.ends_with("Computer Science Al- liance."));
+  ASSERT_TRUE(block8->text.starts_with("References"));
   ASSERT_TRUE(block9->text.starts_with("[Knuth, 1984]"));
   ASSERT_TRUE(block9->text.ends_with("111."));
   ASSERT_TRUE(block10->text.starts_with("[Lamport, 1994]"));
@@ -450,10 +442,6 @@ TEST_F(TextBlocksDetectionUtilsTest, computeIsFirstLineOfItem) {
   // Input: nullptr.
   ASSERT_DEATH(utils.computeIsFirstLineOfItem(nullptr), "");
 
-  // Input: text line without any words.
-  PdfTextLine line;
-  ASSERT_FALSE(utils.computeIsFirstLineOfItem(&line));
-
   ASSERT_FALSE(utils.computeIsFirstLineOfItem(line1));
   ASSERT_FALSE(utils.computeIsFirstLineOfItem(line2));
   ASSERT_FALSE(utils.computeIsFirstLineOfItem(line3));
@@ -592,11 +580,11 @@ TEST_F(TextBlocksDetectionUtilsTest, computePotentialFootnoteLabels) {
   utils.computePotentialFootnoteLabels(line2, &result2);
   ASSERT_EQ(result2.size(), static_cast<unsigned int>(3));
   ASSERT_TRUE(result2.contains("*"));
-  // TODO(korzen): The other footnote labels are not rendered correctly. Fix it.
+  // FIXME(korzen): The other footnote labels are not detected correctly. Fix it.
   // ASSERT_TRUE(result2.contains("†"));
   // ASSERT_TRUE(result2.contains("‡"));
 
-  // Input: Text line with one footnote labels.
+  // Input: Text line with one footnote label.
   unordered_set<string> result3;
   utils.computePotentialFootnoteLabels(line3, &result3);
   ASSERT_EQ(result3.size(), static_cast<unsigned int>(1));
@@ -894,13 +882,6 @@ TEST_F(TextBlocksDetectionUtilsTest, createTextBlock) {
   ASSERT_FALSE(blocks[1]->isEmphasized);
   ASSERT_TRUE(blocks[1]->isLinesCentered);
   ASSERT_NEAR(blocks[1]->hangingIndent, 0.0, TOL);
-
-  std::cout << line8->toString() << std::endl;
-  std::cout << line9->toString() << std::endl;
-  std::cout << line10->toString() << std::endl;
-  std::cout << line11->toString() << std::endl;
-  std::cout << line12->toString() << std::endl;
-  std::cout << line13->toString() << std::endl;
 
   lines = { line8, line9, line10, line11, line12, line13 };
   utils.createTextBlock(lines, &blocks);

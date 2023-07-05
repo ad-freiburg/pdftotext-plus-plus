@@ -6,13 +6,11 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include <iostream>
-
 #include <algorithm>  // std::max, std::min
 #include <regex>
 #include <string>
 #include <unordered_set>
-#include <utility>  // pair
+#include <utility>  // std::pair
 #include <vector>
 
 #include "./Counter.h"
@@ -24,6 +22,7 @@
 using std::max;
 using std::min;
 using std::pair;
+using std::regex_search;
 using std::smatch;
 using std::string;
 using std::unordered_set;
@@ -494,6 +493,23 @@ bool TextBlocksDetectionUtils::computeIsFirstLineOfItem(const PdfTextLine* line,
 }
 
 // _________________________________________________________________________________________________
+bool TextBlocksDetectionUtils::computeIsContinuationOfItem(const PdfTextLine* line,
+      const unordered_set<string>* potentialFootnoteLabels) {
+  assert(line);
+
+  // The line is not a continuation of an item (a footnote) if it does not have a parent line.
+  const PdfTextLine* parentLine = line->parentLine;
+  if (!parentLine) {
+    return false;
+  }
+
+  // The line is a continuation of an item (a footnote) if the parent line is the first line or a
+  // continuation of an item (a footnote).
+  return computeIsFirstLineOfItem(parentLine, potentialFootnoteLabels) ||
+         computeIsContinuationOfItem(parentLine, potentialFootnoteLabels);
+}
+
+// _________________________________________________________________________________________________
 void TextBlocksDetectionUtils::computePotentialFootnoteLabels(const PdfTextLine* line,
       unordered_set<string>* result) {
   assert(line);
@@ -752,26 +768,6 @@ void TextBlocksDetectionUtils::createTextBlock(const vector<PdfTextLine*>& lines
   block->hangingIndent = computeHangingIndent(block);
 
   blocks->push_back(block);
-}
-
-
-
-// _________________________________________________________________________________________________
-bool TextBlocksDetectionUtils::computeIsContinuationOfItem(
-      const PdfTextLine* line,
-      const unordered_set<string>* potentialFootnoteLabels) {
-  assert(line);
-
-  // The line is not a continuation of an item (a footnote) if it does not have a parent line.
-  const PdfTextLine* parentLine = line->parentLine;
-  if (!parentLine) {
-    return false;
-  }
-
-  // The line is a continuation of an item (a footnote) if the parent line is the first line or a
-  // continuation of an item (a footnote).
-  return computeIsFirstLineOfItem(parentLine, potentialFootnoteLabels) ||
-         computeIsContinuationOfItem(parentLine, potentialFootnoteLabels);
 }
 
 }  // namespace ppp::utils
