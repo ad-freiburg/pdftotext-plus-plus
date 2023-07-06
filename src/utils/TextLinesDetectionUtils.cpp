@@ -7,11 +7,8 @@
  */
 
 #include <stack>
-#include <string>
 #include <tuple>
-#include <unordered_set>
 #include <utility>  // std::pair
-#include <vector>
 
 #include "./Counter.h"
 #include "./MathUtils.h"
@@ -19,22 +16,13 @@
 #include "./TextLinesDetectionUtils.h"
 
 using std::make_tuple;
+using std::pair;
 using std::stack;
-using std::string;
-using std::unordered_set;
-using std::vector;
 
 using ppp::utils::counter::DoubleCounter;
-using ppp::utils::elements::computeHasEqualFont;
-using ppp::utils::elements::computeHasEqualFontSize;
-using ppp::utils::elements::computeHasEqualLeftX;
-using ppp::utils::elements::computeLeftXOffset;
-using ppp::utils::elements::computeMaxXOverlapRatio;
-using ppp::utils::elements::computeRightXOffset;
 using ppp::utils::elements::computeVerticalGap;
 using ppp::utils::math::equal;
 using ppp::utils::math::equalOrLarger;
-using ppp::utils::math::equalOrSmaller;
 using ppp::utils::math::larger;
 using ppp::utils::math::round;
 using ppp::utils::math::smaller;
@@ -52,7 +40,7 @@ TextLinesDetectionUtils::TextLinesDetectionUtils(const TextLinesDetectionConfig&
 TextLinesDetectionUtils::~TextLinesDetectionUtils() = default;
 
 // _________________________________________________________________________________________________
-void TextLinesDetectionUtils::computeTextLineHierarchy(const PdfPage* page) {
+void TextLinesDetectionUtils::computeTextLineHierarchy(const PdfPage* page) const {
   assert(page);
 
   // Do nothing if the page does not contain any segments.
@@ -148,7 +136,7 @@ void TextLinesDetectionUtils::computeTextLineHierarchy(const PdfPage* page) {
 
 // _________________________________________________________________________________________________
 tuple<double, double, double, double> TextLinesDetectionUtils::computeTrimBox(
-    const PdfPageSegment* segment) {
+    const PdfPageSegment* segment) const {
   assert(segment);
 
   // Initialize the coordinates of the trim box with the respective coordinates of the bounding box.

@@ -148,6 +148,32 @@ bool between(double d, double lower, double upper,
  */
 double round(double d, unsigned int numDecimals = 0);
 
+/**
+ * This method returns the minimum of the two double values.
+ *
+ * @param d1
+ *    The first double value.
+ * @param d2
+ *    The second double value.
+ *
+ * @return
+ *    The minimum of the two double values.
+ */
+double minimum(double d1, double d2);
+
+/**
+ * This method returns the maximum of the two double values.
+ *
+ * @param d1
+ *    The first double value.
+ * @param d2
+ *    The second double value.
+ *
+ * @return
+ *    The maximum of the two double values.
+ */
+double maximum(double d1, double d2);
+
 }  // namespace ppp::utils::math
 
 #endif  // UTILS_MATHUTILS_H_

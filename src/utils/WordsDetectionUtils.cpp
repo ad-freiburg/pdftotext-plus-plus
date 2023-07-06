@@ -1,25 +1,24 @@
 /**
  * Copyright 2023, University of Freiburg,
- * Chair of Algorithms and Data Structures.
+ * Chair of Algorithms and Data Structurestrings.
  * Author: Claudius Korzen <korzen@cs.uni-freiburg.de>.
  *
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include <algorithm>  // min, max
 #include <string>
 #include <vector>
 
 #include "../PdfDocument.h"
 #include "./Counter.h"
+#include "./MathUtils.h"
 #include "./TextUtils.h"
 #include "./WordsDetectionUtils.h"
 
-using std::max;
-using std::min;
-
 using ppp::utils::counter::DoubleCounter;
 using ppp::utils::counter::StringCounter;
+using ppp::utils::math::maximum;
+using ppp::utils::math::minimum;
 using ppp::utils::text::createRandomString;
 
 // =================================================================================================
@@ -35,12 +34,10 @@ WordsDetectionUtils::WordsDetectionUtils(const WordsDetectionConfig& config) {
 WordsDetectionUtils::~WordsDetectionUtils() = default;
 
 // _________________________________________________________________________________________________
-PdfWord* WordsDetectionUtils::createWord(const vector<PdfCharacter*>& characters,
-    const PdfDocument* doc) {
+PdfWord* WordsDetectionUtils::createWord(const vector<PdfCharacter*>& characters) const {
   assert(!characters.empty());
 
   PdfWord* word = new PdfWord();
-  word->doc = doc;
 
   // Create a (unique) id.
   word->id = createRandomString(_config.idLength, "word-");
@@ -55,10 +52,10 @@ PdfWord* WordsDetectionUtils::createWord(const vector<PdfCharacter*>& characters
   string text;
   for (auto* ch : characters) {
     // Update the x,y-coordinates of the bounding box.
-    word->pos->leftX = min(word->pos->leftX, ch->pos->leftX);
-    word->pos->upperY = min(word->pos->upperY, ch->pos->upperY);
-    word->pos->rightX = max(word->pos->rightX, ch->pos->rightX);
-    word->pos->lowerY = max(word->pos->lowerY, ch->pos->lowerY);
+    word->pos->leftX = minimum(word->pos->leftX, ch->pos->leftX);
+    word->pos->upperY = minimum(word->pos->upperY, ch->pos->upperY);
+    word->pos->rightX = maximum(word->pos->rightX, ch->pos->rightX);
+    word->pos->lowerY = maximum(word->pos->lowerY, ch->pos->lowerY);
 
     // Compose the text. If the char was merged with a diacritic mark, append the text with the
     // diacritic mark. If the char is a diacritic mark which was merged with a base char, ignore
@@ -96,6 +93,8 @@ PdfWord* WordsDetectionUtils::createWord(const vector<PdfCharacter*>& characters
 
   // Set the chars.
   word->characters = characters;
+
+  word->doc = characters[0]->doc;
 
   return word;
 }

@@ -578,7 +578,7 @@ struct TextBlocksDetectionConfig : BaseConfig {
    * @return
    *    The threshold.
    */
-  constexpr double getCenteringXOffsetEqualTolerance(const PdfTextLine* line) {
+  constexpr double getCenteringXOffsetEqualTolerance(const PdfTextLine* line) const {
     return line->doc ? 2.0 * line->doc->avgCharWidth : 0.0;
   }
 

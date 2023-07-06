@@ -23,11 +23,11 @@ using std::pair;
 namespace ppp::utils::elements {
 
 /**
- * This method computes the horizontal gap between two elements.
+ * This method computes the horizontal gap between two page elements.
  *
  * It first checks which of the two elements is the leftmost element, that is: which of the
  * elements has the minimum leftX. Let e1 be the leftmost element. The horizontal gap is then
- * computed as: e2.leftX - e1.rightX. Here is an example of the value actually computed:
+ * computed as: e2.leftX - e1.rightX. Here is an example of which value is actually computed:
  *
  *     e1.rightX       e2.leftX
  *             v       v
@@ -51,11 +51,11 @@ namespace ppp::utils::elements {
 double computeHorizontalGap(const PdfElement* e1, const PdfElement* e2);
 
 /**
- * This method computes the vertical gap between two elements.
+ * This method computes the vertical gap between two page elements.
  *
  * It first checks which of the two elements is the upper element, that is: which of the elements
  * has the minimum upperY. Let e1 be the upper element. The vertical gap is then computed as:
- * e2.upperY - e1.lowerY. Here is an example of the value actually computed:
+ * e2.upperY - e1.lowerY. Here is an example of which value is actually computed:
  *
  *              -------------------
  *               A text line.
@@ -81,8 +81,8 @@ double computeVerticalGap(const PdfElement* e1, const PdfElement* e2);
  * This method computes the overlap ratios between the intervals [s1, e1] and [s2, e2]. The
  * returned value is a pair of doubles. The first double represents the percentage of the first
  * interval that is overlapped by the second interval. The second double represents the percentage
- * of the second interval that is overlapped by the first interval. Here are three examples of the
- * values actually computed:
+ * of the second interval that is overlapped by the first interval. Here are three examples of
+ * which values are actually computed:
  *
  * (1) Both intervals are   |   (2) The intervals do not   |   (3) Interval 1 is [1,7],
  *     equal:               |       overlap:               |       interval 2 is [4,16]:
@@ -114,15 +114,15 @@ double computeVerticalGap(const PdfElement* e1, const PdfElement* e2);
 pair<double, double> computeOverlapRatios(double s1, double e1, double s2, double e2);
 
 /**
- * This method computes the horizontal overlap ratios between the two given elements, that is:
+ * This method computes the horizontal overlap ratios between the two given page elements, that is:
  * the overlap ratios between [elem1.leftX, elem1.rightX] and [elem2.leftX, elem2.rightX].
  * For more information about the concept behind overlap ratios, see the comment of the
  * computeOverlapRatios() method.
  *
  * @param elem1
- *    The first element to process.
+ *    The first page element to process.
  * @param elem2
- *    The second element to process.
+ *    The second page element to process.
  *
  * @return
  *    A pair of doubles representing the percentages of the elements which are overlapped
@@ -131,15 +131,15 @@ pair<double, double> computeOverlapRatios(double s1, double e1, double s2, doubl
 pair<double, double> computeXOverlapRatios(const PdfElement* elem1, const PdfElement* elem2);
 
 /**
- * This method computes the vertical overlap ratios between the two given elements, that is:
+ * This method computes the vertical overlap ratios between the two given page elements, that is:
  * the overlap ratios between [elem1.upperY, elem1.lowerY] and [elem2.upperY, elem2.lowerY].
  * For more information about the concept behind overlap ratios, see the comment of the
  * computeOverlapRatios() method.
  *
  * @param elem1
- *    The first element to process.
+ *    The first page element to process.
  * @param elem2
- *    The second element to process.
+ *    The second page element to process.
  *
  * @return
  *    A pair of doubles representing the percentages of the elements which are overlapped
@@ -148,15 +148,15 @@ pair<double, double> computeXOverlapRatios(const PdfElement* elem1, const PdfEle
 pair<double, double> computeYOverlapRatios(const PdfElement* elem1, const PdfElement* elem2);
 
 /**
- * This method computes the maximum of the horizontal overlap ratios between the two given elements,
- * that is: max(computeOverlapRatios(elem1.leftX, elem1.rightX, elem2.leftX, elem2.rightX)).
+ * This method computes the maximum of the horizontal overlap ratios between the two given page
+ * elements, i.e: max(computeOverlapRatios(elem1.leftX, elem1.rightX, elem2.leftX, elem2.rightX)).
  * For more information about the concept behind overlap ratios, see the comment of the
  * computeOverlapRatios() method.
  *
  * @param elem1
- *    The first element to process.
+ *    The first page element to process.
  * @param elem2
- *    The second element to process.
+ *    The second page element to process.
  *
  * @return
  *    The maximum horizontal overlap ratio between the two given elements.
@@ -164,25 +164,23 @@ pair<double, double> computeYOverlapRatios(const PdfElement* elem1, const PdfEle
 double computeMaxXOverlapRatio(const PdfElement* elem1, const PdfElement* elem2);
 
 /**
- * This method computes the maximum of the vertical overlap ratios between the two given elements,
- * that is: max(computeOverlapRatios(elem1.upperY, elem1.lowerY, elem2.upperY, elem2.lowerY)).
+ * This method computes the maximum of the vertical overlap ratios between the two given page
+ * elements, i.e: max(computeOverlapRatios(elem1.upperY, elem1.lowerY, elem2.upperY, elem2.lowerY)).
  * For more information about the concept behind overlap ratios, see the comment of the
  * computeOverlapRatios() method.
  *
  * @param elem1
- *    The first element to process.
+ *    The first page element to process.
  * @param elem2
- *    The second element to process.
+ *    The second page element to process.
  *
  * @return
  *    The maximum vertical overlap ratio between the two given elements.
  */
 double computeMaxYOverlapRatio(const PdfElement* elem1, const PdfElement* elem2);
 
-// =================================================================================================
-
 /**
- * This method checks if the leftX values of the two given elements are (approximately) equal.
+ * This method checks if the leftX values of the two given page elements are (approximately) equal.
  *
  * Whether or not the two values are considered equal depends on the given tolerance, which
  * represents the maximum allowed difference between the values.
@@ -190,11 +188,11 @@ double computeMaxYOverlapRatio(const PdfElement* elem1, const PdfElement* elem2)
  * Formally, this method returns true if: abs(elem1.leftX - elem2.leftX) <= tolerance.
  *
  * @param elem1
- *    The first element to process.
+ *    The first page element to process.
  * @param elem2
- *    The second element to process.
+ *    The second page element to process.
  * @param tolerance
- *    The (absolute) tolerance.
+ *    The tolerance.
  *
  * @return
  *    True if the leftX values of the two elements are (approximately) equal, false otherwise.
@@ -202,7 +200,7 @@ double computeMaxYOverlapRatio(const PdfElement* elem1, const PdfElement* elem2)
 bool computeHasEqualLeftX(const PdfElement* elem1, const PdfElement* elem2, double tolerance);
 
 /**
- * This method checks if the upperY values of the two given elements are (approximately) equal.
+ * This method checks if the upperY values of the two given page elements are (approximately) equal.
  *
  * Whether or not the two values are considered equal depends on the given tolerance, which
  * represents the maximum allowed difference between the values.
@@ -210,11 +208,11 @@ bool computeHasEqualLeftX(const PdfElement* elem1, const PdfElement* elem2, doub
  * Formally, this method returns true if: abs(elem1.upperY - elem2.upperY) <= tolerance.
  *
  * @param elem1
- *    The first element to process.
+ *    The first page element to process.
  * @param elem2
- *    The second element to process.
+ *    The second page element to process.
  * @param tolerance
- *    The (absolute) tolerance.
+ *    The tolerance.
  *
  * @return
  *    True if the upperY values of the two elements are (approximately) equal, false otherwise.
@@ -222,7 +220,7 @@ bool computeHasEqualLeftX(const PdfElement* elem1, const PdfElement* elem2, doub
 bool computeHasEqualUpperY(const PdfElement* elem1, const PdfElement* elem2, double tolerance);
 
 /**
- * This method checks if the rightX values of the two given elements are (approximately) equal.
+ * This method checks if the rightX values of the two given page elements are (approximately) equal.
  *
  * Whether or not the two values are considered equal depends on the given tolerance, which
  * represents the maximum allowed difference between the values.
@@ -230,11 +228,11 @@ bool computeHasEqualUpperY(const PdfElement* elem1, const PdfElement* elem2, dou
  * Formally, this method returns true if: abs(elem1.rightX - elem2.rightX) <= tolerance.
  *
  * @param elem1
- *    The first element to process.
+ *    The first page element to process.
  * @param elem2
- *    The second element to process.
+ *    The second page element to process.
  * @param tolerance
- *    The (absolute) tolerance.
+ *    The tolerance.
  *
  * @return
  *    True if the rightX values of the two elements are (approximately) equal, false otherwise.
@@ -242,7 +240,7 @@ bool computeHasEqualUpperY(const PdfElement* elem1, const PdfElement* elem2, dou
 bool computeHasEqualRightX(const PdfElement* elem1, const PdfElement* elem2, double tolerance);
 
 /**
- * This method checks if the lowerY values of the two given elements are (approximately) equal.
+ * This method checks if the lowerY values of the two given page elements are (approximately) equal.
  *
  * Whether or not the two values are considered equal depends on the given tolerance, which
  * represents the maximum allowed difference between the values.
@@ -250,11 +248,11 @@ bool computeHasEqualRightX(const PdfElement* elem1, const PdfElement* elem2, dou
  * Formally, this method returns true if: abs(elem1.lowerY - elem2.lowerY) <= tolerance.
  *
  * @param elem1
- *    The first element to process.
+ *    The first page element to process.
  * @param elem2
- *    The second element to process.
+ *    The second page element to process.
  * @param tolerance
- *    The (absolute) tolerance.
+ *    The tolerance.
  *
  * @return
  *    True if the lowerY values of the two elements are (approximately) equal, false otherwise.
@@ -264,15 +262,15 @@ bool computeHasEqualLowerY(const PdfElement* elem1, const PdfElement* elem2, dou
 // =================================================================================================
 
 /**
- * This method computes the offset of the leftX value of the first element compared to the leftX
- * value of the second element.
+ * This method computes the offset of the leftX value of the first page element compared to the
+ * leftX value of the second page element.
  *
  * Formally, this method computes elem1.leftX - elem2.leftX.
  *
  * @param elem1
- *   The first element to process.
+ *   The first page element to process.
  * @param elem2
- *   The second element to process.
+ *   The second page element to process.
  *
  * @return
  *    The offset of elem1.leftX compared to elem2.leftX.
@@ -280,15 +278,15 @@ bool computeHasEqualLowerY(const PdfElement* elem1, const PdfElement* elem2, dou
 double computeLeftXOffset(const PdfElement* elem1, const PdfElement* elem2);
 
 /**
- * This method computes the offset of the rightX value of the first element compared to the rightX
- * value of the second element.
+ * This method computes the offset of the rightX value of the first page element compared to the
+ * rightX value of the second page element.
  *
  * Formally, this method computes elem1.rightX - elem2.rightX.
  *
  * @param elem1
- *   The first element to process.
+ *   The first page element to process.
  * @param elem2
- *   The second element to process.
+ *   The second page element to process.
  *
  * @return
  *    The offset of elem1.rightX compared to elem2.rightX.
@@ -299,9 +297,9 @@ double computeRightXOffset(const PdfElement* elem1, const PdfElement* elem2);
  * This method returns true if the given text elements have the same font.
  *
  * @param elem1
- *    The first element to process.
+ *    The first text element to process.
  * @param elem2
- *    The second element to process.
+ *    The second text element to process.
  *
  * @return
  *    True if the given text elements have the same font, false otherwise.
@@ -321,24 +319,13 @@ bool computeHasEqualFont(const PdfTextElement* elem1, const PdfTextElement* elem
  * @param elem2
  *    The second element to process.
  * @param tolerance
- *    The maximum allowed (absolute) tolerance.
+ *    The tolerance.
  *
  * @return
- *    True if the given elements exhibit (approximately) the same font size, false otherwise.
+ *    True if the given elements have (approximately) the same font size, false otherwise.
  */
 bool computeHasEqualFontSize(const PdfTextElement* elem1, const PdfTextElement* elem2,
     double tolerance);
-
-/**
- * This method returns true if the text of the given text element starts with an uppercase.
- *
- * @param element
- *    The element to process.
- *
- * @return
- *    True if the text of the given text element starts with an uppercase, false otherwise.
- */
-bool computeStartsWithUpper(const PdfTextElement* element);
 
 }  // namespace ppp::utils::elements
 

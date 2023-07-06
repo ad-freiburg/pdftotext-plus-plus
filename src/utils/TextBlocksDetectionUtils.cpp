@@ -6,7 +6,6 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include <algorithm>  // std::max, std::min
 #include <regex>
 #include <string>
 #include <unordered_set>
@@ -19,8 +18,6 @@
 #include "./TextUtils.h"
 #include "./TextBlocksDetectionUtils.h"
 
-using std::max;
-using std::min;
 using std::pair;
 using std::regex_search;
 using std::smatch;
@@ -43,6 +40,8 @@ using ppp::utils::math::equal;
 using ppp::utils::math::equalOrLarger;
 using ppp::utils::math::equalOrSmaller;
 using ppp::utils::math::larger;
+using ppp::utils::math::maximum;
+using ppp::utils::math::minimum;
 using ppp::utils::math::round;
 using ppp::utils::math::smaller;
 using ppp::utils::text::createRandomString;
@@ -61,23 +60,24 @@ TextBlocksDetectionUtils::TextBlocksDetectionUtils(const TextBlocksDetectionConf
 TextBlocksDetectionUtils::~TextBlocksDetectionUtils() = default;
 
 // _________________________________________________________________________________________________
-bool TextBlocksDetectionUtils::computeIsCentered(const PdfTextLine* l1, const PdfTextLine* l2) {
-  assert(l1);
-  assert(l2);
+bool TextBlocksDetectionUtils::computeIsCentered(const PdfTextLine* line1,
+    const PdfTextLine* line2) const {
+  assert(line1);
+  assert(line2);
 
   // The lines are not centered when the maximum x-overlap ratio between the lines is smaller than
   // the threshold.
-  double maxXOverlapRatio = computeMaxXOverlapRatio(l1, l2);
+  double maxXOverlapRatio = computeMaxXOverlapRatio(line1, line2);
   if (smaller(maxXOverlapRatio, _config.centeringXOverlapRatioThreshold)) {
     return false;
   }
 
   // The lines are not centered when the leftX-offset and the rightX-offset between the lines
   // are not equal.
-  double absLeftXOffset = abs(computeLeftXOffset(l1, l2));
-  double absRightXOffset = abs(computeRightXOffset(l1, l2));
+  double absLeftXOffset = abs(computeLeftXOffset(line1, line2));
+  double absRightXOffset = abs(computeRightXOffset(line1, line2));
 
-  double xOffsetTolerance = _config.getCenteringXOffsetEqualTolerance(l1);
+  double xOffsetTolerance = _config.getCenteringXOffsetEqualTolerance(line1);
   if (!equal(absLeftXOffset, absRightXOffset, xOffsetTolerance)) {
     return false;
   }
@@ -86,7 +86,7 @@ bool TextBlocksDetectionUtils::computeIsCentered(const PdfTextLine* l1, const Pd
 }
 
 // _________________________________________________________________________________________________
-bool TextBlocksDetectionUtils::computeIsTextLinesCentered(const PdfTextBlock* block) {
+bool TextBlocksDetectionUtils::computeIsTextLinesCentered(const PdfTextBlock* block) const {
   assert(block);
 
   // The lines in the block are not obviously not centered if the block does not contain any lines.
@@ -151,7 +151,7 @@ bool TextBlocksDetectionUtils::computeIsTextLinesCentered(const PdfTextBlock* bl
 }
 
 // _________________________________________________________________________________________________
-bool TextBlocksDetectionUtils::computeIsEmphasized(const PdfTextElement* element) {
+bool TextBlocksDetectionUtils::computeIsEmphasized(const PdfTextElement* element) const {
   assert(element);
   assert(element->doc);
 
@@ -206,7 +206,7 @@ bool TextBlocksDetectionUtils::computeIsEmphasized(const PdfTextElement* element
 
 // _________________________________________________________________________________________________
 bool TextBlocksDetectionUtils::computeHasPrevLineCapacity(const PdfTextLine* prevLine,
-    const PdfTextLine* line) {
+    const PdfTextLine* line) const {
   assert(line);
 
   // The previous line has of course no capacity if there is no previous line.
@@ -230,7 +230,7 @@ bool TextBlocksDetectionUtils::computeHasPrevLineCapacity(const PdfTextLine* pre
 }
 
 // _________________________________________________________________________________________________
-double TextBlocksDetectionUtils::computeHangingIndent(const PdfTextBlock* block) {
+double TextBlocksDetectionUtils::computeHangingIndent(const PdfTextBlock* block) const {
   assert(block);
 
   // The number of lines with a length larger than the threshold.
@@ -384,7 +384,7 @@ double TextBlocksDetectionUtils::computeHangingIndent(const PdfTextBlock* block)
 }
 
 // _________________________________________________________________________________________________
-void TextBlocksDetectionUtils::computeTextLineMargins(const PdfTextBlock* block) {
+void TextBlocksDetectionUtils::computeTextLineMargins(const PdfTextBlock* block) const {
   assert(block);
 
   const PdfTextBlock* prevBlock = block->prevBlock;
@@ -398,8 +398,8 @@ void TextBlocksDetectionUtils::computeTextLineMargins(const PdfTextBlock* block)
     double rightMargin = block->segment->pos->rightX - block->pos->rightX;
     double isCentered = equal(leftMargin, rightMargin, block->doc->avgCharWidth);
     if (!isCentered) {
-      if (prevBlock) { blockTrimRightX = max(blockTrimRightX, prevBlock->trimRightX); }
-      if (nextBlock) { blockTrimRightX = max(blockTrimRightX, nextBlock->trimRightX); }
+      if (prevBlock) { blockTrimRightX = maximum(blockTrimRightX, prevBlock->trimRightX); }
+      if (nextBlock) { blockTrimRightX = maximum(blockTrimRightX, nextBlock->trimRightX); }
     }
   }
 
@@ -412,7 +412,7 @@ void TextBlocksDetectionUtils::computeTextLineMargins(const PdfTextBlock* block)
 
 // _________________________________________________________________________________________________
 bool TextBlocksDetectionUtils::computeIsFirstLineOfItem(const PdfTextLine* line,
-      const unordered_set<string>* potentialFootnoteLabels) {
+      const unordered_set<string>* potentialFootnoteLabels) const {
   assert(line);
 
   // The line is not the first line of an item if it does not contain any words.
@@ -494,7 +494,7 @@ bool TextBlocksDetectionUtils::computeIsFirstLineOfItem(const PdfTextLine* line,
 
 // _________________________________________________________________________________________________
 bool TextBlocksDetectionUtils::computeIsContinuationOfItem(const PdfTextLine* line,
-      const unordered_set<string>* potentialFootnoteLabels) {
+      const unordered_set<string>* potentialFootnoteLabels) const {
   assert(line);
 
   // The line is not a continuation of an item (a footnote) if it does not have a parent line.
@@ -511,7 +511,7 @@ bool TextBlocksDetectionUtils::computeIsContinuationOfItem(const PdfTextLine* li
 
 // _________________________________________________________________________________________________
 void TextBlocksDetectionUtils::computePotentialFootnoteLabels(const PdfTextLine* line,
-      unordered_set<string>* result) {
+      unordered_set<string>* result) const {
   assert(line);
   assert(result);
 
@@ -574,7 +574,7 @@ void TextBlocksDetectionUtils::computePotentialFootnoteLabels(const PdfTextLine*
 }
 
 // _________________________________________________________________________________________________
-bool TextBlocksDetectionUtils::computeIsPrefixedByItemLabel(const PdfTextLine* line) {
+bool TextBlocksDetectionUtils::computeIsPrefixedByItemLabel(const PdfTextLine* line) const {
   assert(line);
 
   // The line is not prefixed by an enumeration item label if it does not contain any words.
@@ -613,7 +613,7 @@ bool TextBlocksDetectionUtils::computeIsPrefixedByItemLabel(const PdfTextLine* l
 
 // _________________________________________________________________________________________________
 bool TextBlocksDetectionUtils::computeIsPrefixedByFootnoteLabel(const PdfTextLine* line,
-      const unordered_set<string>* potentialFootnoteLabels) {
+      const unordered_set<string>* potentialFootnoteLabels) const {
   assert(line);
 
   // The line is not prefixed by a footnote label if it does not contain any words.
@@ -644,7 +644,7 @@ bool TextBlocksDetectionUtils::computeIsPrefixedByFootnoteLabel(const PdfTextLin
 
 // _________________________________________________________________________________________________
 PdfFigure* TextBlocksDetectionUtils::computeOverlapsFigure(const PdfElement* element,
-    const vector<PdfFigure*>& figures) {
+    const vector<PdfFigure*>& figures) const {
   assert(element);
 
   for (auto* figure : figures) {
@@ -663,7 +663,7 @@ PdfFigure* TextBlocksDetectionUtils::computeOverlapsFigure(const PdfElement* ele
 
 // _________________________________________________________________________________________________
 void TextBlocksDetectionUtils::createTextBlock(const vector<PdfTextLine*>& lines,
-    vector<PdfTextBlock*>* blocks) {
+    vector<PdfTextBlock*>* blocks) const {
   assert(!lines.empty());
   assert(blocks);
 
@@ -699,24 +699,24 @@ void TextBlocksDetectionUtils::createTextBlock(const vector<PdfTextLine*>& lines
     PdfTextLine* currLine = lines[i];
     PdfTextLine* nextLine = i < lines.size() - 1 ? lines[i+1] : nullptr;
 
-    double lineMinX = min(currLine->pos->leftX, currLine->pos->rightX);
-    double lineMinY = min(currLine->pos->upperY, currLine->pos->lowerY);
-    double lineMaxX = max(currLine->pos->leftX, currLine->pos->rightX);
-    double lineMaxY = max(currLine->pos->upperY, currLine->pos->lowerY);
+    double lineMinX = minimum(currLine->pos->leftX, currLine->pos->rightX);
+    double lineMinY = minimum(currLine->pos->upperY, currLine->pos->lowerY);
+    double lineMaxX = maximum(currLine->pos->leftX, currLine->pos->rightX);
+    double lineMaxY = maximum(currLine->pos->upperY, currLine->pos->lowerY);
 
     // Compute the bounding box.
-    block->pos->leftX = min(block->pos->leftX, lineMinX);
-    block->pos->upperY = min(block->pos->upperY, lineMinY);
-    block->pos->rightX = max(block->pos->rightX, lineMaxX);
-    block->pos->lowerY = max(block->pos->lowerY, lineMaxY);
+    block->pos->leftX = minimum(block->pos->leftX, lineMinX);
+    block->pos->upperY = minimum(block->pos->upperY, lineMinY);
+    block->pos->rightX = maximum(block->pos->rightX, lineMaxX);
+    block->pos->lowerY = maximum(block->pos->lowerY, lineMaxY);
 
     // Compute the trim box.
     // TODO(korzen): block->segment->trimLeftX was computed by page_segment_utils::computeTrimBox()
     // which does not exist anymore.
-    block->trimLeftX = max(block->pos->leftX, block->segment->trimLeftX);
-    block->trimUpperY = max(block->pos->upperY, block->segment->trimUpperY);
-    block->trimRightX = min(block->pos->rightX, block->segment->trimRightX);
-    block->trimLowerY = min(block->pos->lowerY, block->segment->trimLowerY);
+    block->trimLeftX = maximum(block->pos->leftX, block->segment->trimLeftX);
+    block->trimUpperY = maximum(block->pos->upperY, block->segment->trimUpperY);
+    block->trimRightX = minimum(block->pos->rightX, block->segment->trimRightX);
+    block->trimLowerY = minimum(block->pos->lowerY, block->segment->trimLowerY);
 
     // Count the font names and font sizes, for computing the most frequent font name / font size.
     fontNameCounter[currLine->fontName]++;

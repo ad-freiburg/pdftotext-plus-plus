@@ -31,7 +31,7 @@ class WordsDetectionUtils {
    * The default constructor.
    *
    * @param config
-   *   The configurtion to use.
+   *   The configuration to use.
    */
   explicit WordsDetectionUtils(const WordsDetectionConfig& config);
 
@@ -43,13 +43,11 @@ class WordsDetectionUtils {
    *
    * @param characters
    *   The characters from which to create the word.
-   * @param doc
-   *   The PDF document of which the word is a part of.
    *
    * @return
    *    The created word.
    */
-  PdfWord* createWord(const vector<PdfCharacter*>& chars, const PdfDocument* doc);
+  PdfWord* createWord(const vector<PdfCharacter*>& chars) const;
 
  private:
   // The configuration to use.

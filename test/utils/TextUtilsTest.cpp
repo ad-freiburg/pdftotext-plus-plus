@@ -23,6 +23,7 @@ using ppp::utils::text::escapeJson;
 using ppp::utils::text::join;
 using ppp::utils::text::shorten;
 using ppp::utils::text::splitIntoWords;
+using ppp::utils::text::startsWithUpper;
 using ppp::utils::text::strip;
 using ppp::utils::text::wrap;
 
@@ -105,6 +106,14 @@ TEST(TextUtilsTest, endsWithSentenceDelimiter) {
   ASSERT_TRUE(endsWithSentenceDelimiter("The Fantastic Four.", ".!"));
   ASSERT_TRUE(endsWithSentenceDelimiter("The Fantastic Four!", ".!"));
   ASSERT_FALSE(endsWithSentenceDelimiter("The Fantastic Four?", ".!"));
+}
+
+// _________________________________________________________________________________________________
+TEST(TextUtilsTest, startsWithUpper) {
+  ASSERT_FALSE(startsWithUpper(""));
+  ASSERT_FALSE(startsWithUpper("big"));
+  ASSERT_TRUE(startsWithUpper("Apple"));
+  ASSERT_FALSE(startsWithUpper("123"));
 }
 
 // _________________________________________________________________________________________________
@@ -197,6 +206,7 @@ TEST(TextUtilsTest, wrap) {
   string s3 = wrap("Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam.", 20, 0);
   ASSERT_EQ(s3, "Lorem ipsum dolor\nsit amet, consetetur\nsadipscing elitr,\nsed diam.");
 
+  // TODO(korzen): Shouldn't be the first line also indented?
   string s4 = wrap("Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam.", 35, 3);
   ASSERT_EQ(s4, "   Lorem ipsum dolor sit amet,\n   consetetur sadipscing elitr, sed\n   diam.");
 }

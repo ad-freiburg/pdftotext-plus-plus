@@ -38,7 +38,7 @@ namespace ppp::utils::text {
  * @param words
  *   The vector to which the computed words should be appended.
  * @param wordDelimiters
- *   The characters to consider as a word delimiter.
+ *   The characters to consider as word delimiters.
  */
 void splitIntoWords(const wstring& text, vector<wstring>* words,
     const char* const wordDelimiters = WORD_DELIMITERS_ALPHABET);
@@ -52,7 +52,7 @@ void splitIntoWords(const wstring& text, vector<wstring>* words,
  * @param words
  *   The vector to which the computed words should be appended.
  * @param wordDelimiters
- *   The characters to consider as a word delimiter.
+ *   The characters to consider as word delimiters.
  */
 void splitIntoWords(const string& text, vector<string>* words,
     const char* const wordDelimiters = WORD_DELIMITERS_ALPHABET);
@@ -61,9 +61,9 @@ void splitIntoWords(const string& text, vector<string>* words,
  * This method returns true if the given text ends with a sentence delimiter.
  *
  * @param text
- *    The text to process.
- * @param wordDelimiters
- *   The characters to consider as a sentence delimiter.
+ *   The text to process.
+ * @param sentenceDelimiters
+ *   The characters to consider as sentence delimiters.
  *
  * @return
  *    True if the given text ends with a sentence delimiter, false otherwise.
@@ -72,8 +72,19 @@ bool endsWithSentenceDelimiter(const string& text,
     const char* const sentenceDelimiters = SENTENCE_DELIMITERS_ALPHABET);
 
 /**
- * This method creates a random string of the given length, consisting of alpha-numerical
- * characters. Prepends the given prefix to the created string.
+ * This method returns true if the given string starts with an uppercase character.
+ *
+ * @param str
+ *    The string to process.
+ *
+ * @return
+ *    True if the given string starts with an uppercase character, false otherwise.
+ */
+bool startsWithUpper(const string& string);
+
+/**
+ * This method creates a random string of the given length, consisting of characters chosen from
+ * the given alphabet. Prepends the given prefix to the created string.
  *
  * This method is used to, for example, create the unique ids of the extracted text elements.
  *
@@ -81,11 +92,14 @@ bool endsWithSentenceDelimiter(const string& text,
  *    The length of the string to create.
  * @param prefix
  *    The prefix to prepend to the string.
+ * @param alphabet
+ *    The alphabet from which to choose the characters.
  *
  * @return
  *    The created string.
  */
-string createRandomString(unsigned int len, const string& prefix = "");
+string createRandomString(unsigned int len, const string& prefix = "",
+    const char* const alphabet = ALPHA_NUM);
 
 /**
  * This method escapes the given string to a valid JSON string. For example, it escapes double-
@@ -121,7 +135,7 @@ string shorten(const string& str, unsigned int len = 40);
  *   The string to process.
  *
  * @return
- *   The string without leading and trailing whitespaces.
+ *   A copy of the string without leading and trailing whitespaces.
  */
 string strip(const string& str);
 

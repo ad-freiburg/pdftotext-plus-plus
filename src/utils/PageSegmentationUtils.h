@@ -9,13 +9,11 @@
 #ifndef UTILS_PAGESEGMENTATIONUTILS_H_
 #define UTILS_PAGESEGMENTATIONUTILS_H_
 
-#include <tuple>
 #include <vector>
 
 #include "../Config.h"
 #include "../PdfDocument.h"
 
-using std::tuple;
 using std::vector;
 
 using ppp::config::PageSegmentationConfig;
@@ -41,15 +39,13 @@ class PageSegmentationUtils {
   ~PageSegmentationUtils();
 
   /**
-   * This method creates a new `PdfPageSegment` from the given elements, computes the respective
-   * properties of the segment and returns the created segment.
+   * This method creates a new segment consisting of the given page elements, computes the
+   * respective properties of the segment and returns the segment.
    *
-   * @param elems
-   *   The elements to create a segment from.
-   * @param doc
-   *   The PDF document of which this segment is a part.
+   * @param elements
+   *   The page elements from which to create a segment.
    */
-  PdfPageSegment* createPageSegment(const vector<PdfElement*>& elems, const PdfDocument* doc = 0);
+  PdfPageSegment* createPageSegment(const vector<PdfElement*>& elements);
 
  private:
   // The configuration to use.

@@ -124,7 +124,7 @@ void WordsDetection::detectWords(PdfPage* page) {
     // Check if the char starts a new word. If so, create a word from the characters of the
     // "active" word and start a new word.
     if (startsWord(currChar) && !_activeWord.characters.empty()) {
-      PdfWord* word = _utils->createWord(_activeWord.characters, _doc);
+      PdfWord* word = _utils->createWord(_activeWord.characters);
       word->rank = page->words.size();
       page->words.push_back(word);
 
@@ -159,7 +159,7 @@ void WordsDetection::detectWords(PdfPage* page) {
 
   // Don't forget to process the last word.
   if (!_activeWord.characters.empty()) {
-    PdfWord* word = _utils->createWord(_activeWord.characters, _doc);
+    PdfWord* word = _utils->createWord(_activeWord.characters);
     word->rank = page->words.size();
     page->words.push_back(word);
 

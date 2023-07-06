@@ -6,6 +6,7 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
+#include <algorithm>  // std::min, std::max
 #include <cassert>  // assert
 #include <cmath>  // fabs
 
@@ -55,6 +56,16 @@ double round(double d, unsigned int numDecimals) {
 
   double divisor = std::pow(10.0, numDecimals);
   return std::round(d * divisor) / divisor;
+}
+
+// _________________________________________________________________________________________________
+double minimum(double d1, double d2) {
+  return std::min(d1, d2);
+}
+
+// _________________________________________________________________________________________________
+double maximum(double d1, double d2) {
+  return std::max(d1, d2);
 }
 
 }  // namespace ppp::utils::math

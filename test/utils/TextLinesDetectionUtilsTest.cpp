@@ -26,7 +26,7 @@ using ppp::utils::math::round;
 // The path to the PDF file to process in the test cases below.
 static const char* PDF_FILE_PATH = "./test/pdfs/TextLinesDetectionUtilsTest.pdf";
 
-// The allowed tolerance on comparing two double values.
+// The tolerance to use on comparing two float values.
 static const double TOL = ppp::config::DEFAULT_DOUBLE_EQUAL_TOLERANCE;
 
 
@@ -141,7 +141,7 @@ TEST_F(TextLinesDetectionUtilsTest, computeTextLineHierarchy) {
 }
 
 // _________________________________________________________________________________________________
-// TODO(korzen): Add a test for a "normal" segment, without a line exceeding the column boundaries.
+// TODO(korzen): Add a test for a "normal" segment, without a line extending the column boundaries.
 TEST_F(TextLinesDetectionUtilsTest, computeTrimBox) {
   PdfPage* page = pdf->pages[1];
   PdfPageSegment* segment = page->segments[0];

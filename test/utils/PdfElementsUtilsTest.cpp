@@ -31,14 +31,13 @@ using ppp::utils::elements::computeMaxXOverlapRatio;
 using ppp::utils::elements::computeMaxYOverlapRatio;
 using ppp::utils::elements::computeOverlapRatios;
 using ppp::utils::elements::computeRightXOffset;
-using ppp::utils::elements::computeStartsWithUpper;
 using ppp::utils::elements::computeVerticalGap;
 using ppp::utils::elements::computeXOverlapRatios;
 using ppp::utils::elements::computeYOverlapRatios;
 
 // =================================================================================================
 
-// The allowed tolerance on comparing two float values.
+// The tolerance to use on comparing two float values.
 static const double TOL = ppp::config::DEFAULT_DOUBLE_EQUAL_TOLERANCE;
 
 // _________________________________________________________________________________________________
@@ -274,7 +273,6 @@ TEST(PdfElementsUtilsTest, computeHasEqualLeftX) {
   ASSERT_DEATH(computeHasEqualLeftX(&word1, nullptr, TOL), "");
   ASSERT_DEATH(computeHasEqualLeftX(nullptr, &word2, TOL), "");
 
-  // Check the standard behaviour.
   ASSERT_TRUE(computeHasEqualLeftX(&word1, &word1, TOL));
   ASSERT_TRUE(computeHasEqualLeftX(&word1, &word2, TOL));
   ASSERT_TRUE(computeHasEqualLeftX(&word2, &word1, TOL));
@@ -464,61 +462,3 @@ TEST(PdfElementsUtilsTest, computeHasEqualFontSize) {
   ASSERT_TRUE(computeHasEqualFontSize(&word2, &word3, 5.0));
   ASSERT_TRUE(computeHasEqualFontSize(&word3, &word2, 5.0));
 }
-
-// _________________________________________________________________________________________________
-TEST(PdfElementsUtilsTest, computeStartsWithUpper) {
-  PdfWord word0;
-  PdfWord word1;
-  PdfWord word2;
-  PdfWord word3;
-  PdfWord word4;
-  word1.text = "";
-  word2.text = "big";
-  word3.text = "Apple";
-  word4.text = "123";
-
-  // Input: one or more nullptrs.
-  ASSERT_DEATH(computeStartsWithUpper(nullptr), "");
-
-  // Check the standard behaviour.
-  ASSERT_FALSE(computeStartsWithUpper(&word0));
-  ASSERT_FALSE(computeStartsWithUpper(&word1));
-  ASSERT_FALSE(computeStartsWithUpper(&word2));
-  ASSERT_TRUE(computeStartsWithUpper(&word3));
-  ASSERT_FALSE(computeStartsWithUpper(&word4));
-}
-
-// _________________________________________________________________________________________________
-// TEST_F(PdfElementsUtilsTest, computeOverlapsFigurePdf1) {
-//   // TODO(korzen): Read from config
-//   double minXOverlapRatio = 0.5;
-//   double minYOverlapRatio = 0.5;
-
-//   PdfPage* page1 = pdf1->pages[1];
-//   std::vector<PdfFigure*>& figures = page1->figures;
-
-//   // Test the first line of the second page ("Lorem ipsum...").
-//   PdfTextLine* line = page1->segments[0]->lines[0];
-//   ASSERT_EQ(computeOverlapsFigure(line, minXOverlapRatio, minYOverlapRatio, figures), nullptr)
-//       << "Line: " << line->toString();
-
-//   // Test the second line of the second page ("vel ne dolore...").
-//   line = page1->segments[0]->lines[1];
-//   ASSERT_EQ(computeOverlapsFigure(line, minXOverlapRatio, minYOverlapRatio, figures), nullptr)
-//       << "Line: " << line->toString();
-
-//   // Test the first character ("f") in Figure 1 on the second page.
-//   PdfCharacter* ch = figures[0]->characters[0];
-//   ASSERT_EQ(computeOverlapsFigure(ch, minXOverlapRatio, minYOverlapRatio, figures), figures[0])
-//       << "Character: " << ch->toString();
-
-//   // Test the second character ("o") in Figure 1 on the second page.
-//   ch = figures[0]->characters[1];
-//   ASSERT_EQ(computeOverlapsFigure(ch, minXOverlapRatio, minYOverlapRatio, figures), figures[0])
-//       << "Character: " << ch->toString();
-
-//   // Test the third character ("o") in Figure 1 on the second page.
-//   ch = figures[0]->characters[2];
-//   ASSERT_EQ(computeOverlapsFigure(ch, minXOverlapRatio, minYOverlapRatio, figures), figures[0])
-//       << "Character: " << ch->toString();
-// }

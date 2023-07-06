@@ -31,7 +31,6 @@ using ppp::utils::TextBlocksDetectionUtils;
 using ppp::utils::elements::computeHasEqualFont;
 using ppp::utils::elements::computeHasEqualFontSize;
 using ppp::utils::elements::computeLeftXOffset;
-using ppp::utils::elements::computeStartsWithUpper;
 using ppp::utils::elements::computeVerticalGap;
 using ppp::utils::log::Logger;
 using ppp::utils::log::BLUE;
@@ -46,6 +45,7 @@ using ppp::utils::math::round;
 using ppp::utils::math::smaller;
 using ppp::utils::text::shorten;
 using ppp::utils::text::endsWithSentenceDelimiter;
+using ppp::utils::text::startsWithUpper;
 
 // =================================================================================================
 
@@ -631,7 +631,7 @@ Trool TextBlocksDetection::startsBlock_item(const PdfTextBlock* pBlock, const Pd
     // identify an item of the following form:
     //    (i) This is an item that continues in the next
     //  line. Note the smaller leftX of the second line.
-    if (!endsWithSentenceDelimiter(prevLine->text) && !computeStartsWithUpper(line)) {
+    if (!endsWithSentenceDelimiter(prevLine->text) && !startsWithUpper(line->text)) {
       _log->debug(p) << _q << BLUE << BOLD << " + prev line does not end with sentence delimiter "
           << "+ curr line does not start with an uppercase → continues block" << OFF << endl;
       return Trool::False;

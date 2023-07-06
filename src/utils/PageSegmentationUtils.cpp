@@ -6,10 +6,6 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include <algorithm>  // std::max
-#include <tuple>
-#include <unordered_map>
-#include <utility>  // std::pair
 #include <vector>
 
 #include "../Config.h"
@@ -17,16 +13,11 @@
 #include "./PageSegmentationUtils.h"
 #include "./TextUtils.h"
 
-using std::make_tuple;
-using std::max;
-using std::min;
-using std::pair;
-using std::tuple;
-using std::unordered_map;
-
 using ppp::config::PageSegmentationConfig;
 using ppp::utils::text::createRandomString;
 using ppp::utils::math::equalOrLarger;
+using ppp::utils::math::maximum;
+using ppp::utils::math::minimum;
 using ppp::utils::math::round;
 
 // =================================================================================================
@@ -42,10 +33,8 @@ PageSegmentationUtils::PageSegmentationUtils(const PageSegmentationConfig& confi
 PageSegmentationUtils::~PageSegmentationUtils() = default;
 
 // _________________________________________________________________________________________________
-PdfPageSegment* PageSegmentationUtils::createPageSegment(
-    const vector<PdfElement*>& elements, const PdfDocument* doc) {
+PdfPageSegment* PageSegmentationUtils::createPageSegment(const vector<PdfElement*>& elements) {
   PdfPageSegment* segment = new PdfPageSegment();
-  segment->doc = doc;
 
   // Create a (unique) id.
   segment->id = createRandomString(_config.idLength, "segment-");
@@ -55,14 +44,17 @@ PdfPageSegment* PageSegmentationUtils::createPageSegment(
 
   // Compute and set the coordinates of the bounding box.
   for (const auto* element : elements) {
-    segment->pos->leftX = min(segment->pos->leftX, element->pos->leftX);
-    segment->pos->upperY = min(segment->pos->upperY, element->pos->upperY);
-    segment->pos->rightX = max(segment->pos->rightX, element->pos->rightX);
-    segment->pos->lowerY = max(segment->pos->lowerY, element->pos->lowerY);
+    segment->pos->leftX = minimum(segment->pos->leftX, element->pos->leftX);
+    segment->pos->upperY = minimum(segment->pos->upperY, element->pos->upperY);
+    segment->pos->rightX = maximum(segment->pos->rightX, element->pos->rightX);
+    segment->pos->lowerY = maximum(segment->pos->lowerY, element->pos->lowerY);
   }
 
-  // Set the elements.
+  // Set the vector of page elements.
   segment->elements = elements;
+
+  // Set the reference to the current PDF document.
+  segment->doc = !elements.empty() ? elements[0]->doc : nullptr;
 
   return segment;
 }

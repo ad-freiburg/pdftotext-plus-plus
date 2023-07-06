@@ -16,6 +16,8 @@ using ppp::utils::math::equal;
 using ppp::utils::math::equalOrLarger;
 using ppp::utils::math::equalOrSmaller;
 using ppp::utils::math::larger;
+using ppp::utils::math::minimum;
+using ppp::utils::math::maximum;
 using ppp::utils::math::round;
 using ppp::utils::math::smaller;
 
@@ -111,4 +113,26 @@ TEST(MathUtilsTest, round) {
   ASSERT_NEAR(round(1.56731, 3), 1.567, TOL);
   ASSERT_NEAR(round(1.56731, 4), 1.5673, TOL);
   ASSERT_NEAR(round(1.56731, 5), 1.56731, TOL);
+}
+
+// _________________________________________________________________________________________________
+TEST(MathUtilsTest, minimum) {
+  ASSERT_NEAR(minimum(0.0, 0.0), 0.0, TOL);
+  ASSERT_NEAR(minimum(-6.3, -5.6), -6.3, TOL);
+  ASSERT_NEAR(minimum(-5.6, -6.3), -6.3, TOL);
+  ASSERT_NEAR(minimum(-7.2, 2.3), -7.2, TOL);
+  ASSERT_NEAR(minimum(2.3, -7.2), -7.2, TOL);
+  ASSERT_NEAR(minimum(2.3, 5.6), 2.3, TOL);
+  ASSERT_NEAR(minimum(5.6, 2.3), 2.3, TOL);
+}
+
+// _________________________________________________________________________________________________
+TEST(MathUtilsTest, maximum) {
+  ASSERT_NEAR(maximum(0.0, 0.0), 0.0, TOL);
+  ASSERT_NEAR(maximum(-6.3, -5.6), -5.6, TOL);
+  ASSERT_NEAR(maximum(-5.6, -6.3), -5.6, TOL);
+  ASSERT_NEAR(maximum(-7.2, 2.3), 2.3, TOL);
+  ASSERT_NEAR(maximum(2.3, -7.2), 2.3, TOL);
+  ASSERT_NEAR(maximum(2.3, 5.6), 5.6, TOL);
+  ASSERT_NEAR(maximum(5.6, 2.3), 5.6, TOL);
 }

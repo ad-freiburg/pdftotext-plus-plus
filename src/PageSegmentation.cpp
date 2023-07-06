@@ -106,7 +106,7 @@ void PageSegmentation::processPage(PdfPage* page, vector<PdfPageSegment*>* segme
 
   // Create a `PdfPageSegment` from each group and append it to the result vector.
   for (const auto& group : groups) {
-    PdfPageSegment* segment = _utils->createPageSegment(group, _doc);
+    PdfPageSegment* segment = _utils->createPageSegment(group);
     segments->push_back(segment);
   }
 }

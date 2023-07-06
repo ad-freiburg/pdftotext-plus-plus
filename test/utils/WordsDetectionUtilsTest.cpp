@@ -28,7 +28,7 @@ using ppp::utils::math::round;
 // The path to the PDF file to process in the test cases below.
 static const char* PDF_FILE_PATH = "./test/pdfs/WordsDetectionUtilsTest.pdf";
 
-// The allowed tolerance on comparing two double values.
+// The tolerance to use on comparing two float values.
 static const double TOL = ppp::config::DEFAULT_DOUBLE_EQUAL_TOLERANCE;
 
 
@@ -103,8 +103,7 @@ TEST_F(WordsDetectionUtilsTest, createWord) {
   ASSERT_EQ(char16->text, "y");
 
   vector<PdfCharacter*> characters = { char1, char2, char3, char4, char5, char6 };
-  PdfWord* word = utils.createWord(characters, pdf);
-  ASSERT_EQ(word->doc, pdf);
+  PdfWord* word = utils.createWord(characters);
   ASSERT_TRUE(word->id.size() > static_cast<unsigned int>(0));
   ASSERT_EQ(word->pos->pageNum, 1);
   // TODO(korzen): The coordinates should not be rounded here.
@@ -122,10 +121,10 @@ TEST_F(WordsDetectionUtilsTest, createWord) {
   ASSERT_EQ(word->fontName, "VUTQYG+CMR10");
   ASSERT_NEAR(word->fontSize, 10.9, TOL);
   ASSERT_EQ(word->characters, characters);
+  ASSERT_EQ(word->doc, pdf);
 
   characters = { char7, char8, char9, char10, char11, char12 };
-  word = utils.createWord(characters, pdf);
-  ASSERT_EQ(word->doc, pdf);
+  word = utils.createWord(characters);
   ASSERT_TRUE(word->id.size() > static_cast<unsigned int>(0));
   ASSERT_EQ(word->pos->pageNum, 1);
   // TODO(korzen): The coordinates should not be rounded here.
@@ -143,10 +142,10 @@ TEST_F(WordsDetectionUtilsTest, createWord) {
   ASSERT_EQ(word->fontName, "VUTQYG+CMR10");
   ASSERT_NEAR(word->fontSize, 10.9, TOL);
   ASSERT_EQ(word->characters, characters);
+  ASSERT_EQ(word->doc, pdf);
 
   characters = { char13, char14, char15, char16 };
-  word = utils.createWord(characters, pdf);
-  ASSERT_EQ(word->doc, pdf);
+  word = utils.createWord(characters);
   ASSERT_TRUE(word->id.size() > static_cast<unsigned int>(0));
   ASSERT_EQ(word->pos->pageNum, 1);
   // TODO(korzen): The coordinates should not be rounded here.
@@ -164,4 +163,5 @@ TEST_F(WordsDetectionUtilsTest, createWord) {
   ASSERT_EQ(word->fontName, "AQMQUF+CMSS10");
   ASSERT_NEAR(word->fontSize, 10.9, TOL);
   ASSERT_EQ(word->characters, characters);
+  ASSERT_EQ(word->doc, pdf);
 }

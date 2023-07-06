@@ -6,7 +6,6 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include <algorithm>  // std::min, std::max
 #include <utility>  // std::pair
 
 #include "../PdfDocument.h"
@@ -19,6 +18,8 @@ using std::min;
 using std::pair;
 
 using ppp::utils::math::equal;
+using ppp::utils::math::maximum;
+using ppp::utils::math::minimum;
 using ppp::utils::math::smaller;
 
 // =================================================================================================
@@ -84,19 +85,19 @@ double computeVerticalGap(const PdfElement* elem1, const PdfElement* elem2) {
 // _________________________________________________________________________________________________
 pair<double, double> computeOverlapRatios(double s1, double e1, double s2, double e2) {
   // Compute the length of the first interval.
-  double min1 = min(s1, e1);
-  double max1 = max(s1, e1);
+  double min1 = minimum(s1, e1);
+  double max1 = maximum(s1, e1);
   double length1 = max1 - min1;
 
   // Compute the length of the second interval.
-  double min2 = min(s2, e2);
-  double max2 = max(s2, e2);
+  double min2 = minimum(s2, e2);
+  double max2 = maximum(s2, e2);
   double length2 = max2 - min2;
 
   // Compute the length of the overlap between the two intervals.
-  double minMax = min(max1, max2);
-  double maxMin = max(min1, min2);
-  double overlapLength = max(0.0, minMax - maxMin);
+  double minMax = minimum(max1, max2);
+  double maxMin = maximum(min1, min2);
+  double overlapLength = maximum(0.0, minMax - maxMin);
 
   // Compute the overlap ratios.
   double ratio1 = length1 > 0 ? overlapLength / length1 : 0;
@@ -132,13 +133,13 @@ pair<double, double> computeYOverlapRatios(const PdfElement* element1, const Pdf
 // _________________________________________________________________________________________________
 double computeMaxXOverlapRatio(const PdfElement* elem1, const PdfElement* elem2) {
   pair<double, double> ratios = computeXOverlapRatios(elem1, elem2);
-  return max(ratios.first, ratios.second);
+  return maximum(ratios.first, ratios.second);
 }
 
 // _________________________________________________________________________________________________
 double computeMaxYOverlapRatio(const PdfElement* elem1, const PdfElement* elem2) {
   pair<double, double> ratios = computeYOverlapRatios(elem1, elem2);
-  return max(ratios.first, ratios.second);
+  return maximum(ratios.first, ratios.second);
 }
 
 // _________________________________________________________________________________________________
@@ -205,17 +206,6 @@ bool computeHasEqualFontSize(const PdfTextElement* e1, const PdfTextElement* e2,
   assert(e2);
 
   return equal(e1->fontSize, e2->fontSize, tolerance);
-}
-
-// _________________________________________________________________________________________________
-bool computeStartsWithUpper(const PdfTextElement* element) {
-  assert(element);
-
-  if (element->text.empty()) {
-    return false;
-  }
-
-  return isupper(element->text[0]);
 }
 
 }  // namespace ppp::utils::elements

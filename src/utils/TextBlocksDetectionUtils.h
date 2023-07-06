@@ -60,7 +60,7 @@ class TextBlocksDetectionUtils {
    *    True, if the two given lines are centered with respect to the requirements mentioned above,
    *    false otherwise.
    */
-  bool computeIsCentered(const PdfTextLine* line1, const PdfTextLine* line2);
+  bool computeIsCentered(const PdfTextLine* line1, const PdfTextLine* line2) const;
 
   /**
    * This method returns true if the lines in the given text block are centered compared to each
@@ -85,7 +85,7 @@ class TextBlocksDetectionUtils {
    *    True if the lines in the given text block are centered with respect to the requirements
    *    described above; false otherwise.
    */
-  bool computeIsTextLinesCentered(const PdfTextBlock* block);
+  bool computeIsTextLinesCentered(const PdfTextBlock* block) const;
 
   /**
    * This method returns true if the text of the given element is emphasized compared to the
@@ -106,13 +106,13 @@ class TextBlocksDetectionUtils {
    * @return
    *    True if the text of the given text block is emphasized, false otherwise.
    */
-  bool computeIsEmphasized(const PdfTextElement* element);
+  bool computeIsEmphasized(const PdfTextElement* element) const;
 
   /**
-   * This method returns true if the first line has capacity, that is: if the first word of the
-   * second line would have enough space to be placed at the end of the first line (or: if the
-   * right margin of the first line is larger than the width of the first word of the second line +
-   * some extra space for an additional whitespace).
+   * This method returns true if the first of the two given lines has capacity, that is: if the
+   * first word of the second line would have enough space to be placed at the end of the first
+   * line (or: if the right margin of the first line is larger than the width of the first word of
+   * the second line + some extra space for an additional whitespace).
    *
    * This method is primarily used to detect text block boundaries and forced line breaks. If this
    * method returns true, it is assumed that the two given lines do not belong to the same text
@@ -127,7 +127,7 @@ class TextBlocksDetectionUtils {
    * @return
    *    True if the first line has capacity, false otherwise.
    */
-  bool computeHasPrevLineCapacity(const PdfTextLine* prevLine, const PdfTextLine* line);
+  bool computeHasPrevLineCapacity(const PdfTextLine* prevLine, const PdfTextLine* line) const;
 
   /**
    * This method checks if the given block is in hanging indent format (meaning that the first line
@@ -164,12 +164,12 @@ class TextBlocksDetectionUtils {
    * @return
    *    A value > 0 if the block is in hanging indent format, and 0.0 otherwise.
    */
-  double computeHangingIndent(const PdfTextBlock* block);
+  double computeHangingIndent(const PdfTextBlock* block) const;
 
   /**
-   * This method iterates through the text lines of the given block (stored in block.lines) and
-   * computes the left and right margins of each. Writes the computed left margin of text line L to
-   * L.leftMargin and the computed right margin to L.rightMargin.
+   * This method iterates through the text lines of the given block (the elements stored in
+   * block.lines) and computes the left and right margins of each. Writes the computed left margin
+   * of text line L to L.leftMargin and the computed right margin to L.rightMargin.
    *
    * The left margin of the text line L in block B is the distance between the left boundary of B
    * and the left boundary of L, that is: abs(L.leftX - B.trimLeftX).
@@ -194,7 +194,7 @@ class TextBlocksDetectionUtils {
    * @param block
    *    The text block to process.
    */
-  void computeTextLineMargins(const PdfTextBlock* block);
+  void computeTextLineMargins(const PdfTextBlock* block) const;
 
   /**
    * This method returns true if the given text line is the first line of an enumeration item or of
@@ -225,7 +225,7 @@ class TextBlocksDetectionUtils {
    *    otherwise.
    */
   bool computeIsFirstLineOfItem(const PdfTextLine* line,
-      const unordered_set<string>* potentialFootnoteLabels = nullptr);
+      const unordered_set<string>* potentialFootnoteLabels = nullptr) const;
 
   /**
    * This method returns true if the given line is a continuation line of an enumeration item or of
@@ -252,7 +252,7 @@ class TextBlocksDetectionUtils {
    *    otherwise.
    */
   bool computeIsContinuationOfItem(const PdfTextLine* line,
-      const unordered_set<string>* potentialFootnoteLabels = nullptr);
+      const unordered_set<string>* potentialFootnoteLabels = nullptr) const;
 
   /**
    * This method computes potential footnote labels contained in the given line and appends it to
@@ -277,7 +277,7 @@ class TextBlocksDetectionUtils {
    * @param result
    *    The set to which the detected potential footnote labels should be appended.
    */
-  void computePotentialFootnoteLabels(const PdfTextLine* line, unordered_set<string>* result);
+  void computePotentialFootnoteLabels(const PdfTextLine* line, unordered_set<string>* result) const;
 
   /**
    * This method returns true if the given line is prefixed by an enumeration item label, that is:
@@ -291,7 +291,7 @@ class TextBlocksDetectionUtils {
    * @return
    *    True if the line is prefixed by an enumeration label, false otherwise.
    */
-  bool computeIsPrefixedByItemLabel(const PdfTextLine* line);
+  bool computeIsPrefixedByItemLabel(const PdfTextLine* line) const;
 
   /**
    * This method returns true if the given line is prefixed by a footnote label.
@@ -310,7 +310,7 @@ class TextBlocksDetectionUtils {
    *    True if the line is prefixed by an enumeration label, false otherwise.
    */
   bool computeIsPrefixedByFootnoteLabel(const PdfTextLine* line,
-      const unordered_set<string>* potentialFootnoteLabels = nullptr);
+      const unordered_set<string>* potentialFootnoteLabels = nullptr) const;
 
   /**
    * This method iterates through the given figures and returns the first figure which horizontally
@@ -330,7 +330,8 @@ class TextBlocksDetectionUtils {
    *    The first figure in the given vector which fulfills the given minimum overlap ratios, or
    *    nullptr if there is no such figure.
    */
-  PdfFigure* computeOverlapsFigure(const PdfElement* element, const vector<PdfFigure*>& figures);
+  PdfFigure* computeOverlapsFigure(const PdfElement* element,
+      const vector<PdfFigure*>& figures) const;
 
   /**
    * This method creates a new `PdfTextBlock` instance consisting of the given text lines, computes
@@ -341,7 +342,7 @@ class TextBlocksDetectionUtils {
    * @param blocks
    *    The vector to which the created text block should be appended.
    */
-  void createTextBlock(const vector<PdfTextLine*>& lines, vector<PdfTextBlock*>* blocks);
+  void createTextBlock(const vector<PdfTextLine*>& lines, vector<PdfTextBlock*>* blocks) const;
 
  private:
   // The configuration to use.

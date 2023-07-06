@@ -9,17 +9,10 @@
 #ifndef UTILS_TEXTLINESDETECTIONUTILS_H_
 #define UTILS_TEXTLINESDETECTIONUTILS_H_
 
-#include <regex>
-#include <string>
 #include <tuple>
-#include <unordered_set>
 
 #include "../Config.h"
 #include "../PdfDocument.h"
-
-using std::regex;
-using std::string;
-using std::unordered_set;
 
 using ppp::config::TextLinesDetectionConfig;
 
@@ -102,7 +95,7 @@ class TextLinesDetectionUtils {
    * @param page
    *    The page to process.
    */
-  void computeTextLineHierarchy(const PdfPage* page);
+  void computeTextLineHierarchy(const PdfPage* page) const;
 
   /**
    * This method computes the trim box of the given page segment, that is: the bounding box around
@@ -151,7 +144,7 @@ class TextLinesDetectionUtils {
    * @return
    *    The leftX, upperY, rightX, and lowerY of the computed trim box.
    */
-  tuple<double, double, double, double> computeTrimBox(const PdfPageSegment* segment);
+  tuple<double, double, double, double> computeTrimBox(const PdfPageSegment* segment) const;
 
  private:
   // The configuration to use.

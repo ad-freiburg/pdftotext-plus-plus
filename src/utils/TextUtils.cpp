@@ -13,8 +13,8 @@
 #include <utility>  // std::move
 #include <vector>
 
-#include "./TextUtils.h"
 #include "../Config.h"
+#include "./TextUtils.h"
 
 using std::hex;
 using std::isspace;
@@ -27,7 +27,6 @@ using std::vector;
 using std::wstring;
 
 using ppp::config::ALPHA_NUM;
-using ppp::config::WORD_DELIMITERS_ALPHABET;
 
 // =================================================================================================
 
@@ -82,21 +81,25 @@ bool endsWithSentenceDelimiter(const string& text, const char* const sentenceDel
 }
 
 // _________________________________________________________________________________________________
-string createRandomString(unsigned int len, const string& prefix) {
+bool startsWithUpper(const string& str) {
+  return !str.empty() ? isupper(str[0]) : false;
+}
+
+
+// _________________________________________________________________________________________________
+string createRandomString(unsigned int len, const string& prefix, const char* const alphabet) {
   // Append the prefix.
   string str = prefix;
   str.reserve(prefix.length() + len);
 
   // Append <len>-many random alphanumerical characters.
-  int alphabetSize = strlen(ALPHA_NUM);
+  int alphabetSize = strlen(alphabet);
   for (unsigned int i = 0; i < len; i++) {
-    str += ALPHA_NUM[rand() % (alphabetSize - 1)];
+    str += alphabet[rand() % (alphabetSize - 1)];
   }
 
   return str;
 }
-
-// =================================================================================================
 
 // _________________________________________________________________________________________________
 string escapeJson(const string& str) {
