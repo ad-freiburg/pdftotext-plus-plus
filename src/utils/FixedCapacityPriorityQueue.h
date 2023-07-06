@@ -19,9 +19,9 @@ using std::vector;
 // =================================================================================================
 
 /**
- * A priority queue with a fixed capacity. If on pushing a new element the queue is already full
- * (i.e., _capacity == _size), the element referenced by top() is removed beforehand (so that the
- * priority queue never contains more than <capacity>-many elements).
+ * A priority queue with a fixed capacity. If the queue is already full (i.e., _capacity == _size),
+ * the element referenced by top() is removed before pushing a new element (thus, the priority
+ * queue never contains more than <_capacity>-many elements).
  */
 template <typename T, typename Comparator>
 class FixedCapacityPriorityQueue : public priority_queue<T, vector<T>, Comparator> {
@@ -41,8 +41,8 @@ class FixedCapacityPriorityQueue : public priority_queue<T, vector<T>, Comparato
 
   /**
    * This method pushes the given value to this priority queue. If the priority queue is already
-   * full (meaning that _size == _capacity), the top element is removed beforehand (so that the
-   * queue never contains more than <_capacity>-many elements).
+   * full (meaning that _size == _capacity), the top element is removed before (thus, the queue
+   * never contains more than <_capacity>-many elements).
    *
    * @param value
    *   The value to push.
@@ -55,7 +55,7 @@ class FixedCapacityPriorityQueue : public priority_queue<T, vector<T>, Comparato
   }
 
   /**
-   * This method sorts the elements contained in the queue using the given comparator and appends
+   * This method sorts the elements contained in this queue using the given comparator and appends
    * the elements to the given result vector (in sorted order).
    *
    * @param cmp

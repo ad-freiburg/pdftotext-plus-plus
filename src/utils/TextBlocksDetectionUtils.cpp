@@ -730,8 +730,12 @@ void TextBlocksDetectionUtils::createTextBlock(const vector<PdfTextLine*>& lines
   }
 
   // Compute and set the most frequent font name and -size.
-  block->fontName = fontNameCounter.mostFreq();
-  block->fontSize = fontSizeCounter.mostFreq();
+  if (fontNameCounter.sumCounts() > 0) {
+    block->fontName = fontNameCounter.mostFreq();
+  }
+  if (fontSizeCounter.sumCounts() > 0) {
+    block->fontSize = fontSizeCounter.mostFreq();
+  }
 
   // Compute and set the text.
   for (size_t i = 0; i < lines.size(); i++) {

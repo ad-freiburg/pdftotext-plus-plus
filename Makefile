@@ -163,11 +163,13 @@ clean:
 	@echo "$(INFO_STYLE)[$@] Cleaning the project ...$(N)"
 	rm -f core
 	rm -rf $(BUILD_DIR)
-	rm -f $(TEST_DIR)/*.aux
-	rm -f $(TEST_DIR)/*.fdb_latexmk
-	rm -f $(TEST_DIR)/*.fls
-	rm -f $(TEST_DIR)/*.log
-	rm -f $(TEST_DIR)/*.synctex.gz
+	rm -f $(TEST_DIR)/*.aux $(TEST_DIR)/**/*.aux
+	rm -f $(TEST_DIR)/*.fdb_latexmk $(TEST_DIR)/**/*.fdb_latexmk
+	rm -f $(TEST_DIR)/*.fls $(TEST_DIR)/**/*.fls
+	rm -f $(TEST_DIR)/*.log $(TEST_DIR)/**/*.log
+	rm -f $(TEST_DIR)/*.synctex.gz $(TEST_DIR)/**/*.synctex.gz
+	rm -f $(TEST_DIR)/*.bbl $(TEST_DIR)/**/*.bbl
+	rm -f $(TEST_DIR)/*.blg $(TEST_DIR)/**/*.blg
 
 # --------------------------------------------------------------------------------------------------
 # Releasing.

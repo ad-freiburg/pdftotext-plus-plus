@@ -442,10 +442,18 @@ void TextLinesDetection::computeTextLineProperties(PdfTextLine* line) const {
   line->text = text;
 
   // Compute and set the font info.
-  line->fontName = fontNameCounter.mostFreq();
-  line->fontSize = fontSizeCounter.mostFreq();
-  line->maxFontSize = fontSizeCounter.max();
-  line->base = baseCounter.mostFreq();
+  if (fontNameCounter.sumCounts() > 0) {
+    line->fontName = fontNameCounter.mostFreq();
+  }
+
+  if (fontSizeCounter.sumCounts() > 0) {
+    line->fontSize = fontSizeCounter.mostFreq();
+    line->maxFontSize = fontSizeCounter.max();
+  }
+
+  if (baseCounter.sumCounts() > 0) {
+    line->base = baseCounter.mostFreq();
+  }
 }
 
 }  // namespace ppp

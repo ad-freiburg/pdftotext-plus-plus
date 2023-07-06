@@ -46,7 +46,7 @@ bool between(double d, double low, double up, double tol) {
 }
 
 // _________________________________________________________________________________________________
-double round(double d, int numDecimals) {
+double round(double d, unsigned int numDecimals) {
   assert(numDecimals >= 0);
 
   if (numDecimals == 0) {

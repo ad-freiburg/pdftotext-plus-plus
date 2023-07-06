@@ -21,7 +21,7 @@ using ppp::utils::math::smaller;
 
 // =================================================================================================
 
-// The allowed tolerance on comparing two float values.
+// The tolerance to use on comparing two float values.
 static const double TOL = ppp::config::DEFAULT_DOUBLE_EQUAL_TOLERANCE;
 
 // _________________________________________________________________________________________________

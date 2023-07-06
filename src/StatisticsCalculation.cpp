@@ -88,8 +88,8 @@ void StatisticsCalculation::computeGlyphStatistics() const {
   }
 
   // Compute the most frequent font size and font name.
-  _doc->mostFreqFontSize = fontSizeCounter.mostFreq();
-  _doc->mostFreqFontName = fontNameCounter.mostFreq();
+  _doc->mostFreqFontSize = fontSizeCounter.sumCounts() > 0 ? fontSizeCounter.mostFreq() : 0.0;
+  _doc->mostFreqFontName = fontNameCounter.sumCounts() > 0 ? fontNameCounter.mostFreq() : "";
 
   _log->debug() << "doc.mostFreqFontSize: " << _doc->mostFreqFontSize << endl;
   _log->debug() << "doc.mostFreqFontName: " << _doc->mostFreqFontName << endl;
@@ -181,9 +181,17 @@ void StatisticsCalculation::computeWordStatistics() const {
     }
   }
 
-  _doc->mostFreqWordHeight = wordHeightCounter.mostFreq();
-  _doc->mostFreqWordDistance = horizontalGapCounter.mostFreq();
-  _doc->mostFreqEstimatedLineDistance = verticalGapCounter.mostFreq();
+  if (wordHeightCounter.sumCounts() > 0) {
+    _doc->mostFreqWordHeight = wordHeightCounter.mostFreq();
+  }
+
+  if (horizontalGapCounter.sumCounts() > 0) {
+    _doc->mostFreqWordDistance = horizontalGapCounter.mostFreq();
+  }
+
+  if (verticalGapCounter.sumCounts() > 0) {
+    _doc->mostFreqEstimatedLineDistance = verticalGapCounter.mostFreq();
+  }
 
   _log->debug() << "doc.mostFreqWordHeight: " << _doc->mostFreqWordHeight << endl;
   _log->debug() << "doc.mostFreqWordDistance: " << _doc->mostFreqWordDistance << endl;
@@ -244,7 +252,9 @@ void StatisticsCalculation::computeTextLineStatistics() const {
   }
 
   // Compute the most frequent line distance.
-  _doc->mostFreqLineDistance = lineDistanceCounter.mostFreq();
+  if (lineDistanceCounter.sumCounts() > 0) {
+    _doc->mostFreqLineDistance = lineDistanceCounter.mostFreq();
+  }
 
   // Compute the most frequent line distances broken down by font sizes.
   unordered_map<double, int> mostFreqLineDistanceCountPerFontSize;
@@ -252,7 +262,9 @@ void StatisticsCalculation::computeTextLineStatistics() const {
     const double fontSize = doubleMapPair.first;
     const DoubleCounter& lineDistanceCounter = doubleMapPair.second;
 
-    _doc->mostFreqLineDistancePerFontSize[fontSize] = lineDistanceCounter.mostFreq();
+    if (lineDistanceCounter.sumCounts() > 0) {
+      _doc->mostFreqLineDistancePerFontSize[fontSize] = lineDistanceCounter.mostFreq();
+    }
   }
 
   _log->debug() << "doc.mostFreqLineDist: " << _doc->mostFreqEstimatedLineDistance << endl;

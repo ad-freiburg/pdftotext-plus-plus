@@ -11,7 +11,6 @@
 #include <string>  // string
 #include <vector>  // vector
 
-#include "./utils/Counter.h"
 #include "./utils/Log.h"
 #include "./utils/MathUtils.h"
 #include "./utils/PdfElementsUtils.h"

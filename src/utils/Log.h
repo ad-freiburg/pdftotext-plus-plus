@@ -19,7 +19,7 @@ using std::string;
 
 namespace ppp::utils::log {
 
-// Some ANSI codes to print text in colors or in bold. For example, to print text in bold, you can
+// Some ANSI codes to print text in colors or in bold. For example, to print text in blue, you can
 // type: 'cout << BLUE << "Hello World" << OFF << endl;'. To print text in bold
 // *and* blue you can type: 'cout << BOLD << BLUE << "Hello World" << OFF << endl;' or
 // 'cout << BBOLD << "Hello World" << OFF << endl;'.
@@ -44,7 +44,7 @@ enum LogLevel { TRACE, DEBUG, INFO, WARN, ERROR };
 
 /**
  * An output stream that acts like /dev/null, meaning that any text forwarded to this stream will
- * be ignored (it is not printed to the console). This stream is used by the 'Logger' class for
+ * be ignored (it does not appear on the console). This stream is used by the 'Logger' class for
  * filtering out messages that do not match the current log level filter or page filter.
  *
  * Disclaimer: The code of this class is stolen from: https://stackoverflow.com/questions/8243743.
@@ -74,29 +74,31 @@ class Logger {
    *    print messages of level INFO, WARN, and ERROR to the console, and will ignore messages of
    *    level TRACE and DEBUG.
    * @param pageFilter
-   *    The page filter. Log message can be associated with a page number of the, with the purpose
-   *    to specify that the message was produced while processing the respective page. If specified
+   *    The page filter. Log message can be associated with a page number, with the purpose to
+   *    specify that the message was produced while processing the respective page. If specified
    *    with a value > 0, only those message that are associated with the <pageFilter>-th page will
-   *    be output on the console. All messages that are associated with other pages will be ignored.
-   *    If specified by a value <= 0, all messages will be output on the console, no matter with
-   *    which pages the messages are associated.
+   *    be printed to the console. All messages that are associated with other pages will be
+   *    ignored. If specified by a value <= 0, all messages will be printed to the console, no
+   *    matter with which pages the messages are associated.
    */
   explicit Logger(const LogLevel& logLevel, int pageFilter = -1);
 
   /**
-   * This method sets the log level of this logger.
+   * This method sets the log level of this logger, specifying the lowest level of log messages
+   * this logger should print to the console. See the comment of the constructor for more
+   * information.
    *
    * @param logLevel
-   *    The lowest level of log messages this logger should print to the console. See the
-   *    comment of the constructor for more information.
+   *    The logging level.
    */
   void setLogLevel(const LogLevel& logLevel);
 
   /**
-   * This method sets the page filter of this logger.
+   * This method sets the page filter of this logger. See the comment of the constructor for more
+   * information about page filters.
    *
    * @param pageNum
-   *    The page filter. See the comment of the constructor for more information.
+   *    The page filter.
    */
   void setPageFilter(int pageNum);
 
@@ -207,8 +209,8 @@ class Logger {
 
  private:
   /**
-   * This method returns the output stream to which a logging message related to the given log level
-   * and page number should be forwarded.
+   * This method returns the output stream to which a logging message related to the given log
+   * level and page number should be forwarded.
    *
    * If (1) the given log level is smaller than _logLevel or (2) if _pageFilter is set and the
    * given page number is set, but the page number is not equal to _pageFilter, this method returns
@@ -217,23 +219,24 @@ class Logger {
    * to this stream appear on stdout).
    *
    * @param logLevel
-   *    The log level of the logging messages.
+   *    The logging level.
    * @param pageNum
    *    A page number, indicating that the logging message was created while processing the
    *    <pageNum>-th page of the current PDF document.
    *
    * @return
-   *    An output stream to which a log message related to the given log level and page number
+   *    An output stream to which a log message associated with the given log level and page number
    *    should be forwarded.
    */
   ostream& getostream(const LogLevel& logLevel, int pageNum = -1) const;
 
   /**
-   * This method creates the string that is prepended to each log message. This string contains the
-   * current timestamp and the logging level. Here is an example: "2022-06-02 10:49:00.990 - ERROR:"
+   * This method returns the string to prepend to each log message associated with the given
+   * logging level. The returned string contains the current timestamp and the given logging level.
+   * Here is an example: "2022-06-02 10:49:00.990 - ERROR:"
    *
    * @return
-   *    The string that is prepended to each log message.
+   *    The string to prepend to each log message associated with the given logging level.
    */
   string createLogMessagePrefix(const LogLevel& logLevel) const;
 

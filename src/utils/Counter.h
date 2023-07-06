@@ -22,10 +22,10 @@ using std::unordered_map;
 namespace ppp::utils::counter {
 
 /**
- * This class is for counting double values and determining the most frequent double value or the
- * maximum double value. It is implemented as a subclass of unordered_map. It stores the double
- * values as keys and the respective counts as values. To initialize a counter and change the count
- * associated with a double D, you can type something like:
+ * This class is for counting given double values and for determining the most frequent double
+ * value or the maximum double value. It is implemented as a subclass of unordered_map. It stores
+ * the double values as keys and the respective counts as values. To initialize a counter and
+ * change the count associated with a double D, you can type something like:
  *
  * DoubleCounter counter;
  * counter[D] = 3;
@@ -41,7 +41,7 @@ class DoubleCounter : public unordered_map<double, unsigned int> {
    *    The most frequent double value in this counter.
    *
    * @throws std::runtime_error
-   *    When the counter is empty or all counts are <= 0.
+   *    When the counter is empty or all counts are == 0.
    */
   double mostFreq() const;
 
@@ -53,16 +53,16 @@ class DoubleCounter : public unordered_map<double, unsigned int> {
    *    The count of the most frequent double value in this counter.
    *
    * @throws std::runtime_error
-   *    When the counter is empty or all counts are <= 0.
+   *    When the counter is empty or all counts are == 0.
    */
   unsigned int mostFreqCount() const;
 
   /**
-   * This method returns a pair consisting of the most frequent double value stored in this counter
-   * and the respective count.
+   * This method returns the most frequent double value stored in this counter *and* the respective
+   * count.
    *
    * @return
-   *    A pair of the most frequent double value and the respective count.
+   *    A pair containing the most frequent double value and the respective count.
    *
    * @throws std::runtime_error
    *    When the counter is empty or all counts are <= 0.
@@ -70,21 +70,22 @@ class DoubleCounter : public unordered_map<double, unsigned int> {
   pair<double, unsigned int> mostFreqAndCount() const;
 
   /**
-   * This method returns the maximum double value stored in this counter whose count is > 0.
+   * This method returns the maximum double value which is associated with a count > 0 in this
+   * counter.
    *
    * @return
    *    The maximum double value stored in this counter.
    *
    * @throws std::runtime_error
-   *    When the counter is empty or all counts are <= 0.
+   *    When the counter is empty or all counts are == 0.
    */
   double max() const;
 
   /**
-   * This method returns the sum of all counts stored in this counter.
+   * This method returns the sum of all counts.
    *
    * @return
-   *    The sum of all counts stored in this counter.
+   *    The sum of all counts.
    */
   unsigned int sumCounts() const;
 };
@@ -92,7 +93,7 @@ class DoubleCounter : public unordered_map<double, unsigned int> {
 // =================================================================================================
 
 /**
- * This class is for counting string values and determining the most frequent string. It is
+ * This class is for counting given string values and determining the most frequent string. It is
  * implemented as a subclass of unordered_map. It stores the strings as keys and the respective
  * counts as values. To initialize a counter and change the count associated with a string S, you
  * can type something like:
@@ -111,7 +112,7 @@ class StringCounter : public unordered_map<string, unsigned int> {
    *    The most frequent string in this counter.
    *
    * @throws std::runtime_error
-   *    When the counter is empty or all counts are <= 0.
+   *    When the counter is empty or all counts are == 0.
    */
   string mostFreq() const;
 
@@ -123,13 +124,12 @@ class StringCounter : public unordered_map<string, unsigned int> {
    *    The count of the most frequent string in this counter.
    *
    * @throws std::runtime_error
-   *    When the counter is empty or all counts are <= 0.
+   *    When the counter is empty or all counts are == 0.
    */
   unsigned int mostFreqCount() const;
 
   /**
-   * This method returns a pair consisting of the most frequent string stored in this counter and
-   * the respective count.
+   * This method returns the most frequent string stored in this counter *and* the respective count.
    *
    * @return
    *    A pair of the most frequent string and the respective count.

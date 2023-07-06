@@ -179,6 +179,16 @@ int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
       Timing timing("Detecting text lines", duration_cast<milliseconds>(end - start).count());
       timings->push_back(timing);
     }
+
+    // FIXME(korzen): Find another solution. It is currently needed only for testing.
+    for (auto* page : doc->pages) {
+      page->textLines.clear();
+      for (auto* segment : page->segments) {
+        for (auto* line : segment->lines) {
+          page->textLines.push_back(line);
+        }
+      }
+    }
   }
 
   // (9) Detect subscripted and superscripted characters.
@@ -240,8 +250,9 @@ int PdfToTextPlusPlus::process(const string& pdfFilePath, PdfDocument* doc,
     }
   }
 
-  // TODO(korzen): Maybe move this to somewhere else, it is currenlty needed only for testing.
+  // FIXME(korzen): Find another solution. It is currently needed only for testing.
   for (auto* page : doc->pages) {
+    page->textLines.clear();
     for (auto* block : page->blocks) {
       for (auto* line : block->lines) {
         page->textLines.push_back(line);

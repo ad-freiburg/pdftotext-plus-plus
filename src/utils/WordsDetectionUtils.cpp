@@ -37,6 +37,8 @@ WordsDetectionUtils::~WordsDetectionUtils() = default;
 // _________________________________________________________________________________________________
 PdfWord* WordsDetectionUtils::createWord(const vector<PdfCharacter*>& characters,
     const PdfDocument* doc) {
+  assert(!characters.empty());
+
   PdfWord* word = new PdfWord();
   word->doc = doc;
 
@@ -79,8 +81,12 @@ PdfWord* WordsDetectionUtils::createWord(const vector<PdfCharacter*>& characters
   word->text = text;
 
   // Set the most frequent font name and font size.
-  word->fontName = fontNameCounter.mostFreq();
-  word->fontSize = fontSizeCounter.mostFreq();
+  if (fontNameCounter.sumCounts() > 0) {
+    word->fontName = fontNameCounter.mostFreq();
+  }
+  if (fontSizeCounter.sumCounts() > 0) {
+    word->fontSize = fontSizeCounter.mostFreq();
+  }
 
   // Set the writing mode.
   word->pos->wMode = characters[0]->pos->wMode;

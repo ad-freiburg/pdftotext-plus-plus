@@ -163,17 +163,20 @@ tuple<double, double, double, double> TextLinesDetectionUtils::computeTrimBox(
     double rightX = round(line->pos->getRotRightX(), _config.trimBoxCoordsPrec);
     rightXCounter[rightX]++;
   }
-  pair<double, double> mostFreqRightXPair = rightXCounter.mostFreqAndCount();
-  double mostFreqRightX = mostFreqRightXPair.first;
-  int mostFreqRightXCount = mostFreqRightXPair.second;
 
-  // Compute the percentage of lines exhibiting the most frequent rightX.
-  size_t nLines = segment->lines.size();
-  double mostFreqRightXRatio = nLines > 0 ? mostFreqRightXCount / static_cast<double>(nLines): 0.0;
+  if (rightXCounter.sumCounts() > 0) {
+    pair<double, double> mostFreqRightXPair = rightXCounter.mostFreqAndCount();
+    double mostFreqRightX = mostFreqRightXPair.first;
+    int mostFreqRightXCount = mostFreqRightXPair.second;
 
-  // If the percentage is larger or equal to the given threshold, set trimRightX to this value.
-  if (equalOrLarger(mostFreqRightXRatio, _config.minPrecLinesSameRightX)) {
-    trimRightX = mostFreqRightX;
+    // Compute the percentage of lines exhibiting the most frequent rightX.
+    double nLines = segment->lines.size();
+    double mostFreqRightXRatio = nLines > 0 ? mostFreqRightXCount / nLines: 0.0;
+
+    // If the percentage is larger or equal to the given threshold, set trimRightX to this value.
+    if (equalOrLarger(mostFreqRightXRatio, _config.minPrecLinesSameRightX)) {
+      trimRightX = mostFreqRightX;
+    }
   }
 
   return make_tuple(trimLeftX, trimUpperY, trimRightX, trimLowerY);

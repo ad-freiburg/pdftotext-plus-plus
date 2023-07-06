@@ -8,7 +8,7 @@
 
 #include <limits>
 #include <string>
-#include <utility>  // std::make_pair, std::pair
+#include <utility>  // std::pair
 
 #include "./Counter.h"
 #include "./MathUtils.h"
@@ -48,7 +48,7 @@ pair<double, unsigned int> DoubleCounter::mostFreqAndCount() const {
   }
 
   if (!entryFound) {
-    throw std::runtime_error("The counter is empty or all counts are <= 0.");
+    throw std::runtime_error("The counter is empty or all counts are == 0.");
   }
 
   return make_pair(mostFreq, mostFreqCount);
@@ -67,7 +67,7 @@ double DoubleCounter::max() const {
   }
 
   if (!entryFound) {
-    throw std::runtime_error("The counter is empty or all counts are <= 0.");
+    throw std::runtime_error("The counter is empty or all counts are == 0.");
   }
 
   return max;
