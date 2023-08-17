@@ -8,6 +8,7 @@
 
 #include <gtest/gtest.h>
 
+#include <string>
 #include <vector>
 
 #include "../../src/Config.h"
@@ -15,6 +16,7 @@
 #include "../../src/utils/MathUtils.h"
 #include "../../src/utils/WordsDetectionUtils.h"
 
+using std::string;
 using std::vector;
 
 using ppp::PdfToTextPlusPlus;

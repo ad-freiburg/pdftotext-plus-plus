@@ -49,6 +49,8 @@ using ppp::utils::text::startsWithUpper;
 
 // =================================================================================================
 
+namespace ppp::modules {
+
 // _________________________________________________________________________________________________
 TextBlocksDetection::TextBlocksDetection(PdfDocument* doc,
     const TextBlocksDetectionConfig& config) {
@@ -865,3 +867,5 @@ Trool TextBlocksDetection::startsBlock_indent(const PdfTextLine* line) const {
 
   return Trool::None;
 }
+
+}  // namespace ppp::modules

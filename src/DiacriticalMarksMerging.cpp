@@ -32,7 +32,7 @@ using ppp::utils::math::larger;
 
 // =================================================================================================
 
-namespace ppp {
+namespace ppp::modules {
 
 // _________________________________________________________________________________________________
 DiacriticalMarksMerging::DiacriticalMarksMerging(
@@ -211,4 +211,4 @@ void DiacriticalMarksMerging::process() const {
   }
 }
 
-}  // namespace ppp
+}  // namespace ppp::modules

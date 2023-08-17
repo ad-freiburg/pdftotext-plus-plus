@@ -24,16 +24,16 @@ using std::min;
 using std::numeric_limits;
 using std::vector;
 
-using ppp::SemanticRolesPrediction;
 using ppp::config::ReadingOrderDetectionConfig;
 using ppp::config::SemanticRolesPredictionConfig;
+using ppp::modules::SemanticRolesPrediction;
 
 // =================================================================================================
 
 // TODO(korzen): Implement a logger.
 // TODO(korzen): Split semantic roles detection and reading order detection.
 
-namespace ppp {
+namespace ppp::modules {
 
 // _________________________________________________________________________________________________
 ReadingOrderDetection::ReadingOrderDetection(
@@ -391,4 +391,4 @@ void ReadingOrderDetection::chooseYCuts(const vector<Cut*>& cuts,
   }
 }
 
-}  // namespace ppp
+}  // namespace ppp::modules

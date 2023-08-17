@@ -36,16 +36,16 @@ using std::string;
 using std::unique_ptr;
 using std::vector;
 
-using ppp::DiacriticalMarksMerging;
-using ppp::PdfParsing;
-using ppp::ReadingOrderDetection;
-using ppp::StatisticsCalculation;
-using ppp::SubSuperScriptsDetection;
-using ppp::TextLinesDetection;
-using ppp::WordsDehyphenation;
-using ppp::WordsDetection;
-
 using ppp::config::Config;
+using ppp::modules::DiacriticalMarksMerging;
+using ppp::modules::PdfParsing;
+using ppp::modules::ReadingOrderDetection;
+using ppp::modules::StatisticsCalculation;
+using ppp::modules::SubSuperScriptsDetection;
+using ppp::modules::TextBlocksDetection;
+using ppp::modules::TextLinesDetection;
+using ppp::modules::WordsDehyphenation;
+using ppp::modules::WordsDetection;
 using ppp::types::Timing;
 
 // =================================================================================================

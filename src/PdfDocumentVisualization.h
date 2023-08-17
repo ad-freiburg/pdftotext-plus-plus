@@ -25,7 +25,7 @@ using std::unique_ptr;
 using std::vector;
 
 using ppp::config::PdfDocumentVisualizationConfig;
-using ppp::PdfParsing;
+using ppp::modules::PdfParsing;
 
 // =================================================================================================
 

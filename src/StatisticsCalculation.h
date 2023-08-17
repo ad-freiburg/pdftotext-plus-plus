@@ -18,7 +18,7 @@ using ppp::utils::log::Logger;
 
 // =================================================================================================
 
-namespace ppp {
+namespace ppp::modules {
 
 /**
  * This class computes some statistics about the glyphs, words and text lines in a PDF document,
@@ -88,6 +88,6 @@ class StatisticsCalculation {
   Logger* _log;
 };
 
-}  // namespace ppp
+}  // namespace ppp::modules
 
 #endif  // STATISTICSCALCULATION_H_

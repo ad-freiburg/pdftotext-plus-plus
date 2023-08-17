@@ -39,7 +39,7 @@ using ppp::utils::log::OFF;
 
 // =================================================================================================
 
-namespace ppp {
+namespace ppp::modules {
 
 // _________________________________________________________________________________________________
 WordsDetection::WordsDetection(PdfDocument* doc, const WordsDetectionConfig& config) {
@@ -397,4 +397,4 @@ void WordsDetection::mergeStackedMathSymbols(const PdfPage* page) const {
   _log->debug(p) << "=======================================" << endl;
 }
 
-}  // namespace ppp
+}  // namespace ppp::modules

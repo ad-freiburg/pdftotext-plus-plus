@@ -28,7 +28,7 @@ using ppp::utils::log::Logger;
 
 // =================================================================================================
 
-namespace ppp {
+namespace ppp::modules {
 
 /**
  * This class is responsible for (a) merging the characters of a PDF document to words, and
@@ -127,6 +127,6 @@ class WordsDetection {
   PdfWord _activeWord;
 };
 
-}  // namespace ppp
+}  // namespace ppp::modules
 
 #endif  // WORDSDETECTION_H_

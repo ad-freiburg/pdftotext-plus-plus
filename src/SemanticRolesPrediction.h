@@ -26,7 +26,7 @@ using ppp::config::SemanticRolesPredictionConfig;
 
 // =================================================================================================
 
-namespace ppp {
+namespace ppp::modules {
 
 /**
  * This class predicts the semantic roles of the text blocks of a given PDF document by using
@@ -109,6 +109,6 @@ class SemanticRolesPrediction {
   bool _modelOk = false;
 };
 
-}  // namespace ppp
+}  // namespace ppp::modules
 
 #endif  // SEMANTICROLESPREDICTION_H_

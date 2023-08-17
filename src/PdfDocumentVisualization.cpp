@@ -35,8 +35,8 @@ using std::vector;
 
 using ppp::config::PdfDocumentVisualizationConfig;
 using ppp::config::PdfParsingConfig;
+using ppp::modules::PdfParsing;
 using ppp::types::SemanticRole;
-using ppp::PdfParsing;
 using ppp::utils::math::smaller;
 
 namespace color_schemes = visualizer::color_schemes;

@@ -21,7 +21,7 @@ using std::vector;
 
 // =================================================================================================
 
-namespace ppp {
+namespace ppp::modules {
 
 /**
  * This class detects the natural reading order of the text blocks extracted from a PDF document,
@@ -186,6 +186,6 @@ class ReadingOrderDetection {
   SemanticRolesPrediction* _semanticRolesPrediction;
 };
 
-}  // namespace ppp
+}  // namespace ppp::modules
 
 #endif  // READINGORDERDETECTION_H_

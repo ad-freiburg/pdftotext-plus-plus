@@ -18,7 +18,7 @@ using ppp::config::WordsDehyphenationConfig;
 
 // =================================================================================================
 
-namespace ppp {
+namespace ppp::modules {
 
 // _________________________________________________________________________________________________
 WordsDehyphenation::WordsDehyphenation(PdfDocument* doc, const WordsDehyphenationConfig& config) {
@@ -73,4 +73,4 @@ void WordsDehyphenation::dehyphenate() const {
   }
 }
 
-}  // namespace ppp
+}  // namespace ppp::modules

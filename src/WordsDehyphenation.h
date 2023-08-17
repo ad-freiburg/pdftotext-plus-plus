@@ -16,7 +16,7 @@ using ppp::config::WordsDehyphenationConfig;
 
 // =================================================================================================
 
-namespace ppp {
+namespace ppp::modules {
 
 class WordsDehyphenation {
  public:
@@ -31,6 +31,6 @@ class WordsDehyphenation {
   WordsDehyphenationConfig _config;
 };
 
-}  // namespace ppp
+}  // namespace ppp::modules
 
 #endif  // WORDSDEHYPHENATION_H_

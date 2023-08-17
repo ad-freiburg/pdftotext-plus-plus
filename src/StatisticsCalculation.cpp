@@ -35,7 +35,7 @@ using ppp::utils::math::equalOrSmaller;
 using ppp::utils::math::round;
 using ppp::utils::math::smaller;
 
-namespace ppp {
+namespace ppp::modules {
 
 // _________________________________________________________________________________________________
 StatisticsCalculation::StatisticsCalculation(
@@ -274,4 +274,4 @@ void StatisticsCalculation::computeTextLineStatistics() const {
   _log->debug() << "=======================================" << endl;
 }
 
-}  // namespace ppp
+}  // namespace ppp::modules

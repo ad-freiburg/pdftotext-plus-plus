@@ -27,7 +27,7 @@ using ppp::utils::math::smaller;
 
 // =================================================================================================
 
-namespace ppp {
+namespace ppp::modules {
 
 // _________________________________________________________________________________________________
 SubSuperScriptsDetection::SubSuperScriptsDetection(PdfDocument* doc,
@@ -101,4 +101,4 @@ void SubSuperScriptsDetection::process() const {
   }
 }
 
-}  // namespace ppp
+}  // namespace ppp::modules

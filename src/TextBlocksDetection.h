@@ -32,6 +32,8 @@ using ppp::utils::log::Logger;
 
 // =================================================================================================
 
+namespace ppp::modules {
+
 /**
  * This class is responsible for detecting text blocks in a PDF document.
  *
@@ -361,5 +363,7 @@ class TextBlocksDetection {
   // the detection of preliminary text blocks and the final text blocks.
   string _q;
 };
+
+}  // namespace ppp::modules
 
 #endif  // TEXTBLOCKSDETECTION_H_

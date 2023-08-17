@@ -25,7 +25,7 @@ using ppp::utils::log::Logger;
 
 // =================================================================================================
 
-namespace ppp {
+namespace ppp::modules {
 
 /**
  * This class is responsible for detecting text lines from the words of a PDF document.
@@ -112,6 +112,6 @@ class TextLinesDetection {
   Logger* _log;
 };
 
-}  // namespace ppp
+}  // namespace ppp::modules
 
 #endif  // TEXTLINESDETECTION_H_

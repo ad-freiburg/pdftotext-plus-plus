@@ -24,7 +24,7 @@ using ppp::utils::log::Logger;
 
 // =================================================================================================
 
-namespace ppp {
+namespace ppp::modules {
 
 /**
  * This class is an implementation of Poppler's OutputDev. It is responsible for (1) handling the
@@ -265,6 +265,6 @@ class PdfParsing : public OutputDev {
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> _wStringConverter;
 };
 
-}  // namespace ppp
+}  // namespace ppp::modules
 
 #endif  // PDFPARSING_H_

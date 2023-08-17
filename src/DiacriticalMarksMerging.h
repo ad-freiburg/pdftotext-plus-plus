@@ -18,7 +18,7 @@ using ppp::utils::log::Logger;
 
 // =================================================================================================
 
-namespace ppp {
+namespace ppp::modules {
 
 /**
  * This class is responsible for merging diacritical marks with their base characters.
@@ -75,6 +75,6 @@ class DiacriticalMarksMerging {
   Logger* _log;
 };
 
-}  // namespace ppp
+}  // namespace ppp::modules
 
 #endif  // DIACRITICALMARKSMERGING_H_

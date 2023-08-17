@@ -54,7 +54,7 @@ using ppp::utils::math::round;
 
 // =================================================================================================
 
-namespace ppp {
+namespace ppp::modules {
 
 // _________________________________________________________________________________________________
 TextLinesDetection::TextLinesDetection(PdfDocument* doc, const TextLinesDetectionConfig& config) {
@@ -456,4 +456,4 @@ void TextLinesDetection::computeTextLineProperties(PdfTextLine* line) const {
   }
 }
 
-}  // namespace ppp
+}  // namespace ppp::modules

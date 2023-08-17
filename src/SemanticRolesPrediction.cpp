@@ -30,7 +30,7 @@ using ppp::config::SemanticRolesPredictionConfig;
 
 // =================================================================================================
 
-namespace ppp {
+namespace ppp::modules {
 
 // _________________________________________________________________________________________________
 SemanticRolesPrediction::SemanticRolesPrediction(const SemanticRolesPredictionConfig& config) {
@@ -394,4 +394,4 @@ cppflow::tensor SemanticRolesPrediction::createWordsInputTensor(const PdfDocumen
   return wordsTensor;
 }
 
-}  // namespace ppp
+}  // namespace ppp::modules

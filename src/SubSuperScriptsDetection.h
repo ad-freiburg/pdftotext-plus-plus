@@ -18,7 +18,7 @@ using ppp::utils::log::Logger;
 
 // =================================================================================================
 
-namespace ppp {
+namespace ppp::modules {
 
 /**
  * This class is responsible for detecting sub- and superscripted characters in a PDF document.
@@ -65,6 +65,6 @@ class SubSuperScriptsDetection {
   Logger* _log;
 };
 
-}  // namespace ppp
+}  // namespace ppp::modules
 
 #endif  // SUBSUPERSCRIPTSDETECTION_H_

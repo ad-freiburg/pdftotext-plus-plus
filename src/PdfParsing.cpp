@@ -52,7 +52,7 @@ using ppp::utils::text::createRandomString;
 
 // =================================================================================================
 
-namespace ppp {
+namespace ppp::modules {
 
 // _________________________________________________________________________________________________
 PdfParsing::PdfParsing(PdfDocument* doc, const PdfParsingConfig& config) {
@@ -849,4 +849,4 @@ void PdfParsing::concat(const double* m1, const double* m2, double* res) const {
   res[5] = m1[4] * m2[1] + m1[5] * m2[3] + m2[5];
 }
 
-}  // namespace ppp
+}  // namespace ppp::modules
