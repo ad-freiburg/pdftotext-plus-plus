@@ -45,9 +45,10 @@ class WordsDetectionUtilsTest : public ::testing::Test {
     config.semanticRolesPrediction.disable = true;
     config.wordsDehyphenation.disable = true;
 
-    PdfToTextPlusPlus engine(config);
+    PdfToTextPlusPlus engine(&config);
     pdf = new PdfDocument();
-    engine.process(PDF_FILE_PATH, pdf);
+    string pdfFilePathStr = PDF_FILE_PATH;
+    engine.process(&pdfFilePathStr, pdf);
   }
 
   // This method is called after the last test case of this test suite is called.
