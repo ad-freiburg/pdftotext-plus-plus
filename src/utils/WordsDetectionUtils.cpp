@@ -15,6 +15,9 @@
 #include "./TextUtils.h"
 #include "./WordsDetectionUtils.h"
 
+using std::string;
+using std::vector;
+
 using ppp::utils::counter::DoubleCounter;
 using ppp::utils::counter::StringCounter;
 using ppp::utils::math::maximum;

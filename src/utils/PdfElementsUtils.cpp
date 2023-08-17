@@ -13,8 +13,6 @@
 #include "./PdfElementsUtils.h"
 
 using std::make_pair;
-using std::max;
-using std::min;
 using std::pair;
 
 using ppp::utils::math::equal;

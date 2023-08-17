@@ -19,19 +19,19 @@ using std::vector;
 // =================================================================================================
 // Define some comparators needed to test FixedCapacityPriorityQueue.
 
-// A comparator for sorting int values in ascending order.
+// A comparator for sorting integer values in ascending order.
 class IntAscComparator {
  public:
-  // A method that returns true if the two given elements need to be swapped.
+  // A method that returns true if the two given integers need to be swapped.
   bool operator() (int i1, int i2) const {
     return i1 <= i2;
   }
 };
 
-// A comparator for sorting int values in descending order.
+// A comparator for sorting integer values in descending order.
 class IntDescComparator {
  public:
-  // A method that returns true if the two given elements need to be swapped.
+  // A method that returns true if the two given integers need to be swapped.
   bool operator() (int i1, int i2) const {
     return i1 >= i2;
   }
@@ -40,7 +40,7 @@ class IntDescComparator {
 // A comparator for sorting strings in ascending order.
 class StringAscComparator {
  public:
-  // A method that returns true if the two given elements need to be swapped.
+  // A method that returns true if the two given strings need to be swapped.
   bool operator() (const string& s1, const string& s2) const {
     return s1 <= s2;
   }

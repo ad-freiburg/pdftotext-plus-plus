@@ -8,7 +8,7 @@
 
 #include <gtest/gtest.h>
 
-#include <limits>
+#include <limits>  // std::numeric_limits
 #include <vector>
 
 #include "../../src/Config.h"

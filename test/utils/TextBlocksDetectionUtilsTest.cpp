@@ -20,6 +20,7 @@
 
 using std::string;
 using std::unordered_set;
+using std::vector;
 
 using ppp::PdfToTextPlusPlus;
 using ppp::config::Config;
@@ -781,41 +782,6 @@ TEST_F(TextBlocksDetectionUtilsTest, computeOverlapsFigure) {
   // TODO(korzen): The flower picture is not a figure. Why not?
   // ASSERT_TRUE(utils.computeOverlapsFigure(line2, page->figures));
 }
-
-// _________________________________________________________________________________________________
-// TEST_F(PdfElementsUtilsTest, computeOverlapsFigurePdf1) {
-//   // TODO(korzen): Read from config
-//   double minXOverlapRatio = 0.5;
-//   double minYOverlapRatio = 0.5;
-
-//   PdfPage* page1 = pdf1->pages[1];
-//   std::vector<PdfFigure*>& figures = page1->figures;
-
-//   // Test the first line of the second page ("Lorem ipsum...").
-//   PdfTextLine* line = page1->segments[0]->lines[0];
-//   ASSERT_EQ(computeOverlapsFigure(line, minXOverlapRatio, minYOverlapRatio, figures), nullptr)
-//       << "Line: " << line->toString();
-
-//   // Test the second line of the second page ("vel ne dolore...").
-//   line = page1->segments[0]->lines[1];
-//   ASSERT_EQ(computeOverlapsFigure(line, minXOverlapRatio, minYOverlapRatio, figures), nullptr)
-//       << "Line: " << line->toString();
-
-//   // Test the first character ("f") in Figure 1 on the second page.
-//   PdfCharacter* ch = figures[0]->characters[0];
-//   ASSERT_EQ(computeOverlapsFigure(ch, minXOverlapRatio, minYOverlapRatio, figures), figures[0])
-//       << "Character: " << ch->toString();
-
-//   // Test the second character ("o") in Figure 1 on the second page.
-//   ch = figures[0]->characters[1];
-//   ASSERT_EQ(computeOverlapsFigure(ch, minXOverlapRatio, minYOverlapRatio, figures), figures[0])
-//       << "Character: " << ch->toString();
-
-//   // Test the third character ("o") in Figure 1 on the second page.
-//   ch = figures[0]->characters[2];
-//   ASSERT_EQ(computeOverlapsFigure(ch, minXOverlapRatio, minYOverlapRatio, figures), figures[0])
-//       << "Character: " << ch->toString();
-// }
 
 // _________________________________________________________________________________________________
 TEST_F(TextBlocksDetectionUtilsTest, createTextBlock) {

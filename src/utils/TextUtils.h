@@ -80,7 +80,7 @@ bool endsWithSentenceDelimiter(const string& text,
  * @return
  *    True if the given string starts with an uppercase character, false otherwise.
  */
-bool startsWithUpper(const string& string);
+bool startsWithUpper(const string& str);
 
 /**
  * This method creates a random string of the given length, consisting of characters chosen from

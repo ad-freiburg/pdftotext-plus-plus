@@ -14,6 +14,8 @@
 #include "../Config.h"
 #include "../PdfDocument.h"
 
+using std::tuple;
+
 using ppp::config::TextLinesDetectionConfig;
 
 // =================================================================================================

@@ -66,7 +66,6 @@ TEST_F(WordsDetectionUtilsTest, createWord) {
   WordsDetectionUtils utils(config);
 
   PdfPage* page = pdf->pages[0];
-
   PdfCharacter* char1 = page->characters[12];
   PdfCharacter* char2 = page->characters[13];
   PdfCharacter* char3 = page->characters[14];

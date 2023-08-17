@@ -1,5 +1,5 @@
 /**
- * Copyright 2022, University of Freiburg,
+ * Copyright 2023, University of Freiburg,
  * Chair of Algorithms and Data Structures.
  * Author: Claudius Korzen <korzen@cs.uni-freiburg.de>.
  *
@@ -11,7 +11,7 @@
 
 #include <string>
 #include <unordered_map>
-#include <utility>  // make_pair
+#include <utility>  // std::make_pair
 
 using std::make_pair;
 using std::pair;

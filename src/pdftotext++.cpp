@@ -157,9 +157,9 @@ int main(int argc, char* argv[]) {
   // NOTE: If specified as "-", the text is output to stdout.
   string outputFilePath = "-";
 
-  // The format in which to output the extracted text.
+  // The format in which the extracted text should be output.
   SerializationFormat format = SerializationFormat::TXT;
-  // The semantic roles of the text blocks to output.
+  // The roles filter (blocks with a role that do not appear in this vector will not be output).
   vector<SemanticRole> roles = ppp::types::getSemanticRoles();
   // The units of the text to output.
   vector<DocumentUnit> units = ppp::types::getDocumentUnits();
@@ -210,7 +210,7 @@ int main(int argc, char* argv[]) {
     (
       "role",
       value<vector<SemanticRole>>(&roles),
-      ("Only output text from text blocks with the specified roles. Use the syntax "
+      ("Output only the text from text blocks with the specified roles. Use the syntax "
        "'--role <value1> --role <value2> ...' to specify multiple roles.\n"
        "Valid roles: " + ppp::types::getSemanticRolesStr() + ".\n").c_str()
     )
@@ -363,7 +363,7 @@ int main(int argc, char* argv[]) {
       "Print the help.");
 
   // Specify the private options (= options that will not be shown in the help message).
-  // NOTE: these options *must* include an entry for each positional option (defined below), this
+  // NOTE: these options *must* include an entry for each positional option (defined below) - this
   // is a restriction of the boost library.
   options_description privateOpts("");
   privateOpts.add_options()
@@ -546,7 +546,7 @@ int main(int argc, char* argv[]) {
   config.wordsDehyphenation.logPageFilter = logPageFilter;
   config.wordsDehyphenation.disable = noDehyphenation;
 
-  PdfToTextPlusPlus engine(config, parseMode);
+  PdfToTextPlusPlus engine(&config, parseMode);
 
   PdfDocument doc;
   vector<Timing> timings;
@@ -555,7 +555,7 @@ int main(int argc, char* argv[]) {
   // TODO(korzen): Don't use the invalid argument exception; it is currently thrown by
   // SemanticRolesPredictor. Instead, use the exit code to check if something went wrong.
   try {
-    status = engine.process(pdfFilePath, &doc, &timings);
+    status = engine.process(&pdfFilePath, &doc, &timings);
   } catch (const std::invalid_argument& ia) {
     cerr << "An error occurred: " << ia.what() << '\n';
     return 3;
@@ -639,7 +639,7 @@ int main(int argc, char* argv[]) {
     timings.push_back(timingVisualizing);
   }
 
-  // Print the running times needed by the different processing steps, if requested by the user.
+  // Print the running times needed by the different pipeline steps, if requested by the user.
   if (printRunningTimes) {
     // Print the values with thousands separator.
     cout.imbue(locale(""));

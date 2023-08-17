@@ -23,7 +23,7 @@ namespace ppp::utils::counter {
 
 /**
  * This class is for counting given double values and for determining the most frequent double
- * value or the maximum double value. It is implemented as a subclass of unordered_map. It stores
+ * value, or the maximum double value. It is implemented as a subclass of unordered_map. It stores
  * the double values as keys and the respective counts as values. To initialize a counter and
  * change the count associated with a double D, you can type something like:
  *
@@ -47,7 +47,7 @@ class DoubleCounter : public unordered_map<double, unsigned int> {
 
   /**
    * This method returns the count of the most frequent double value stored in this counter (that
-   * is: the largest value in this map).
+   * is: the largest value stored in this map).
    *
    * @return
    *    The count of the most frequent double value in this counter.
@@ -70,8 +70,7 @@ class DoubleCounter : public unordered_map<double, unsigned int> {
   pair<double, unsigned int> mostFreqAndCount() const;
 
   /**
-   * This method returns the maximum double value which is associated with a count > 0 in this
-   * counter.
+   * This method returns the maximum double value which is associated with a count > 0.
    *
    * @return
    *    The maximum double value stored in this counter.
@@ -106,7 +105,7 @@ class StringCounter : public unordered_map<string, unsigned int> {
  public:
   /**
    * This method returns the most frequent string stored in this counter (that is: the key that is
-   * associated with the largest value in this map).
+   * associated with the largest value in the map).
    *
    * @return
    *    The most frequent string in this counter.
@@ -118,7 +117,7 @@ class StringCounter : public unordered_map<string, unsigned int> {
 
   /**
    * This method returns the count of the most frequent string stored in this counter (that is: the
-   * largest value in this map).
+   * largest value stored in this map).
    *
    * @return
    *    The count of the most frequent string in this counter.

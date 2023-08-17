@@ -15,6 +15,8 @@
 #include "../../src/utils/MathUtils.h"
 #include "../../src/utils/TextLinesDetectionUtils.h"
 
+using std::tuple;
+
 using ppp::PdfToTextPlusPlus;
 using ppp::config::Config;
 using ppp::config::TextLinesDetectionConfig;

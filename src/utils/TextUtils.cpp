@@ -8,7 +8,7 @@
 
 #include <cassert>  // assert
 #include <iomanip>  // std::setw, std::setfill
-#include <sstream>
+#include <sstream>  // std::stringstream
 #include <string>
 #include <utility>  // std::move
 #include <vector>

@@ -71,24 +71,24 @@ TEST(DoubleCounterTest, mostFreqCount) {
   counter[0.7] = 5;
   counter[2.5] = 2;
   counter[3.1] = 1;
-  ASSERT_EQ(counter.mostFreqCount(), static_cast<unsigned int>(5));
+  ASSERT_EQ(counter.mostFreqCount(), 5U);
 
   counter[2.5] += 2;
-  ASSERT_EQ(counter.mostFreqCount(), static_cast<unsigned int>(5));
+  ASSERT_EQ(counter.mostFreqCount(), 5U);
 
   counter[2.5] += 4;
-  ASSERT_EQ(counter.mostFreqCount(), static_cast<unsigned int>(8));
+  ASSERT_EQ(counter.mostFreqCount(), 8U);
 
   counter[6.3] = 9;
-  ASSERT_EQ(counter.mostFreqCount(), static_cast<unsigned int>(9));
+  ASSERT_EQ(counter.mostFreqCount(), 9U);
 
   counter[6.3] -= 5;
-  ASSERT_EQ(counter.mostFreqCount(), static_cast<unsigned int>(8));
+  ASSERT_EQ(counter.mostFreqCount(), 8U);
 
   counter[0.7] = 0;
   counter[2.5] = 0;
   counter[6.3] = 0;
-  ASSERT_EQ(counter.mostFreqCount(), static_cast<unsigned int>(1));
+  ASSERT_EQ(counter.mostFreqCount(), 1U);
 
   counter[3.1] = 0;
   ASSERT_THROW(counter.mostFreqCount(), std::runtime_error);
@@ -176,31 +176,31 @@ TEST(DoubleCounterTest, sumCounts) {
   DoubleCounter counter;
 
   // Test the empty counter.
-  ASSERT_EQ(counter.sumCounts(), static_cast<unsigned int>(0));
+  ASSERT_EQ(counter.sumCounts(), 0U);
 
   counter[4.5] = 3;
   counter[2.1] = 6;
   counter[4.7] = 2;
-  ASSERT_EQ(counter.sumCounts(), static_cast<unsigned int>(11));
+  ASSERT_EQ(counter.sumCounts(), 11U);
 
   counter[4.7] += 6;
-  ASSERT_EQ(counter.sumCounts(), static_cast<unsigned int>(17));
+  ASSERT_EQ(counter.sumCounts(), 17U);
 
   counter[4.7] = 1;
-  ASSERT_EQ(counter.sumCounts(), static_cast<unsigned int>(10));
+  ASSERT_EQ(counter.sumCounts(), 10U);
 
   counter[4.7]--;
-  ASSERT_EQ(counter.sumCounts(), static_cast<unsigned int>(9));
+  ASSERT_EQ(counter.sumCounts(), 9U);
 
   counter[5.2]++;
-  ASSERT_EQ(counter.sumCounts(), static_cast<unsigned int>(10));
+  ASSERT_EQ(counter.sumCounts(), 10U);
 
   counter[5.2] = 0;
   counter[2.1] = 0;
-  ASSERT_EQ(counter.sumCounts(), static_cast<unsigned int>(3));
+  ASSERT_EQ(counter.sumCounts(), 3U);
 
   counter[4.5] = 0;
-  ASSERT_EQ(counter.sumCounts(), static_cast<unsigned int>(0));
+  ASSERT_EQ(counter.sumCounts(), 0U);
 }
 
 // =================================================================================================
@@ -254,22 +254,22 @@ TEST(StringCounterTest, mostFreqCount) {
   counter["Buche"] = 3;
   counter["Eiche"] = 5;
   counter["Linde"] = 2;
-  ASSERT_EQ(counter.mostFreqCount(), static_cast<unsigned int>(5));
+  ASSERT_EQ(counter.mostFreqCount(), 5U);
 
   counter["Linde"] += 2;
-  ASSERT_EQ(counter.mostFreqCount(), static_cast<unsigned int>(5));
+  ASSERT_EQ(counter.mostFreqCount(), 5U);
 
   counter["Linde"] += 2;
-  ASSERT_EQ(counter.mostFreqCount(), static_cast<unsigned int>(6));
+  ASSERT_EQ(counter.mostFreqCount(), 6U);
 
   counter["Buche"] = 8;
-  ASSERT_EQ(counter.mostFreqCount(), static_cast<unsigned int>(8));
+  ASSERT_EQ(counter.mostFreqCount(), 8U);
 
   counter["Buche"] -= 5;
-  ASSERT_EQ(counter.mostFreqCount(), static_cast<unsigned int>(6));
+  ASSERT_EQ(counter.mostFreqCount(), 6U);
 
   counter["Ahorn"] = 12;
-  ASSERT_EQ(counter.mostFreqCount(), static_cast<unsigned int>(12));
+  ASSERT_EQ(counter.mostFreqCount(), 12U);
 
   counter["Buche"] = 0;
   counter["Eiche"] = 0;
@@ -324,31 +324,31 @@ TEST(StringCounterTest, sumCounts) {
   StringCounter counter;
 
   // Test the empty counter.
-  ASSERT_EQ(counter.sumCounts(), static_cast<unsigned int>(0));
+  ASSERT_EQ(counter.sumCounts(), 0U);
 
   counter["Buche"] = 3;
   counter["Eiche"] = 5;
   counter["Linde"] = 2;
-  ASSERT_EQ(counter.sumCounts(), static_cast<unsigned int>(10));
+  ASSERT_EQ(counter.sumCounts(), 10U);
 
   counter["Linde"] += 2;
-  ASSERT_EQ(counter.sumCounts(), static_cast<unsigned int>(12));
+  ASSERT_EQ(counter.sumCounts(), 12U);
 
   counter["Linde"] += 2;
-  ASSERT_EQ(counter.sumCounts(), static_cast<unsigned int>(14));
+  ASSERT_EQ(counter.sumCounts(), 14U);
 
   counter["Buche"] = 8;
-  ASSERT_EQ(counter.sumCounts(), static_cast<unsigned int>(19));
+  ASSERT_EQ(counter.sumCounts(), 19U);
 
   counter["Buche"] -= 5;
-  ASSERT_EQ(counter.sumCounts(), static_cast<unsigned int>(14));
+  ASSERT_EQ(counter.sumCounts(), 14U);
 
   counter["Ahorn"] = 12;
-  ASSERT_EQ(counter.sumCounts(), static_cast<unsigned int>(26));
+  ASSERT_EQ(counter.sumCounts(), 26U);
 
   counter["Buche"] = 0;
   counter["Eiche"] = 0;
   counter["Linde"] = 0;
   counter["Ahorn"] = 0;
-  ASSERT_EQ(counter.sumCounts(), static_cast<unsigned int>(0));
+  ASSERT_EQ(counter.sumCounts(), 0U);
 }

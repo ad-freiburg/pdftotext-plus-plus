@@ -10,9 +10,10 @@
 #define UTILS_FIXEDCAPACITYPRIORITYQUEUE_H_
 
 #include <algorithm>  // std::sort
-#include <queue>
+#include <queue>  // std::priority_queue
 #include <vector>
 
+using std::partial_sort_copy;
 using std::priority_queue;
 using std::vector;
 
@@ -20,7 +21,7 @@ using std::vector;
 
 /**
  * A priority queue with a fixed capacity. If the queue is already full (i.e., _capacity == _size),
- * the element referenced by top() is removed before pushing a new element (thus, the priority
+ * the element referenced by top() is removed before pushing a new element (so that the priority
  * queue never contains more than <_capacity>-many elements).
  */
 template <typename T, typename Comparator>
@@ -41,7 +42,7 @@ class FixedCapacityPriorityQueue : public priority_queue<T, vector<T>, Comparato
 
   /**
    * This method pushes the given value to this priority queue. If the priority queue is already
-   * full (meaning that _size == _capacity), the top element is removed before (thus, the queue
+   * full (meaning that _size == _capacity), the top element is removed before (so that the queue
    * never contains more than <_capacity>-many elements).
    *
    * @param value

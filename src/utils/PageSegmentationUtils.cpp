@@ -13,6 +13,8 @@
 #include "./PageSegmentationUtils.h"
 #include "./TextUtils.h"
 
+using std::vector;
+
 using ppp::config::PageSegmentationConfig;
 using ppp::utils::text::createRandomString;
 using ppp::utils::math::equalOrLarger;

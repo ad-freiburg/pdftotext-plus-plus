@@ -30,11 +30,10 @@ namespace ppp {
 
 /**
  * This class is the core class of pdftotext++. It is responsible for processing a given PDF file
- * and invoking the following modules of the extraction pipeline to extract the text from the PDF
- * file:
+ * by invoking the following modules of the extraction pipeline:
  *
  *  (1) Loading the PDF file;
- *  (2) Parsing the content streams of the PDF file for characters, graphics and shapes;
+ *  (2) Parsing the content streams of the PDF file for detecting characters, graphics and shapes;
  *  (3) Computing character statistics;
  *  (4) Merging combining diacritical marks with their base characters;
  *  (5) Detecting words;
@@ -66,7 +65,7 @@ class PdfToTextPlusPlus {
    *   the contained characters (e.g., the position, text and color) for assembling the true words,
    *   text blocks, etc. based on the color of the characters.
    */
-  explicit PdfToTextPlusPlus(const Config& config, bool parseMode = false);
+  explicit PdfToTextPlusPlus(const Config* config, bool parseMode = false);
 
   /** The deconstructor */
   ~PdfToTextPlusPlus();
@@ -78,7 +77,7 @@ class PdfToTextPlusPlus {
    * @param pdfFilePath
    *   The path to the PDF file to process.
    * @param doc
-   *   The `PdfDocument` instance to which the extracted text and elements should be stored.
+   *   The `PdfDocument` instance to which the extracted text and other elements should be stored.
    * @param timing
    *   A vector to which the running times needed by the different modules of the extraction
    *   pipeline should be appended. If not set, no running times will be appended.
@@ -86,11 +85,11 @@ class PdfToTextPlusPlus {
    * @return
    *    0 if the PDF was processed successfully, and a value > 0 otherwise.
    */
-  int process(const string& pdfFilePath, PdfDocument* doc, vector<Timing>* timings = nullptr) const;
+  int process(const string* pdfFilePath, PdfDocument* doc, vector<Timing>* timings = nullptr) const;
 
  private:
   // The configuration to use.
-  Config _config;
+  const Config* _config;
   // Whether or not to parse the embedded font files of a PDF file.
   bool _noEmbeddedFontFilesParsing;
   // Whether or not to activate the parsing mode.

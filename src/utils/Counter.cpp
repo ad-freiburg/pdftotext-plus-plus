@@ -6,7 +6,7 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include <limits>
+#include <limits>  // std::numeric_limits
 #include <string>
 #include <utility>  // std::pair
 
@@ -16,6 +16,7 @@
 using std::make_pair;
 using std::numeric_limits;
 using std::pair;
+using std::string;
 
 using ppp::utils::math::larger;
 
@@ -37,17 +38,15 @@ unsigned int DoubleCounter::mostFreqCount() const {
 pair<double, unsigned int> DoubleCounter::mostFreqAndCount() const {
   double mostFreq = 0.0;
   unsigned int mostFreqCount = 0;
-  bool entryFound = false;
 
   for (auto it = begin(); it != end(); it++) {
     if (it->second > mostFreqCount) {
       mostFreq = it->first;
       mostFreqCount = it->second;
-      entryFound = true;
     }
   }
 
-  if (!entryFound) {
+  if (mostFreqCount == 0) {
     throw std::runtime_error("The counter is empty or all counts are == 0.");
   }
 
@@ -101,17 +100,15 @@ unsigned int StringCounter::mostFreqCount() const {
 pair<string, unsigned int> StringCounter::mostFreqAndCount() const {
   string mostFreq;
   unsigned int mostFreqCount = 0;
-  bool entryFound = false;
 
   for (auto it = begin(); it != end(); it++) {
     if (it->second > mostFreqCount) {
       mostFreq = it->first;
       mostFreqCount = it->second;
-      entryFound = true;
     }
   }
 
-  if (!entryFound) {
+  if (mostFreqCount == 0) {
     throw std::runtime_error("The counter is empty or all counts are <= 0.");
   }
 

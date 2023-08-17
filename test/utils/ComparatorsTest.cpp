@@ -26,7 +26,7 @@ using ppp::utils::comparators::UpperYAscComparator;
 
 // =================================================================================================
 
-// Define some characters.
+// Create some characters.
 static PdfCharacter char0(1, 2.0, 4.1, 2.5, 7.8, 0, 0);
 static PdfCharacter char1(1, 1.7, 7.5, 8.1, 7.7, 0, 0);
 static PdfCharacter char2(1, 5.0, 1.2, 7.2, 9.2, 0, 0);
@@ -34,7 +34,7 @@ static PdfCharacter char3(1, 3.2, 4.5, 5.1, 5.5, 0, 0);
 static PdfCharacter char4(1, 3.0, 2.0, 4.7, 3.1, 0, 0);
 static vector<PdfCharacter*> chars = { &char0, &char1, &char2, &char3, &char4 };
 
-// Define some words (rotated by 90 degrees).
+// Create some words, rotated by 90 degrees.
 static PdfWord word0(1, 4.8, 2.0, 9.9, 2.7, 1, 0);
 static PdfWord word1(1, 5.2, 3.1, 5.5, 8.1, 1, 0);
 static PdfWord word2(1, 1.0, 5.5, 7.2, 5.9, 1, 0);
