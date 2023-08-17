@@ -64,9 +64,9 @@ CXX_MACROS      = -DCONFIG_SEMANTIC_ROLES_DETECTION_MODELS_DIR="\"$(SEMANTIC_ROL
 CXX_MACROS_MAIN = -DPROGRAM_NAME="\"$(PROGRAM_NAME)\"" -DPROGRAM_DESCRIPTION="\"$(DESCRIPTION)\"" -DPROGRAM_USAGE="\"$(USAGE)\"" -DVERSION="\"$(VERSION)\""
 CXX_LIBS        = -I$(USR_DIR)/include -L$(USR_DIR)/lib -ltensorflow_framework -ltensorflow -lpoppler -lutf8proc -lboost_program_options
 CXX_LIBS_TEST   = $(CXX_LIBS) -lgtest -lgtest_main -lpthread
-CXX_DEBUG       = g++ -std=c++17 -Wall -g $(CXX_MACROS)
-CXX_PROD        = g++ -std=c++17 -Wall -O3 $(CXX_MACROS)
-CXX_TEST        = g++ -std=c++17 -Wall -g $(CXX_MACROS)
+CXX_DEBUG       = g++ -std=c++20 -Wall -g $(CXX_MACROS)
+CXX_PROD        = g++ -std=c++20 -Wall -O3 $(CXX_MACROS)
+CXX_TEST        = g++ -std=c++20 -Wall -g $(CXX_MACROS)
 CXX							= $(CXX_PROD)
 
 # ==================================================================================================
@@ -94,7 +94,7 @@ checkstyle:
 	python3 cpplint.py --repository="$(SRC_DIR)" "$(SRC_DIR)"/*.cpp "$(SRC_DIR)"/**/*.cpp
 
 	@echo "$(INFO_STYLE)[$@] Checking style of test files ...$(N)"
-	python3 cpplint.py --repository="$(TEST_DIR)" "$(TEST_DIR)"/*.cpp
+	python3 cpplint.py --repository="$(TEST_DIR)" "$(TEST_DIR)"/*.cpp "$(TEST_DIR)"/**/*.cpp
 
 # --------------------------------------------------------------------------------------------------
 # Compiling.
@@ -163,11 +163,13 @@ clean:
 	@echo "$(INFO_STYLE)[$@] Cleaning the project ...$(N)"
 	rm -f core
 	rm -rf $(BUILD_DIR)
-	rm -f $(TEST_DIR)/*.aux
-	rm -f $(TEST_DIR)/*.fdb_latexmk
-	rm -f $(TEST_DIR)/*.fls
-	rm -f $(TEST_DIR)/*.log
-	rm -f $(TEST_DIR)/*.synctex.gz
+	rm -f $(TEST_DIR)/*.aux $(TEST_DIR)/**/*.aux
+	rm -f $(TEST_DIR)/*.fdb_latexmk $(TEST_DIR)/**/*.fdb_latexmk
+	rm -f $(TEST_DIR)/*.fls $(TEST_DIR)/**/*.fls
+	rm -f $(TEST_DIR)/*.log $(TEST_DIR)/**/*.log
+	rm -f $(TEST_DIR)/*.synctex.gz $(TEST_DIR)/**/*.synctex.gz
+	rm -f $(TEST_DIR)/*.bbl $(TEST_DIR)/**/*.bbl
+	rm -f $(TEST_DIR)/*.blg $(TEST_DIR)/**/*.blg
 
 # --------------------------------------------------------------------------------------------------
 # Releasing.

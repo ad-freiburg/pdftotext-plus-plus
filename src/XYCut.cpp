@@ -11,25 +11,28 @@
 #include <vector>
 
 #include "./utils/Comparators.h"
-#include "./utils/FixedPriorityQueue.h"
+#include "./utils/FixedCapacityPriorityQueue.h"
 #include "./utils/PdfElementsUtils.h"
-#include "./utils/StringUtils.h"
+#include "./utils/TextUtils.h"
 
 #include "./PdfDocument.h"
 #include "./XYCut.h"
 
-using comparators::LeftXAscComparator;
-using comparators::RightXDescComparator;
-using comparators::UpperYAscComparator;
-
-using ppp::math_utils::equal;
-using ppp::math_utils::equalOrLarger;
-using ppp::math_utils::larger;
-using ppp::math_utils::smaller;
 using std::max;
 using std::min;
 using std::numeric_limits;
 using std::vector;
+
+using ppp::utils::comparators::LeftXAscComparator;
+using ppp::utils::comparators::RightXDescComparator;
+using ppp::utils::comparators::UpperYAscComparator;
+using ppp::utils::elements::computeHorizontalGap;
+using ppp::utils::elements::computeVerticalGap;
+using ppp::utils::math::equal;
+using ppp::utils::math::equalOrLarger;
+using ppp::utils::math::larger;
+using ppp::utils::math::smaller;
+using ppp::utils::text::createRandomString;
 
 // _________________________________________________________________________________________________
 void xyCut(const vector<PdfElement*>& elements,
@@ -126,8 +129,8 @@ bool xCut(const vector<PdfElement*>& elements, double minGapWidth, int maxNumOve
   // reversed order (starting at the element with the largest rightX value). For each element Q
   // in the queue the gap width (E.leftX - Q.rightX) is computed. If the gap width between E and Q
   // is >= minGapWidth, a cut candidate dividing the elements between Q and E is created.
-  int queueSize = maxNumOverlappingElements + 1;
-  FixedPriorityQueue<PdfElement*, RightXDescComparator> elementsLargestRightXQueue(queueSize);
+  int qSize = maxNumOverlappingElements + 1;
+  FixedCapacityPriorityQueue<PdfElement*, RightXDescComparator> elementsLargestRightXQueue(qSize);
   elementsLargestRightXQueue.push(sElements[0]);
 
   // Iterate through the elements from left to right and compute the cut candidates.
@@ -146,13 +149,13 @@ bool xCut(const vector<PdfElement*>& elements, double minGapWidth, int maxNumOve
     vector<PdfElement*> overlappingElements;
     for (auto* prevElement : elementsLargestRightXSorted) {
       // Compute the gap width (= the horizontal gap between prevElement and element).
-      double gapWidth = element_utils::computeHorizontalGap(prevElement, element);
+      double gapWidth = computeHorizontalGap(prevElement, element);
       // Compute the x-coordinate of the cut (= the horizontal midpoint of the gap).
       double gapX = prevElement->pos->rightX + ((gapWidth) / 2.0);
 
       if (equalOrLarger(gapWidth, minGapWidth)) {
         Cut* cut = new Cut(CutDir::X);
-        cut->id = ppp::string_utils::createRandomString(3);
+        cut->id = createRandomString(3);
         cut->posInElements = pos;
         cut->elementBefore = prevElement;
         cut->elementAfter = element;
@@ -248,13 +251,13 @@ bool yCut(const vector<PdfElement*>& elements, double minGapHeight,
     PdfElement* element = sElements[pos];
 
     // Compute the gap height (= the vertical gap between the elementLargestLowerY and element).
-    double gapHeight = element_utils::computeVerticalGap(elementLargestLowerY, element);
+    double gapHeight = computeVerticalGap(elementLargestLowerY, element);
     // Compute the y-coordinate of the cut (= the vertical midpoint of the gap).
     double gapY = elementLargestLowerY->pos->lowerY + ((gapHeight) / 2.0);
 
     if (equalOrLarger(gapHeight, minGapHeight)) {
       Cut* cut = new Cut(CutDir::Y);
-      cut->id = ppp::string_utils::createRandomString(3);
+      cut->id = createRandomString(3);
       cut->posInElements = pos;
       cut->elementBefore = elementLargestLowerY;
       cut->elementAfter = element;

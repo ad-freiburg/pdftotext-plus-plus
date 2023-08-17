@@ -10,14 +10,12 @@
 #include <string>
 
 #include "./utils/MathUtils.h"
-
-#include "./Constants.h"
 #include "./PdfDocument.h"
-
-using global_config::COORDS_PREC;
 
 using std::string;
 using std::stringstream;
+
+using ppp::utils::math::round;
 
 // =================================================================================================
 // Cut
@@ -147,10 +145,10 @@ string PdfPosition::toString() const {
   stringstream ss;
   ss << "PdfPosition("
      << "page=" << pageNum << "; "
-     << "leftX=" << ppp::math_utils::round(leftX, COORDS_PREC) << "; "
-     << "upperY=" << ppp::math_utils::round(upperY, COORDS_PREC) << "; "
-     << "rightX=" << ppp::math_utils::round(rightX, COORDS_PREC) << "; "
-     << "lowerY=" << ppp::math_utils::round(lowerY, COORDS_PREC) << "; "
+     << "leftX=" << round(leftX, 1) << "; "
+     << "upperY=" << round(upperY, 1) << "; "
+     << "rightX=" << round(rightX, 1) << "; "
+     << "lowerY=" << round(lowerY, 1) << "; "
      << "rotation=" << rotation << "; "
      << "wMode=" << wMode << ")";
   return ss.str();
@@ -160,10 +158,10 @@ string PdfPosition::toString() const {
 string PdfPosition::toShortString() const {
   stringstream ss;
   ss << "p=" << pageNum
-     << "; leftX=" << ppp::math_utils::round(leftX, COORDS_PREC)
-     << "; upperY=" << ppp::math_utils::round(upperY, COORDS_PREC)
-     << "; rightX=" << ppp::math_utils::round(rightX, COORDS_PREC)
-     << "; lowerY=" << ppp::math_utils::round(lowerY, COORDS_PREC);
+     << "; leftX=" << round(leftX, 1)
+     << "; upperY=" << round(upperY, 1)
+     << "; rightX=" << round(rightX, 1)
+     << "; lowerY=" << round(lowerY, 1);
   return ss.str();
 }
 
@@ -313,6 +311,43 @@ PdfTextLine::PdfTextLine(int pageNum, double leftX, double upperY, double rightX
   pos->lowerY = lowerY;
   pos->rotation = rotation;
   pos->wMode = wMode;
+}
+
+// _________________________________________________________________________________________________
+PdfTextLine::PdfTextLine(const PdfTextLine& line) {
+  id = line.id;
+  pos->leftX = line.pos->leftX;
+  pos->upperY = line.pos->upperY;
+  pos->rightX = line.pos->rightX;
+  pos->lowerY = line.pos->lowerY;
+  pos->rotation = line.pos->rotation;
+  pos->wMode = line.pos->wMode;
+  pos->pageNum = line.pos->pageNum;
+  rank = line.rank;
+  doc = line.doc;
+  text = line.text;
+  fontSize = line.fontSize;
+  fontName = line.fontName;
+  color[0] = line.color[0];
+  color[1] = line.color[1];
+  color[2] = line.color[2];
+  opacity = line.opacity;
+  words = line.words;
+  segment = line.segment;
+  block = line.block;
+  baseBBoxLeftX = line.baseBBoxLeftX;
+  baseBBoxUpperY = line.baseBBoxUpperY;
+  baseBBoxRightX = line.baseBBoxRightX;
+  baseBBoxLowerY = line.baseBBoxLowerY;
+  maxFontSize = line.maxFontSize;
+  base = line.base;
+  leftMargin = line.leftMargin;
+  rightMargin = line.rightMargin;
+  prevLine = line.prevLine;
+  nextLine = line.nextLine;
+  prevSiblingLine = line.prevSiblingLine;
+  nextSiblingLine = line.nextSiblingLine;
+  parentLine = line.parentLine;
 }
 
 // _________________________________________________________________________________________________

@@ -24,15 +24,16 @@
 #include <vector>
 
 using std::istringstream;
-using std::unordered_map;
 using std::make_tuple;
 using std::max;
 using std::min;
 using std::numeric_limits;
 using std::regex;
+using std::smatch;
 using std::stoi;
 using std::string;
 using std::stringstream;
+using std::unordered_map;
 using std::vector;
 
 // _________________________________________________________________________________________________
@@ -272,15 +273,11 @@ void Type1FontFileParser::parseAsciiPart(Object* strObj, int length, PdfFontInfo
       }
     }
 
-    // Find the "/ItalicAngle" entry of form: "/ItalicAngle 0 def". A value != 0 means that the
-    // font is an italic font.
+    // Find the "/ItalicAngle" entry of form: "/ItalicAngle 0 def".
+    // A value != 0 means that the font is an italic font.
     if (!italicAngleFound) {
-      size_t pos = line.find("/ItalicAngle");
-      if (pos != string::npos) {
-        istringstream lineSS(line);
-        double d;
-        lineSS >> d;
-        fontInfo->isItalic |= (d != 0);
+      if (line.starts_with("/ItalicAngle")) {
+        fontInfo->isItalic |= (line != "/ItalicAngle 0 def");
         italicAngleFound = true;
       }
     }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022, University of Freiburg,
+ * Copyright 2023, University of Freiburg,
  * Chair of Algorithms and Data Structures.
  * Author: Claudius Korzen <korzen@cs.uni-freiburg.de>.
  *
@@ -17,9 +17,12 @@ using std::string;
 
 // =================================================================================================
 
-// Some ANSI codes to print text in colors or in bold to the console. For example, to print text in
-// bold, you can type: 'cout << BLUE << "Hello World" << OFF << endl;'. To print text in bold
-// *and* blue you can type: 'cout << BOLD << BLUE << "Hello World" << OFF << endl;'.
+namespace ppp::utils::log {
+
+// Some ANSI codes to print text in colors or in bold. For example, to print text in blue, you can
+// type: 'cout << BLUE << "Hello World" << OFF << endl;'. To print text in bold *and* blue you can
+// type: 'cout << BOLD << BLUE << "Hello World" << OFF << endl;' or
+// 'cout << BBOLD << "Hello World" << OFF << endl;'.
 const char* const BOLD = "\033[1m";
 const char* const RED = "\033[31m";
 const char* const GREEN = "\033[32m";
@@ -33,25 +36,25 @@ const char* const OFF = "\033[0m";
 // =================================================================================================
 
 /**
- * The available log levels, ordered by their severity.
+ * The available log levels, ordered by their severity (in ascending order).
  */
 enum LogLevel { TRACE, DEBUG, INFO, WARN, ERROR };
 
 // =================================================================================================
 
 /**
- * An output stream that acts like /dev/null, meaning that any text that is streamed to it will be
- * ignored (that is: will be not printed to the console). This stream is used by the 'Logger' class
- * for filtering out messages that do not match the current log level filter or page filter.
+ * An output stream that acts like /dev/null, meaning that any text forwarded to this stream will
+ * be discarded (it does not appear on the console). This stream is used by the 'Logger' class for
+ * filtering out messages that do not match the current log level filter or page filter.
  *
- * The code of this class is stolen from: https://stackoverflow.com/questions/8243743.
+ * Disclaimer: The code of this class is stolen from: https://stackoverflow.com/questions/8243743.
  */
 class NullStream : public ostream {
  public:
   /** The default constructor. */
   NullStream() : ostream(nullptr) {}
   /** The copy constructor. */
-  NullStream(const NullStream &) : ostream(nullptr) {}
+  NullStream(const NullStream&) : ostream(nullptr) {}
 };
 
 // =================================================================================================
@@ -62,144 +65,184 @@ class NullStream : public ostream {
 class Logger {
  public:
   /**
-   * This constructor creates and initializes a new instance of the 'Logger' class.
+   * The default constructor.
    *
    * @param logLevel
    *    The lowest level of log messages this logger should print to the console. The order of log
    *    levels is as follows (ordered by their severity, from low to high): TRACE, DEBUG, INFO,
    *    WARN, ERROR. For example, if the log level is specified as INFO, the logger will only
-   *    print messages of level INFO, WARN, and ERROR to the console, and will ignore messages of
+   *    print messages of level INFO, WARN, and ERROR to the console, and will discard messages of
    *    level TRACE and DEBUG.
    * @param pageFilter
-   *    The page filter. This logger allows to associate a log message with a page number of the
-   *    current document (see the logging methods below), meaning that the message was produced
-   *    while processing the respective page. If specified by a value > 0, this logger prints only
-   *    those message to the console that are associated with the <pageFilter>-th page and will
-   *    ignore messages that are associated with other pages. If specified by a value <= 0, this
-   *    logger prints all messages to the console, no matter with which pages the messages are
-   *    associated.
+   *    The page filter. Log messages can be associated with a page number, with the purpose to
+   *    specify that the message was produced while processing the respective PDF page. If
+   *    specified with a value > 0, only those message that are associated with the <pageFilter>-th
+   *    page will be printed to the console. All messages that are associated with other pages will
+   *    be discarded. If specified by a value <= 0, all messages will be printed to the console, no
+   *    matter with which pages the messages are associated.
    */
   explicit Logger(const LogLevel& logLevel, int pageFilter = -1);
 
   /**
-   * This method sets the log level of this logger.
+   * This method sets the log level of this logger, specifying the lowest level of log messages
+   * this logger should print to the console. See the comment of the constructor for more
+   * information.
    *
    * @param logLevel
-   *    The lowest level of log messages this logger should print to the console. This parameter
-   *    is already described in the comment of the constructor, so see this comment for more
-   *    details about this parameter.
+   *    The logging level.
    */
   void setLogLevel(const LogLevel& logLevel);
 
   /**
-   * This method sets the page filter of this logger.
+   * This method sets the page filter of this logger. See the comment of the constructor for more
+   * information about page filters.
    *
    * @param pageNum
-   *    The page filter. This parameter is already described in the comment of the constructor, so
-   *    see this comment for more details about this parameter.
+   *    The page filter.
    */
   void setPageFilter(int pageNum);
 
   /**
-   * This method returns a stream which prints the received messages with log level TRACE to the
-   * console. The usage is as follows: 'log->trace() << "This is a message" << endl;', which
-   * outputs: '2022-06-02 10:49:00.990 - TRACE:  This is a message'.
+   * This method returns the stream to use for outputting logging messages of log level TRACE.
+   * The usage is as follows: 'log->trace() << "This is a message" << endl;'. The output is:
+   * '2022-06-02 10:49:00.990 - TRACE:  This is a message'.
+   *
+   * NOTE: In general, this method returns std::cout. It may return also the null stream however,
+   * depending on the current values of _logLevel and _pageFilter (see the comment of the
+   * constructor for more information). The null stream is equivalent to /dev/null, meaning that
+   * logging messages forwarded to this stream will be discarded (they do not appear anywhere).
    *
    * @param pageNum
    *    A page number, indicating that the message sent to the stream was produced while processing
-   *    the <pageNum>-th page of the current document. This is needed by the feature of this logger
-   *    that allows to print only those messages to the console that were produced while processing
-   *    a specific page, see the comment given for the constructor for more information.
+   *    the <pageNum>-th PDF page of the current document. This is needed by a feature of this
+   *    logger that allows to print only those messages to the console that were produced while
+   *    processing a specific page, see the comment of the constructor for more information.
    *
    * @return
-   *    A stream which prints the received messages with log level TRACE to the console.
+   *    The stream to use for outputting logging messages of log level TRACE.
    */
   ostream& trace(int pageNum = -1) const;
 
   /**
-   * This method returns a stream which prints the received messages with log level DEBUG to the
-   * console. The usage is as follows: 'log->debug() << "This is a message" << endl;', which
-   * outputs: '2022-06-02 10:49:00.990 - DEBUG: This is a message'.
+   * This method returns the stream to use for outputting logging messages of log level DEBUG.
+   * The usage is as follows: 'log->debug() << "This is a message" << endl;'. The output is:
+   * '2022-06-02 10:49:00.990 - DEBUG:  This is a message'.
+   *
+   * NOTE: In general, this method returns std::cout. It may return also the null stream however,
+   * depending on the current values of _logLevel and _pageFilter (see the comment of the
+   * constructor for more information). The null stream is equivalent to /dev/null, meaning that
+   * logging messages forwarded to this stream will be discarded (they do not appear anywhere).
    *
    * @param pageNum
    *    A page number, indicating that the message sent to the stream was produced while processing
-   *    the <pageNum>-th page of the current document. This is needed by the feature of this logger
-   *    that allows to print only those messages to the console that were produced while processing
-   *    a specific page, see the comment given for the constructor for more information.
+   *    the <pageNum>-th PDF page of the current document. This is needed by a feature of this
+   *    logger that allows to print only those messages to the console that were produced while
+   *    processing a specific page, see the comment of the constructor for more information.
    *
    * @return
-   *    A stream which prints the received messages with log level DEBUG to the console.
+   *    The stream to use for outputting logging messages of log level DEBUG.
    */
   ostream& debug(int pageNum = -1) const;
 
   /**
-   * This method returns a stream which prints the received messages with log level INFO to the
-   * console. The usage is as follows: 'log->info() << "This is a message" << endl;', which
-   * outputs: '2022-06-02 10:49:00.990 - INFO: This is a message'.
+   * This method returns the stream to use for outputting logging messages of log level INFO.
+   * The usage is as follows: 'log->info() << "This is a message" << endl;'. The output is:
+   * '2022-06-02 10:49:00.990 - INFO:  This is a message'.
+   *
+   * NOTE: In general, this method returns std::cout. It may return also the null stream however,
+   * depending on the current values of _logLevel and _pageFilter (see the comment of the
+   * constructor for more information). The null stream is equivalent to /dev/null, meaning that
+   * logging messages forwarded to this stream will be discarded (they do not appear anywhere).
    *
    * @param pageNum
    *    A page number, indicating that the message sent to the stream was produced while processing
-   *    the <pageNum>-th page of the current document. This is needed by the feature of this logger
-   *    that allows to print only those messages to the console that were produced while processing
-   *    a specific page, see the comment given for the constructor for more information.
+   *    the <pageNum>-th PDF page of the current document. This is needed by a feature of this
+   *    logger that allows to print only those messages to the console that were produced while
+   *    processing a specific page, see the comment of the constructor for more information.
    *
    * @return
-   *    A stream which prints the received messages with log level INFO to the console.
+   *    The stream to use for outputting logging messages of log level INFO.
    */
   ostream& info(int pageNum = -1) const;
 
   /**
-   * This method returns a stream which prints the received messages with log level WARN to the
-   * console. The usage is as follows: 'log->warn() << "This is a message" << endl;', which
-   * outputs: '2022-06-02 10:49:00.990 - WARN:  This is a message'.
+   * This method returns the stream to use for outputting logging messages of log level WARN.
+   * The usage is as follows: 'log->warn() << "This is a message" << endl;'. The output is:
+   * '2022-06-02 10:49:00.990 - WARN:  This is a message'.
+   *
+   * NOTE: In general, this method returns std::cout. It may return also the null stream however,
+   * depending on the current values of _logLevel and _pageFilter (see the comment of the
+   * constructor for more information). The null stream is equivalent to /dev/null, meaning that
+   * logging messages forwarded to this stream will be discarded (they do not appear anywhere).
    *
    * @param pageNum
    *    A page number, indicating that the message sent to the stream was produced while processing
-   *    the <pageNum>-th page of the current document. This is needed by the feature of this logger
-   *    that allows to print only those messages to the console that were produced while processing
-   *    a specific page, see the comment given for the constructor for more information.
+   *    the <pageNum>-th PDF page of the current document. This is needed by a feature of this
+   *    logger that allows to print only those messages to the console that were produced while
+   *    processing a specific page, see the comment of the constructor for more information.
    *
    * @return
-   *    A stream which prints the received messages with log level WARN to the console.
+   *    The stream to use for outputting logging messages of log level WARN.
    */
   ostream& warn(int pageNum = -1) const;
 
   /**
-   * This method returns a stream which prints the received messages with log level ERROR to the
-   * console. Thes usage is as follows: 'log->error() << "This is a message" << endl;', which
-   * outputs: '2022-06-02 10:49:00.990 - ERROR:  This is a message'.
+   * This method returns the stream to use for outputting logging messages of log level ERROR.
+   * The usage is as follows: 'log->error() << "This is a message" << endl;'. The output is:
+   * '2022-06-02 10:49:00.990 - ERROR:  This is a message'.
+   *
+   * NOTE: In general, this method returns std::cout. It may return also the null stream however,
+   * depending on the current values of _logLevel and _pageFilter (see the comment of the
+   * constructor for more information). The null stream is equivalent to /dev/null, meaning that
+   * logging messages forwarded to this stream will be discarded (they do not appear anywhere).
    *
    * @param pageNum
    *    A page number, indicating that the message sent to the stream was produced while processing
-   *    the <pageNum>-th page of the current document. This is needed by the feature of this logger
-   *    that allows to print only those messages to the console that were produced while processing
-   *    a specific page, see the comment given for the constructor for more information.
+   *    the <pageNum>-th PDF page of the current document. This is needed by a feature of this
+   *    logger that allows to print only those messages to the console that were produced while
+   *    processing a specific page, see the comment of the constructor for more information.
    *
    * @return
-   *    A stream which prints the received messages with log level ERROR to the console.
+   *    The stream to use for outputting logging messages of log level ERROR.
    */
   ostream& error(int pageNum = -1) const;
 
  private:
   /**
-   * This method returns a stream which prints the received messages with the given log level to
-   * the console.
+   * This method returns the output stream to which a logging message related to the given log
+   * level and page number should be forwarded.
+   *
+   * If (1) the given log level is smaller than _logLevel or (2) if _pageFilter is set and the
+   * given page number is set, but the page number is not equal to _pageFilter, this method returns
+   * the null stream (logging messages forwarded to this stream will be discarded, meaning that
+   * they don't appear on stdout). Otherwise, the method returns std::cout (logging messages
+   * forwarded to this stream appear on stdout).
    *
    * @param logLevel
-   *    The log level of the messages that will be sent to the stream.
+   *    The logging level.
    * @param pageNum
-   *    A page number, indicating that the message sent to the stream was produced while processing
-   *    the <pageNum>-th page of the current document.
+   *    A page number, indicating that the logging message was created while processing the
+   *    <pageNum>-th page of the current PDF document.
    *
    * @return
-   *    A stream which prints the received messages with the given log level to the console.
+   *    An output stream to which a log message associated with the given log level and page number
+   *    should be forwarded.
    */
-  ostream& log(const LogLevel& logLevel, int pageNum = -1) const;
+  ostream& getostream(const LogLevel& logLevel, int pageNum = -1) const;
+
+  /**
+   * This method returns the string to prepend to each log message associated with the given
+   * logging level. The returned string contains the current timestamp and the given logging level.
+   * Here is an example: "2022-06-02 10:49:00.990 - ERROR:"
+   *
+   * @return
+   *    The string to prepend to each logging message associated with the given logging level.
+   */
+  string createLogMessagePrefix(const LogLevel& logLevel) const;
 
   /**
    * This method returns the current timestamp as a human-readable string, for example:
-   * "2022-06-02 10:49:00.990". This string is prepended to each log message printed by this
-   * logger, for reproducibility purposes.
+   * "2022-06-02 10:49:00.990".
    *
    * @return
    *    The current time stamp as a human-readable string.
@@ -208,11 +251,17 @@ class Logger {
 
   // The logging level.
   LogLevel _logLevel = ERROR;
-
   // The page filter.
   int _pageFilter = -1;
 
-  friend class Log_constructor_Test;  // same as FRIEND_TEST(Log, constructor);
+  friend class LogTest_constructor_Test;
+  friend class LogTest_setLogLevel_Test;
+  friend class LogTest_setPageFilter_Test;
+  friend class LogTest_getostream_Test;
+  friend class LogTest_createLogMessagePrefix_Test;
+  friend class LogTest_getTimeStamp_Test;
 };
+
+}  // namespace ppp::utils::log
 
 #endif  // UTILS_LOG_H_

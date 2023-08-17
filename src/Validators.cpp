@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-#include "./serialization/Serialization.h"
+#include "./PdfDocumentSerialization.h"
 #include "./Types.h"
 #include "./Validators.h"
 
