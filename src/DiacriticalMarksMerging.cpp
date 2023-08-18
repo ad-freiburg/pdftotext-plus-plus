@@ -12,10 +12,10 @@
 #include <algorithm>  // min
 #include <vector>
 
+#include "./DiacriticalMarksMerging.h"
 #include "./utils/Log.h"
 #include "./utils/MathUtils.h"
 #include "./utils/PdfElementsUtils.h"
-#include "./DiacriticalMarksMerging.h"
 
 using std::endl;
 using std::max;
@@ -23,10 +23,10 @@ using std::min;
 using std::vector;
 
 using ppp::config::DiacriticalMarksMergingConfig;
-using ppp::utils::log::Logger;
+using ppp::utils::elements::computeMaxXOverlapRatio;
 using ppp::utils::log::BOLD;
 using ppp::utils::log::OFF;
-using ppp::utils::elements::computeMaxXOverlapRatio;
+using ppp::utils::log::Logger;
 using ppp::utils::math::equal;
 using ppp::utils::math::larger;
 

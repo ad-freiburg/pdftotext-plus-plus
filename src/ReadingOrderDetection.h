@@ -15,9 +15,10 @@
 #include "./PdfDocument.h"
 #include "./SemanticRolesPrediction.h"
 
+using std::vector;
+
 using ppp::config::ReadingOrderDetectionConfig;
 using ppp::config::SemanticRolesPredictionConfig;
-using std::vector;
 
 // =================================================================================================
 

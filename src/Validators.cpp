@@ -13,11 +13,14 @@
 #include "./Types.h"
 #include "./Validators.h"
 
-using ppp::types::SerializationFormat;
 using std::string;
 using std::vector;
 
+using ppp::types::SerializationFormat;
+
 namespace po = boost::program_options;
+
+// =================================================================================================
 
 namespace ppp::types {
 

@@ -13,8 +13,8 @@
 #include <utility>  // std::move
 #include <vector>
 
-#include "../Config.h"
 #include "./TextUtils.h"
+#include "../Config.h"
 
 using std::hex;
 using std::isspace;

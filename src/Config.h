@@ -17,8 +17,8 @@
 #include <utility>  // std::pair
 #include <vector>  // std::pair
 
-#include "./utils/Log.h"
 #include "./PdfDocument.h"
+#include "./utils/Log.h"
 
 using std::make_pair;
 using std::max;

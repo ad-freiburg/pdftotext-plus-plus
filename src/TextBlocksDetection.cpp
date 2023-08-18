@@ -11,22 +11,23 @@
 #include <utility>  // std::pair
 #include <vector>
 
-#include "./utils/Log.h"
-#include "./utils/MathUtils.h"
-#include "./utils/PdfElementsUtils.h"
-#include "./utils/TextUtils.h"
-#include "./utils/TextBlocksDetectionUtils.h"
-#include "./utils/Trool.h"
 #include "./Config.h"
 #include "./PdfDocument.h"
 #include "./TextBlocksDetection.h"
+#include "./utils/Log.h"
+#include "./utils/MathUtils.h"
+#include "./utils/PdfElementsUtils.h"
+#include "./utils/TextBlocksDetectionUtils.h"
+#include "./utils/TextUtils.h"
+#include "./utils/Trool.h"
 
-using std::max;
 using std::endl;
+using std::max;
 using std::string;
 using std::vector;
 
 using ppp::config::TextBlocksDetectionConfig;
+using ppp::utils::Trool;
 using ppp::utils::TextBlocksDetectionUtils;
 using ppp::utils::elements::computeHasEqualFont;
 using ppp::utils::elements::computeHasEqualFontSize;
@@ -43,8 +44,8 @@ using ppp::utils::math::equalOrSmaller;
 using ppp::utils::math::larger;
 using ppp::utils::math::round;
 using ppp::utils::math::smaller;
-using ppp::utils::text::shorten;
 using ppp::utils::text::endsWithSentenceDelimiter;
+using ppp::utils::text::shorten;
 using ppp::utils::text::startsWithUpper;
 
 // =================================================================================================

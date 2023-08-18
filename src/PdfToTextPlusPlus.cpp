@@ -19,9 +19,9 @@
 #include "./DiacriticalMarksMerging.h"
 #include "./PageSegmentation.h"
 #include "./PdfParsing.h"
-#include "./StatisticsCalculation.h"
 #include "./PdfToTextPlusPlus.h"
 #include "./ReadingOrderDetection.h"
+#include "./StatisticsCalculation.h"
 #include "./SubSuperScriptsDetection.h"
 #include "./TextBlocksDetection.h"
 #include "./TextLinesDetection.h"
@@ -38,6 +38,7 @@ using std::vector;
 
 using ppp::config::Config;
 using ppp::modules::DiacriticalMarksMerging;
+using ppp::modules::PageSegmentation;
 using ppp::modules::PdfParsing;
 using ppp::modules::ReadingOrderDetection;
 using ppp::modules::StatisticsCalculation;

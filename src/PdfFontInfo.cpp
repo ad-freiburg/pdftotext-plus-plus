@@ -6,8 +6,6 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include "./PdfFontInfo.h"
-
 #include <poppler/GfxFont.h>
 #include <poppler/GfxState.h>
 #include <poppler/Object.h>
@@ -23,6 +21,8 @@
 #include <utility>
 #include <vector>
 
+#include "./PdfFontInfo.h"
+
 using std::istringstream;
 using std::make_tuple;
 using std::max;
@@ -35,6 +35,10 @@ using std::string;
 using std::stringstream;
 using std::unordered_map;
 using std::vector;
+
+// =================================================================================================
+
+namespace ppp::types {
 
 // _________________________________________________________________________________________________
 PdfFontInfo::PdfFontInfo() = default;
@@ -857,3 +861,5 @@ void Type1FontFileParser::decrypt(const char* bytes, int numBytes, int r, int n,
     r = ((cipher + r) * c1 + c2) & ((1 << 16) - 1);
   }
 }
+
+}  // namespace ppp::types

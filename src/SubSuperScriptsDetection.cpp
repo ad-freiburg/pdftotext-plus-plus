@@ -8,11 +8,11 @@
 
 #include <algorithm>  // std::min, std::max
 
-#include "./utils/Log.h"
-#include "./utils/MathUtils.h"
 #include "./Config.h"
 #include "./PdfDocument.h"
 #include "./SubSuperScriptsDetection.h"
+#include "./utils/Log.h"
+#include "./utils/MathUtils.h"
 
 using std::endl;
 using std::max;

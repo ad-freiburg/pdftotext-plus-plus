@@ -11,14 +11,15 @@
 #include <string>
 #include <unordered_set>
 
+#include "./PlainTextExtendedSerializer.h"
 #include "../PdfDocument.h"
 #include "../Types.h"
-#include "./PlainTextExtendedSerializer.h"
+
+using std::endl;
+using std::unordered_set;
 
 using ppp::types::DocumentUnit;
 using ppp::types::SemanticRole;
-using std::endl;
-using std::unordered_set;
 
 // =================================================================================================
 

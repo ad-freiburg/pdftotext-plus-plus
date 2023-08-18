@@ -9,9 +9,9 @@
 #ifndef SUBSUPERSCRIPTSDETECTION_H_
 #define SUBSUPERSCRIPTSDETECTION_H_
 
-#include "./utils/Log.h"
 #include "./Config.h"
 #include "./PdfDocument.h"
+#include "./utils/Log.h"
 
 using ppp::config::SubSuperScriptsDetectionConfig;
 using ppp::utils::log::Logger;

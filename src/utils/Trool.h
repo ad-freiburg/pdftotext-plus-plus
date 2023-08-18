@@ -9,6 +9,8 @@
 #ifndef UTILS_TROOL_H_
 #define UTILS_TROOL_H_
 
+namespace ppp::utils {
+
 /**
  * A tri-state "boolean", with values: true, false and "not set". This is required by, for example,
  * the text block detector to express the following three possible states:
@@ -17,5 +19,7 @@
  *   (c) it can't be decided whether the text line starts a new text block.
  */
 enum Trool { None = -1, False, True };
+
+}  // namespace ppp::utils
 
 #endif  // UTILS_TROOL_H_

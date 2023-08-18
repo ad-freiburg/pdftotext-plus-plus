@@ -10,13 +10,13 @@
 #include <limits>
 #include <vector>
 
-#include "./utils/Comparators.h"
-#include "./utils/FixedCapacityPriorityQueue.h"
-#include "./utils/PdfElementsUtils.h"
-#include "./utils/TextUtils.h"
-
-#include "./PdfDocument.h"
+#include "./Comparators.h"
+#include "./FixedCapacityPriorityQueue.h"
+#include "./PdfElementsUtils.h"
+#include "./TextUtils.h"
 #include "./XYCut.h"
+
+#include "../PdfDocument.h"
 
 using std::max;
 using std::min;
@@ -33,6 +33,10 @@ using ppp::utils::math::equalOrLarger;
 using ppp::utils::math::larger;
 using ppp::utils::math::smaller;
 using ppp::utils::text::createRandomString;
+
+// =================================================================================================
+
+namespace ppp::utils {
 
 // _________________________________________________________________________________________________
 void xyCut(const vector<PdfElement*>& elements,
@@ -315,3 +319,5 @@ bool yCut(const vector<PdfElement*>& elements, double minGapHeight,
 
   return hasChosenCut;
 }
+
+}  // namespace ppp::utils

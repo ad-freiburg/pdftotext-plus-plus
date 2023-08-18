@@ -11,13 +11,13 @@
 #include <string>  // string
 #include <vector>  // vector
 
+#include "./PdfDocument.h"
+#include "./WordsDetection.h"
 #include "./utils/Log.h"
 #include "./utils/MathUtils.h"
 #include "./utils/PdfElementsUtils.h"
 #include "./utils/TextUtils.h"
 #include "./utils/WordsDetectionUtils.h"
-#include "./PdfDocument.h"
-#include "./WordsDetection.h"
 
 using std::endl;
 using std::max;
@@ -26,16 +26,16 @@ using std::string;
 using std::vector;
 
 using ppp::config::WordsDetectionConfig;
+using ppp::utils::WordsDetectionUtils;
 using ppp::utils::elements::computeHorizontalGap;
 using ppp::utils::elements::computeMaxXOverlapRatio;
 using ppp::utils::elements::computeMaxYOverlapRatio;
-using ppp::utils::WordsDetectionUtils;
-using ppp::utils::math::larger;
-using ppp::utils::math::smaller;
 using ppp::utils::log::Logger;
 using ppp::utils::log::BLUE;
 using ppp::utils::log::BOLD;
 using ppp::utils::log::OFF;
+using ppp::utils::math::larger;
+using ppp::utils::math::smaller;
 
 // =================================================================================================
 

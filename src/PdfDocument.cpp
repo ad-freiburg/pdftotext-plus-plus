@@ -9,8 +9,9 @@
 #include <sstream>  // std::stringstream
 #include <string>
 
-#include "./utils/MathUtils.h"
 #include "./PdfDocument.h"
+#include "./utils/MathUtils.h"
+
 
 using std::string;
 using std::stringstream;

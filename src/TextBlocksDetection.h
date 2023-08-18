@@ -14,11 +14,11 @@
 #include <unordered_set>
 #include <utility>   // std::make_pair
 
+#include "./Config.h"
+#include "./PdfDocument.h"
 #include "./utils/Log.h"
 #include "./utils/TextBlocksDetectionUtils.h"
 #include "./utils/Trool.h"
-#include "./Config.h"
-#include "./PdfDocument.h"
 
 using std::make_pair;
 using std::max;
@@ -27,6 +27,7 @@ using std::string;
 using std::unordered_set;
 
 using ppp::config::TextBlocksDetectionConfig;
+using ppp::utils::Trool;
 using ppp::utils::TextBlocksDetectionUtils;
 using ppp::utils::log::Logger;
 

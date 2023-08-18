@@ -17,11 +17,13 @@
 #include "./PdfFontInfo.h"
 #include "./Types.h"
 
-using ppp::types::SemanticRole;
 using std::numeric_limits;
 using std::string;
 using std::unordered_map;
 using std::vector;
+
+using ppp::types::PdfFontInfo;
+using ppp::types::SemanticRole;
 
 class PdfDocument;
 class PdfElement;

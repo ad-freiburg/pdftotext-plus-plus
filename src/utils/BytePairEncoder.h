@@ -6,8 +6,8 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#ifndef BYTEPAIRENCODER_H_
-#define BYTEPAIRENCODER_H_
+#ifndef UTILS_BYTEPAIRENCODER_H_
+#define UTILS_BYTEPAIRENCODER_H_
 
 #include <string>
 #include <unordered_map>
@@ -23,6 +23,8 @@ using std::vector;
 using std::wstring;
 
 // =================================================================================================
+
+namespace ppp::utils {
 
 /**
  * This class encodes given texts by using byte pair encoding.
@@ -107,4 +109,6 @@ class BytePairEncoder {
   friend class BytePairEncoderTest_computeTokenPairPositions_Test;
 };
 
-#endif  // BYTEPAIRENCODER_H_
+}  // namespace ppp::utils
+
+#endif  // UTILS_BYTEPAIRENCODER_H_

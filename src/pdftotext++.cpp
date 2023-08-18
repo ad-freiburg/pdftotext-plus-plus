@@ -51,7 +51,6 @@ using boost::program_options::store;
 using boost::program_options::value;
 using boost::program_options::variables_map;
 
-using ppp::PdfDocumentVisualization;
 using ppp::PdfToTextPlusPlus;
 using ppp::config::Config;
 using ppp::serialization::Serializer;  // TODO(korzen)
@@ -70,6 +69,7 @@ using ppp::utils::log::WARN;
 using ppp::utils::math::round;
 using ppp::utils::text::wrap;
 using ppp::utils::text::strip;
+using ppp::visualization::PdfDocumentVisualization;
 
 // =================================================================================================
 // Global parameters.
@@ -601,37 +601,37 @@ int main(int argc, char* argv[]) {
     auto start = high_resolution_clock::now();
     PdfDocumentVisualization pdv(pdfFilePath, config.pdfDocumentVisualization);
     if (visualizeChars) {
-      pdv.visualizeCharacters(doc, visualizer::color_schemes::blue);
+      pdv.visualizeCharacters(doc, ppp::visualization::color_schemes::blue);
     }
     if (visualizeFigures) {
-      pdv.visualizeFigures(doc, visualizer::color_schemes::blue);
+      pdv.visualizeFigures(doc, ppp::visualization::color_schemes::blue);
     }
     if (visualizeShapes) {
-      pdv.visualizeShapes(doc, visualizer::color_schemes::blue);
+      pdv.visualizeShapes(doc, ppp::visualization::color_schemes::blue);
     }
     if (visualizeGraphics) {
-      pdv.visualizeGraphics(doc, visualizer::color_schemes::blue);
+      pdv.visualizeGraphics(doc, ppp::visualization::color_schemes::blue);
     }
     if (visualizeWords) {
-      pdv.visualizeWords(doc, visualizer::color_schemes::blue);
+      pdv.visualizeWords(doc, ppp::visualization::color_schemes::blue);
     }
     if (visualizeTextLines) {
-      pdv.visualizeTextLines(doc, visualizer::color_schemes::blue);
+      pdv.visualizeTextLines(doc, ppp::visualization::color_schemes::blue);
     }
     if (visualizeTextBlocks) {
-      pdv.visualizeTextBlocks(doc, visualizer::color_schemes::red);
+      pdv.visualizeTextBlocks(doc, ppp::visualization::color_schemes::red);
     }
     if (visualizePageSegments) {
-      pdv.visualizePageSegments(doc, visualizer::color_schemes::blue);
+      pdv.visualizePageSegments(doc, ppp::visualization::color_schemes::blue);
     }
     if (visualizeReadingOrder) {
-      pdv.visualizeReadingOrder(doc, visualizer::color_schemes::blue);
+      pdv.visualizeReadingOrder(doc, ppp::visualization::color_schemes::blue);
     }
     if (visualizeSegmentCuts) {
-      pdv.visualizeSegmentCuts(doc, visualizer::color_schemes::blue);
+      pdv.visualizeSegmentCuts(doc, ppp::visualization::color_schemes::blue);
     }
     if (visualizeReadingOrderCuts) {
-      pdv.visualizeReadingOrderCuts(doc, visualizer::color_schemes::blue);
+      pdv.visualizeReadingOrderCuts(doc, ppp::visualization::color_schemes::blue);
     }
     pdv.save(visualizeFilePathStr);
     auto end = high_resolution_clock::now();

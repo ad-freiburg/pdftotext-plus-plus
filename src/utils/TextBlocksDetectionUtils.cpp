@@ -17,6 +17,7 @@
 #include "./PdfElementsUtils.h"
 #include "./TextUtils.h"
 #include "./TextBlocksDetectionUtils.h"
+#include "../PdfFontInfo.h"
 
 using std::pair;
 using std::regex_search;
@@ -25,6 +26,7 @@ using std::string;
 using std::unordered_set;
 using std::vector;
 
+using ppp::types::PdfFontInfo;
 using ppp::utils::counter::DoubleCounter;
 using ppp::utils::counter::StringCounter;
 using ppp::utils::elements::computeHasEqualFont;

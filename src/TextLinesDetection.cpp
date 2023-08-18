@@ -13,16 +13,16 @@
 #include <unordered_map>
 #include <vector>
 
+#include "./Config.h"
+#include "./PdfDocument.h"
+#include "./TextLinesDetection.h"
 #include "./utils/Comparators.h"
 #include "./utils/Counter.h"
 #include "./utils/Log.h"
 #include "./utils/MathUtils.h"
 #include "./utils/PdfElementsUtils.h"
-#include "./utils/TextUtils.h"
 #include "./utils/TextLinesDetectionUtils.h"
-#include "./Config.h"
-#include "./PdfDocument.h"
-#include "./TextLinesDetection.h"
+#include "./utils/TextUtils.h"
 
 using std::endl;
 using std::get;
@@ -34,15 +34,14 @@ using std::unordered_map;
 using std::vector;
 
 using ppp::config::TextLinesDetectionConfig;
-using ppp::utils::counter::DoubleCounter;
-using ppp::utils::counter::StringCounter;
-using ppp::utils::text::createRandomString;
 using ppp::utils::TextLinesDetectionUtils;
 using ppp::utils::comparators::LeftXAscComparator;
 using ppp::utils::comparators::RotLeftXAscComparator;
 using ppp::utils::comparators::RotLeftXDescComparator;
 using ppp::utils::comparators::RotLowerYAscComparator;
 using ppp::utils::comparators::RotLowerYDescComparator;
+using ppp::utils::counter::DoubleCounter;
+using ppp::utils::counter::StringCounter;
 using ppp::utils::elements::computeHorizontalGap;
 using ppp::utils::elements::computeMaxYOverlapRatio;
 using ppp::utils::log::Logger;
@@ -51,6 +50,7 @@ using ppp::utils::log::GRAY;
 using ppp::utils::log::OFF;
 using ppp::utils::math::equalOrLarger;
 using ppp::utils::math::round;
+using ppp::utils::text::createRandomString;
 
 // =================================================================================================
 

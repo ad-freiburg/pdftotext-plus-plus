@@ -11,13 +11,12 @@
 #include <limits>  // std::numeric_limits
 #include <unordered_set>
 #include <vector>
-#include <iostream>
 
 #include "./Config.h"
 #include "./PdfDocument.h"
 #include "./ReadingOrderDetection.h"
 #include "./SemanticRolesPrediction.h"
-#include "./XYCut.h"
+#include "./utils/XYCut.h"
 
 using std::max;
 using std::min;
@@ -27,6 +26,9 @@ using std::vector;
 using ppp::config::ReadingOrderDetectionConfig;
 using ppp::config::SemanticRolesPredictionConfig;
 using ppp::modules::SemanticRolesPrediction;
+using ppp::utils::xCut;
+using ppp::utils::xyCut;
+using ppp::utils::yCut;
 
 // =================================================================================================
 

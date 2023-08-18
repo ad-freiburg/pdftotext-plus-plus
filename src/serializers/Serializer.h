@@ -16,11 +16,12 @@
 #include "../PdfDocument.h"
 #include "../Types.h"
 
-using ppp::types::DocumentUnit;
-using ppp::types::SemanticRole;
 using std::ostream;
 using std::string;
 using std::unordered_set;
+
+using ppp::types::DocumentUnit;
+using ppp::types::SemanticRole;
 
 // =================================================================================================
 

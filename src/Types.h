@@ -15,10 +15,9 @@
 using std::string;
 using std::vector;
 
-namespace ppp::types {
-
 // =================================================================================================
-// Document units.
+
+namespace ppp::types {
 
 // The available document units.
 enum struct DocumentUnit {

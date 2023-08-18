@@ -18,9 +18,10 @@
 #include "./serializers/PlainTextExtendedSerializer.h"
 #include "./serializers/JsonlSerializer.h"
 
-using ppp::types::SerializationFormat;
 using std::string;
 using std::unordered_map;
+
+using ppp::types::SerializationFormat;
 
 // =================================================================================================
 

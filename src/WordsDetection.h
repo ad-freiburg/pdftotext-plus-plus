@@ -13,10 +13,10 @@
 #include <unordered_set>
 #include <vector>
 
-#include "./utils/Log.h"
-#include "./utils/WordsDetectionUtils.h"
 #include "./Config.h"
 #include "./PdfDocument.h"
+#include "./utils/Log.h"
+#include "./utils/WordsDetectionUtils.h"
 
 using std::string;
 using std::unordered_set;

@@ -9,12 +9,12 @@
 #include <algorithm>  // max
 #include <unordered_map>
 
+#include "./PdfDocument.h"
+#include "./StatisticsCalculation.h"
 #include "./utils/Counter.h"
 #include "./utils/Log.h"
 #include "./utils/MathUtils.h"
 #include "./utils/PdfElementsUtils.h"
-#include "./PdfDocument.h"
-#include "./StatisticsCalculation.h"
 
 using std::endl;
 using std::max;
@@ -34,6 +34,8 @@ using ppp::utils::math::equalOrLarger;
 using ppp::utils::math::equalOrSmaller;
 using ppp::utils::math::round;
 using ppp::utils::math::smaller;
+
+// =================================================================================================
 
 namespace ppp::modules {
 

@@ -11,22 +11,23 @@
 #include <unordered_set>
 
 #include "./JsonlSerializer.h"
-
 #include "../utils/MathUtils.h"
 #include "../utils/TextUtils.h"
-
 #include "../PdfDocument.h"
+#include "../PdfFontInfo.h"
 #include "../Types.h"
 
-using ppp::types::SemanticRole;
-using ppp::utils::math::round;
-using ppp::utils::text::escapeJson;
-using std::cout;
 using std::cerr;
+using std::cout;
 using std::endl;
 using std::ostream;
 using std::string;
 using std::unordered_set;
+
+using ppp::types::PdfFontInfo;
+using ppp::types::SemanticRole;
+using ppp::utils::math::round;
+using ppp::utils::text::escapeJson;
 
 // =================================================================================================
 

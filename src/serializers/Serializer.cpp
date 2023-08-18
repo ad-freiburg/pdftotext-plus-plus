@@ -14,14 +14,17 @@
 #include "./Serializer.h"
 #include "../Types.h"
 
-using ppp::types::DocumentUnit;
-using ppp::types::SemanticRole;
 using std::cerr;
 using std::cout;
 using std::endl;
 using std::ofstream;
 using std::string;
 using std::unordered_set;
+
+using ppp::types::DocumentUnit;
+using ppp::types::SemanticRole;
+
+// =================================================================================================
 
 namespace ppp::serialization {
 

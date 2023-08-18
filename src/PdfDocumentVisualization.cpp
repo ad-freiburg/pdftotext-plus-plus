@@ -18,13 +18,12 @@
 #include <utility>  // std::move
 #include <vector>
 
-#include "./utils/MathUtils.h"
-
 #include "./Config.h"
 #include "./PdfDocument.h"
 #include "./PdfDocumentVisualization.h"
 #include "./PdfParsing.h"
 #include "./Types.h"
+#include "./utils/MathUtils.h"
 
 using std::make_unique;
 using std::move;
@@ -39,9 +38,9 @@ using ppp::modules::PdfParsing;
 using ppp::types::SemanticRole;
 using ppp::utils::math::smaller;
 
-namespace color_schemes = visualizer::color_schemes;
+// =================================================================================================
 
-namespace ppp {
+namespace ppp::visualization {
 
 // _________________________________________________________________________________________________
 PdfDocumentVisualization::PdfDocumentVisualization(const string& pdfFilePath,
@@ -335,7 +334,7 @@ void PdfDocumentVisualization::drawPageSegmentBoundingBoxes(
 
     // Draw the (preliminary) text blocks stored in the segment
     for (const auto* block : segment->blocks) {
-      const ColorScheme& cs2 = color_schemes::red;
+      const ColorScheme& cs2 = ppp::visualization::color_schemes::red;
       Page* pdfPage = _pdfDoc->getPage(segment->pos->pageNum);
       Gfx* gfx = _gfxs[segment->pos->pageNum];
       double leftX = block->pos->leftX;
@@ -672,4 +671,4 @@ string PdfDocumentVisualization::convertToUtf16(const string& str) const {
   return s;
 }
 
-}  // namespace ppp
+}  // namespace ppp::visualization

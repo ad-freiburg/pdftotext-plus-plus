@@ -11,19 +11,22 @@
 
 #include <vector>
 
+#include "./Config.h"
+#include "./PdfDocument.h"
 #include "./utils/Log.h"
 #include "./utils/PageSegmentationUtils.h"
 #include "./utils/Trool.h"
-#include "./Config.h"
-#include "./PdfDocument.h"
 
 using std::vector;
 
 using ppp::config::PageSegmentationConfig;
+using ppp::utils::Trool;
 using ppp::utils::PageSegmentationUtils;
 using ppp::utils::log::Logger;
 
 // =================================================================================================
+
+namespace ppp::modules {
 
 /**
  * This class is responsible for dividing the pages of a given PDF document into segments, by using
@@ -323,5 +326,7 @@ class PageSegmentation {
   // The logger.
   Logger* _log;
 };
+
+}  // namespace ppp::modules
 
 #endif  // PAGESEGMENTATION_H_

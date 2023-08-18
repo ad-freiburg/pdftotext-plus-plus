@@ -14,10 +14,9 @@
 using std::string;
 using std::vector;
 
-namespace ppp::types {
-
 // =================================================================================================
-// Document units.
+
+namespace ppp::types {
 
 // _________________________________________________________________________________________________
 string getName(DocumentUnit unit) {
@@ -45,9 +44,6 @@ string getDocumentUnitsStr(const string& separator) {
   return resultStr;
 }
 
-// =================================================================================================
-// Serialization formats.
-
 // _________________________________________________________________________________________________
 string getName(SerializationFormat format) {
   return SERIALIZATION_FORMAT_NAMES[static_cast<int>(format)];
@@ -73,9 +69,6 @@ string getSerializationFormatsStr(const string& separator) {
   }
   return resultStr;
 }
-
-// =================================================================================================
-// Semantic roles.
 
 // _________________________________________________________________________________________________
 string getName(SemanticRole role) {

@@ -8,10 +8,10 @@
 
 #include <vector>
 
-#include "../Config.h"
 #include "./MathUtils.h"
 #include "./PageSegmentationUtils.h"
 #include "./TextUtils.h"
+#include "../Config.h"
 
 using std::vector;
 

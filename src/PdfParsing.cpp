@@ -18,12 +18,13 @@
 #include <string>
 #include <utility>
 
+#include "./PdfDocument.h"
+#include "./PdfFontInfo.h"
+#include "./PdfParsing.h"
 #include "./utils/CharMap.h"
 #include "./utils/Log.h"
 #include "./utils/MathUtils.h"
 #include "./utils/TextUtils.h"
-#include "./PdfDocument.h"
-#include "./PdfParsing.h"
 
 using std::dynamic_pointer_cast;
 using std::endl;
@@ -39,6 +40,8 @@ using std::stringstream;
 using std::wstring;
 
 using ppp::config::PdfParsingConfig;
+using ppp::types::PdfFontInfo;
+using ppp::utils::charMap;
 using ppp::utils::log::Logger;
 using ppp::utils::log::BOLD;
 using ppp::utils::log::OFF;

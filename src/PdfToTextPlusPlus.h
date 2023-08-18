@@ -12,10 +12,10 @@
 #include <string>
 #include <vector>
 
-#include "./utils/Log.h"
 #include "./Config.h"
 #include "./PdfDocument.h"
 #include "./Types.h"
+#include "./utils/Log.h"
 
 using std::string;
 using std::vector;

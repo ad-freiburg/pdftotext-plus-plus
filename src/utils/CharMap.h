@@ -20,6 +20,8 @@ using std::unordered_map;
 
 // =================================================================================================
 
+namespace ppp::utils {
+
 /**
  * A mapping of char names to the respective Unicode codepoints and string representations.
  * This is needed because for some chars, some PDFs only provide the char names but not the
@@ -165,3 +167,5 @@ const unordered_map<string, pair<unsigned int, string>> charMap = {
 };
 
 #endif  // UTILS_CHARMAP_H_
+
+}  // namespace ppp::utils

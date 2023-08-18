@@ -9,11 +9,11 @@
 #include <string>
 #include <vector>
 
-#include "../PdfDocument.h"
 #include "./Counter.h"
 #include "./MathUtils.h"
 #include "./TextUtils.h"
 #include "./WordsDetectionUtils.h"
+#include "../PdfDocument.h"
 
 using std::string;
 using std::vector;

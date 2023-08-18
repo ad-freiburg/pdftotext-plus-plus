@@ -9,9 +9,9 @@
 #ifndef STATISTICSCALCULATION_H_
 #define STATISTICSCALCULATION_H_
 
-#include "./utils/Log.h"
 #include "./Config.h"
 #include "./PdfDocument.h"
+#include "./utils/Log.h"
 
 using ppp::config::StatisticsCalculationConfig;
 using ppp::utils::log::Logger;

@@ -9,15 +9,15 @@
 #include <utility>  // std::pair
 #include <vector>
 
+#include "./Config.h"
+#include "./PageSegmentation.h"
+#include "./PdfDocument.h"
 #include "./utils/Log.h"
 #include "./utils/MathUtils.h"
 #include "./utils/PageSegmentationUtils.h"
 #include "./utils/PdfElementsUtils.h"
 #include "./utils/Trool.h"
-#include "./Config.h"
-#include "./PageSegmentation.h"
-#include "./PdfDocument.h"
-#include "./XYCut.h"
+#include "./utils/XYCut.h"
 
 using std::bind;
 using std::endl;
@@ -25,13 +25,20 @@ using std::pair;
 using std::vector;
 
 using ppp::config::PageSegmentationConfig;
+using ppp::utils::PageSegmentationUtils;
+using ppp::utils::Trool;
+using ppp::utils::xCut;
+using ppp::utils::xyCut;
 using ppp::utils::elements::computeMaxYOverlapRatio;
-using ppp::utils::log::Logger;
 using ppp::utils::log::BLUE;
 using ppp::utils::log::BOLD;
 using ppp::utils::log::OFF;
+using ppp::utils::log::Logger;
 using ppp::utils::math::smaller;
-using ppp::utils::PageSegmentationUtils;
+
+// =================================================================================================
+
+namespace ppp::modules {
 
 // _________________________________________________________________________________________________
 PageSegmentation::PageSegmentation(PdfDocument* doc, const PageSegmentationConfig& config) {
@@ -476,3 +483,5 @@ void PageSegmentation::chooseYCuts(const vector<Cut*>& cuts, const vector<PdfEle
     }
   }
 }
+
+}  // namespace ppp::modules

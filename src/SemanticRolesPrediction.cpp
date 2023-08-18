@@ -14,12 +14,11 @@
 #include <string>
 #include <utility>  // std::make_pair
 #include <vector>
-#include <iostream>
-#include <iomanip>
 
-#include "./BytePairEncoder.h"
 #include "./Config.h"
+#include "./PdfFontInfo.h"
 #include "./SemanticRolesPrediction.h"
+#include "./utils/BytePairEncoder.h"
 
 using std::numeric_limits;
 using std::string;
@@ -27,6 +26,8 @@ using std::vector;
 using std::wstring;
 
 using ppp::config::SemanticRolesPredictionConfig;
+using ppp::types::PdfFontInfo;
+using ppp::utils::BytePairEncoder;
 
 // =================================================================================================
 

@@ -15,11 +15,13 @@
 #include <codecvt>  // std::codecvt_utf8_utf16
 #include <locale>  // std::wstring_convert
 
-#include "./utils/Log.h"
 #include "./Config.h"
 #include "./PdfDocument.h"
+#include "./PdfFontInfo.h"
+#include "./utils/Log.h"
 
 using ppp::config::PdfParsingConfig;
+using ppp::types::PdfFontInfo;
 using ppp::utils::log::Logger;
 
 // =================================================================================================

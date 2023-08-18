@@ -13,7 +13,7 @@
 #include <vector>
 
 #include "./BytePairEncoder.h"
-#include "./utils/TextUtils.h"
+#include "./TextUtils.h"
 
 using std::pair;
 using std::unordered_map;
@@ -22,6 +22,10 @@ using std::vector;
 using std::wstring;
 
 using ppp::utils::text::splitIntoWords;
+
+// =================================================================================================
+
+namespace ppp::utils {
 
 // _________________________________________________________________________________________________
 BytePairEncoder::BytePairEncoder(unordered_map<wstring, int>* vocabulary) {
@@ -207,3 +211,5 @@ void BytePairEncoder::computeTokenPairPositions(const vector<wstring>& tokens,
     cache[merged] = pair;
   }
 }
+
+}  // namespace ppp::utils

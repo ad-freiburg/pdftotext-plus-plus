@@ -9,9 +9,9 @@
 #ifndef DIACRITICALMARKSMERGING_H_
 #define DIACRITICALMARKSMERGING_H_
 
-#include "./utils/Log.h"
 #include "./Config.h"
 #include "./PdfDocument.h"
+#include "./utils/Log.h"
 
 using ppp::config::DiacriticalMarksMergingConfig;
 using ppp::utils::log::Logger;

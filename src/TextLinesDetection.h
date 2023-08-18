@@ -11,11 +11,11 @@
 
 #include <vector>
 
+#include "./Config.h"
+#include "./PdfDocument.h"
 #include "./utils/Log.h"
 #include "./utils/MathUtils.h"
 #include "./utils/TextLinesDetectionUtils.h"
-#include "./Config.h"
-#include "./PdfDocument.h"
 
 using std::vector;
 
