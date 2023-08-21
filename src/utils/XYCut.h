@@ -16,6 +16,9 @@
 
 using std::vector;
 
+using ppp::types::Cut;
+using ppp::types::PdfElement;
+
 // =================================================================================================
 
 namespace ppp::utils {

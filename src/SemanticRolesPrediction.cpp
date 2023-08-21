@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "./Config.h"
+#include "./PdfDocument.h"
 #include "./PdfFontInfo.h"
 #include "./SemanticRolesPrediction.h"
 #include "./utils/BytePairEncoder.h"
@@ -26,6 +27,7 @@ using std::vector;
 using std::wstring;
 
 using ppp::config::SemanticRolesPredictionConfig;
+using ppp::types::PdfDocument;
 using ppp::types::PdfFontInfo;
 using ppp::utils::BytePairEncoder;
 

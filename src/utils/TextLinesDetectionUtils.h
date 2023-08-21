@@ -17,6 +17,8 @@
 using std::tuple;
 
 using ppp::config::TextLinesDetectionConfig;
+using ppp::types::PdfPage;
+using ppp::types::PdfPageSegment;
 
 // =================================================================================================
 

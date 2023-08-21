@@ -1,5 +1,5 @@
 /**
- * Copyright 2022, University of Freiburg,
+ * Copyright 2023, University of Freiburg,
  * Chair of Algorithms and Data Structures.
  * Author: Claudius Korzen <korzen@cs.uni-freiburg.de>.
  *
@@ -7,7 +7,7 @@
  */
 
 #include <algorithm>  // std::sort
-#include <limits>
+#include <limits>  // std::numeric_limits
 #include <vector>
 
 #include "./Comparators.h"
@@ -15,14 +15,16 @@
 #include "./PdfElementsUtils.h"
 #include "./TextUtils.h"
 #include "./XYCut.h"
-
 #include "../PdfDocument.h"
 
-using std::max;
-using std::min;
+using std::max;  // TODO(korzen): use utils::math:maximum
+using std::min;  // TODO(korzen): use utils::math:minimum
 using std::numeric_limits;
 using std::vector;
 
+using ppp::types::Cut;
+using ppp::types::CutDir;
+using ppp::types::PdfElement;
 using ppp::utils::comparators::LeftXAscComparator;
 using ppp::utils::comparators::RightXDescComparator;
 using ppp::utils::comparators::UpperYAscComparator;
@@ -31,8 +33,8 @@ using ppp::utils::elements::computeVerticalGap;
 using ppp::utils::math::equal;
 using ppp::utils::math::equalOrLarger;
 using ppp::utils::math::larger;
-using ppp::utils::math::smaller;
 using ppp::utils::text::createRandomString;
+
 
 // =================================================================================================
 

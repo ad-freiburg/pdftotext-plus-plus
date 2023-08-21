@@ -9,7 +9,7 @@
 #ifndef UTILS_FIXEDCAPACITYPRIORITYQUEUE_H_
 #define UTILS_FIXEDCAPACITYPRIORITYQUEUE_H_
 
-#include <algorithm>  // std::sort
+#include <algorithm>  // std::partial_sort_copy
 #include <queue>  // std::priority_queue
 #include <vector>
 

@@ -14,11 +14,16 @@
 #include "./MathUtils.h"
 #include "./PdfElementsUtils.h"
 #include "./TextLinesDetectionUtils.h"
+#include "../PdfDocument.h"
 
 using std::make_tuple;
 using std::pair;
 using std::stack;
 
+using ppp::types::PdfDocument;
+using ppp::types::PdfPage;
+using ppp::types::PdfPageSegment;
+using ppp::types::PdfTextLine;
 using ppp::utils::counter::DoubleCounter;
 using ppp::utils::elements::computeVerticalGap;
 using ppp::utils::math::equal;

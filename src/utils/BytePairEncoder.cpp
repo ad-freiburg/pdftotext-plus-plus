@@ -1,5 +1,5 @@
 /**
- * Copyright 2022, University of Freiburg,
+ * Copyright 2023, University of Freiburg,
  * Chair of Algorithms and Data Structures.
  * Author: Claudius Korzen <korzen@cs.uni-freiburg.de>.
  *
@@ -9,7 +9,7 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
-#include <utility>  // std::make_pair
+#include <utility>  // std::pair
 #include <vector>
 
 #include "./BytePairEncoder.h"

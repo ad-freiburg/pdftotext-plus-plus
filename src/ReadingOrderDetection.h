@@ -19,6 +19,10 @@ using std::vector;
 
 using ppp::config::ReadingOrderDetectionConfig;
 using ppp::config::SemanticRolesPredictionConfig;
+using ppp::types::Cut;
+using ppp::types::PdfDocument;
+using ppp::types::PdfElement;
+using ppp::types::PdfPage;
 
 // =================================================================================================
 

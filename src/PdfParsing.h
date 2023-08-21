@@ -21,7 +21,9 @@
 #include "./utils/Log.h"
 
 using ppp::config::PdfParsingConfig;
+using ppp::types::PdfDocument;
 using ppp::types::PdfFontInfo;
+using ppp::types::PdfPage;
 using ppp::utils::log::Logger;
 
 // =================================================================================================

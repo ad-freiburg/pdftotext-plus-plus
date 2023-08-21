@@ -26,6 +26,10 @@ using std::string;
 using std::vector;
 
 using ppp::config::WordsDetectionConfig;
+using ppp::types::PdfCharacter;
+using ppp::types::PdfDocument;
+using ppp::types::PdfPage;
+using ppp::types::PdfWord;
 using ppp::utils::WordsDetectionUtils;
 using ppp::utils::elements::computeHorizontalGap;
 using ppp::utils::elements::computeMaxXOverlapRatio;

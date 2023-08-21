@@ -18,6 +18,8 @@
 using std::string;
 using std::vector;
 
+using ppp::types::PdfCharacter;
+using ppp::types::PdfWord;
 using ppp::utils::counter::DoubleCounter;
 using ppp::utils::counter::StringCounter;
 using ppp::utils::math::maximum;

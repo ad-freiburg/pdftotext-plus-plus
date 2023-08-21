@@ -21,6 +21,11 @@ using std::unordered_set;
 using std::vector;
 
 using ppp::config::TextBlocksDetectionConfig;
+using ppp::types::PdfElement;
+using ppp::types::PdfFigure;
+using ppp::types::PdfTextBlock;
+using ppp::types::PdfTextElement;
+using ppp::types::PdfTextLine;
 
 // =================================================================================================
 

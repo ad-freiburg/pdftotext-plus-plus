@@ -17,6 +17,8 @@
 using std::vector;
 
 using ppp::config::WordsDetectionConfig;
+using ppp::types::PdfCharacter;
+using ppp::types::PdfWord;
 
 // =================================================================================================
 

@@ -29,6 +29,9 @@ using std::unordered_map;
 using std::unordered_set;
 using std::vector;
 
+using ppp::types::PdfDocument;
+using ppp::types::PdfTextLine;
+using ppp::types::PdfWord;
 using ppp::utils::log::LogLevel;
 
 // =================================================================================================

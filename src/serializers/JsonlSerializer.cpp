@@ -17,14 +17,20 @@
 #include "../PdfFontInfo.h"
 #include "../Types.h"
 
-using std::cerr;
-using std::cout;
 using std::endl;
 using std::ostream;
 using std::string;
 using std::unordered_set;
 
+using ppp::types::PdfCharacter;
+using ppp::types::PdfDocument;
+using ppp::types::PdfFigure;
 using ppp::types::PdfFontInfo;
+using ppp::types::PdfPage;
+using ppp::types::PdfShape;
+using ppp::types::PdfTextBlock;
+using ppp::types::PdfTextLine;
+using ppp::types::PdfWord;
 using ppp::types::SemanticRole;
 using ppp::utils::math::round;
 using ppp::utils::text::escapeJson;

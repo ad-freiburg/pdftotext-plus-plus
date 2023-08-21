@@ -14,6 +14,7 @@
 #include "./utils/Log.h"
 
 using ppp::config::SubSuperScriptsDetectionConfig;
+using ppp::types::PdfDocument;
 using ppp::utils::log::Logger;
 
 // =================================================================================================

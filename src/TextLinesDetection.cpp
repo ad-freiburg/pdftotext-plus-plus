@@ -34,6 +34,10 @@ using std::unordered_map;
 using std::vector;
 
 using ppp::config::TextLinesDetectionConfig;
+using ppp::types::PdfDocument;
+using ppp::types::PdfPageSegment;
+using ppp::types::PdfTextLine;
+using ppp::types::PdfWord;
 using ppp::utils::TextLinesDetectionUtils;
 using ppp::utils::comparators::LeftXAscComparator;
 using ppp::utils::comparators::RotLeftXAscComparator;

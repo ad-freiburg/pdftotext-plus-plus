@@ -19,6 +19,7 @@ using std::max;
 using std::min;
 
 using ppp::config::SubSuperScriptsDetectionConfig;
+using ppp::types::PdfDocument;
 using ppp::utils::log::Logger;
 using ppp::utils::log::BOLD;
 using ppp::utils::log::OFF;

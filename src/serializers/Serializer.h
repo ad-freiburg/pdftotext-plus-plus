@@ -21,6 +21,7 @@ using std::string;
 using std::unordered_set;
 
 using ppp::types::DocumentUnit;
+using ppp::types::PdfDocument;
 using ppp::types::SemanticRole;
 
 // =================================================================================================

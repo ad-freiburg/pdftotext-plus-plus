@@ -27,6 +27,10 @@ using std::string;
 using std::vector;
 
 using ppp::config::TextBlocksDetectionConfig;
+using ppp::types::PdfDocument;
+using ppp::types::PdfFigure;
+using ppp::types::PdfTextBlock;
+using ppp::types::PdfTextLine;
 using ppp::utils::Trool;
 using ppp::utils::TextBlocksDetectionUtils;
 using ppp::utils::elements::computeHasEqualFont;

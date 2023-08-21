@@ -21,6 +21,7 @@ using std::string;
 using std::vector;
 
 using ppp::config::Config;
+using ppp::types::PdfDocument;
 using ppp::types::Timing;
 using ppp::utils::log::LogLevel;
 

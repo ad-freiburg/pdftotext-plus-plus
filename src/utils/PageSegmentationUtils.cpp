@@ -12,15 +12,17 @@
 #include "./PageSegmentationUtils.h"
 #include "./TextUtils.h"
 #include "../Config.h"
+#include "../PdfDocument.h"
 
 using std::vector;
 
 using ppp::config::PageSegmentationConfig;
-using ppp::utils::text::createRandomString;
-using ppp::utils::math::equalOrLarger;
+using ppp::types::PdfElement;
+using ppp::types::PdfPageSegment;
 using ppp::utils::math::maximum;
 using ppp::utils::math::minimum;
 using ppp::utils::math::round;
+using ppp::utils::text::createRandomString;
 
 // =================================================================================================
 

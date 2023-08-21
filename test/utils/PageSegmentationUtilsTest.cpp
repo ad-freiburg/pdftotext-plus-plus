@@ -19,6 +19,10 @@ using std::numeric_limits;
 using std::vector;
 
 using ppp::config::PageSegmentationConfig;
+using ppp::types::PdfDocument;
+using ppp::types::PdfElement;
+using ppp::types::PdfPageSegment;
+using ppp::types::PdfWord;
 using ppp::utils::PageSegmentationUtils;
 
 // =================================================================================================

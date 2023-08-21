@@ -6,12 +6,13 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <string>
 #include <unordered_set>
 
 #include "./Serializer.h"
+#include "../PdfDocument.h"
 #include "../Types.h"
 
 using std::cerr;
@@ -22,6 +23,7 @@ using std::string;
 using std::unordered_set;
 
 using ppp::types::DocumentUnit;
+using ppp::types::PdfDocument;
 using ppp::types::SemanticRole;
 
 // =================================================================================================

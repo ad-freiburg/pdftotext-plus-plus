@@ -13,10 +13,10 @@
 #include <unordered_map>
 
 #include "./Types.h"
-#include "./serializers/Serializer.h"
+#include "./serializers/JsonlSerializer.h"
 #include "./serializers/PlainTextSerializer.h"
 #include "./serializers/PlainTextExtendedSerializer.h"
-#include "./serializers/JsonlSerializer.h"
+#include "./serializers/Serializer.h"
 
 using std::string;
 using std::unordered_map;

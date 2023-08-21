@@ -1,5 +1,5 @@
 /**
- * Copyright 2022, University of Freiburg,
+ * Copyright 2023, University of Freiburg,
  * Chair of Algorithms and Data Structures.
  * Author: Claudius Korzen <korzen@cs.uni-freiburg.de>.
  *
@@ -26,6 +26,17 @@ using std::vector;
 
 using ppp::config::PdfDocumentVisualizationConfig;
 using ppp::modules::PdfParsing;
+using ppp::types::Cut;
+using ppp::types::PdfCharacter;
+using ppp::types::PdfDocument;
+using ppp::types::PdfElement;
+using ppp::types::PdfFigure;
+using ppp::types::PdfGraphic;
+using ppp::types::PdfPageSegment;
+using ppp::types::PdfShape;
+using ppp::types::PdfTextBlock;
+using ppp::types::PdfTextLine;
+using ppp::types::PdfWord;
 
 // =================================================================================================
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022, University of Freiburg,
+ * Copyright 2023, University of Freiburg,
  * Chair of Algorithms and Data Structures.
  * Author: Claudius Korzen <korzen@cs.uni-freiburg.de>.
  *
@@ -12,14 +12,14 @@
 #include "./PdfDocument.h"
 #include "./utils/MathUtils.h"
 
-
 using std::string;
 using std::stringstream;
 
 using ppp::utils::math::round;
 
 // =================================================================================================
-// Cut
+
+namespace ppp::types {
 
 // _________________________________________________________________________________________________
 Cut::Cut(const CutDir dirA) {
@@ -606,3 +606,5 @@ PdfDocument::~PdfDocument() {
     delete fi.second;
   }
 }
+
+}  // namespace ppp::types

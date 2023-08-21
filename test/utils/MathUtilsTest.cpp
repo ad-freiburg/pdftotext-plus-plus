@@ -16,8 +16,8 @@ using ppp::utils::math::equal;
 using ppp::utils::math::equalOrLarger;
 using ppp::utils::math::equalOrSmaller;
 using ppp::utils::math::larger;
-using ppp::utils::math::minimum;
 using ppp::utils::math::maximum;
+using ppp::utils::math::minimum;
 using ppp::utils::math::round;
 using ppp::utils::math::smaller;
 

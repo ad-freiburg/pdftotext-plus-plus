@@ -1,5 +1,5 @@
 /**
- * Copyright 2022, University of Freiburg,
+ * Copyright 2023, University of Freiburg,
  * Chair of Algorithms and Data Structures.
  * Author: Claudius Korzen <korzen@cs.uni-freiburg.de>.
  *
@@ -13,20 +13,20 @@
 
 #include <algorithm>  // std::min, std::max
 #include <limits>
-#include <memory>
+#include <memory>  // std::shared_ptr
 #include <regex>
-#include <sstream>  // stringstream
+#include <sstream>  // std::stringstream
 #include <string>
 #include <unordered_map>
-#include <utility>
+#include <utility>  // std::make_tuple
 #include <vector>
 
 #include "./PdfFontInfo.h"
 
 using std::istringstream;
 using std::make_tuple;
-using std::max;
-using std::min;
+using std::max;  // TODO(korzen): Use utils::math::maximum
+using std::min;  // TODO(korzen): Use utils::math::minimum
 using std::numeric_limits;
 using std::regex;
 using std::smatch;

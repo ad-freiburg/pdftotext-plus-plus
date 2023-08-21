@@ -15,8 +15,8 @@
 #include "./Counter.h"
 #include "./MathUtils.h"
 #include "./PdfElementsUtils.h"
-#include "./TextUtils.h"
 #include "./TextBlocksDetectionUtils.h"
+#include "./TextUtils.h"
 #include "../PdfFontInfo.h"
 
 using std::pair;
@@ -26,7 +26,14 @@ using std::string;
 using std::unordered_set;
 using std::vector;
 
+using ppp::types::PdfCharacter;
+using ppp::types::PdfElement;
+using ppp::types::PdfFigure;
 using ppp::types::PdfFontInfo;
+using ppp::types::PdfTextBlock;
+using ppp::types::PdfTextElement;
+using ppp::types::PdfTextLine;
+using ppp::types::PdfWord;
 using ppp::utils::counter::DoubleCounter;
 using ppp::utils::counter::StringCounter;
 using ppp::utils::elements::computeHasEqualFont;

@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "../../src/Config.h"
+#include "../../src/PdfDocument.h"
 #include "../../src/PdfToTextPlusPlus.h"
 #include "../../src/utils/MathUtils.h"
 #include "../../src/utils/WordsDetectionUtils.h"
@@ -22,6 +23,10 @@ using std::vector;
 using ppp::PdfToTextPlusPlus;
 using ppp::config::Config;
 using ppp::config::WordsDetectionConfig;
+using ppp::types::PdfCharacter;
+using ppp::types::PdfDocument;
+using ppp::types::PdfPage;
+using ppp::types::PdfWord;
 using ppp::utils::WordsDetectionUtils;
 using ppp::utils::math::round;
 

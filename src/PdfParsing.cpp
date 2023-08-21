@@ -12,11 +12,11 @@
 
 #include <algorithm>  // std::min, std::max
 #include <cmath>  // fabs
-#include <limits>  // numeric_limits
-#include <memory>
+#include <limits>  // std::numeric_limits
+#include <memory>  // std::shared_ptr
 #include <sstream>  // std::stringstream
 #include <string>
-#include <utility>
+#include <utility>  // std::move
 
 #include "./PdfDocument.h"
 #include "./PdfFontInfo.h"
@@ -30,8 +30,8 @@ using std::dynamic_pointer_cast;
 using std::endl;
 using std::get;
 using std::iswspace;
-using std::max;
-using std::min;
+using std::max;  // TODO(korzen): Use utils::math::maximum
+using std::min;  // TODO(korzen): Use utils::math::minimum
 using std::numeric_limits;
 using std::optional;
 using std::shared_ptr;
@@ -40,7 +40,13 @@ using std::stringstream;
 using std::wstring;
 
 using ppp::config::PdfParsingConfig;
+using ppp::types::PdfCharacter;
+using ppp::types::PdfDocument;
+using ppp::types::PdfFigure;
 using ppp::types::PdfFontInfo;
+using ppp::types::PdfGraphic;
+using ppp::types::PdfPage;
+using ppp::types::PdfShape;
 using ppp::utils::charMap;
 using ppp::utils::log::Logger;
 using ppp::utils::log::BOLD;

@@ -12,6 +12,7 @@
 #include <tuple>
 
 #include "../../src/Config.h"
+#include "../../src/PdfDocument.h"
 #include "../../src/PdfToTextPlusPlus.h"
 #include "../../src/utils/MathUtils.h"
 #include "../../src/utils/TextLinesDetectionUtils.h"
@@ -22,6 +23,10 @@ using std::tuple;
 using ppp::PdfToTextPlusPlus;
 using ppp::config::Config;
 using ppp::config::TextLinesDetectionConfig;
+using ppp::types::PdfDocument;
+using ppp::types::PdfPage;
+using ppp::types::PdfPageSegment;
+using ppp::types::PdfTextLine;
 using ppp::utils::TextLinesDetectionUtils;
 using ppp::utils::math::round;
 

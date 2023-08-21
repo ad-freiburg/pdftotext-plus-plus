@@ -55,6 +55,7 @@ using ppp::PdfToTextPlusPlus;
 using ppp::config::Config;
 using ppp::serialization::Serializer;  // TODO(korzen)
 using ppp::types::DocumentUnit;
+using ppp::types::PdfDocument;
 using ppp::types::SemanticRole;
 using ppp::types::SerializationFormat;
 using ppp::types::Timing;

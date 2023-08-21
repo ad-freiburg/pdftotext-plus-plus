@@ -23,6 +23,7 @@ using std::string;
 using std::unordered_map;
 
 using ppp::config::SemanticRolesPredictionConfig;
+using ppp::types::PdfDocument;
 
 // =================================================================================================
 

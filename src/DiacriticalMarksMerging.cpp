@@ -13,16 +13,19 @@
 #include <vector>
 
 #include "./DiacriticalMarksMerging.h"
+#include "./PdfDocument.h"
 #include "./utils/Log.h"
 #include "./utils/MathUtils.h"
 #include "./utils/PdfElementsUtils.h"
 
 using std::endl;
-using std::max;
-using std::min;
+using std::max;  // TODO(korzen): use utils::math:maximum
+using std::min;  // TODO(korzen): use utils::math:minimum
 using std::vector;
 
 using ppp::config::DiacriticalMarksMergingConfig;
+using ppp::types::PdfCharacter;
+using ppp::types::PdfDocument;
 using ppp::utils::elements::computeMaxXOverlapRatio;
 using ppp::utils::log::BOLD;
 using ppp::utils::log::OFF;

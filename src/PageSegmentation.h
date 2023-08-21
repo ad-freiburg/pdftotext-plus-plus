@@ -20,8 +20,13 @@
 using std::vector;
 
 using ppp::config::PageSegmentationConfig;
-using ppp::utils::Trool;
+using ppp::types::Cut;
+using ppp::types::PdfDocument;
+using ppp::types::PdfElement;
+using ppp::types::PdfPage;
+using ppp::types::PdfPageSegment;
 using ppp::utils::PageSegmentationUtils;
+using ppp::utils::Trool;
 using ppp::utils::log::Logger;
 
 // =================================================================================================

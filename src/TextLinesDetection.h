@@ -20,6 +20,10 @@
 using std::vector;
 
 using ppp::config::TextLinesDetectionConfig;
+using ppp::types::PdfDocument;
+using ppp::types::PdfPageSegment;
+using ppp::types::PdfTextLine;
+using ppp::types::PdfWord;
 using ppp::utils::TextLinesDetectionUtils;
 using ppp::utils::log::Logger;
 

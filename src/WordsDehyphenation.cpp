@@ -15,6 +15,9 @@
 using std::string;
 
 using ppp::config::WordsDehyphenationConfig;
+using ppp::types::PdfDocument;
+using ppp::types::PdfTextLine;
+using ppp::types::PdfWord;
 
 // =================================================================================================
 

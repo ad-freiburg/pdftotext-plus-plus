@@ -26,8 +26,6 @@ using std::stringstream;
 using std::vector;
 using std::wstring;
 
-using ppp::config::ALPHA_NUM;
-
 // =================================================================================================
 
 namespace ppp::utils::text {

@@ -6,7 +6,7 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include <algorithm>
+#include <algorithm>  // std::transform
 #include <ostream>
 #include <string>
 #include <unordered_set>
@@ -16,9 +16,15 @@
 #include "../Types.h"
 
 using std::endl;
+using std::ostream;
+using std::string;
+using std::transform;
 using std::unordered_set;
 
 using ppp::types::DocumentUnit;
+using ppp::types::PdfDocument;
+using ppp::types::PdfTextBlock;
+using ppp::types::PdfWord;
 using ppp::types::SemanticRole;
 
 // =================================================================================================
@@ -52,7 +58,7 @@ void PlainTextExtendedSerializer::serializeToStream(const PdfDocument* doc,
 
       // Prefix each block with its semantic role.
       string roleStr = ppp::types::getName(block->role);
-      std::transform(roleStr.begin(), roleStr.end(), roleStr.begin(), ::toupper);
+      transform(roleStr.begin(), roleStr.end(), roleStr.begin(), ::toupper);
       out << "[" << roleStr << "] ";
 
       // Prefix each emphasized block with "^A" (start of heading).

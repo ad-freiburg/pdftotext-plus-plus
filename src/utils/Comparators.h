@@ -12,6 +12,7 @@
 #include "./MathUtils.h"
 #include "../PdfDocument.h"
 
+using ppp::types::PdfElement;
 using ppp::utils::math::larger;
 using ppp::utils::math::smaller;
 

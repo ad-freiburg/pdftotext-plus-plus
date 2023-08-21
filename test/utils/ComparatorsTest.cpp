@@ -11,11 +11,13 @@
 #include <algorithm>  // std::sort
 #include <vector>
 
-#include "../../src/utils/Comparators.h"
 #include "../../src/PdfDocument.h"
+#include "../../src/utils/Comparators.h"
 
 using std::vector;
 
+using ppp::types::PdfCharacter;
+using ppp::types::PdfWord;
 using ppp::utils::comparators::LeftXAscComparator;
 using ppp::utils::comparators::RightXDescComparator;
 using ppp::utils::comparators::RotLeftXAscComparator;

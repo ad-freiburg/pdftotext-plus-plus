@@ -18,6 +18,7 @@
 
 #include "./DiacriticalMarksMerging.h"
 #include "./PageSegmentation.h"
+#include "./PdfDocument.h"
 #include "./PdfParsing.h"
 #include "./PdfToTextPlusPlus.h"
 #include "./ReadingOrderDetection.h"
@@ -47,6 +48,7 @@ using ppp::modules::TextBlocksDetection;
 using ppp::modules::TextLinesDetection;
 using ppp::modules::WordsDehyphenation;
 using ppp::modules::WordsDetection;
+using ppp::types::PdfDocument;
 using ppp::types::Timing;
 
 // =================================================================================================

@@ -17,6 +17,9 @@ using std::endl;
 using std::unordered_set;
 
 using ppp::types::DocumentUnit;
+using ppp::types::PdfDocument;
+using ppp::types::PdfTextBlock;
+using ppp::types::PdfWord;
 using ppp::types::SemanticRole;
 
 // =================================================================================================

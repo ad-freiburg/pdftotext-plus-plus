@@ -17,6 +17,8 @@
 using std::vector;
 
 using ppp::config::PageSegmentationConfig;
+using ppp::types::PdfElement;
+using ppp::types::PdfPageSegment;
 
 // =================================================================================================
 

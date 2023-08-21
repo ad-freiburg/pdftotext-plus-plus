@@ -21,6 +21,9 @@ using std::max;
 using std::unordered_map;
 
 using ppp::config::StatisticsCalculationConfig;
+using ppp::types::PdfDocument;
+using ppp::types::PdfTextLine;
+using ppp::types::PdfWord;
 using ppp::utils::counter::DoubleCounter;
 using ppp::utils::counter::StringCounter;
 using ppp::utils::elements::computeHorizontalGap;

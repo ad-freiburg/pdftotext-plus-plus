@@ -13,6 +13,7 @@
 #include "./PdfDocument.h"
 
 using ppp::config::WordsDehyphenationConfig;
+using ppp::types::PdfDocument;
 
 // =================================================================================================
 

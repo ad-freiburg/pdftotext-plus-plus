@@ -11,8 +11,8 @@
 #include <string>
 #include <utility>  // std::pair
 
-#include "../../src/utils/Counter.h"
 #include "../../src/Config.h"
+#include "../../src/utils/Counter.h"
 
 using std::pair;
 using std::string;

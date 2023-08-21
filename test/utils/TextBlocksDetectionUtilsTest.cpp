@@ -25,6 +25,12 @@ using std::vector;
 using ppp::PdfToTextPlusPlus;
 using ppp::config::Config;
 using ppp::config::TextBlocksDetectionConfig;
+using ppp::types::PdfCharacter;
+using ppp::types::PdfDocument;
+using ppp::types::PdfFigure;
+using ppp::types::PdfPage;
+using ppp::types::PdfTextBlock;
+using ppp::types::PdfTextLine;
 using ppp::utils::TextBlocksDetectionUtils;
 using ppp::utils::math::round;
 

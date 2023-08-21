@@ -25,6 +25,13 @@ using std::pair;
 using std::vector;
 
 using ppp::config::PageSegmentationConfig;
+using ppp::types::Cut;
+using ppp::types::CutDir;
+using ppp::types::PdfDocument;
+using ppp::types::PdfElement;
+using ppp::types::PdfPage;
+using ppp::types::PdfPageSegment;
+using ppp::types::PdfWord;
 using ppp::utils::PageSegmentationUtils;
 using ppp::utils::Trool;
 using ppp::utils::xCut;
