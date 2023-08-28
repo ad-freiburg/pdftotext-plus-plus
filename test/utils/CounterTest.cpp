@@ -15,6 +15,7 @@
 #include "../../src/utils/Counter.h"
 
 using std::pair;
+using std::runtime_error;
 using std::string;
 
 using ppp::utils::counter::DoubleCounter;
@@ -30,7 +31,7 @@ TEST(DoubleCounterTest, mostFreq) {
   DoubleCounter counter;
 
   // Test the empty counter.
-  ASSERT_THROW(counter.mostFreq(), std::runtime_error);
+  ASSERT_THROW(counter.mostFreq(), runtime_error);
 
   counter[0.4] = 1;
   counter[1.7] = 7;
@@ -58,7 +59,7 @@ TEST(DoubleCounterTest, mostFreq) {
   ASSERT_NEAR(counter.mostFreq(), 0.4, TOL);
 
   counter[0.4] = 0;
-  ASSERT_THROW(counter.mostFreq(), std::runtime_error);
+  ASSERT_THROW(counter.mostFreq(), runtime_error);
 }
 
 // _________________________________________________________________________________________________
@@ -66,7 +67,7 @@ TEST(DoubleCounterTest, mostFreqCount) {
   DoubleCounter counter;
 
   // Test the empty counter.
-  ASSERT_THROW(counter.mostFreqCount(), std::runtime_error);
+  ASSERT_THROW(counter.mostFreqCount(), runtime_error);
 
   counter[0.7] = 5;
   counter[2.5] = 2;
@@ -91,7 +92,7 @@ TEST(DoubleCounterTest, mostFreqCount) {
   ASSERT_EQ(counter.mostFreqCount(), 1U);
 
   counter[3.1] = 0;
-  ASSERT_THROW(counter.mostFreqCount(), std::runtime_error);
+  ASSERT_THROW(counter.mostFreqCount(), runtime_error);
 }
 
 // _________________________________________________________________________________________________
@@ -99,7 +100,7 @@ TEST(DoubleCounterTest, mostFreqAndCount) {
   DoubleCounter counter;
 
   // Test the empty counter.
-  ASSERT_THROW(counter.mostFreqAndCount(), std::runtime_error);
+  ASSERT_THROW(counter.mostFreqAndCount(), runtime_error);
 
   counter[4.5] = 3;
   counter[2.1] = 6;
@@ -136,7 +137,7 @@ TEST(DoubleCounterTest, mostFreqAndCount) {
   ASSERT_EQ(entry.second, 3);
 
   counter[4.5] = 0;
-  ASSERT_THROW(counter.mostFreqAndCount(), std::runtime_error);
+  ASSERT_THROW(counter.mostFreqAndCount(), runtime_error);
 }
 
 // _________________________________________________________________________________________________
@@ -144,7 +145,7 @@ TEST(DoubleCounterTest, max) {
   DoubleCounter counter;
 
   // Test the empty counter.
-  ASSERT_THROW(counter.max(), std::runtime_error);
+  ASSERT_THROW(counter.max(), runtime_error);
 
   counter[4.5] = 3;
   counter[2.1] = 6;
@@ -168,7 +169,7 @@ TEST(DoubleCounterTest, max) {
   ASSERT_NEAR(counter.max(), 4.5, TOL);
 
   counter[4.5] = 0;
-  ASSERT_THROW(counter.max(), std::runtime_error);
+  ASSERT_THROW(counter.max(), runtime_error);
 }
 
 // _________________________________________________________________________________________________
@@ -210,7 +211,7 @@ TEST(StringCounterTest, mostFreq) {
   StringCounter counter;
 
   // Test the empty counter.
-  ASSERT_THROW(counter.mostFreq(), std::runtime_error);
+  ASSERT_THROW(counter.mostFreq(), runtime_error);
 
   counter["Iron Man"] = 2;
   counter["Pepper Potts"] = 7;
@@ -241,7 +242,7 @@ TEST(StringCounterTest, mostFreq) {
   ASSERT_EQ(counter.mostFreq(), "Iron Man");
 
   counter["Iron Man"] = 0;
-  ASSERT_THROW(counter.mostFreq(), std::runtime_error);
+  ASSERT_THROW(counter.mostFreq(), runtime_error);
 }
 
 // _________________________________________________________________________________________________
@@ -249,7 +250,7 @@ TEST(StringCounterTest, mostFreqCount) {
   StringCounter counter;
 
   // Test the empty counter.
-  ASSERT_THROW(counter.mostFreqCount(), std::runtime_error);
+  ASSERT_THROW(counter.mostFreqCount(), runtime_error);
 
   counter["Buche"] = 3;
   counter["Eiche"] = 5;
@@ -275,7 +276,7 @@ TEST(StringCounterTest, mostFreqCount) {
   counter["Eiche"] = 0;
   counter["Linde"] = 0;
   counter["Ahorn"] = 0;
-  ASSERT_THROW(counter.mostFreqCount(), std::runtime_error);
+  ASSERT_THROW(counter.mostFreqCount(), runtime_error);
 }
 
 // _________________________________________________________________________________________________
@@ -283,7 +284,7 @@ TEST(StringCounterTest, mostFreqAndCount) {
   StringCounter counter;
 
   // Test the empty counter.
-  ASSERT_THROW(counter.mostFreqAndCount(), std::runtime_error);
+  ASSERT_THROW(counter.mostFreqAndCount(), runtime_error);
 
   counter["USA"] = 3;
   counter["Germany"] = 6;
@@ -316,7 +317,7 @@ TEST(StringCounterTest, mostFreqAndCount) {
   counter["France"] = 0;
   counter["Sweden"] = 0;
   counter["Germany"] = 0;
-  ASSERT_THROW(counter.mostFreqAndCount(), std::runtime_error);
+  ASSERT_THROW(counter.mostFreqAndCount(), runtime_error);
 }
 
 // _________________________________________________________________________________________________
