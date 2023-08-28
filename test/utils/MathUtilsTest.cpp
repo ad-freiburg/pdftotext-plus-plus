@@ -124,6 +124,9 @@ TEST(MathUtilsTest, minimum) {
   ASSERT_NEAR(minimum(2.3, -7.2), -7.2, TOL);
   ASSERT_NEAR(minimum(2.3, 5.6), 2.3, TOL);
   ASSERT_NEAR(minimum(5.6, 2.3), 2.3, TOL);
+  ASSERT_NEAR(minimum(1, 2, 3, 4), 1, TOL);
+  ASSERT_NEAR(minimum(3, 2, 4), 2, TOL);
+  ASSERT_NEAR(minimum(0.6, 0.4, 0.3, 1.2), 0.3, TOL);
 }
 
 // _________________________________________________________________________________________________
@@ -135,4 +138,7 @@ TEST(MathUtilsTest, maximum) {
   ASSERT_NEAR(maximum(2.3, -7.2), 2.3, TOL);
   ASSERT_NEAR(maximum(2.3, 5.6), 5.6, TOL);
   ASSERT_NEAR(maximum(5.6, 2.3), 5.6, TOL);
+  ASSERT_NEAR(maximum(1, 2, 3, 4), 4, TOL);
+  ASSERT_NEAR(maximum(3, 2, 1), 3, TOL);
+  ASSERT_NEAR(maximum(0.6, 0.4, 0.3, 1.2), 1.2, TOL);
 }

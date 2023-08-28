@@ -19,6 +19,10 @@
 using std::string;
 using std::vector;
 
+using ppp::types::DocumentUnit;
+using ppp::types::SemanticRole;
+using ppp::types::SerializationFormat;
+
 // =================================================================================================
 
 namespace ppp::types {

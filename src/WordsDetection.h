@@ -9,18 +9,10 @@
 #ifndef WORDSDETECTION_H_
 #define WORDSDETECTION_H_
 
-#include <string>
-#include <unordered_set>
-#include <vector>
-
 #include "./Config.h"
 #include "./PdfDocument.h"
 #include "./utils/Log.h"
 #include "./utils/WordsDetectionUtils.h"
-
-using std::string;
-using std::unordered_set;
-using std::vector;
 
 using ppp::config::WordsDetectionConfig;
 using ppp::types::PdfCharacter;

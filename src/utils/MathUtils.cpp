@@ -64,8 +64,28 @@ double minimum(double d1, double d2) {
 }
 
 // _________________________________________________________________________________________________
+double minimum(double d1, double d2, double d3) {
+  return minimum(minimum(d1, d2), d3);
+}
+
+// _________________________________________________________________________________________________
+double minimum(double d1, double d2, double d3, double d4) {
+  return minimum(minimum(d1, d2), minimum(d3, d4));
+}
+
+// _________________________________________________________________________________________________
 double maximum(double d1, double d2) {
   return std::max(d1, d2);
+}
+
+// _________________________________________________________________________________________________
+double maximum(double d1, double d2, double d3) {
+  return maximum(maximum(d1, d2), d3);
+}
+
+// _________________________________________________________________________________________________
+double maximum(double d1, double d2, double d3, double d4) {
+  return maximum(maximum(d1, d2), maximum(d3, d4));
 }
 
 }  // namespace ppp::utils::math

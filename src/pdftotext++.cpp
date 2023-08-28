@@ -17,30 +17,31 @@
 #include <unordered_set>
 #include <vector>
 
-#include "./utils/Log.h"
-#include "./utils/MathUtils.h"
-#include "./utils/TextUtils.h"
 #include "./Config.h"
 #include "./PdfDocumentSerialization.h"
 #include "./PdfDocumentVisualization.h"
 #include "./PdfToTextPlusPlus.h"
 #include "./Types.h"
 #include "./Validators.h"
+#include "./utils/Log.h"
+#include "./utils/MathUtils.h"
+#include "./utils/TextUtils.h"
 
-using std::chrono::duration_cast;
-using std::chrono::high_resolution_clock;
-using std::chrono::milliseconds;
 using std::cerr;
 using std::cout;
 using std::endl;
 using std::exception;
 using std::fixed;
+using std::invalid_argument;
 using std::locale;
 using std::setprecision;
 using std::setw;
 using std::string;
 using std::unordered_set;
 using std::vector;
+using std::chrono::duration_cast;
+using std::chrono::high_resolution_clock;
+using std::chrono::milliseconds;
 
 using boost::program_options::bool_switch;
 using boost::program_options::command_line_parser;
@@ -67,6 +68,7 @@ using ppp::utils::log::INFO;
 using ppp::utils::log::OFF;
 using ppp::utils::log::TRACE;
 using ppp::utils::log::WARN;
+using ppp::utils::log::LogLevel;
 using ppp::utils::math::round;
 using ppp::utils::text::wrap;
 using ppp::utils::text::strip;
@@ -557,7 +559,7 @@ int main(int argc, char* argv[]) {
   // SemanticRolesPredictor. Instead, use the exit code to check if something went wrong.
   try {
     status = engine.process(&pdfFilePath, &doc, &timings);
-  } catch (const std::invalid_argument& ia) {
+  } catch (const invalid_argument& ia) {
     cerr << "An error occurred: " << ia.what() << '\n';
     return 3;
   }

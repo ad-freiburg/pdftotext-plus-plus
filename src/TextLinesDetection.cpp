@@ -6,7 +6,7 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include <algorithm>  // std::min, std::max
+#include <algorithm>  // std::sort
 #include <sstream>  // std::stringstream
 #include <string>
 #include <tuple>
@@ -26,9 +26,9 @@
 
 using std::endl;
 using std::get;
-using std::max;
-using std::min;
+using std::sort;
 using std::string;
+using std::stringstream;
 using std::tuple;
 using std::unordered_map;
 using std::vector;
@@ -48,11 +48,13 @@ using ppp::utils::counter::DoubleCounter;
 using ppp::utils::counter::StringCounter;
 using ppp::utils::elements::computeHorizontalGap;
 using ppp::utils::elements::computeMaxYOverlapRatio;
-using ppp::utils::log::Logger;
 using ppp::utils::log::BOLD;
 using ppp::utils::log::GRAY;
 using ppp::utils::log::OFF;
+using ppp::utils::log::Logger;
 using ppp::utils::math::equalOrLarger;
+using ppp::utils::math::maximum;
+using ppp::utils::math::minimum;
 using ppp::utils::math::round;
 using ppp::utils::text::createRandomString;
 
@@ -92,7 +94,7 @@ void TextLinesDetection::process() {
       _log->debug(p) << "=========================================================" << endl;
 
       // Prefix each subsequent log message with the segment id, for convenience purposes.
-      std::stringstream s;
+      stringstream s;
       s << GRAY << "(" << segment->id << ") " << OFF;
       string q = s.str();
 
@@ -164,7 +166,7 @@ void TextLinesDetection::process() {
         _log->debug(p) << "=========================================================" << endl;
 
         // Prefix each subsequent log message with the segment id and the rotation.
-        std::stringstream ss;
+        stringstream ss;
         ss << q << GRAY << "(rot-" << rot << ") " << OFF;
         string qq = ss.str();
 
@@ -221,7 +223,7 @@ void TextLinesDetection::process() {
           _log->debug(p) << "=========================================================" << endl;
 
           // Prefix each subsequent log message with the segment id, the rotation, and the round.
-          std::stringstream sss;
+          stringstream sss;
           sss << qq << GRAY << "(round-" << r << ") " << OFF;
           string qqq = sss.str();
 
@@ -415,15 +417,15 @@ void TextLinesDetection::computeTextLineProperties(PdfTextLine* line) const {
   for (size_t i = 0; i < line->words.size(); i++) {
     PdfWord* word = line->words[i];
 
-    double wordMinX = min(word->pos->leftX, word->pos->rightX);
-    double wordMinY = min(word->pos->lowerY, word->pos->upperY);
-    double wordMaxX = max(word->pos->leftX, word->pos->rightX);
-    double wordMaxY = max(word->pos->lowerY, word->pos->upperY);
+    double wordMinX = minimum(word->pos->leftX, word->pos->rightX);
+    double wordMinY = minimum(word->pos->lowerY, word->pos->upperY);
+    double wordMaxX = maximum(word->pos->leftX, word->pos->rightX);
+    double wordMaxY = maximum(word->pos->lowerY, word->pos->upperY);
 
-    line->pos->leftX = min(line->pos->leftX, wordMinX);
-    line->pos->upperY = min(line->pos->upperY, wordMinY);
-    line->pos->rightX = max(line->pos->rightX, wordMaxX);
-    line->pos->lowerY = max(line->pos->lowerY, wordMaxY);
+    line->pos->leftX = minimum(line->pos->leftX, wordMinX);
+    line->pos->upperY = minimum(line->pos->upperY, wordMinY);
+    line->pos->rightX = maximum(line->pos->rightX, wordMaxX);
+    line->pos->lowerY = maximum(line->pos->lowerY, wordMaxY);
 
     // Compute the most frequent font name, font size and baseline among the characters.
     for (const auto* ch : word->characters) {

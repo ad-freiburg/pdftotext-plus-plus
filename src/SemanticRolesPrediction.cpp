@@ -1,5 +1,5 @@
 /**
- * Copyright 2022, University of Freiburg,
+ * Copyright 2023, University of Freiburg,
  * Chair of Algorithms and Data Structures.
  * Author: Claudius Korzen <korzen@cs.uni-freiburg.de>.
  *
@@ -21,9 +21,14 @@
 #include "./SemanticRolesPrediction.h"
 #include "./utils/BytePairEncoder.h"
 
+using std::ifstream;
+using std::invalid_argument;
+using std::make_pair;
 using std::numeric_limits;
+using std::stoi;
 using std::string;
 using std::vector;
+using std::wifstream;
 using std::wstring;
 
 using ppp::config::SemanticRolesPredictionConfig;
@@ -68,11 +73,11 @@ void SemanticRolesPrediction::readModel() {
   // -----------
   // Read the BPE vocabulary.
 
-  std::wifstream bpeVocabFile(bpeVocabFilePath);
+  wifstream bpeVocabFile(bpeVocabFilePath);
 
   // Abort if the file can't be read.
   if (!bpeVocabFile.is_open()) {
-    throw std::invalid_argument("Could not load vocab file \"" + bpeVocabFilePath + "\"");
+    throw invalid_argument("Could not load vocab file \"" + bpeVocabFilePath + "\"");
   }
 
   // Tell the wifstream that the file is encoded in UTF-8 and contains multi-byte characters.
@@ -91,16 +96,16 @@ void SemanticRolesPrediction::readModel() {
     size_t posTab = wline.find(L"\t");
     if (posTab == string::npos) { continue; }
     wstring token = wline.substr(0, posTab);
-    int tokenId = std::stoi(wline.substr(posTab + 1));
-    _bpeVocab.insert(std::make_pair(token, tokenId));
+    int tokenId = stoi(wline.substr(posTab + 1));
+    _bpeVocab.insert(make_pair(token, tokenId));
   }
 
   // -----------
   // Read the roles vocabulary.
 
-  std::ifstream vocabFile(rolesVocabFilePath);
+  ifstream vocabFile(rolesVocabFilePath);
   if (!vocabFile.is_open()) {
-    throw std::invalid_argument("Could not load vocab file \"" + rolesVocabFilePath + "\"");
+    throw invalid_argument("Could not load vocab file \"" + rolesVocabFilePath + "\"");
   }
   string line;
   while (true) {
@@ -112,7 +117,7 @@ void SemanticRolesPrediction::readModel() {
     if (posTab == string::npos) { continue; }
 
     string roleStr = line.substr(0, posTab);
-    int roleId = std::stoi(line.substr(posTab + 1));
+    int roleId = stoi(line.substr(posTab + 1));
     _rolesVocab[roleId] = roleStr;
   }
 
@@ -136,11 +141,11 @@ void SemanticRolesPrediction::predict(const PdfDocument* doc) {
     { "serving_default_words_input:0", wordsTensor}
   }, { "StatefulPartitionedCall:0" })[0];
 
-  std::vector<int64_t> shape = output.shape().get_data<int64_t>();
+  vector<int64_t> shape = output.shape().get_data<int64_t>();
   assert(shape.size() == 2);
   int64_t yDim = shape[1];
 
-  std::vector<float> outputData = output.get_data<float>();
+  vector<float> outputData = output.get_data<float>();
 
   // For each block, determine the role with the highest probability.
   int blockIndex = 0;
@@ -187,7 +192,7 @@ cppflow::tensor SemanticRolesPrediction::createLayoutInputTensor(const PdfDocume
   // Create the tensor.
   int xDim = numBlocks;
   int yDim = 15;
-  std::vector<float> layoutTensorValues;
+  vector<float> layoutTensorValues;
   layoutTensorValues.reserve(xDim * yDim);
 
   for (const auto* page : doc->pages) {
@@ -376,7 +381,7 @@ cppflow::tensor SemanticRolesPrediction::createWordsInputTensor(const PdfDocumen
 
   int xDim = numBlocks;
   int yDim = 100;
-  std::vector<int> wordsTensorValues;
+  vector<int> wordsTensorValues;
   wordsTensorValues.reserve(xDim * yDim);
 
   for (const auto* page : doc->pages) {

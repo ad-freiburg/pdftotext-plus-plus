@@ -6,7 +6,6 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include <algorithm>  // max
 #include <unordered_map>
 
 #include "./PdfDocument.h"
@@ -17,7 +16,6 @@
 #include "./utils/PdfElementsUtils.h"
 
 using std::endl;
-using std::max;
 using std::unordered_map;
 
 using ppp::config::StatisticsCalculationConfig;
@@ -29,12 +27,13 @@ using ppp::utils::counter::StringCounter;
 using ppp::utils::elements::computeHorizontalGap;
 using ppp::utils::elements::computeMaxYOverlapRatio;
 using ppp::utils::elements::computeVerticalGap;
-using ppp::utils::log::Logger;
 using ppp::utils::log::BOLD;
 using ppp::utils::log::OFF;
+using ppp::utils::log::Logger;
 using ppp::utils::math::equal;
 using ppp::utils::math::equalOrLarger;
 using ppp::utils::math::equalOrSmaller;
+using ppp::utils::math::maximum;
 using ppp::utils::math::round;
 using ppp::utils::math::smaller;
 
@@ -243,7 +242,7 @@ void StatisticsCalculation::computeTextLineStatistics() const {
         // when one or both lines contain sub- or superscripts. By our experience, computing the
         // line distance with sub- and superscripts ignored results in more accurate line distances.
         double dist = currLine->baseBBoxUpperY - prevLine->baseBBoxLowerY;
-        dist = max(0.0, round(dist, _config.lineDistancePrecision));
+        dist = maximum(0.0, round(dist, _config.lineDistancePrecision));
         lineDistanceCounter[dist]++;
 
         // If the font sizes of the text lines are equal, add the distance also to

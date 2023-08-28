@@ -14,7 +14,6 @@
 #include <vector>
 
 #include "./TextUtils.h"
-#include "../Config.h"
 
 using std::hex;
 using std::isspace;
@@ -75,7 +74,7 @@ bool endsWithSentenceDelimiter(const string& text, const char* const sentenceDel
   // Do we need to convert it at all, or is there another solution?
   const string delimiters = string(sentenceDelimiters);
 
-  return delimiters.find(text.back()) != std::string::npos;
+  return delimiters.find(text.back()) != string::npos;
 }
 
 // _________________________________________________________________________________________________

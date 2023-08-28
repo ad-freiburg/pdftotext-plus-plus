@@ -6,7 +6,6 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include <algorithm>  // std::max
 #include <string>
 #include <utility>  // std::pair
 #include <vector>
@@ -22,7 +21,6 @@
 #include "./utils/Trool.h"
 
 using std::endl;
-using std::max;
 using std::string;
 using std::vector;
 
@@ -37,15 +35,15 @@ using ppp::utils::elements::computeHasEqualFont;
 using ppp::utils::elements::computeHasEqualFontSize;
 using ppp::utils::elements::computeLeftXOffset;
 using ppp::utils::elements::computeVerticalGap;
-using ppp::utils::log::Logger;
 using ppp::utils::log::BLUE;
 using ppp::utils::log::BOLD;
 using ppp::utils::log::OFF;
+using ppp::utils::log::Logger;
 using ppp::utils::math::between;
 using ppp::utils::math::equal;
-using ppp::utils::math::equalOrLarger;
 using ppp::utils::math::equalOrSmaller;
 using ppp::utils::math::larger;
+using ppp::utils::math::maximum;
 using ppp::utils::math::round;
 using ppp::utils::math::smaller;
 using ppp::utils::text::endsWithSentenceDelimiter;
@@ -438,9 +436,9 @@ Trool TextBlocksDetection::startsBlock_lineDistance(const PdfTextLine* line) con
   double expectedLineDistance = 0;
   if (_doc->mostFreqLineDistancePerFontSize.count(fontSize) > 0) {
     double eld = _doc->mostFreqLineDistancePerFontSize.at(fontSize);
-    expectedLineDistance = max(expectedLineDistance, eld);
+    expectedLineDistance = maximum(expectedLineDistance, eld);
   }
-  expectedLineDistance = max(expectedLineDistance, _doc->mostFreqLineDistance);
+  expectedLineDistance = maximum(expectedLineDistance, _doc->mostFreqLineDistance);
 
   // Compute the actual line distance.
   double actualLineDistance = computeVerticalGap(prevLine, line);

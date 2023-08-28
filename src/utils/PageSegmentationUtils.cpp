@@ -21,7 +21,6 @@ using ppp::types::PdfElement;
 using ppp::types::PdfPageSegment;
 using ppp::utils::math::maximum;
 using ppp::utils::math::minimum;
-using ppp::utils::math::round;
 using ppp::utils::text::createRandomString;
 
 // =================================================================================================

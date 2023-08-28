@@ -15,15 +15,15 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>  // std::pair
-#include <vector>  // std::pair
+#include <vector>
 
 #include "./PdfDocument.h"
 #include "./utils/Log.h"
 
 using std::make_pair;
-using std::max;
 using std::pair;
 using std::regex;
+using std::regex_constants::icase;
 using std::string;
 using std::unordered_map;
 using std::unordered_set;
@@ -487,7 +487,7 @@ struct TextBlocksDetectionConfig : BaseConfig {
    */
   constexpr static double getExpectedLineDistanceThreshold(const PdfDocument* doc,
       double expectedLineDist) {
-    return max(1.0, 0.1 * expectedLineDist);
+    return std::max(1.0, 0.1 * expectedLineDist);
   }
 
   // ----------
@@ -684,21 +684,21 @@ struct TextBlocksDetectionConfig : BaseConfig {
     // A regex to find item labels of form "• ", or "- ", or "+ ", etc.
     regex("^(•|-|–|\\+)\\s+"),
     // A regex to find item labels of form "I. ", "II. ", "III. ", "IV. ", etc.
-    regex("^(X{0,1}(IX|IV|V?I{0,3}))\\.\\s+", std::regex_constants::icase),
+    regex("^(X{0,1}(IX|IV|V?I{0,3}))\\.\\s+", icase),
     // A regex to find item labels of form "(I)", "(II)", "(III)", "(IV) ", etc.
-    regex("^\\((X{0,1}(IX|IV|V?I{0,3}))\\)\\s+", std::regex_constants::icase),
+    regex("^\\((X{0,1}(IX|IV|V?I{0,3}))\\)\\s+", icase),
     // A regex to find item labels of form "a. ", "b. ", "c. ", etc.
     regex("^([a-z])\\.\\s+"),
     // A regex to find item labels of form "1. ", "2. ", "3. ", etc.
     regex("^([0-9]+)\\.\\s+"),
     // A regex to find item labels of form "(A) ", "(1) ", "(C1) ", "[1] ", "[2] ", etc.
-    regex("^(\\(|\\[)([a-z0-9][0-9]{0,2})(\\)|\\])\\s+", std::regex_constants::icase),
+    regex("^(\\(|\\[)([a-z0-9][0-9]{0,2})(\\)|\\])\\s+", icase),
     // A regex to find item labels of form "[Bu2] ", "[Ch] ", "[Enn2020] ", etc.
     regex("^(\\[)([A-Z][a-zA-Z0-9]{0,5})(\\])\\s+"),
     // A regex to find item labels of form "A) " or "1) " or "a1) ".
-    regex("^([a-z0-9][0-9]{0,1})\\)\\s+", std::regex_constants::icase),
+    regex("^([a-z0-9][0-9]{0,1})\\)\\s+", icase),
     // A regex to find item labels of form "PACS" (1011.5073).
-    regex("^PACS\\s+", std::regex_constants::icase)
+    regex("^PACS\\s+", icase)
   };
 };
 

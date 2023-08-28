@@ -9,7 +9,6 @@
 #include <poppler/GlobalParams.h>
 #include <utf8proc.h>
 
-#include <algorithm>  // min
 #include <vector>
 
 #include "./DiacriticalMarksMerging.h"
@@ -19,8 +18,6 @@
 #include "./utils/PdfElementsUtils.h"
 
 using std::endl;
-using std::max;  // TODO(korzen): use utils::math:maximum
-using std::min;  // TODO(korzen): use utils::math:minimum
 using std::vector;
 
 using ppp::config::DiacriticalMarksMergingConfig;
@@ -32,6 +29,8 @@ using ppp::utils::log::OFF;
 using ppp::utils::log::Logger;
 using ppp::utils::math::equal;
 using ppp::utils::math::larger;
+using ppp::utils::math::maximum;
+using ppp::utils::math::minimum;
 
 // =================================================================================================
 
@@ -199,10 +198,10 @@ void DiacriticalMarksMerging::process() const {
       base->textWithDiacriticMark = reinterpret_cast<char*>(output);
 
       // Update the bounding box.
-      base->pos->leftX = min(base->pos->leftX, mark->pos->leftX);
-      base->pos->upperY = min(base->pos->upperY, mark->pos->upperY);
-      base->pos->rightX = max(base->pos->rightX, mark->pos->rightX);
-      base->pos->lowerY = max(base->pos->lowerY, mark->pos->lowerY);
+      base->pos->leftX = minimum(base->pos->leftX, mark->pos->leftX);
+      base->pos->upperY = minimum(base->pos->upperY, mark->pos->upperY);
+      base->pos->rightX = maximum(base->pos->rightX, mark->pos->rightX);
+      base->pos->lowerY = maximum(base->pos->lowerY, mark->pos->lowerY);
 
       _log->debug(p) << " • base.textWithDiacMark: " << base->textWithDiacriticMark << endl;
       _log->debug(p) << " • base.leftX: " << base->pos->leftX << endl;

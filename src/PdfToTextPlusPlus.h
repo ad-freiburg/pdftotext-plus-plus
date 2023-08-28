@@ -5,7 +5,6 @@
  *
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
-
 #ifndef PDFTOTEXTPLUSPLUS_H_
 #define PDFTOTEXTPLUSPLUS_H_
 

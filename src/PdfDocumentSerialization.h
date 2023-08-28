@@ -14,8 +14,8 @@
 
 #include "./Types.h"
 #include "./serializers/JsonlSerializer.h"
-#include "./serializers/PlainTextSerializer.h"
 #include "./serializers/PlainTextExtendedSerializer.h"
+#include "./serializers/PlainTextSerializer.h"
 #include "./serializers/Serializer.h"
 
 using std::string;

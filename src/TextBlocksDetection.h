@@ -1,5 +1,5 @@
 /**
- * Copyright 2022, University of Freiburg,
+ * Copyright 2023, University of Freiburg,
  * Chair of Algorithms and Data Structures.
  * Author: Claudius Korzen <korzen@cs.uni-freiburg.de>.
  *
@@ -9,10 +9,8 @@
 #ifndef TEXTBLOCKSDETECTION_H_
 #define TEXTBLOCKSDETECTION_H_
 
-#include <algorithm>  // std::max
 #include <string>
 #include <unordered_set>
-#include <utility>   // std::make_pair
 
 #include "./Config.h"
 #include "./PdfDocument.h"
@@ -20,9 +18,6 @@
 #include "./utils/TextBlocksDetectionUtils.h"
 #include "./utils/Trool.h"
 
-using std::make_pair;
-using std::max;
-using std::pair;
 using std::string;
 using std::unordered_set;
 
@@ -30,8 +25,8 @@ using ppp::config::TextBlocksDetectionConfig;
 using ppp::types::PdfDocument;
 using ppp::types::PdfTextBlock;
 using ppp::types::PdfTextLine;
-using ppp::utils::Trool;
 using ppp::utils::TextBlocksDetectionUtils;
+using ppp::utils::Trool;
 using ppp::utils::log::Logger;
 
 // =================================================================================================

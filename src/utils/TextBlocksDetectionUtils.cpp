@@ -553,7 +553,7 @@ void TextBlocksDetectionUtils::computePotentialFootnoteLabels(const PdfTextLine*
 
       // The character is part of a potential footnote label when it occurs in our alphabet we
       // defined to identify special (= non-alphanumerical) footnote labels.
-      bool isLabel = _config.specialFootnoteLabelsAlphabet.find(ch->text[0]) != std::string::npos;
+      bool isLabel = _config.specialFootnoteLabelsAlphabet.find(ch->text[0]) != string::npos;
 
       // The character is also a potential footnote label when it is a superscripted alphanumerical.
       if (ch->isSuperscript && isalnum(ch->text[0])) {

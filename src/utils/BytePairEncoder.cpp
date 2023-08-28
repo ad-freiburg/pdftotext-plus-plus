@@ -15,6 +15,7 @@
 #include "./BytePairEncoder.h"
 #include "./TextUtils.h"
 
+using std::make_pair;
 using std::pair;
 using std::unordered_map;
 using std::unordered_set;
@@ -205,10 +206,10 @@ void BytePairEncoder::computeTokenPairPositions(const vector<wstring>& tokens,
     auto positions = new unordered_set<size_t>();
     positions->insert(i - 1);
 
-    auto pair = new std::pair<wstring, unordered_set<size_t>* >(merged, positions);
+    auto p = new pair<wstring, unordered_set<size_t>* >(merged, positions);
 
-    result->push_back(pair);
-    cache[merged] = pair;
+    result->push_back(p);
+    cache[merged] = p;
   }
 }
 

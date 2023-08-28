@@ -12,14 +12,14 @@
 
 #include "./Comparators.h"
 #include "./FixedCapacityPriorityQueue.h"
+#include "./MathUtils.h"
 #include "./PdfElementsUtils.h"
 #include "./TextUtils.h"
 #include "./XYCut.h"
 #include "../PdfDocument.h"
 
-using std::max;  // TODO(korzen): use utils::math:maximum
-using std::min;  // TODO(korzen): use utils::math:minimum
 using std::numeric_limits;
+using std::sort;
 using std::vector;
 
 using ppp::types::Cut;
@@ -33,6 +33,8 @@ using ppp::utils::elements::computeVerticalGap;
 using ppp::utils::math::equal;
 using ppp::utils::math::equalOrLarger;
 using ppp::utils::math::larger;
+using ppp::utils::math::maximum;
+using ppp::utils::math::minimum;
 using ppp::utils::text::createRandomString;
 
 
@@ -105,14 +107,14 @@ bool xCut(const vector<PdfElement*>& elements, double minGapWidth, int maxNumOve
 
   // Sort the elements by their leftX values, in ascending order.
   vector<PdfElement*> sElements = elements;
-  std::sort(sElements.begin(), sElements.end(), LeftXAscComparator());
+  sort(sElements.begin(), sElements.end(), LeftXAscComparator());
 
   // Compute minY and maxY among the elements, needed for computing the y-coordinates of the cuts.
   double elementsMinY = numeric_limits<double>::max();
   double elementsMaxY = numeric_limits<double>::min();
   for (const auto* element : sElements) {
-    elementsMinY = min(elementsMinY, element->pos->upperY);
-    elementsMaxY = max(elementsMaxY, element->pos->lowerY);
+    elementsMinY = minimum(elementsMinY, element->pos->upperY);
+    elementsMaxY = maximum(elementsMaxY, element->pos->lowerY);
   }
 
   // Create a fixed-size queue for storing the elements with the <maxNumOverlappingElements + 1>-th
@@ -236,14 +238,14 @@ bool yCut(const vector<PdfElement*>& elements, double minGapHeight,
 
   // Sort the elements by their upperY in ascending order.
   vector<PdfElement*> sElements = elements;
-  std::sort(sElements.begin(), sElements.end(), UpperYAscComparator());
+  sort(sElements.begin(), sElements.end(), UpperYAscComparator());
 
   // Compute minY and maxY among the elements, needed for computing the x-coordinates of the cuts.
   double elementsMinX = numeric_limits<double>::max();
   double elementsMaxX = numeric_limits<double>::min();
   for (const auto* element : sElements) {
-    elementsMinX = min(elementsMinX, element->pos->leftX);
-    elementsMaxX = max(elementsMaxX, element->pos->rightX);
+    elementsMinX = minimum(elementsMinX, element->pos->leftX);
+    elementsMaxX = maximum(elementsMaxX, element->pos->rightX);
   }
 
   // The element with the largest lowerY seen so far.

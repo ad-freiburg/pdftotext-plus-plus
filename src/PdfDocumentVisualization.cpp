@@ -363,7 +363,7 @@ void PdfDocumentVisualization::drawPageSegmentBoundingBoxes(
       AnnotGeometry* a = new AnnotGeometry(_pdfDoc.get(), &rect, Annot::AnnotSubtype::typeSquare);
 
       // Define the color of the bounding box.
-      std::unique_ptr<AnnotColor> color = make_unique<AnnotColor>(cs2.primaryColor);
+      unique_ptr<AnnotColor> color = make_unique<AnnotColor>(cs2.primaryColor);
       a->setColor(move(color));
 
       // Draw the bounding box.
@@ -396,7 +396,7 @@ void PdfDocumentVisualization::drawBoundingBox(const PdfElement* element, const 
   AnnotGeometry* annot = new AnnotGeometry(_pdfDoc.get(), &rect, Annot::AnnotSubtype::typeSquare);
 
   // Define the color of the bounding box.
-  std::unique_ptr<AnnotColor> color = make_unique<AnnotColor>(cs.primaryColor);
+  unique_ptr<AnnotColor> color = make_unique<AnnotColor>(cs.primaryColor);
   annot->setColor(move(color));
 
   // Draw the bounding box.
@@ -430,7 +430,7 @@ void PdfDocumentVisualization::drawTextBlockSemanticRoles(const vector<PdfTextBl
     annot->setContents(make_unique<GooString>(convertToUtf16(ppp::types::getName(block->role))));
 
     // Remove the default border around the annotation.
-    std::unique_ptr<AnnotBorder> border(new AnnotBorderArray());
+    unique_ptr<AnnotBorder> border(new AnnotBorderArray());
     border->setWidth(0);
     annot->setBorder(move(border));
 
@@ -471,7 +471,7 @@ void PdfDocumentVisualization::drawReadingOrder(const vector<PdfTextBlock*>& blo
     lineAnnot->setVertices(prevMidX, prevMidY, currMidX, currMidY);
 
     // Define the width of the reading order line.
-    std::unique_ptr<AnnotBorder> lineBorder(new AnnotBorderArray());
+    unique_ptr<AnnotBorder> lineBorder(new AnnotBorderArray());
     lineBorder->setWidth(_config.readingOrderLineWidth);
     lineAnnot->setBorder(move(lineBorder));
 
@@ -533,7 +533,7 @@ void PdfDocumentVisualization::drawReadingOrderIndexCircle(Page* page, Gfx* gfx,
   indexAnnot->setQuadding(VariableTextQuadding::centered);
 
   // Remove the default border around the reading order index.
-  std::unique_ptr<AnnotBorder> indexBorder(new AnnotBorderArray());
+  unique_ptr<AnnotBorder> indexBorder(new AnnotBorderArray());
   indexBorder->setWidth(0);
   indexAnnot->setBorder(move(indexBorder));
 
@@ -568,7 +568,7 @@ void PdfDocumentVisualization::drawCuts(const vector<Cut*>& cuts, const ColorSch
     lineAnnot->setVertices(x1, y1, x2, y2);
 
     // Define the line width.
-    std::unique_ptr<AnnotBorder> lineBorder(new AnnotBorderArray());
+    unique_ptr<AnnotBorder> lineBorder(new AnnotBorderArray());
     lineBorder->setWidth(_config.cutWidth);
     lineAnnot->setBorder(move(lineBorder));
 
@@ -620,7 +620,7 @@ void PdfDocumentVisualization::drawCuts(const vector<Cut*>& cuts, const ColorSch
       indexAnnot->setQuadding(VariableTextQuadding::centered);
 
       // Remove the default border around the cut index.
-      std::unique_ptr<AnnotBorder> indexBorder(new AnnotBorderArray());
+      unique_ptr<AnnotBorder> indexBorder(new AnnotBorderArray());
       indexBorder->setWidth(0);
       indexAnnot->setBorder(move(indexBorder));
 
@@ -653,7 +653,7 @@ void PdfDocumentVisualization::drawCuts(const vector<Cut*>& cuts, const ColorSch
     idAnnot->setQuadding(VariableTextQuadding::centered);
 
     // Remove the default border around the cut id.
-    std::unique_ptr<AnnotBorder> idBorder(new AnnotBorderArray());
+    unique_ptr<AnnotBorder> idBorder(new AnnotBorderArray());
     idBorder->setWidth(0);
     idAnnot->setBorder(move(idBorder));
 

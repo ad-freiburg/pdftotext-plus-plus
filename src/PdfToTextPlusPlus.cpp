@@ -33,6 +33,7 @@
 using std::chrono::duration_cast;
 using std::chrono::high_resolution_clock;
 using std::chrono::milliseconds;
+using std::make_unique;
 using std::string;
 using std::unique_ptr;
 using std::vector;
@@ -74,7 +75,7 @@ int PdfToTextPlusPlus::process(
   doc->pdfFilePath = *pdfFilePath;
 
   // Initialize the global parameters, needed by Poppler.
-  globalParams = std::make_unique<GlobalParams>();
+  globalParams = make_unique<GlobalParams>();
 
   // (1) Load the PDF file. Abort if it couldn't be loaded successfully.
   auto start = high_resolution_clock::now();

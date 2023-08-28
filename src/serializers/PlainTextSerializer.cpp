@@ -14,6 +14,8 @@
 #include "../Types.h"
 
 using std::endl;
+using std::find;
+using std::ostream;
 using std::unordered_set;
 
 using ppp::types::DocumentUnit;
@@ -42,7 +44,7 @@ void PlainTextSerializer::serializeToStream(const PdfDocument* doc,
   for (auto* page : doc->pages) {
     for (auto* block : page->blocks) {
       // Skip the block if its role is not included in 'roles'.
-      if (std::find(roles.begin(), roles.end(), block->role) == roles.end()) {
+      if (find(roles.begin(), roles.end(), block->role) == roles.end()) {
         continue;
       }
 

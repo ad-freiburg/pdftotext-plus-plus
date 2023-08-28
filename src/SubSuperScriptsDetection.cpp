@@ -6,8 +6,6 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include <algorithm>  // std::min, std::max
-
 #include "./Config.h"
 #include "./PdfDocument.h"
 #include "./SubSuperScriptsDetection.h"
@@ -15,15 +13,15 @@
 #include "./utils/MathUtils.h"
 
 using std::endl;
-using std::max;
-using std::min;
 
 using ppp::config::SubSuperScriptsDetectionConfig;
 using ppp::types::PdfDocument;
-using ppp::utils::log::Logger;
 using ppp::utils::log::BOLD;
 using ppp::utils::log::OFF;
+using ppp::utils::log::Logger;
 using ppp::utils::math::larger;
+using ppp::utils::math::maximum;
+using ppp::utils::math::minimum;
 using ppp::utils::math::smaller;
 
 // =================================================================================================
@@ -89,10 +87,10 @@ void SubSuperScriptsDetection::process() const {
             }
 
             // Compute the coordinates of the base bounding box of the line.
-            line->baseBBoxLeftX = min(line->baseBBoxLeftX, character->pos->leftX);
-            line->baseBBoxUpperY = min(line->baseBBoxUpperY, character->pos->upperY);
-            line->baseBBoxRightX = max(line->baseBBoxRightX, character->pos->rightX);
-            line->baseBBoxLowerY = max(line->baseBBoxLowerY, character->pos->lowerY);
+            line->baseBBoxLeftX = minimum(line->baseBBoxLeftX, character->pos->leftX);
+            line->baseBBoxUpperY = minimum(line->baseBBoxUpperY, character->pos->upperY);
+            line->baseBBoxRightX = maximum(line->baseBBoxRightX, character->pos->rightX);
+            line->baseBBoxLowerY = maximum(line->baseBBoxLowerY, character->pos->lowerY);
           }
         }
       }

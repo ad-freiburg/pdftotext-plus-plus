@@ -6,24 +6,16 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include <algorithm>  // min, max
 #include <limits>  // std::numeric_limits
-#include <string>  // string
-#include <vector>  // vector
 
 #include "./PdfDocument.h"
 #include "./WordsDetection.h"
 #include "./utils/Log.h"
 #include "./utils/MathUtils.h"
 #include "./utils/PdfElementsUtils.h"
-#include "./utils/TextUtils.h"
 #include "./utils/WordsDetectionUtils.h"
 
 using std::endl;
-using std::max;
-using std::min;
-using std::string;
-using std::vector;
 
 using ppp::config::WordsDetectionConfig;
 using ppp::types::PdfCharacter;
@@ -34,11 +26,13 @@ using ppp::utils::WordsDetectionUtils;
 using ppp::utils::elements::computeHorizontalGap;
 using ppp::utils::elements::computeMaxXOverlapRatio;
 using ppp::utils::elements::computeMaxYOverlapRatio;
-using ppp::utils::log::Logger;
 using ppp::utils::log::BLUE;
 using ppp::utils::log::BOLD;
 using ppp::utils::log::OFF;
+using ppp::utils::log::Logger;
 using ppp::utils::math::larger;
+using ppp::utils::math::maximum;
+using ppp::utils::math::minimum;
 using ppp::utils::math::smaller;
 
 // =================================================================================================
@@ -152,13 +146,13 @@ void WordsDetection::detectWords(PdfPage* page) {
 
     // Append the character to the active word and recompute the position.
     _activeWord.characters.push_back(currChar);
-    _activeWord.pos->leftX = min(_activeWord.pos->leftX, currChar->pos->leftX);
-    _activeWord.pos->upperY = min(_activeWord.pos->upperY, currChar->pos->upperY);
-    _activeWord.pos->rightX = max(_activeWord.pos->rightX, currChar->pos->rightX);
-    _activeWord.pos->lowerY = max(_activeWord.pos->lowerY, currChar->pos->lowerY);
+    _activeWord.pos->leftX = minimum(_activeWord.pos->leftX, currChar->pos->leftX);
+    _activeWord.pos->upperY = minimum(_activeWord.pos->upperY, currChar->pos->upperY);
+    _activeWord.pos->rightX = maximum(_activeWord.pos->rightX, currChar->pos->rightX);
+    _activeWord.pos->lowerY = maximum(_activeWord.pos->lowerY, currChar->pos->lowerY);
     _activeWord.pos->rotation = currChar->pos->rotation;
     _activeWord.pos->wMode = currChar->pos->wMode;
-    _activeWord.fontSize = max(_activeWord.fontSize, currChar->fontSize);
+    _activeWord.fontSize = maximum(_activeWord.fontSize, currChar->fontSize);
   }
 
   // Don't forget to process the last word.

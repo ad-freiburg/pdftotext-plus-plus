@@ -10,7 +10,6 @@
 #include <poppler/GfxState.h>
 #include <poppler/GlobalParams.h>
 
-#include <algorithm>  // std::min, std::max
 #include <cmath>  // fabs
 #include <limits>  // std::numeric_limits
 #include <memory>  // std::shared_ptr
@@ -30,8 +29,6 @@ using std::dynamic_pointer_cast;
 using std::endl;
 using std::get;
 using std::iswspace;
-using std::max;  // TODO(korzen): Use utils::math::maximum
-using std::min;  // TODO(korzen): Use utils::math::minimum
 using std::numeric_limits;
 using std::optional;
 using std::shared_ptr;
@@ -48,13 +45,15 @@ using ppp::types::PdfGraphic;
 using ppp::types::PdfPage;
 using ppp::types::PdfShape;
 using ppp::utils::charMap;
-using ppp::utils::log::Logger;
 using ppp::utils::log::BOLD;
 using ppp::utils::log::OFF;
+using ppp::utils::log::Logger;
 using ppp::utils::math::equal;
 using ppp::utils::math::equalOrLarger;
 using ppp::utils::math::equalOrSmaller;
 using ppp::utils::math::larger;
+using ppp::utils::math::maximum;
+using ppp::utils::math::minimum;
 using ppp::utils::math::round;
 using ppp::utils::math::smaller;
 using ppp::utils::text::createRandomString;
@@ -430,10 +429,10 @@ void PdfParsing::drawChar(GfxState* state, double x, double y, double dx, double
     double rightX3 = rightX2 * trm[0] + lowerY2 * trm[2] + trm[4];
     double lowerY3 = rightX2 * trm[1] + lowerY2 * trm[3] + trm[5];
 
-    leftX = min(leftX3, rightX3);
-    upperY = min(upperY3, lowerY3);
-    rightX = max(leftX3, rightX3);
-    lowerY = max(upperY3, lowerY3);
+    leftX = minimum(leftX3, rightX3);
+    upperY = minimum(upperY3, lowerY3);
+    rightX = maximum(leftX3, rightX3);
+    lowerY = maximum(upperY3, lowerY3);
 
     // Update the bounding box when the alternative bounding box has a larger vertical extent.
     double tolerance = _config.coordsEqualTolerance;
@@ -527,10 +526,10 @@ void PdfParsing::drawChar(GfxState* state, double x, double y, double dx, double
           && equal(clipRightX, figure->clipRightX, _config.coordsEqualTolerance)
           && equal(clipLowerY, figure->clipLowerY, _config.coordsEqualTolerance)) {
       // Update the bounding box of the figure.
-      figure->pos->leftX = min(figure->pos->leftX, ch->pos->leftX);
-      figure->pos->upperY = min(figure->pos->upperY, ch->pos->upperY);
-      figure->pos->rightX = max(figure->pos->rightX, ch->pos->rightX);
-      figure->pos->lowerY = max(figure->pos->lowerY, ch->pos->lowerY);
+      figure->pos->leftX = minimum(figure->pos->leftX, ch->pos->leftX);
+      figure->pos->upperY = minimum(figure->pos->upperY, ch->pos->upperY);
+      figure->pos->rightX = maximum(figure->pos->rightX, ch->pos->rightX);
+      figure->pos->lowerY = maximum(figure->pos->lowerY, ch->pos->lowerY);
       figure->characters.push_back(ch);
       _log->debug(_p) << "Append to figure " << figure->id << "." << endl;
       return;
@@ -604,10 +603,10 @@ void PdfParsing::stroke(GfxState* state) {
         continue;
       }
 
-      leftX = max(min(leftX, x), clipLeftX);
-      upperY = max(min(upperY, y), clipUpperY);
-      rightX = min(max(rightX, x), clipRightX);
-      lowerY = min(max(lowerY, y), clipLowerY);
+      leftX = maximum(minimum(leftX, x), clipLeftX);
+      upperY = maximum(minimum(upperY, y), clipUpperY);
+      rightX = minimum(maximum(rightX, x), clipRightX);
+      lowerY = minimum(maximum(lowerY, y), clipLowerY);
     }
   }
 
@@ -660,10 +659,10 @@ void PdfParsing::stroke(GfxState* state) {
           && equal(clipRightX, figure->clipRightX, _config.coordsEqualTolerance)
           && equal(clipLowerY, figure->clipLowerY, _config.coordsEqualTolerance)) {
       // Update the bounding box of the figure.
-      figure->pos->leftX = min(figure->pos->leftX, shape->pos->leftX);
-      figure->pos->upperY = min(figure->pos->upperY, shape->pos->upperY);
-      figure->pos->rightX = max(figure->pos->rightX, shape->pos->rightX);
-      figure->pos->lowerY = max(figure->pos->lowerY, shape->pos->lowerY);
+      figure->pos->leftX = minimum(figure->pos->leftX, shape->pos->leftX);
+      figure->pos->upperY = minimum(figure->pos->upperY, shape->pos->upperY);
+      figure->pos->rightX = maximum(figure->pos->rightX, shape->pos->rightX);
+      figure->pos->lowerY = maximum(figure->pos->lowerY, shape->pos->lowerY);
       figure->shapes.push_back(shape);
       _log->debug(_p) << "Append to figure " << figure->id << "." << endl;
       return;
@@ -764,10 +763,10 @@ void PdfParsing::drawGraphic(GfxState* state) {
   graphic->id = createRandomString(_config.idLength, "graphic-");
   graphic->doc = _doc;
   graphic->pos->pageNum = _page->pageNum;
-  graphic->pos->leftX = max(min(leftX, rightX), clipLeftX);
-  graphic->pos->upperY = max(min(upperY, lowerY), clipUpperY);
-  graphic->pos->rightX = min(max(leftX, rightX), clipRightX);
-  graphic->pos->lowerY = min(max(upperY, lowerY), clipLowerY);
+  graphic->pos->leftX = maximum(minimum(leftX, rightX), clipLeftX);
+  graphic->pos->upperY = maximum(minimum(upperY, lowerY), clipUpperY);
+  graphic->pos->rightX = minimum(maximum(leftX, rightX), clipRightX);
+  graphic->pos->lowerY = minimum(maximum(upperY, lowerY), clipLowerY);
   graphic->rank = _numElements++;
 
   _log->debug(_p) << " • graphic.id: " << graphic->id << endl;
@@ -808,10 +807,10 @@ void PdfParsing::drawGraphic(GfxState* state) {
           && equal(clipRightX, figure->clipRightX, _config.coordsEqualTolerance)
           && equal(clipLowerY, figure->clipLowerY, _config.coordsEqualTolerance)) {
       // Update the bounding box of the figure.
-      figure->pos->leftX = min(figure->pos->leftX, graphic->pos->leftX);
-      figure->pos->upperY = min(figure->pos->upperY, graphic->pos->upperY);
-      figure->pos->rightX = max(figure->pos->rightX, graphic->pos->rightX);
-      figure->pos->lowerY = max(figure->pos->lowerY, graphic->pos->lowerY);
+      figure->pos->leftX = minimum(figure->pos->leftX, graphic->pos->leftX);
+      figure->pos->upperY = minimum(figure->pos->upperY, graphic->pos->upperY);
+      figure->pos->rightX = maximum(figure->pos->rightX, graphic->pos->rightX);
+      figure->pos->lowerY = maximum(figure->pos->lowerY, graphic->pos->lowerY);
       figure->graphics.push_back(graphic);
       _log->debug(_p) << "Append to figure " << figure->id << "." << endl;
       return;

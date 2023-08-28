@@ -10,7 +10,6 @@
 #define SERIALIZERS_PLAINTEXTSERIALIZER_H_
 
 #include <ostream>
-#include <string>
 #include <unordered_set>
 
 #include "./Serializer.h"
@@ -18,7 +17,6 @@
 #include "../Types.h"
 
 using std::ostream;
-using std::string;
 using std::unordered_set;
 
 using ppp::types::PdfDocument;

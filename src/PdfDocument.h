@@ -25,6 +25,8 @@ using std::vector;
 using ppp::types::PdfFontInfo;
 using ppp::types::SemanticRole;
 
+// =================================================================================================
+
 namespace ppp::types {
 
 class PdfDocument;

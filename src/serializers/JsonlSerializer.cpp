@@ -18,6 +18,7 @@
 #include "../Types.h"
 
 using std::endl;
+using std::find;
 using std::ostream;
 using std::string;
 using std::unordered_set;
@@ -103,7 +104,7 @@ void JsonlSerializer::serializeCharacters(const PdfDocument* doc,
   for (const PdfPage* page : doc->pages) {
     for (const PdfTextBlock* block : page->blocks) {
       // Skip the block if its role is not included in 'roles'.
-      if (std::find(roles.begin(), roles.end(), block->role) == roles.end()) {
+      if (find(roles.begin(), roles.end(), block->role) == roles.end()) {
         continue;
       }
 
@@ -207,7 +208,7 @@ void JsonlSerializer::serializeWords(const PdfDocument* doc,
   for (const PdfPage* page : doc->pages) {
     for (const PdfTextBlock* block : page->blocks) {
       // Skip the block if its role is not included in 'roles'.
-      if (std::find(roles.begin(), roles.end(), block->role) == roles.end()) {
+      if (find(roles.begin(), roles.end(), block->role) == roles.end()) {
         continue;
       }
 
@@ -243,7 +244,7 @@ void JsonlSerializer::serializeTextBlocks(const PdfDocument* doc,
   for (const PdfPage* page : doc->pages) {
     for (const PdfTextBlock* block : page->blocks) {
       // Skip the block if its role is not included in 'roles'.
-      if (std::find(roles.begin(), roles.end(), block->role) == roles.end()) {
+      if (find(roles.begin(), roles.end(), block->role) == roles.end()) {
         continue;
       }
 
