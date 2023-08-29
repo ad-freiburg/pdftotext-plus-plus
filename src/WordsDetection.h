@@ -49,7 +49,7 @@ class WordsDetection {
    * @param config
    *   The configuration to use.
    */
-  WordsDetection(PdfDocument* doc, const WordsDetectionConfig& config);
+  WordsDetection(PdfDocument* doc, const WordsDetectionConfig* config);
 
   /** The deconstructor. */
   ~WordsDetection();
@@ -113,11 +113,11 @@ class WordsDetection {
   // The document to process.
   PdfDocument* _doc;
   // The configuration to use.
-  WordsDetectionConfig _config;
+  const WordsDetectionConfig* _config;
   // The words detection utils.
-  WordsDetectionUtils* _utils;
+  const WordsDetectionUtils* _utils;
   // The logger.
-  Logger* _log;
+  const Logger* _log;
 
   // The active word.
   PdfWord _activeWord;

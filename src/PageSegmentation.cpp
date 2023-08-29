@@ -48,11 +48,11 @@ using ppp::utils::math::smaller;
 namespace ppp::modules {
 
 // _________________________________________________________________________________________________
-PageSegmentation::PageSegmentation(PdfDocument* doc, const PageSegmentationConfig& config) {
+PageSegmentation::PageSegmentation(PdfDocument* doc, const PageSegmentationConfig* config) {
   _doc = doc;
   _config = config;
   _utils = new PageSegmentationUtils(config);
-  _log = new Logger(config.logLevel, config.logPageFilter);
+  _log = new Logger(config->logLevel, config->logPageFilter);
 }
 
 // _________________________________________________________________________________________________
@@ -109,9 +109,9 @@ void PageSegmentation::processPage(PdfPage* page, vector<PdfPageSegment*>* segme
   // Segment the page using the XY-cut algorithm.
   vector<vector<PdfElement*>> groups;
   xyCut(pageElements,
-      _config.getXCutMinGapWidth(_doc),
-      _config.getYCutMinGapHeight(_doc),
-      _config.xCutMaxNumOverlappingElements,
+      _config->getXCutMinGapWidth(_doc),
+      _config->getYCutMinGapHeight(_doc),
+      _config->xCutMaxNumOverlappingElements,
       chooseXCutsBind,
       chooseYCutsBind,
       false,
@@ -209,13 +209,13 @@ Trool PageSegmentation::chooseXCut_overlappingElements(const Cut* cut, const vec
   assert(cut);
 
   int p = cut->pageNum;
-  double marginThreshold = _config.getOverlappingElementsMarginThreshold(_doc);
+  double marginThreshold = _config->getOverlappingElementsMarginThreshold(_doc);
 
   if (!silent) {
     _log->debug(p) << BLUE << "Are there overlapping elements at the top/bottom?" << OFF << endl;
     _log->debug(p) << " └─ #overlappingElements: " << cut->overlappingElements.size() << endl;
     _log->debug(p) << " └─ #elements: " << elements.size() << endl;
-    _log->debug(p) << " └─ numElementsThreshold: " << _config.overlappingMinNumElements << endl;
+    _log->debug(p) << " └─ numElementsThreshold: " << _config->overlappingMinNumElements << endl;
     _log->debug(p) << " └─ marginThreshold: " << marginThreshold << endl;
   }
 
@@ -225,7 +225,7 @@ Trool PageSegmentation::chooseXCut_overlappingElements(const Cut* cut, const vec
   }
 
   // Do not choose the cut when the number of elements is smaller than the threshold.
-  if (elements.size() < _config.overlappingMinNumElements) {
+  if (elements.size() < _config->overlappingMinNumElements) {
     if (!silent) {
       _log->debug(p) << BLUE << BOLD << " #elements < threshold → do not choose" << OFF << endl;
     }
@@ -266,7 +266,7 @@ Trool PageSegmentation::chooseXCut_smallGapWidthHeight(const Cut* cut, bool sile
   assert(cut);
 
   int p = cut->pageNum;
-  pair<double, double> thresholds = _config.getSmallGapWidthHeightThresholds(_doc);
+  pair<double, double> thresholds = _config->getSmallGapWidthHeightThresholds(_doc);
   double wThreshold = thresholds.first;
   double hThreshold = thresholds.second;
 
@@ -295,7 +295,7 @@ Trool PageSegmentation::chooseXCut_contiguousWords(const Cut* cut,
   // Determine the rightmost word to the left of the cut.
   int p = cut->pageNum;
   const PdfWord* leftWord = dynamic_cast<const PdfWord*>(cut->elementBefore);
-  double yOverlapRatioThreshold = _config.contiguousWordsYOverlapRatioThreshold;
+  double yOverlapRatioThreshold = _config->contiguousWordsYOverlapRatioThreshold;
 
   if (!silent) {
     _log->debug(p) << BLUE << "Does the cut divide contiguous words?" << OFF << endl;
@@ -354,7 +354,7 @@ Trool PageSegmentation::chooseXCut_slimGroups(const Cut* prevChosenCut, const Cu
   }
 
   int p = cut->pageNum;
-  double widthThreshold = _config.getSlimGroupWidthThreshold(_doc);
+  double widthThreshold = _config->getSlimGroupWidthThreshold(_doc);
 
   // Compute the width of the resulting left group.
   const PdfElement* leftGroupFirstElem = prevChosenCut ? prevChosenCut->elementAfter : elements[0];
@@ -459,8 +459,8 @@ void PageSegmentation::chooseYCuts(const vector<Cut*>& cuts, const vector<PdfEle
       vector<PdfElement*> elems(elements.begin() + beginPos, elements.begin() + endPos);
 
       bool cutOk = xCut(elems,
-          _config.getXCutMinGapWidth(_doc),
-          _config.xCutMaxNumOverlappingElements,
+          _config->getXCutMinGapWidth(_doc),
+          _config->xCutMaxNumOverlappingElements,
           chooseXCutsBind,
           true);
 

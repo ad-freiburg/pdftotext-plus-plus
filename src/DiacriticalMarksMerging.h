@@ -39,7 +39,7 @@ class DiacriticalMarksMerging {
    * @param config
    *    The configuration to use.
    */
-  DiacriticalMarksMerging(PdfDocument* doc, const DiacriticalMarksMergingConfig& config);
+  DiacriticalMarksMerging(PdfDocument* doc, const DiacriticalMarksMergingConfig* config);
 
   /** The deconstructor */
   ~DiacriticalMarksMerging();
@@ -71,7 +71,7 @@ class DiacriticalMarksMerging {
   // The PDF document to process.
   PdfDocument* _doc;
   // The configuration to use.
-  DiacriticalMarksMergingConfig _config;
+  const DiacriticalMarksMergingConfig* _config;
   // The logger.
   Logger* _log;
 };

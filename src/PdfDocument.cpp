@@ -596,6 +596,11 @@ double PdfPage::getHeight() const {
 PdfDocument::PdfDocument() = default;
 
 // _________________________________________________________________________________________________
+PdfDocument::PdfDocument(const string& pdfFilePathA) {
+  pdfFilePath = pdfFilePathA;
+}
+
+// _________________________________________________________________________________________________
 PdfDocument::~PdfDocument() {
   // Delete the pages.
   for (const auto& page : pages) {

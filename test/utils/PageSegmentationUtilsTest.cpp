@@ -33,7 +33,7 @@ static const double TOL = ppp::config::DEFAULT_DOUBLE_EQUAL_TOLERANCE;
 // _________________________________________________________________________________________________
 TEST(PageSegmentationUtilsTest, createPageSegment) {
   PageSegmentationConfig config;
-  PageSegmentationUtils utils(config);
+  PageSegmentationUtils utils(&config);
 
   // Input: empty vector.
   vector<PdfElement*> elements;

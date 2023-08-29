@@ -42,7 +42,7 @@ class TextBlocksDetectionUtils {
    * @param config
    *   The configuration to use.
    */
-  explicit TextBlocksDetectionUtils(const TextBlocksDetectionConfig& config);
+  explicit TextBlocksDetectionUtils(const TextBlocksDetectionConfig* config);
 
   /** The deconstructor. */
   ~TextBlocksDetectionUtils();
@@ -351,7 +351,7 @@ class TextBlocksDetectionUtils {
 
  private:
   // The configuration to use.
-  TextBlocksDetectionConfig _config;
+  const TextBlocksDetectionConfig* _config;
 };
 
 }  // namespace ppp::utils

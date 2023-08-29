@@ -44,7 +44,7 @@ class SemanticRolesPrediction {
    * @param config
    *   The configuration to use.
    */
-  explicit SemanticRolesPrediction(const SemanticRolesPredictionConfig& config);
+  explicit SemanticRolesPrediction(const SemanticRolesPredictionConfig* config);
 
   /** The deconstructor. */
   ~SemanticRolesPrediction();
@@ -95,7 +95,7 @@ class SemanticRolesPrediction {
   cppflow::tensor createWordsInputTensor(const PdfDocument* doc);
 
   // The configuration to use.
-  SemanticRolesPredictionConfig _config;
+  const SemanticRolesPredictionConfig* _config;
 
   // The model loaded from file.
   // tensorflow::SavedModelBundle _bundle;

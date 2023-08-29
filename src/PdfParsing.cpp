@@ -71,8 +71,8 @@ PdfParsing::PdfParsing(PdfDocument* doc, const PdfParsingConfig& config) {
   _log->info() << "Parsing PDF file..." << endl;
   _log->debug() << "=======================================" << endl;
   _log->debug() << BOLD << "DEBUG MODE" << OFF << endl;
-  _log->debug() << " • disable parsing embedded fonts: "
-      << config.disableParsingEmbeddedFontFiles << endl;
+  _log->debug() << " • disable embedded font files parsing: "
+      << config.skipEmbeddedFontFilesParsing << endl;
 }
 
 // _________________________________________________________________________________________________
@@ -137,7 +137,7 @@ void PdfParsing::updateFont(GfxState* state) {
   // Check if the info about the current font was already computed. If not, compute it.
   if (_doc->fontInfos.count(fontName) == 0) {
     _doc->fontInfos[fontName] = PdfFontInfo::create(state, _xref,
-        !_config.disableParsingEmbeddedFontFiles);
+        !_config.skipEmbeddedFontFilesParsing);
   }
   _fontInfo = _doc->fontInfos[fontName];
 

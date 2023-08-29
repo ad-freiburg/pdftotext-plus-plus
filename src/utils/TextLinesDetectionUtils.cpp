@@ -37,7 +37,7 @@ using ppp::utils::math::smaller;
 namespace ppp::utils {
 
 // _________________________________________________________________________________________________
-TextLinesDetectionUtils::TextLinesDetectionUtils(const TextLinesDetectionConfig& config) {
+TextLinesDetectionUtils::TextLinesDetectionUtils(const TextLinesDetectionConfig* config) {
   _config = config;
 }
 
@@ -68,8 +68,8 @@ void TextLinesDetectionUtils::computeTextLineHierarchy(const PdfPage* page) cons
         bool hasSameWMode = prevLine->pos->wMode == line->pos->wMode;
         if (hasSameRotation && hasSameWMode) {
           double absLineDistance = abs(computeVerticalGap(prevLine, line));
-          if (larger(absLineDistance, _config.lineHierarchyMaxLineDist,
-              _config.coordsEqualTolerance)) {
+          if (larger(absLineDistance, _config->lineHierarchyMaxLineDist,
+              _config->coordsEqualTolerance)) {
             lineStack = stack<PdfTextLine*>();
           }
         }
@@ -79,7 +79,7 @@ void TextLinesDetectionUtils::computeTextLineHierarchy(const PdfPage* page) cons
       const PdfDocument* doc = page->segments[0]->doc;
       // TODO(korzen): Move to config.
       double leftXOffsetThreshold =
-        _config.textLineHierarchyLeftXOffsetThresholdFactor * doc->avgCharWidth;
+        _config->textLineHierarchyLeftXOffsetThresholdFactor * doc->avgCharWidth;
 
       // Remove all lines from the stack with a larger leftX than the current line, because
       // they can't be a parent line or any sibling line of the current line.
@@ -105,7 +105,7 @@ void TextLinesDetectionUtils::computeTextLineHierarchy(const PdfPage* page) cons
       // sibling line of a line in a different column.
       double topStackLowerY = lineStack.top()->pos->lowerY;
       double lineLowerY = line->pos->lowerY;
-      if (equalOrLarger(topStackLowerY, lineLowerY, _config.coordsEqualTolerance)) {
+      if (equalOrLarger(topStackLowerY, lineLowerY, _config->coordsEqualTolerance)) {
         continue;
       }
 
@@ -153,7 +153,7 @@ tuple<double, double, double, double> TextLinesDetectionUtils::computeTrimBox(
   // Compute the most frequent rightX among the text lines.
   DoubleCounter rightXCounter;
   for (auto* line : segment->lines) {
-    double rightX = round(line->pos->getRotRightX(), _config.trimBoxCoordsPrec);
+    double rightX = round(line->pos->getRotRightX(), _config->trimBoxCoordsPrec);
     rightXCounter[rightX]++;
   }
 
@@ -167,7 +167,7 @@ tuple<double, double, double, double> TextLinesDetectionUtils::computeTrimBox(
     double mostFreqRightXRatio = nLines > 0 ? mostFreqRightXCount / nLines: 0.0;
 
     // If the percentage is larger or equal to the given threshold, set trimRightX to this value.
-    if (equalOrLarger(mostFreqRightXRatio, _config.minPrecLinesSameRightX)) {
+    if (equalOrLarger(mostFreqRightXRatio, _config->minPrecLinesSameRightX)) {
       trimRightX = mostFreqRightX;
     }
   }

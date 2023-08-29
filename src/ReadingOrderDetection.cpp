@@ -47,8 +47,8 @@ namespace ppp::modules {
 // _________________________________________________________________________________________________
 ReadingOrderDetection::ReadingOrderDetection(
     PdfDocument* doc,
-    const ReadingOrderDetectionConfig& config,
-    const SemanticRolesPredictionConfig& config2) {
+    const ReadingOrderDetectionConfig* config,
+    const SemanticRolesPredictionConfig* config2) {
   _doc = doc;
   _config = config;
   _semanticRolesPrediction = new SemanticRolesPrediction(config2);
@@ -60,7 +60,7 @@ ReadingOrderDetection::~ReadingOrderDetection() {
 }
 
 // _________________________________________________________________________________________________
-void ReadingOrderDetection::detect() {
+void ReadingOrderDetection::process() {
   detectSemanticRoles();
   detectReadingOrder();
 }

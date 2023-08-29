@@ -992,8 +992,16 @@ class PdfPage {
  */
 class PdfDocument {
  public:
-  /** This constructor creates and initializes a new instance of this class. */
+  /** This constructor creates a new PDF document, without specifying a path to the physical PDF. */
   PdfDocument();
+
+  /**
+   * This constructor creates a new PDF document.
+   *
+   * @param pdfFilePath
+   *    The path to the PDF file.
+   */
+  explicit PdfDocument(const string& pdfFilePath);
 
   /** The deconstructor. */
   ~PdfDocument();

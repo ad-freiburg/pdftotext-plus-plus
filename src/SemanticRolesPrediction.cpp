@@ -41,7 +41,7 @@ using ppp::utils::BytePairEncoder;
 namespace ppp::modules {
 
 // _________________________________________________________________________________________________
-SemanticRolesPrediction::SemanticRolesPrediction(const SemanticRolesPredictionConfig& config) {
+SemanticRolesPrediction::SemanticRolesPrediction(const SemanticRolesPredictionConfig* config) {
   _config = config;
 }
 
@@ -63,7 +63,7 @@ void SemanticRolesPrediction::readModel() {
 //   }
 
   // TODO(korzen): Parameterize the file names.
-  string modelsDirPath = _config.modelsDir;
+  string modelsDirPath = _config->modelsDir;
   string bpeVocabFilePath = modelsDirPath + "/bpe-vocab.tsv";
   string rolesVocabFilePath = modelsDirPath + "/roles-vocab.tsv";
 

@@ -35,7 +35,7 @@ class TextLinesDetectionUtils {
    * @param config
    *   The configuration to use.
    */
-  explicit TextLinesDetectionUtils(const TextLinesDetectionConfig& config);
+  explicit TextLinesDetectionUtils(const TextLinesDetectionConfig* config);
 
   /** The deconstructor. */
   ~TextLinesDetectionUtils();
@@ -152,7 +152,7 @@ class TextLinesDetectionUtils {
 
  private:
   // The configuration to use.
-  TextLinesDetectionConfig _config;
+  const TextLinesDetectionConfig* _config;
 };
 
 }  // namespace ppp::utils

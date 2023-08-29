@@ -35,7 +35,7 @@ class PageSegmentationUtils {
    * @param config
    *    The configuration to use.
    */
-  explicit PageSegmentationUtils(const PageSegmentationConfig& config);
+  explicit PageSegmentationUtils(const PageSegmentationConfig* config);
 
   /** The deconstructor. */
   ~PageSegmentationUtils();
@@ -47,11 +47,11 @@ class PageSegmentationUtils {
    * @param elements
    *   The page elements from which to create a segment.
    */
-  PdfPageSegment* createPageSegment(const vector<PdfElement*>& elements);
+  PdfPageSegment* createPageSegment(const vector<PdfElement*>& elements) const;
 
  private:
   // The configuration to use.
-  PageSegmentationConfig _config;
+  const PageSegmentationConfig* _config;
 };
 
 }  // namespace ppp::utils

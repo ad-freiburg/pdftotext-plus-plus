@@ -64,7 +64,7 @@ PdfDocumentVisualization::PdfDocumentVisualization(const string& pdfFilePath,
   _doc = new PdfDocument();
 
   PdfParsingConfig ppConfig;
-  ppConfig.disableParsingEmbeddedFontFiles = true;
+  ppConfig.skipEmbeddedFontFilesParsing = true;
   _out = new PdfParsing(_doc, ppConfig);
 
   // Create a Gfx for each PDF page.

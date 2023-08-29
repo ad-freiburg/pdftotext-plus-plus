@@ -63,11 +63,11 @@ using ppp::utils::text::createRandomString;
 namespace ppp::modules {
 
 // _________________________________________________________________________________________________
-TextLinesDetection::TextLinesDetection(PdfDocument* doc, const TextLinesDetectionConfig& config) {
+TextLinesDetection::TextLinesDetection(PdfDocument* doc, const TextLinesDetectionConfig* config) {
   _doc = doc;
   _config = config;
   _utils = new TextLinesDetectionUtils(config);
-  _log = new Logger(config.logLevel, config.logPageFilter);
+  _log = new Logger(config->logLevel, config->logPageFilter);
 }
 
 // _________________________________________________________________________________________________
@@ -145,7 +145,7 @@ void TextLinesDetection::process() {
         }
 
         double rotation = word->pos->rotation;
-        double lowerY = round(word->pos->getRotLowerY(), _config.coordinatePrecision);
+        double lowerY = round(word->pos->getRotLowerY(), _config->coordinatePrecision);
         clusters[rotation][lowerY].push_back(word);
         _log->debug(p) << q << "cluster: (" << rotation << ", " << lowerY << ")" << endl;
 
@@ -271,7 +271,7 @@ void TextLinesDetection::process() {
             // rationale behind is as follows: If the horizontal gap between two lines is small,
             // the threshold should be less restrictive. If the horizontal gap is large, the
             // threshold should be more restrictive.
-            double threshold = _config.getYOverlapRatioThreshold(_doc, xGap);
+            double threshold = _config->getYOverlapRatioThreshold(_doc, xGap);
 
             _log->debug(p) << qqq << "max y-overlap ratio: " << yOverlapRatio << endl;
             _log->debug(p) << qqq << "threshold: " << threshold << endl;
@@ -357,7 +357,7 @@ PdfTextLine* TextLinesDetection::createTextLine(const vector<PdfWord*>& words,
   line->doc = _doc;
 
   // Create a (unique) id.
-  line->id = createRandomString(_config.idLength, "line-");
+  line->id = createRandomString(_config->idLength, "line-");
 
   // Set the words.
   line->words = words;

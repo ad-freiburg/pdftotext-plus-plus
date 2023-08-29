@@ -21,15 +21,15 @@ namespace ppp::modules {
 
 class WordsDehyphenation {
  public:
-  WordsDehyphenation(PdfDocument* doc, const WordsDehyphenationConfig& config);
+  WordsDehyphenation(PdfDocument* doc, const WordsDehyphenationConfig* config);
 
   ~WordsDehyphenation();
 
-  void dehyphenate() const;
+  void process() const;
 
  private:
   PdfDocument* _doc;
-  WordsDehyphenationConfig _config;
+  const WordsDehyphenationConfig* _config;
 };
 
 }  // namespace ppp::modules

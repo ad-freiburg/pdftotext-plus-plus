@@ -24,7 +24,7 @@ using ppp::types::PdfWord;
 namespace ppp::modules {
 
 // _________________________________________________________________________________________________
-WordsDehyphenation::WordsDehyphenation(PdfDocument* doc, const WordsDehyphenationConfig& config) {
+WordsDehyphenation::WordsDehyphenation(PdfDocument* doc, const WordsDehyphenationConfig* config) {
   _doc = doc;
   _config = config;
 }
@@ -33,7 +33,7 @@ WordsDehyphenation::WordsDehyphenation(PdfDocument* doc, const WordsDehyphenatio
 WordsDehyphenation::~WordsDehyphenation() = default;
 
 // _________________________________________________________________________________________________
-void WordsDehyphenation::dehyphenate() const {
+void WordsDehyphenation::process() const {
   assert(_doc);
 
   PdfTextLine* prevLine = nullptr;

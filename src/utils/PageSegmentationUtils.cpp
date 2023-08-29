@@ -28,7 +28,7 @@ using ppp::utils::text::createRandomString;
 namespace ppp::utils {
 
 // _________________________________________________________________________________________________
-PageSegmentationUtils::PageSegmentationUtils(const PageSegmentationConfig& config) {
+PageSegmentationUtils::PageSegmentationUtils(const PageSegmentationConfig* config) {
   _config = config;
 }
 
@@ -36,11 +36,12 @@ PageSegmentationUtils::PageSegmentationUtils(const PageSegmentationConfig& confi
 PageSegmentationUtils::~PageSegmentationUtils() = default;
 
 // _________________________________________________________________________________________________
-PdfPageSegment* PageSegmentationUtils::createPageSegment(const vector<PdfElement*>& elements) {
+PdfPageSegment* PageSegmentationUtils::createPageSegment(
+    const vector<PdfElement*>& elements) const {
   PdfPageSegment* segment = new PdfPageSegment();
 
   // Create a (unique) id.
-  segment->id = createRandomString(_config.idLength, "segment-");
+  segment->id = createRandomString(_config->idLength, "segment-");
 
   // Set the page number.
   segment->pos->pageNum = !elements.empty() ? elements[0]->pos->pageNum : -1;

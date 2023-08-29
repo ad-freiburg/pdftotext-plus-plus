@@ -53,7 +53,7 @@ class TextLinesDetection {
    * @param config
    *   The configuration to use.
    */
-  TextLinesDetection(PdfDocument* doc, const TextLinesDetectionConfig& config);
+  TextLinesDetection(PdfDocument* doc, const TextLinesDetectionConfig* config);
 
   /** The deconstructor. */
   ~TextLinesDetection();
@@ -108,11 +108,11 @@ class TextLinesDetection {
   // The PDF document to process.
   PdfDocument* _doc;
   // The configuration to use.
-  TextLinesDetectionConfig _config;
+  const TextLinesDetectionConfig* _config;
   // The text line detection utils.
-  TextLinesDetectionUtils* _utils;
+  const TextLinesDetectionUtils* _utils;
   // The logger.
-  Logger* _log;
+  const Logger* _log;
 };
 
 }  // namespace ppp::modules

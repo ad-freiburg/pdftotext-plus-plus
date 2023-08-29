@@ -170,9 +170,7 @@ int main(int argc, char* argv[]) {
   bool addControlCharacters = false;  // TODO(korzen): Introduce an extra format.
   bool addSemanticRoles = false;  // TODO(korzen): Introduce an extra format.
   bool noScripts = false;  // TODO(korzen): Allow to disable all optional components of pipeline.
-  bool noEmbeddedFontFiles = false;
   bool noDehyphenation = false;
-  bool parseMode = false;
   bool visualizeChars = false;
   bool visualizeWords = false;
   bool visualizeTextLines = false;
@@ -186,14 +184,32 @@ int main(int argc, char* argv[]) {
   bool visualizeReadingOrderCuts = false;
   string visualizeFilePath = "";
   string verbosity = "error";
+  bool skipEmbeddedFontFilesParsing = false;
+  bool skipGlyphsStatisticsCalculation = false;
+  bool skipDiacriticalMarksMerging = false;
+  bool skipWordsDetection = false;
+  bool skipWordsStatisticsCalculation = false;
+  bool skipPageSegmentation = false;
+  bool skipTextLinesDetection = false;
+  bool skipSubSuperScriptsDetection = false;
+  bool skipLineStatisticsCalculation = false;
+  bool skipTextBlocksDetection = false;
+  bool skipReadingOrderDetection = false;
+  bool skipSemanticRolesPrediction = false;
+  bool skipWordsDehyphenation = false;
   bool debugPdfParsing = false;  // TODO(korzen): Introduce advanced logging.
-  bool debugStatisticsCalculation = false;
-  bool debugDiacriticMarksMerging = false;
+  bool debugGlyphsStatisticsCalculation = false;
+  bool debugDiacriticalMarksMerging = false;
   bool debugWordsDetection = false;
+  bool debugWordsStatisticsCalculation = false;
   bool debugPageSegmentation = false;
   bool debugTextLinesDetection = false;
   bool debugSubSuperScriptsDetection = false;
+  bool debugLineStatisticsCalculation = false;
   bool debugTextBlocksDetection = false;
+  bool debugReadingOrderDetection = false;
+  bool debugSemanticRolesPrediction = false;
+  bool debugWordsDehyphenation = false;
   int logPageFilter = -1;
   bool printRunningTimes = false;
   bool printVersion = false;
@@ -253,13 +269,6 @@ int main(int argc, char* argv[]) {
       "Do not merge hyphenated words. "
       "NOTE: Using this option has the consequence that each part into which a hyphenated word is "
       "divided appears as a separate word in the extracted text."
-    )
-    (
-      "no-embedded-font-files",
-      bool_switch(&noEmbeddedFontFiles),
-      "Do not parse the font files embedded into the PDF file. "
-      "NOTE: Using this option results in a faster extraction process, but a less accurate "
-      "extraction result."
     )
     (
       "visualization-path",
@@ -380,14 +389,6 @@ int main(int argc, char* argv[]) {
       value<string>(&outputFilePath),
       "The path to the file into which the extracted text should be written."
     )
-    (
-      "parse-mode",
-      bool_switch(&parseMode),
-      "Only parse the content streams of the PDF file for characters, figures, and shapes. "
-      "Do not detect words, text lines, and text blocks. "
-      "NOTE: To output the extracted elements, use the '--output-characters', '--output-figures' "
-      "and/or '--output-shapes' options."
-    )
     // TODO(korzen): Think about how to handle logging (one log per module?).
     (
       "debug-pdf-parsing",
@@ -395,15 +396,32 @@ int main(int argc, char* argv[]) {
       "Print the debug messages produced while parsing the content streams of the PDF file."
     )
     (
-      "debug-statistics",
-      bool_switch(&debugStatisticsCalculation),
-      "Print the debug messages produced while calculating the statistics."
+      "skip-embedded-font-files-parsing",
+      bool_switch(&skipEmbeddedFontFilesParsing),
+      "Skip the parsing of embedded font files. "
+      "NOTE: Using this option results in a faster extraction process, but a less accurate "
+      "extraction result."
+    )
+    (
+      "debug-glyphs-statistics-calculation",
+      bool_switch(&debugGlyphsStatisticsCalculation),
+      "Print the debug messages produced while calculating the glyph statistics."
+    )
+    (
+      "skip-glyphs-statistics-calculation",
+      bool_switch(&skipGlyphsStatisticsCalculation),
+      "Skip the calculation of glyph statistics."
     )
     (
       "debug-diacritic-marks-merging",
-      bool_switch(&debugDiacriticMarksMerging),
+      bool_switch(&debugDiacriticalMarksMerging),
       "Print the debug messages produced while merging diacritical marks with their base "
       "characters."
+    )
+    (
+      "skip-diacritic-marks-merging",
+      bool_switch(&skipDiacriticalMarksMerging),
+      "Skip the merging of diacritical marks with their base characters."
     )
     (
       "debug-words-detection",
@@ -411,9 +429,29 @@ int main(int argc, char* argv[]) {
       "Print the debug messages produced while detecting words."
     )
     (
+      "skip-words-detection",
+      bool_switch(&skipWordsDetection),
+      "Skip the detection of words."
+    )
+    (
+      "debug-words-statistics-calculation",
+      bool_switch(&debugWordsStatisticsCalculation),
+      "Print the debug messages produced while calculating the word statistics."
+    )
+    (
+      "skip-words-statistics-calculation",
+      bool_switch(&skipWordsStatisticsCalculation),
+      "Skip the calculation of word statistics."
+    )
+    (
       "debug-page-segmentation",
       bool_switch(&debugPageSegmentation),
       "Print the debug messages produced while segmenting the pages."
+    )
+    (
+      "skip-page-segmentation",
+      bool_switch(&skipPageSegmentation),
+      "Skip the segmentation of pages."
     )
     (
       "debug-text-lines-detection",
@@ -421,14 +459,69 @@ int main(int argc, char* argv[]) {
       "Print the debug messages produced while detecting text lines."
     )
     (
+      "skip-text-lines-detection",
+      bool_switch(&skipTextLinesDetection),
+      "Skip the detection of text lines."
+    )
+    (
       "debug-sub-super-scripts-detection",
       bool_switch(&debugSubSuperScriptsDetection),
       "Print the debug messages produced while detecting sub-/superscripts."
     )
     (
+      "skip-sub-super-scripts-detection",
+      bool_switch(&skipSubSuperScriptsDetection),
+      "Skip the detection of sub-/superscripts."
+    )
+    (
+      "debug-text-lines-statistics-calculation",
+      bool_switch(&debugLineStatisticsCalculation),
+      "Print the debug messages produced while calculating the text line statistics."
+    )
+    (
+      "skip-text-lines-statistics-calculation",
+      bool_switch(&skipLineStatisticsCalculation),
+      "Skip the calculation of text line statistics."
+    )
+    (
       "debug-text-blocks-detection",
       bool_switch(&debugTextBlocksDetection),
       "Print the debug messages produced while detecting text blocks."
+    )
+    (
+      "skip-text-blocks-detection",
+      bool_switch(&skipTextBlocksDetection),
+      "Skip the detection of text blocks."
+    )
+    (
+      "debug-reading-order-detection",
+      bool_switch(&debugReadingOrderDetection),
+      "Print the debug messages produced while detecting the reading order."
+    )
+    (
+      "skip-reading-order-detection",
+      bool_switch(&skipReadingOrderDetection),
+      "Skip the detection of the reading order."
+    )
+    (
+      "debug-semantic-roles-prediction",
+      bool_switch(&debugSemanticRolesPrediction),
+      "Print the debug messages produced while predicting the semantic roles."
+    )
+    (
+      "skip-semantic-roles-prediction",
+      bool_switch(&skipSemanticRolesPrediction),
+      "Skip the prediction of the semantic roles."
+    )
+    (
+      "debug-words-dehyphenation",
+      bool_switch(&debugWordsDehyphenation),
+      "Print the debug messages produced while dehyphenating words."
+    )
+    (
+      "skip-words-dehyphenation",
+      bool_switch(&skipWordsDehyphenation),
+      "Skip the dehyphenation of words."
     )
     (
       "log-page-filter",
@@ -515,50 +608,70 @@ int main(int argc, char* argv[]) {
   if (verbosity == "info" || verbosity == "INFO") { logLevel = INFO; }
   if (verbosity == "warn" || verbosity == "WARN") { logLevel = WARN; }
 
-  Config config;
+  Config conf;
   // Configure pdf parsing.
-  config.pdfParsing.logLevel = debugPdfParsing ? DEBUG : logLevel;
-  config.pdfParsing.logPageFilter = logPageFilter;
-  config.pdfParsing.disableParsingEmbeddedFontFiles = noEmbeddedFontFiles;
-  // Configure statistics calculation.
-  config.statisticsCalculation.logLevel = debugStatisticsCalculation ? DEBUG : logLevel;
-  config.statisticsCalculation.logPageFilter = logPageFilter;
-  // Configure diacritics merging.
-  config.diacriticalMarksMerging.logLevel = debugDiacriticMarksMerging ? DEBUG : logLevel;
-  config.diacriticalMarksMerging.logPageFilter = logPageFilter;
-  // Configure words detection.
-  config.wordsDetection.logLevel = debugWordsDetection ? DEBUG : logLevel;
-  config.wordsDetection.logPageFilter = logPageFilter;
-  // Configure text lines detection.
-  config.textLinesDetection.logLevel = debugTextLinesDetection ? DEBUG : logLevel;
-  config.textLinesDetection.logPageFilter = logPageFilter;
-  // Configure sub-/super scripts detection.
-  config.subSuperScriptsDetection.logLevel = debugSubSuperScriptsDetection ? DEBUG : logLevel;
-  config.subSuperScriptsDetection.logPageFilter = logPageFilter;
-  // Configure text blocks detection.
-  config.textBlocksDetection.logLevel = debugSubSuperScriptsDetection ? DEBUG : logLevel;
-  config.textBlocksDetection.logPageFilter = logPageFilter;
-  // Configure reading order detection.
-  config.readingOrderDetection.logLevel = logLevel;
-  config.readingOrderDetection.logPageFilter = logPageFilter;
-  config.semanticRolesPrediction.logLevel = logLevel;
-  config.semanticRolesPrediction.logPageFilter = logPageFilter;
-  config.semanticRolesPrediction.modelsDir = CONFIG_SEMANTIC_ROLES_DETECTION_MODELS_DIR;
+  conf.pdfParsing.logLevel = debugPdfParsing ? DEBUG : logLevel;
+  conf.pdfParsing.logPageFilter = logPageFilter;
+  conf.pdfParsing.skipEmbeddedFontFilesParsing = skipEmbeddedFontFilesParsing;
+  // Configure the calculation of glyphs statistics.
+  conf.glyphsStatisticsCalculation.disabled = skipGlyphsStatisticsCalculation;
+  conf.glyphsStatisticsCalculation.logLevel = debugGlyphsStatisticsCalculation ? DEBUG : logLevel;
+  conf.glyphsStatisticsCalculation.logPageFilter = logPageFilter;
+  // Configure the merging of combining diacritical marks.
+  conf.diacriticalMarksMerging.disabled = skipDiacriticalMarksMerging;
+  conf.diacriticalMarksMerging.logLevel = debugDiacriticalMarksMerging ? DEBUG : logLevel;
+  conf.diacriticalMarksMerging.logPageFilter = logPageFilter;
+  // Configure the detection of words.
+  conf.wordsDetection.disabled = skipWordsDetection;
+  conf.wordsDetection.logLevel = debugWordsDetection ? DEBUG : logLevel;
+  conf.wordsDetection.logPageFilter = logPageFilter;
+  // Configure the calculation of words statistics.
+  conf.wordsStatisticsCalculation.disabled = skipWordsStatisticsCalculation;
+  conf.wordsStatisticsCalculation.logLevel = debugWordsStatisticsCalculation ? DEBUG : logLevel;
+  conf.wordsStatisticsCalculation.logPageFilter = logPageFilter;
+  // Configure the segmentation of pages.
+  conf.pageSegmentation.disabled = skipPageSegmentation;
+  conf.pageSegmentation.logLevel = debugPageSegmentation ? DEBUG : logLevel;
+  conf.pageSegmentation.logPageFilter = logPageFilter;
+  // Configure the detection of text lines.
+  conf.textLinesDetection.disabled = skipTextLinesDetection;
+  conf.textLinesDetection.logLevel = debugTextLinesDetection ? DEBUG : logLevel;
+  conf.textLinesDetection.logPageFilter = logPageFilter;
+  // Configure the detection of sub-/superscripts.
+  conf.subSuperScriptsDetection.disabled = skipSubSuperScriptsDetection;
+  conf.subSuperScriptsDetection.logLevel = debugSubSuperScriptsDetection ? DEBUG : logLevel;
+  conf.subSuperScriptsDetection.logPageFilter = logPageFilter;
+  // Configure the calculation of text lines statistics.
+  conf.textLinesStatisticsCalculation.disabled = skipLineStatisticsCalculation;
+  conf.textLinesStatisticsCalculation.logLevel = debugLineStatisticsCalculation ? DEBUG : logLevel;
+  conf.textLinesStatisticsCalculation.logPageFilter = logPageFilter;
+  // Configure the detection of text blocks.
+  conf.textBlocksDetection.disabled = skipTextBlocksDetection;
+  conf.textBlocksDetection.logLevel = debugTextBlocksDetection ? DEBUG : logLevel;
+  conf.textBlocksDetection.logPageFilter = logPageFilter;
+  // Configure the detection of the reading order.
+  conf.readingOrderDetection.disabled = skipReadingOrderDetection;
+  conf.readingOrderDetection.logLevel = debugReadingOrderDetection ? DEBUG : logLevel;
+  conf.readingOrderDetection.logPageFilter = logPageFilter;
+  // Configure the prediction of semantic roles.
+  conf.semanticRolesPrediction.disabled = skipSemanticRolesPrediction;
+  conf.semanticRolesPrediction.logLevel = debugSemanticRolesPrediction ? DEBUG : logLevel;
+  conf.semanticRolesPrediction.logPageFilter = logPageFilter;
+  conf.semanticRolesPrediction.modelsDir = CONFIG_SEMANTIC_ROLES_DETECTION_MODELS_DIR;
   // Configure words dehyphenation.
-  config.wordsDehyphenation.logLevel = logLevel;
-  config.wordsDehyphenation.logPageFilter = logPageFilter;
-  config.wordsDehyphenation.disable = noDehyphenation;
+  conf.wordsDehyphenation.disabled = skipWordsDehyphenation;
+  conf.wordsDehyphenation.logLevel = debugWordsDehyphenation ? DEBUG : logLevel;
+  conf.wordsDehyphenation.logPageFilter = logPageFilter;
 
-  PdfToTextPlusPlus engine(&config, parseMode);
-
-  PdfDocument doc;
+  PdfDocument doc(pdfFilePath);
   vector<Timing> timings;
 
   int status = 0;
   // TODO(korzen): Don't use the invalid argument exception; it is currently thrown by
   // SemanticRolesPredictor. Instead, use the exit code to check if something went wrong.
   try {
-    status = engine.process(&pdfFilePath, &doc, &timings);
+    PdfToTextPlusPlus engine(&conf);
+    status = engine.process(&doc, &timings);
   } catch (const invalid_argument& ia) {
     cerr << "An error occurred: " << ia.what() << '\n';
     return 3;
@@ -602,7 +715,7 @@ int main(int argc, char* argv[]) {
   const string visualizeFilePathStr(visualizeFilePath);
   if (!visualizeFilePathStr.empty()) {
     auto start = high_resolution_clock::now();
-    PdfDocumentVisualization pdv(pdfFilePath, config.pdfDocumentVisualization);
+    PdfDocumentVisualization pdv(pdfFilePath, conf.pdfDocumentVisualization);
     if (visualizeChars) {
       pdv.visualizeCharacters(doc, ppp::visualization::color_schemes::blue);
     }

@@ -35,7 +35,7 @@ class WordsDetectionUtils {
    * @param config
    *   The configuration to use.
    */
-  explicit WordsDetectionUtils(const WordsDetectionConfig& config);
+  explicit WordsDetectionUtils(const WordsDetectionConfig* config);
 
   ~WordsDetectionUtils();
 
@@ -53,7 +53,7 @@ class WordsDetectionUtils {
 
  private:
   // The configuration to use.
-  WordsDetectionConfig _config;
+  const WordsDetectionConfig* _config;
 };
 
 }  // namespace ppp::utils

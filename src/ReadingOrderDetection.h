@@ -66,8 +66,8 @@ class ReadingOrderDetection {
    */
   explicit ReadingOrderDetection(
     PdfDocument* doc,
-    const ReadingOrderDetectionConfig& config,
-    const SemanticRolesPredictionConfig& config2);
+    const ReadingOrderDetectionConfig* config,
+    const SemanticRolesPredictionConfig* config2);
 
   /** The deconstructor. */
   ~ReadingOrderDetection();
@@ -77,7 +77,7 @@ class ReadingOrderDetection {
    * which includes: (1) the detection of the semantic role of the text blocks, (2) the detection
    * of "semantic y-cuts" and (3) the detection of the reading order of the text blocks.
    */
-  void detect();
+  void process();
 
  private:
   /**
@@ -173,7 +173,7 @@ class ReadingOrderDetection {
   // The document to process.
   PdfDocument* _doc;
   // The configuration to use.
-  ReadingOrderDetectionConfig _config;
+  const ReadingOrderDetectionConfig* _config;
 
   double _minXCutGapWidth = 0;
   double _minYCutGapHeight = 0;

@@ -80,7 +80,7 @@ class TextBlocksDetection {
    * @param config
    *    The config to use.
    */
-  TextBlocksDetection(PdfDocument* doc, const TextBlocksDetectionConfig& config);
+  TextBlocksDetection(PdfDocument* doc, const TextBlocksDetectionConfig* config);
 
   /** The deconstructor. */
   ~TextBlocksDetection();
@@ -348,11 +348,11 @@ class TextBlocksDetection {
   // The PDF document to process.
   PdfDocument* _doc;
   // The configuration to use.
-  TextBlocksDetectionConfig _config;
+  const TextBlocksDetectionConfig* _config;
   // The text blocks detection utils.
-  TextBlocksDetectionUtils* _utils;
+  const TextBlocksDetectionUtils* _utils;
   // The logger.
-  Logger* _log;
+  const Logger* _log;
 
   // The potential footnote labels, that is: superscripted strings consisting of alphanumerical
   // characters.

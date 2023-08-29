@@ -39,10 +39,10 @@ namespace ppp::modules {
 // _________________________________________________________________________________________________
 DiacriticalMarksMerging::DiacriticalMarksMerging(
     PdfDocument* doc,
-    const DiacriticalMarksMergingConfig& config) {
+    const DiacriticalMarksMergingConfig* config) {
   _doc = doc;
   _config = config;
-  _log = new Logger(_config.logLevel, _config.logPageFilter);
+  _log = new Logger(_config->logLevel, _config->logPageFilter);
 }
 
 // _________________________________________________________________________________________________
@@ -100,8 +100,8 @@ void DiacriticalMarksMerging::process() const {
       // Get the unicode of the character. If it is contained in combininMap, replace the unicode
       // by its combining equivalent.
       unsigned int unicode = currChar->unicodes[0];
-      if (_config.combiningMap.count(unicode) > 0) {
-        unicode = _config.combiningMap.at(unicode);
+      if (_config->combiningMap.count(unicode) > 0) {
+        unicode = _config->combiningMap.at(unicode);
       }
 
       // The character is a diacritic mark when its unicode falls into one of the categories:

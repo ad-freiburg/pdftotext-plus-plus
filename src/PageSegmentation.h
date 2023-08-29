@@ -51,7 +51,7 @@ class PageSegmentation {
    * @param config
    *   The configuration to use.
    */
-  PageSegmentation(PdfDocument* doc, const PageSegmentationConfig& config);
+  PageSegmentation(PdfDocument* doc, const PageSegmentationConfig* config);
 
   /** The deconstructor. **/
   ~PageSegmentation();
@@ -325,11 +325,11 @@ class PageSegmentation {
   // The document to process.
   PdfDocument* _doc;
   // The configuration to use.
-  PageSegmentationConfig _config;
+  const PageSegmentationConfig* _config;
   // The page segmentation utils.
-  PageSegmentationUtils* _utils;
+  const PageSegmentationUtils* _utils;
   // The logger.
-  Logger* _log;
+  const Logger* _log;
 };
 
 }  // namespace ppp::modules
