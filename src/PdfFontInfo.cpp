@@ -1,40 +1,47 @@
 /**
- * Copyright 2022, University of Freiburg,
+ * Copyright 2023, University of Freiburg,
  * Chair of Algorithms and Data Structures.
  * Author: Claudius Korzen <korzen@cs.uni-freiburg.de>.
  *
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include "./PdfFontInfo.h"
-
 #include <poppler/GfxFont.h>
 #include <poppler/GfxState.h>
 #include <poppler/Object.h>
 #include <poppler/XRef.h>
 
-#include <algorithm>  // std::min, std::max
 #include <limits>
-#include <memory>
+#include <memory>  // std::shared_ptr
 #include <regex>
-#include <sstream>  // stringstream
+#include <sstream>  // std::stringstream
 #include <string>
 #include <unordered_map>
-#include <utility>
+#include <utility>  // std::make_tuple
 #include <vector>
+
+#include "./PdfFontInfo.h"
+#include "./utils/MathUtils.h"
 
 using std::istringstream;
 using std::make_tuple;
-using std::max;
-using std::min;
 using std::numeric_limits;
 using std::regex;
+using std::shared_ptr;
 using std::smatch;
+using std::sregex_iterator;
 using std::stoi;
 using std::string;
 using std::stringstream;
 using std::unordered_map;
 using std::vector;
+
+using ppp::utils::math::maximum;
+using ppp::utils::math::minimum;
+
+// =================================================================================================
+
+namespace ppp::types {
 
 // _________________________________________________________________________________________________
 PdfFontInfo::PdfFontInfo() = default;
@@ -47,7 +54,7 @@ PdfFontInfo* PdfFontInfo::create(const GfxState* state, XRef* xref, bool parseEm
   assert(state);
   assert(xref);
 
-  const std::shared_ptr<GfxFont> gfxFont = state->getFont();
+  const shared_ptr<GfxFont> gfxFont = state->getFont();
   // Do nothing if the given graphics state does not provide a font.
   if (!gfxFont) {
     return nullptr;
@@ -60,7 +67,7 @@ PdfFontInfo* PdfFontInfo::create(const GfxState* state, XRef* xref, bool parseEm
   string fontName = gfxFontAddress.str();
 
   // If the font provide a font name, take this.
-  const std::optional<std::string> gooFontName = gfxFont->getName();
+  const std::optional<string> gooFontName = gfxFont->getName();
   if (gooFontName) {
     fontName = move(*gooFontName);
   }
@@ -83,7 +90,7 @@ PdfFontInfo* PdfFontInfo::create(const GfxState* state, XRef* xref, bool parseEm
   // Compute and set the font base name (= the normalized font name without the suffix starting
   // with "-" and without digits).
   string baseName = fontInfo->normFontName;
-  size_t endPos = min(baseName.find("-"), baseName.size());
+  size_t endPos = minimum(baseName.find("-"), baseName.size());
   int pos = 0;
   for (size_t i = 0; i < endPos; i++) {
     if (!isdigit(baseName[i])) {
@@ -94,8 +101,8 @@ PdfFontInfo* PdfFontInfo::create(const GfxState* state, XRef* xref, bool parseEm
   fontInfo->fontBaseName = baseName.substr(0, pos);
 
   // Set the ascent and descent.
-  fontInfo->ascent = 0.95;  // fontInfo->ascent = max(gfxFont->getAscent(), 0.95);
-  fontInfo->descent = -0.35;  // fontInfo->descent = min(gfxFont->getDescent(), -0.35);
+  fontInfo->ascent = 0.95;  // fontInfo->ascent = maximum(gfxFont->getAscent(), 0.95);
+  fontInfo->descent = -0.35;  // fontInfo->descent = minimum(gfxFont->getDescent(), -0.35);
 
   int fontFlags = gfxFont->getFlags();
   fontInfo->isFixedWidth = fontFlags & fontFixedWidth;
@@ -402,12 +409,12 @@ void Type1FontFileParser::parseEncryptedPart(Object* strObj, int length,
 
   string subrs = decrypted.substr(subrsStart, subrsEnd - subrsStart);
   regex dupRegex("dup\\s(\\d+)\\s(\\d+)\\sRD\\s");
-  auto dupBegin = std::sregex_iterator(subrs.begin(), subrs.end(), dupRegex);
-  auto dupEnd = std::sregex_iterator();
+  auto dupBegin = sregex_iterator(subrs.begin(), subrs.end(), dupRegex);
+  auto dupEnd = sregex_iterator();
 
   unordered_map<int, string> subrsMap;
-  for (std::sregex_iterator i = dupBegin; i != dupEnd; i++) {
-    std::smatch match = *i;
+  for (sregex_iterator i = dupBegin; i != dupEnd; i++) {
+    smatch match = *i;
     int index = stoi(match.str(1));
     int nnumBytes = stoi(match.str(2));
 
@@ -435,11 +442,11 @@ void Type1FontFileParser::parseEncryptedPart(Object* strObj, int length,
   string charstrings = decrypted.substr(charStringsStart);
 
   regex words_regex("\\/(\\S+)\\s+(\\d+)\\sRD\\s");
-  auto words_begin = std::sregex_iterator(charstrings.begin(), charstrings.end(), words_regex);
-  auto words_end = std::sregex_iterator();
+  auto words_begin = sregex_iterator(charstrings.begin(), charstrings.end(), words_regex);
+  auto words_end = sregex_iterator();
 
-  for (std::sregex_iterator i = words_begin; i != words_end; ++i) {
-    std::smatch match = *i;
+  for (sregex_iterator i = words_begin; i != words_end; ++i) {
+    smatch match = *i;
     string charName = match.str(1);
     int nnumBytes = stoi(match.str(2));
 
@@ -480,8 +487,8 @@ void Type1FontFileParser::parseCharString(const string& charString,
             //   int y = args->back();
             //   args->pop_back();
 
-            //   *upperY = min(*upperY, min(y, y + dy));
-            //   *lowerY = max(*lowerY, max(y, y + dy));
+            //   *upperY = minimum(*upperY, minimum(y, y + dy));
+            //   *lowerY = maximum(*lowerY, maximum(y, y + dy));
             args->pop_back();
             args->pop_back();
           }
@@ -493,8 +500,8 @@ void Type1FontFileParser::parseCharString(const string& charString,
             //   int x = args->back();
             //   args->pop_back();
 
-            //   *leftX = min(*leftX, min(x, x + dx));
-            //   *rightX = max(*rightX, max(x, x + dx));
+            //   *leftX = minimum(*leftX, minimum(x, x + dx));
+            //   *rightX = maximum(*rightX, maximum(x, x + dx));
             args->pop_back();
             args->pop_back();
           }
@@ -505,8 +512,8 @@ void Type1FontFileParser::parseCharString(const string& charString,
             args->pop_back();
 
             *curY += dy;
-            *upperY = min(*upperY, *curY);
-            *lowerY = max(*lowerY, *curY);
+            *upperY = minimum(*upperY, *curY);
+            *lowerY = maximum(*lowerY, *curY);
           }
           break;
         case 5:  // dx dy rlineto
@@ -518,10 +525,10 @@ void Type1FontFileParser::parseCharString(const string& charString,
 
             *curX += dx;
             *curY += dy;
-            *leftX = min(*leftX, *curX);
-            *rightX = max(*rightX, *curX);
-            *upperY = min(*upperY, *curY);
-            *lowerY = max(*lowerY, *curY);
+            *leftX = minimum(*leftX, *curX);
+            *rightX = maximum(*rightX, *curX);
+            *upperY = minimum(*upperY, *curY);
+            *lowerY = maximum(*lowerY, *curY);
           }
           break;
         case 6:  // dx hlineto
@@ -530,8 +537,8 @@ void Type1FontFileParser::parseCharString(const string& charString,
             args->pop_back();
 
             *curX += dx;
-            *leftX = min(*leftX, *curX);
-            *rightX = max(*rightX, *curX);
+            *leftX = minimum(*leftX, *curX);
+            *rightX = maximum(*rightX, *curX);
           }
           break;
         case 7:  // dy vlineto
@@ -540,8 +547,8 @@ void Type1FontFileParser::parseCharString(const string& charString,
             args->pop_back();
 
             *curY += dy;
-            *upperY = min(*upperY, *curY);
-            *lowerY = max(*lowerY, *curY);
+            *upperY = minimum(*upperY, *curY);
+            *lowerY = maximum(*lowerY, *curY);
           }
           break;
         case 8:  // dx1 dy1 dx2 dy2 dx3 dy3 rrcurveto
@@ -568,10 +575,10 @@ void Type1FontFileParser::parseCharString(const string& charString,
 
             *curX = x3;
             *curY = y3;
-            *leftX = min(*leftX, min(x1, min(x2, x3)));
-            *rightX = max(*rightX, max(x1, max(x2, x3)));
-            *upperY = min(*upperY, min(y1, min(y2, y3)));
-            *lowerY = max(*lowerY, max(y1, max(y2, y3)));
+            *leftX = minimum(*leftX, x1, x2, x3);
+            *rightX = maximum(*rightX, x1, x2, x3);
+            *upperY = minimum(*upperY, y1, y2, y3);
+            *lowerY = maximum(*lowerY, y1, y2, y3);
           }
           break;
         case 10:  // subr# callsubr
@@ -634,10 +641,10 @@ void Type1FontFileParser::parseCharString(const string& charString,
 
                   *curX = sbx;
                   *curY = sby;
-                  *leftX = min(*leftX, *curX);
-                  *rightX = max(*rightX, *curX);
-                  *upperY = min(*upperY, *curY);
-                  *lowerY = max(*lowerY, *curY);
+                  *leftX = minimum(*leftX, *curX);
+                  *rightX = maximum(*rightX, *curX);
+                  *upperY = minimum(*upperY, *curY);
+                  *lowerY = maximum(*lowerY, *curY);
                 }
                 break;
               case 12:  // num1 num2 div
@@ -712,10 +719,10 @@ void Type1FontFileParser::parseCharString(const string& charString,
 
                   *curX = x;
                   *curY = y;
-                  *leftX = min(*leftX, *curX);
-                  *rightX = max(*rightX, *curX);
-                  *upperY = min(*upperY, *curY);
-                  *lowerY = max(*lowerY, *curY);
+                  *leftX = minimum(*leftX, *curX);
+                  *rightX = maximum(*rightX, *curX);
+                  *upperY = minimum(*upperY, *curY);
+                  *lowerY = maximum(*lowerY, *curY);
                 }
                 break;
             }
@@ -730,10 +737,10 @@ void Type1FontFileParser::parseCharString(const string& charString,
 
             *curX = sbx;
             *curY = 0;
-            *leftX = min(*leftX, *curX);
-            *rightX = max(*rightX, *curX);
-            *upperY = min(*upperY, *curY);
-            *lowerY = max(*lowerY, *curY);
+            *leftX = minimum(*leftX, *curX);
+            *rightX = maximum(*rightX, *curX);
+            *upperY = minimum(*upperY, *curY);
+            *lowerY = maximum(*lowerY, *curY);
           }
           break;
         case 21:  // dx dy rmoveto
@@ -745,10 +752,10 @@ void Type1FontFileParser::parseCharString(const string& charString,
 
             *curX += dx;
             *curY += dy;
-            *leftX = min(*leftX, *curX);
-            *rightX = max(*rightX, *curX);
-            *upperY = min(*upperY, *curY);
-            *lowerY = max(*lowerY, *curY);
+            *leftX = minimum(*leftX, *curX);
+            *rightX = maximum(*rightX, *curX);
+            *upperY = minimum(*upperY, *curY);
+            *lowerY = maximum(*lowerY, *curY);
           }
           break;
         case 22:  // dx hmoveto
@@ -757,8 +764,8 @@ void Type1FontFileParser::parseCharString(const string& charString,
             args->pop_back();
 
             *curX += dx;
-            *leftX = min(*leftX, *curX);
-            *rightX = max(*rightX, *curX);
+            *leftX = minimum(*leftX, *curX);
+            *rightX = maximum(*rightX, *curX);
           }
           break;
         case 30:  // dy1 dx2 dy2 dx3 vhcurveto
@@ -781,10 +788,10 @@ void Type1FontFileParser::parseCharString(const string& charString,
 
             *curX = x3;
             *curY = y3;
-            *leftX = min(*leftX, min(x1, min(x2, x3)));
-            *rightX = max(*rightX, max(x1, max(x2, x3)));
-            *upperY = min(*upperY, min(y1, min(y2, y3)));
-            *lowerY = max(*lowerY, max(y1, max(y2, y3)));
+            *leftX = minimum(*leftX, x1, x2, x3);
+            *rightX = maximum(*rightX, x1, x2, x3);
+            *upperY = minimum(*upperY, y1, y2, y3);
+            *lowerY = maximum(*lowerY, y1, y2, y3);
           }
           break;
         case 31:  // dx1 dx2 dy2 dy3 hvcurveto
@@ -807,10 +814,10 @@ void Type1FontFileParser::parseCharString(const string& charString,
 
             *curX = x3;
             *curY = y3;
-            *leftX = min(*leftX, min(x1, min(x2, x3)));
-            *rightX = max(*rightX, max(x1, max(x2, x3)));
-            *upperY = min(*upperY, min(y1, min(y2, y3)));
-            *lowerY = max(*lowerY, max(y1, max(y2, y3)));
+            *leftX = minimum(*leftX, x1, x2, x3);
+            *rightX = maximum(*rightX, x1, x2, x3);
+            *upperY = minimum(*upperY, y1, y2, y3);
+            *lowerY = maximum(*lowerY, y1, y2, y3);
           }
           break;
         case 0:  // error
@@ -857,3 +864,5 @@ void Type1FontFileParser::decrypt(const char* bytes, int numBytes, int r, int n,
     r = ((cipher + r) * c1 + c2) & ((1 << 16) - 1);
   }
 }
+
+}  // namespace ppp::types

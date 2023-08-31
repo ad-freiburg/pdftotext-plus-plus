@@ -21,6 +21,11 @@ using std::unordered_set;
 using std::vector;
 
 using ppp::config::TextBlocksDetectionConfig;
+using ppp::types::PdfElement;
+using ppp::types::PdfFigure;
+using ppp::types::PdfTextBlock;
+using ppp::types::PdfTextElement;
+using ppp::types::PdfTextLine;
 
 // =================================================================================================
 
@@ -37,7 +42,7 @@ class TextBlocksDetectionUtils {
    * @param config
    *   The configuration to use.
    */
-  explicit TextBlocksDetectionUtils(const TextBlocksDetectionConfig& config);
+  explicit TextBlocksDetectionUtils(const TextBlocksDetectionConfig* config);
 
   /** The deconstructor. */
   ~TextBlocksDetectionUtils();
@@ -346,7 +351,7 @@ class TextBlocksDetectionUtils {
 
  private:
   // The configuration to use.
-  TextBlocksDetectionConfig _config;
+  const TextBlocksDetectionConfig* _config;
 };
 
 }  // namespace ppp::utils

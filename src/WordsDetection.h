@@ -9,26 +9,22 @@
 #ifndef WORDSDETECTION_H_
 #define WORDSDETECTION_H_
 
-#include <string>
-#include <unordered_set>
-#include <vector>
-
-#include "./utils/Log.h"
-#include "./utils/WordsDetectionUtils.h"
 #include "./Config.h"
 #include "./PdfDocument.h"
-
-using std::string;
-using std::unordered_set;
-using std::vector;
+#include "./utils/Log.h"
+#include "./utils/WordsDetectionUtils.h"
 
 using ppp::config::WordsDetectionConfig;
+using ppp::types::PdfCharacter;
+using ppp::types::PdfDocument;
+using ppp::types::PdfPage;
+using ppp::types::PdfWord;
 using ppp::utils::WordsDetectionUtils;
 using ppp::utils::log::Logger;
 
 // =================================================================================================
 
-namespace ppp {
+namespace ppp::modules {
 
 /**
  * This class is responsible for (a) merging the characters of a PDF document to words, and
@@ -53,7 +49,7 @@ class WordsDetection {
    * @param config
    *   The configuration to use.
    */
-  WordsDetection(PdfDocument* doc, const WordsDetectionConfig& config);
+  WordsDetection(PdfDocument* doc, const WordsDetectionConfig* config);
 
   /** The deconstructor. */
   ~WordsDetection();
@@ -117,16 +113,16 @@ class WordsDetection {
   // The document to process.
   PdfDocument* _doc;
   // The configuration to use.
-  WordsDetectionConfig _config;
+  const WordsDetectionConfig* _config;
   // The words detection utils.
-  WordsDetectionUtils* _utils;
+  const WordsDetectionUtils* _utils;
   // The logger.
-  Logger* _log;
+  const Logger* _log;
 
   // The active word.
   PdfWord _activeWord;
 };
 
-}  // namespace ppp
+}  // namespace ppp::modules
 
 #endif  // WORDSDETECTION_H_

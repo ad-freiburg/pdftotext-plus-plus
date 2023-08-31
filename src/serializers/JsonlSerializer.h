@@ -10,17 +10,17 @@
 #define SERIALIZERS_JSONLSERIALIZER_H_
 
 #include <ostream>
-#include <string>
 #include <unordered_set>
 
+#include "./Serializer.h"
 #include "../PdfDocument.h"
 #include "../Types.h"
-#include "./Serializer.h"
 
-using ppp::types::SemanticRole;
 using std::ostream;
-using std::string;
 using std::unordered_set;
+
+using ppp::types::PdfDocument;
+using ppp::types::SemanticRole;
 
 // =================================================================================================
 

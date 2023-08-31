@@ -6,19 +6,27 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include <algorithm>
+#include <algorithm>  // std::transform
 #include <ostream>
 #include <string>
 #include <unordered_set>
 
+#include "./PlainTextExtendedSerializer.h"
 #include "../PdfDocument.h"
 #include "../Types.h"
-#include "./PlainTextExtendedSerializer.h"
+
+using std::endl;
+using std::find;
+using std::ostream;
+using std::string;
+using std::transform;
+using std::unordered_set;
 
 using ppp::types::DocumentUnit;
+using ppp::types::PdfDocument;
+using ppp::types::PdfTextBlock;
+using ppp::types::PdfWord;
 using ppp::types::SemanticRole;
-using std::endl;
-using std::unordered_set;
 
 // =================================================================================================
 
@@ -40,7 +48,7 @@ void PlainTextExtendedSerializer::serializeToStream(const PdfDocument* doc,
   for (auto* page : doc->pages) {
     for (auto* block : page->blocks) {
       // Skip the block if its role is not included in 'roles'.
-      if (std::find(roles.begin(), roles.end(), block->role) == roles.end()) {
+      if (find(roles.begin(), roles.end(), block->role) == roles.end()) {
         continue;
       }
 
@@ -51,7 +59,7 @@ void PlainTextExtendedSerializer::serializeToStream(const PdfDocument* doc,
 
       // Prefix each block with its semantic role.
       string roleStr = ppp::types::getName(block->role);
-      std::transform(roleStr.begin(), roleStr.end(), roleStr.begin(), ::toupper);
+      transform(roleStr.begin(), roleStr.end(), roleStr.begin(), ::toupper);
       out << "[" << roleStr << "] ";
 
       // Prefix each emphasized block with "^A" (start of heading).

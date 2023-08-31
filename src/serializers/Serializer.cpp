@@ -6,22 +6,27 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <string>
 #include <unordered_set>
 
 #include "./Serializer.h"
+#include "../PdfDocument.h"
 #include "../Types.h"
 
-using ppp::types::DocumentUnit;
-using ppp::types::SemanticRole;
 using std::cerr;
 using std::cout;
 using std::endl;
 using std::ofstream;
 using std::string;
 using std::unordered_set;
+
+using ppp::types::DocumentUnit;
+using ppp::types::PdfDocument;
+using ppp::types::SemanticRole;
+
+// =================================================================================================
 
 namespace ppp::serialization {
 

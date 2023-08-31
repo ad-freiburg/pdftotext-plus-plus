@@ -19,14 +19,18 @@
 #include "./Config.h"
 #include "./PdfDocument.h"
 
+using std::codecvt_utf8_utf16;
 using std::string;
 using std::unordered_map;
+using std::wstring;
+using std::wstring_convert;
 
 using ppp::config::SemanticRolesPredictionConfig;
+using ppp::types::PdfDocument;
 
 // =================================================================================================
 
-namespace ppp {
+namespace ppp::modules {
 
 /**
  * This class predicts the semantic roles of the text blocks of a given PDF document by using
@@ -40,7 +44,7 @@ class SemanticRolesPrediction {
    * @param config
    *   The configuration to use.
    */
-  explicit SemanticRolesPrediction(const SemanticRolesPredictionConfig& config);
+  explicit SemanticRolesPrediction(const SemanticRolesPredictionConfig* config);
 
   /** The deconstructor. */
   ~SemanticRolesPrediction();
@@ -91,24 +95,24 @@ class SemanticRolesPrediction {
   cppflow::tensor createWordsInputTensor(const PdfDocument* doc);
 
   // The configuration to use.
-  SemanticRolesPredictionConfig _config;
+  const SemanticRolesPredictionConfig* _config;
 
   // The model loaded from file.
   // tensorflow::SavedModelBundle _bundle;
   cppflow::model* _model;
 
   // The mapping of byte pairs to integer ids, for example: {"para": 0; "eff": 1, "icient": 2}.
-  unordered_map<std::wstring, int> _bpeVocab;
+  unordered_map<wstring, int> _bpeVocab;
   // The mapping of integer ids to semantic roles, for example: {0: "paragraph", 1: "title"}.
   unordered_map<int, string> _rolesVocab;
 
-  // The converter for converting string to std::wstring.
-  std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> stringConverter;
+  // The converter for converting string to wstring.
+  wstring_convert<codecvt_utf8_utf16<wchar_t>> stringConverter;
 
   // Whether or not the model was already loaded.
   bool _modelOk = false;
 };
 
-}  // namespace ppp
+}  // namespace ppp::modules
 
 #endif  // SEMANTICROLESPREDICTION_H_

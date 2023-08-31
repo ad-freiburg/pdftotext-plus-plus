@@ -13,14 +13,15 @@
 #include <unordered_map>
 
 #include "./Types.h"
-#include "./serializers/Serializer.h"
-#include "./serializers/PlainTextSerializer.h"
-#include "./serializers/PlainTextExtendedSerializer.h"
 #include "./serializers/JsonlSerializer.h"
+#include "./serializers/PlainTextExtendedSerializer.h"
+#include "./serializers/PlainTextSerializer.h"
+#include "./serializers/Serializer.h"
 
-using ppp::types::SerializationFormat;
 using std::string;
 using std::unordered_map;
+
+using ppp::types::SerializationFormat;
 
 // =================================================================================================
 

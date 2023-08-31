@@ -9,15 +9,17 @@
 #include <string>
 #include <vector>
 
-#include "../PdfDocument.h"
 #include "./Counter.h"
 #include "./MathUtils.h"
 #include "./TextUtils.h"
 #include "./WordsDetectionUtils.h"
+#include "../PdfDocument.h"
 
 using std::string;
 using std::vector;
 
+using ppp::types::PdfCharacter;
+using ppp::types::PdfWord;
 using ppp::utils::counter::DoubleCounter;
 using ppp::utils::counter::StringCounter;
 using ppp::utils::math::maximum;
@@ -29,7 +31,7 @@ using ppp::utils::text::createRandomString;
 namespace ppp::utils {
 
 // _________________________________________________________________________________________________
-WordsDetectionUtils::WordsDetectionUtils(const WordsDetectionConfig& config) {
+WordsDetectionUtils::WordsDetectionUtils(const WordsDetectionConfig* config) {
   _config = config;
 }
 
@@ -43,7 +45,7 @@ PdfWord* WordsDetectionUtils::createWord(const vector<PdfCharacter*>& characters
   PdfWord* word = new PdfWord();
 
   // Create a (unique) id.
-  word->id = createRandomString(_config.idLength, "word-");
+  word->id = createRandomString(_config->idLength, "word-");
 
   // Set the page number.
   word->pos->pageNum = characters[0]->pos->pageNum;

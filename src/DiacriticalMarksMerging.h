@@ -9,16 +9,17 @@
 #ifndef DIACRITICALMARKSMERGING_H_
 #define DIACRITICALMARKSMERGING_H_
 
-#include "./utils/Log.h"
 #include "./Config.h"
 #include "./PdfDocument.h"
+#include "./utils/Log.h"
 
 using ppp::config::DiacriticalMarksMergingConfig;
+using ppp::types::PdfDocument;
 using ppp::utils::log::Logger;
 
 // =================================================================================================
 
-namespace ppp {
+namespace ppp::modules {
 
 /**
  * This class is responsible for merging diacritical marks with their base characters.
@@ -38,7 +39,7 @@ class DiacriticalMarksMerging {
    * @param config
    *    The configuration to use.
    */
-  DiacriticalMarksMerging(PdfDocument* doc, const DiacriticalMarksMergingConfig& config);
+  DiacriticalMarksMerging(PdfDocument* doc, const DiacriticalMarksMergingConfig* config);
 
   /** The deconstructor */
   ~DiacriticalMarksMerging();
@@ -70,11 +71,11 @@ class DiacriticalMarksMerging {
   // The PDF document to process.
   PdfDocument* _doc;
   // The configuration to use.
-  DiacriticalMarksMergingConfig _config;
+  const DiacriticalMarksMergingConfig* _config;
   // The logger.
   Logger* _log;
 };
 
-}  // namespace ppp
+}  // namespace ppp::modules
 
 #endif  // DIACRITICALMARKSMERGING_H_

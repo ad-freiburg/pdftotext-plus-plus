@@ -1,5 +1,5 @@
 /**
- * Copyright 2022, University of Freiburg,
+ * Copyright 2023, University of Freiburg,
  * Chair of Algorithms and Data Structures.
  * Author: Claudius Korzen <korzen@cs.uni-freiburg.de>.
  *
@@ -9,7 +9,7 @@
 #ifndef PDFDOCUMENT_H_
 #define PDFDOCUMENT_H_
 
-#include <limits>  // numeric_limits
+#include <limits>  // std::numeric_limits
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -17,11 +17,17 @@
 #include "./PdfFontInfo.h"
 #include "./Types.h"
 
-using ppp::types::SemanticRole;
 using std::numeric_limits;
 using std::string;
 using std::unordered_map;
 using std::vector;
+
+using ppp::types::PdfFontInfo;
+using ppp::types::SemanticRole;
+
+// =================================================================================================
+
+namespace ppp::types {
 
 class PdfDocument;
 class PdfElement;
@@ -32,8 +38,6 @@ class PdfTextBlock;
 class PdfTextElement;
 class PdfTextLine;
 class PdfWord;
-
-// =================================================================================================
 
 /**
  * The directions of a cut used by the `XYCut` class.
@@ -988,8 +992,16 @@ class PdfPage {
  */
 class PdfDocument {
  public:
-  /** This constructor creates and initializes a new instance of this class. */
+  /** This constructor creates a new PDF document, without specifying a path to the physical PDF. */
   PdfDocument();
+
+  /**
+   * This constructor creates a new PDF document.
+   *
+   * @param pdfFilePath
+   *    The path to the PDF file.
+   */
+  explicit PdfDocument(const string& pdfFilePath);
 
   /** The deconstructor. */
   ~PdfDocument();
@@ -1040,5 +1052,7 @@ class PdfDocument {
   // The path to the PDF file.
   string pdfFilePath;
 };
+
+}  // namespace ppp::types
 
 #endif  // PDFDOCUMENT_H_

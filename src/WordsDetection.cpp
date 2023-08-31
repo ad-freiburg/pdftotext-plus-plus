@@ -6,47 +6,45 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include <algorithm>  // min, max
 #include <limits>  // std::numeric_limits
-#include <string>  // string
-#include <vector>  // vector
 
+#include "./PdfDocument.h"
+#include "./WordsDetection.h"
 #include "./utils/Log.h"
 #include "./utils/MathUtils.h"
 #include "./utils/PdfElementsUtils.h"
-#include "./utils/TextUtils.h"
 #include "./utils/WordsDetectionUtils.h"
-#include "./PdfDocument.h"
-#include "./WordsDetection.h"
 
 using std::endl;
-using std::max;
-using std::min;
-using std::string;
-using std::vector;
 
 using ppp::config::WordsDetectionConfig;
+using ppp::types::PdfCharacter;
+using ppp::types::PdfDocument;
+using ppp::types::PdfPage;
+using ppp::types::PdfWord;
+using ppp::utils::WordsDetectionUtils;
 using ppp::utils::elements::computeHorizontalGap;
 using ppp::utils::elements::computeMaxXOverlapRatio;
 using ppp::utils::elements::computeMaxYOverlapRatio;
-using ppp::utils::WordsDetectionUtils;
-using ppp::utils::math::larger;
-using ppp::utils::math::smaller;
-using ppp::utils::log::Logger;
 using ppp::utils::log::BLUE;
 using ppp::utils::log::BOLD;
 using ppp::utils::log::OFF;
+using ppp::utils::log::Logger;
+using ppp::utils::math::larger;
+using ppp::utils::math::maximum;
+using ppp::utils::math::minimum;
+using ppp::utils::math::smaller;
 
 // =================================================================================================
 
-namespace ppp {
+namespace ppp::modules {
 
 // _________________________________________________________________________________________________
-WordsDetection::WordsDetection(PdfDocument* doc, const WordsDetectionConfig& config) {
+WordsDetection::WordsDetection(PdfDocument* doc, const WordsDetectionConfig* config) {
   _doc = doc;
   _config = config;
   _utils = new WordsDetectionUtils(config);
-  _log = new Logger(config.logLevel, config.logPageFilter);
+  _log = new Logger(config->logLevel, config->logPageFilter);
 }
 
 // _________________________________________________________________________________________________
@@ -148,13 +146,13 @@ void WordsDetection::detectWords(PdfPage* page) {
 
     // Append the character to the active word and recompute the position.
     _activeWord.characters.push_back(currChar);
-    _activeWord.pos->leftX = min(_activeWord.pos->leftX, currChar->pos->leftX);
-    _activeWord.pos->upperY = min(_activeWord.pos->upperY, currChar->pos->upperY);
-    _activeWord.pos->rightX = max(_activeWord.pos->rightX, currChar->pos->rightX);
-    _activeWord.pos->lowerY = max(_activeWord.pos->lowerY, currChar->pos->lowerY);
+    _activeWord.pos->leftX = minimum(_activeWord.pos->leftX, currChar->pos->leftX);
+    _activeWord.pos->upperY = minimum(_activeWord.pos->upperY, currChar->pos->upperY);
+    _activeWord.pos->rightX = maximum(_activeWord.pos->rightX, currChar->pos->rightX);
+    _activeWord.pos->lowerY = maximum(_activeWord.pos->lowerY, currChar->pos->lowerY);
     _activeWord.pos->rotation = currChar->pos->rotation;
     _activeWord.pos->wMode = currChar->pos->wMode;
-    _activeWord.fontSize = max(_activeWord.fontSize, currChar->fontSize);
+    _activeWord.fontSize = maximum(_activeWord.fontSize, currChar->fontSize);
   }
 
   // Don't forget to process the last word.
@@ -225,8 +223,8 @@ bool WordsDetection::startsWord(const PdfCharacter* currChar) const {
   _log->debug(p) << BLUE << "Is the maximum y-overlap ratio between the character and the active "
       << "word smaller than a threshold?" << endl;
   _log->debug(p) << " • maxYRatio: " << maxYOverlapRatio << endl;
-  _log->debug(p) << " • minYOverlapRatio: " << _config.minYOverlapRatio << endl;
-  if (smaller(maxYOverlapRatio, _config.minYOverlapRatio)) {
+  _log->debug(p) << " • minYOverlapRatio: " << _config->minYOverlapRatio << endl;
+  if (smaller(maxYOverlapRatio, _config->minYOverlapRatio)) {
     _log->debug(p) << BLUE << BOLD << " yes → starts word" << OFF << endl;
     return true;
   }
@@ -237,7 +235,7 @@ bool WordsDetection::startsWord(const PdfCharacter* currChar) const {
 
   double hGapLeft = computeHorizontalGap(currChar, &_activeWord);
   double hGapRight = computeHorizontalGap(&_activeWord, currChar);
-  double hGapThreshold = _config.getHorizontalGapThreshold(_doc, &_activeWord);
+  double hGapThreshold = _config->getHorizontalGapThreshold(_doc, &_activeWord);
 
   _log->debug(p) << BLUE << "Are the horizontal gaps between the character and the active word "
       << "larger than a threshold?" << OFF << endl;
@@ -264,7 +262,7 @@ void WordsDetection::mergeStackedMathSymbols(const PdfPage* page) const {
 
   int p = page->pageNum;
   // TODO(korzen): Other name.
-  double threshold = _config.minStackedMathSymbolXOverlapRatio;
+  double threshold = _config->minStackedMathSymbolXOverlapRatio;
 
   for (size_t i = 0; i < page->words.size(); i++) {
     PdfWord* word = page->words.at(i);
@@ -288,16 +286,16 @@ void WordsDetection::mergeStackedMathSymbols(const PdfPage* page) const {
     // Check if the word is the base word of a stacked math symbol.
     bool isBaseOfStackedMathSymbol = false;
     for (auto* ch : word->characters) {
-      if (_config.stackedMathCharTexts.count(ch->text) > 0) {
+      if (_config->stackedMathCharTexts.count(ch->text) > 0) {
         isBaseOfStackedMathSymbol = true;
         break;
       }
-      if (_config.stackedMathCharNames.count(ch->name) > 0) {
+      if (_config->stackedMathCharNames.count(ch->name) > 0) {
         isBaseOfStackedMathSymbol = true;
         break;
       }
     }
-    if (_config.stackedMathWords.count(word->text) > 0) {
+    if (_config->stackedMathWords.count(word->text) > 0) {
       isBaseOfStackedMathSymbol = true;
     }
     _log->debug(p) << " • word.isBaseOfStackedSymbol: " << isBaseOfStackedMathSymbol << endl;
@@ -340,7 +338,7 @@ void WordsDetection::mergeStackedMathSymbols(const PdfPage* page) const {
       // smaller than the font size of the base word.
       _log->debug(p) << " • prevWord.fontSize: " << prevWord->fontSize << endl;
       _log->debug(p) << " • word.fontSize:     " << word->fontSize << endl;
-      if (!smaller(prevWord->fontSize, word->fontSize, _config.fsEqualTolerance)) {
+      if (!smaller(prevWord->fontSize, word->fontSize, _config->fsEqualTolerance)) {
         _log->debug(p) << BOLD << "is *not* part of the stacked math symbol "
             << "(prevWord.fontSize >= word.fontSize)." << OFF << endl;
         break;
@@ -382,7 +380,7 @@ void WordsDetection::mergeStackedMathSymbols(const PdfPage* page) const {
       // smaller than the font size of the base word.
       _log->debug(p) << " • nextWord.fontSize: " << nextWord->fontSize << endl;
       _log->debug(p) << " • word.fontSize:     " << word->fontSize << endl;
-      if (!smaller(nextWord->fontSize, word->fontSize, _config.fsEqualTolerance)) {
+      if (!smaller(nextWord->fontSize, word->fontSize, _config->fsEqualTolerance)) {
         _log->debug(p) << BOLD << "is *not* part of the stacked math symbol "
             << "(nextWord.fontSize >= word.fontSize)." << OFF << endl;
         break;
@@ -397,4 +395,4 @@ void WordsDetection::mergeStackedMathSymbols(const PdfPage* page) const {
   _log->debug(p) << "=======================================" << endl;
 }
 
-}  // namespace ppp
+}  // namespace ppp::modules

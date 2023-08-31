@@ -6,35 +6,35 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include <algorithm>  // std::min, std::max
-
-#include "./utils/Log.h"
-#include "./utils/MathUtils.h"
 #include "./Config.h"
 #include "./PdfDocument.h"
 #include "./SubSuperScriptsDetection.h"
+#include "./utils/Log.h"
+#include "./utils/MathUtils.h"
 
 using std::endl;
-using std::max;
-using std::min;
 
 using ppp::config::SubSuperScriptsDetectionConfig;
-using ppp::utils::log::Logger;
+using ppp::types::PdfDocument;
 using ppp::utils::log::BOLD;
 using ppp::utils::log::OFF;
+using ppp::utils::log::Logger;
 using ppp::utils::math::larger;
+using ppp::utils::math::maximum;
+using ppp::utils::math::minimum;
 using ppp::utils::math::smaller;
 
 // =================================================================================================
 
-namespace ppp {
+namespace ppp::modules {
 
 // _________________________________________________________________________________________________
-SubSuperScriptsDetection::SubSuperScriptsDetection(PdfDocument* doc,
-    const SubSuperScriptsDetectionConfig& config) {
+SubSuperScriptsDetection::SubSuperScriptsDetection(
+    PdfDocument* doc,
+    const SubSuperScriptsDetectionConfig* config) {
   _doc = doc;
   _config = config;
-  _log = new Logger(config.logLevel, config.logPageFilter);
+  _log = new Logger(config->logLevel, config->logPageFilter);
 }
 
 // _________________________________________________________________________________________________
@@ -68,19 +68,19 @@ void SubSuperScriptsDetection::process() const {
             _log->debug(p) << BOLD << "char: " << character->text << OFF << endl;
             _log->debug(p) << " └─ char.fontSize: " << character->fontSize << endl;
             _log->debug(p) << " └─ doc.mostFrequentFontSize: " << _doc->mostFreqFontSize << endl;
-            _log->debug(p) << " └─ tolerance font-size: " << _config.fsEqualTolerance << endl;
+            _log->debug(p) << " └─ tolerance font-size: " << _config->fsEqualTolerance << endl;
             _log->debug(p) << " └─ char.base: " << character->base << endl;
             _log->debug(p) << " └─ line.base: " << line->base << endl;
-            _log->debug(p) << " └─ tolerance base-line: " << _config.baseEqualTolerance << endl;
+            _log->debug(p) << " └─ tolerance base-line: " << _config->baseEqualTolerance << endl;
 
-            if (smaller(character->fontSize, _doc->mostFreqFontSize, _config.fsEqualTolerance)) {
-              if (smaller(character->base, line->base, _config.baseEqualTolerance)) {
+            if (smaller(character->fontSize, _doc->mostFreqFontSize, _config->fsEqualTolerance)) {
+              if (smaller(character->base, line->base, _config->baseEqualTolerance)) {
                 _log->debug(p) << BOLD << " superscript (char.base < line.base)" << OFF << endl;
                 character->isSuperscript = true;
                 continue;
               }
 
-              if (larger(character->base, line->base, _config.baseEqualTolerance)) {
+              if (larger(character->base, line->base, _config->baseEqualTolerance)) {
                 _log->debug(p) << BOLD << " subscript (char.base > line.base)" << OFF << endl;
                 character->isSubscript = true;
                 continue;
@@ -88,10 +88,10 @@ void SubSuperScriptsDetection::process() const {
             }
 
             // Compute the coordinates of the base bounding box of the line.
-            line->baseBBoxLeftX = min(line->baseBBoxLeftX, character->pos->leftX);
-            line->baseBBoxUpperY = min(line->baseBBoxUpperY, character->pos->upperY);
-            line->baseBBoxRightX = max(line->baseBBoxRightX, character->pos->rightX);
-            line->baseBBoxLowerY = max(line->baseBBoxLowerY, character->pos->lowerY);
+            line->baseBBoxLeftX = minimum(line->baseBBoxLeftX, character->pos->leftX);
+            line->baseBBoxUpperY = minimum(line->baseBBoxUpperY, character->pos->upperY);
+            line->baseBBoxRightX = maximum(line->baseBBoxRightX, character->pos->rightX);
+            line->baseBBoxLowerY = maximum(line->baseBBoxLowerY, character->pos->lowerY);
           }
         }
       }
@@ -101,4 +101,4 @@ void SubSuperScriptsDetection::process() const {
   }
 }
 
-}  // namespace ppp
+}  // namespace ppp::modules

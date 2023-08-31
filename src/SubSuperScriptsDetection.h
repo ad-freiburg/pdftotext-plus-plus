@@ -9,16 +9,17 @@
 #ifndef SUBSUPERSCRIPTSDETECTION_H_
 #define SUBSUPERSCRIPTSDETECTION_H_
 
-#include "./utils/Log.h"
 #include "./Config.h"
 #include "./PdfDocument.h"
+#include "./utils/Log.h"
 
 using ppp::config::SubSuperScriptsDetectionConfig;
+using ppp::types::PdfDocument;
 using ppp::utils::log::Logger;
 
 // =================================================================================================
 
-namespace ppp {
+namespace ppp::modules {
 
 /**
  * This class is responsible for detecting sub- and superscripted characters in a PDF document.
@@ -41,7 +42,7 @@ class SubSuperScriptsDetection {
    * @param config
    *   The configuration to use.
    */
-  SubSuperScriptsDetection(PdfDocument* doc, const SubSuperScriptsDetectionConfig& config);
+  SubSuperScriptsDetection(PdfDocument* doc, const SubSuperScriptsDetectionConfig* config);
 
   /** The deconstructor. */
   ~SubSuperScriptsDetection();
@@ -60,11 +61,11 @@ class SubSuperScriptsDetection {
   // The PDF document to process.
   PdfDocument* _doc;
   // The configuration to use.
-  SubSuperScriptsDetectionConfig _config;
+  const SubSuperScriptsDetectionConfig* _config;
   // The logger.
-  Logger* _log;
+  const Logger* _log;
 };
 
-}  // namespace ppp
+}  // namespace ppp::modules
 
 #endif  // SUBSUPERSCRIPTSDETECTION_H_

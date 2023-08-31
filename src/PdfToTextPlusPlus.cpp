@@ -17,35 +17,43 @@
 #include <vector>
 
 #include "./DiacriticalMarksMerging.h"
+#include "./GlyphsStatisticsCalculation.h"
 #include "./PageSegmentation.h"
+#include "./PdfDocument.h"
 #include "./PdfParsing.h"
-#include "./StatisticsCalculation.h"
 #include "./PdfToTextPlusPlus.h"
 #include "./ReadingOrderDetection.h"
 #include "./SubSuperScriptsDetection.h"
 #include "./TextBlocksDetection.h"
 #include "./TextLinesDetection.h"
+#include "./TextLinesStatisticsCalculation.h"
 #include "./Types.h"
 #include "./WordsDehyphenation.h"
 #include "./WordsDetection.h"
+#include "./WordsStatisticsCalculation.h"
 
 using std::chrono::duration_cast;
 using std::chrono::high_resolution_clock;
 using std::chrono::milliseconds;
+using std::make_unique;
 using std::string;
 using std::unique_ptr;
 using std::vector;
 
-using ppp::DiacriticalMarksMerging;
-using ppp::PdfParsing;
-using ppp::ReadingOrderDetection;
-using ppp::StatisticsCalculation;
-using ppp::SubSuperScriptsDetection;
-using ppp::TextLinesDetection;
-using ppp::WordsDehyphenation;
-using ppp::WordsDetection;
-
 using ppp::config::Config;
+using ppp::modules::DiacriticalMarksMerging;
+using ppp::modules::GlyphsStatisticsCalculation;
+using ppp::modules::PageSegmentation;
+using ppp::modules::PdfParsing;
+using ppp::modules::ReadingOrderDetection;
+using ppp::modules::SubSuperScriptsDetection;
+using ppp::modules::TextBlocksDetection;
+using ppp::modules::TextLinesDetection;
+using ppp::modules::TextLinesStatisticsCalculation;
+using ppp::modules::WordsDehyphenation;
+using ppp::modules::WordsDetection;
+using ppp::modules::WordsStatisticsCalculation;
+using ppp::types::PdfDocument;
 using ppp::types::Timing;
 
 // =================================================================================================
@@ -53,29 +61,24 @@ using ppp::types::Timing;
 namespace ppp {
 
 // _________________________________________________________________________________________________
-PdfToTextPlusPlus::PdfToTextPlusPlus(const Config* config, bool parseMode) {
+PdfToTextPlusPlus::PdfToTextPlusPlus(const Config* config) {
   _config = config;
-  _parseMode = parseMode;
 }
 
 // _________________________________________________________________________________________________
 PdfToTextPlusPlus::~PdfToTextPlusPlus() = default;
 
 // _________________________________________________________________________________________________
-int PdfToTextPlusPlus::process(
-    const string* pdfFilePath,
-    PdfDocument* doc,
-    vector<Timing>* timings) const {
+int PdfToTextPlusPlus::process(PdfDocument* doc, vector<Timing>* timings) const {
   assert(doc);
+  assert(!doc->pdfFilePath.empty());
 
-  doc->pdfFilePath = *pdfFilePath;
-
-  // Initialize the global parameters, needed by Poppler.
-  globalParams = std::make_unique<GlobalParams>();
+  // Initialize the global parameters needed by Poppler.
+  globalParams = make_unique<GlobalParams>();
 
   // (1) Load the PDF file. Abort if it couldn't be loaded successfully.
   auto start = high_resolution_clock::now();
-  GooString gooPdfFilePath(*pdfFilePath);
+  GooString gooPdfFilePath(doc->pdfFilePath);
   unique_ptr<PDFDoc> pdfDoc = PDFDocFactory().createPDFDoc(gooPdfFilePath);
   auto end = high_resolution_clock::now();
   auto duration = duration_cast<milliseconds>(end - start).count();
@@ -105,41 +108,34 @@ int PdfToTextPlusPlus::process(
     timings->push_back(Timing("Parse PDF", duration));
   }
 
-  // (3) Compute some statistics about the characters, for example: the most frequent font size.
-  StatisticsCalculation sc(doc, _config->statisticsCalculation);
-  if (!_config->statisticsCalculation.disable) {
+  // (3) Calculate glyphs statistics, for example: the most frequent font size.
+  if (_config->glyphsStatisticsCalculation.disabled == false) {
     start = high_resolution_clock::now();
-    sc.computeGlyphStatistics();
+    GlyphsStatisticsCalculation gsc(doc, &_config->glyphsStatisticsCalculation);
+    gsc.process();
     end = high_resolution_clock::now();
     duration = duration_cast<milliseconds>(end - start).count();
     if (timings) {
-      timings->push_back(Timing("Compute glyph stats", duration));
+      timings->push_back(Timing("Calculate glyph statistics", duration));
     }
   }
 
-  // (4) Merge combining diacritical marks with their base characters.
-  if (!_config->diacriticalMarksMerging.disable) {
+  // (4) Merge the combining diacritical marks with their base characters.
+  if (_config->diacriticalMarksMerging.disabled == false) {
     start = high_resolution_clock::now();
-    DiacriticalMarksMerging dmm(doc, _config->diacriticalMarksMerging);
+    DiacriticalMarksMerging dmm(doc, &_config->diacriticalMarksMerging);
     dmm.process();
     end = high_resolution_clock::now();
     duration = duration_cast<milliseconds>(end - start).count();
     if (timings) {
-      timings->push_back(Timing("Merge diacritics", duration));
+      timings->push_back(Timing("Merge combining diacritics", duration));
     }
   }
 
-  // Stop here when the parsing mode is activated (since it is supposed to extract only the
-  // characters, graphics and shapes from the PDF file).
-  // TODO(korzen): Replace the parse mode with the new disable flags in the different configs.
-  if (_parseMode) {
-    return 0;
-  }
-
   // (5) Detect the words.
-  if (!_config->wordsDetection.disable) {
+  if (_config->wordsDetection.disabled == false) {
     start = high_resolution_clock::now();
-    WordsDetection wd(doc, _config->wordsDetection);
+    WordsDetection wd(doc, &_config->wordsDetection);
     wd.process();
     end = high_resolution_clock::now();
     duration = duration_cast<milliseconds>(end - start).count();
@@ -149,20 +145,21 @@ int PdfToTextPlusPlus::process(
   }
 
   // (6) Compute some statistics about the words, for example: the most frequent word height.
-  if (!_config->statisticsCalculation.disable) {
+  if (_config->wordsStatisticsCalculation.disabled == false) {
     start = high_resolution_clock::now();
-    sc.computeWordStatistics();
+    WordsStatisticsCalculation wsc(doc, &_config->wordsStatisticsCalculation);
+    wsc.process();
     end = high_resolution_clock::now();
     duration = duration_cast<milliseconds>(end - start).count();
     if (timings) {
-      timings->push_back(Timing("Compute word stats", duration));
+      timings->push_back(Timing("Calculate words statistics", duration));
     }
   }
 
   // (7) Segment the pages of the document (for identifying columns).
-  if (!_config->pageSegmentation.disable) {
+  if (_config->pageSegmentation.disabled == false) {
     start = high_resolution_clock::now();
-    PageSegmentation ps(doc, _config->pageSegmentation);
+    PageSegmentation ps(doc, &_config->pageSegmentation);
     ps.process();
     end = high_resolution_clock::now();
     duration = duration_cast<milliseconds>(end - start).count();
@@ -172,9 +169,9 @@ int PdfToTextPlusPlus::process(
   }
 
   // (8) Detect the text lines.
-  if (!_config->textLinesDetection.disable) {
+  if (_config->textLinesDetection.disabled == false) {
     start = high_resolution_clock::now();
-    TextLinesDetection tld(doc, _config->textLinesDetection);
+    TextLinesDetection tld(doc, &_config->textLinesDetection);
     tld.process();
     end = high_resolution_clock::now();
     duration = duration_cast<milliseconds>(end - start).count();
@@ -182,7 +179,7 @@ int PdfToTextPlusPlus::process(
       timings->push_back(Timing("Detect lines", duration));
     }
 
-    // FIXME(korzen): Find another solution. It is currently needed only for testing.
+    // FIXME(korzen): Remove the following code snippet. It is currently needed only for testing.
     for (auto* page : doc->pages) {
       page->textLines.clear();
       for (auto* segment : page->segments) {
@@ -194,48 +191,49 @@ int PdfToTextPlusPlus::process(
   }
 
   // (9) Detect subscripted and superscripted characters.
-  if (!_config->subSuperScriptsDetection.disable) {
+  if (_config->subSuperScriptsDetection.disabled == false) {
     start = high_resolution_clock::now();
-    SubSuperScriptsDetection ssd(doc, _config->subSuperScriptsDetection);
+    SubSuperScriptsDetection ssd(doc, &_config->subSuperScriptsDetection);
     ssd.process();
     end = high_resolution_clock::now();
     duration = duration_cast<milliseconds>(end - start).count();
     if (timings) {
-      timings->push_back(Timing("Detect sub-/superscripts", duration));
+      timings->push_back(Timing("Detect sub/superscripts", duration));
     }
   }
 
   // (10) Compute some statistics about the text lines, for example: the most frequent indentation.
-  if (!_config->statisticsCalculation.disable) {
+  if (_config->textLinesStatisticsCalculation.disabled == false) {
     start = high_resolution_clock::now();
-    sc.computeTextLineStatistics();
+    TextLinesStatisticsCalculation tlsc(doc, &_config->textLinesStatisticsCalculation);
+    tlsc.process();
     end = high_resolution_clock::now();
     duration = duration_cast<milliseconds>(end - start).count();
     if (timings) {
-      timings->push_back(Timing("Compute line stats", duration));
+      timings->push_back(Timing("Calculate text line statistics", duration));
     }
   }
 
   // (11) Detect the text blocks.
-  if (!_config->textBlocksDetection.disable) {
+  if (_config->textBlocksDetection.disabled == false) {
     start = high_resolution_clock::now();
-    TextBlocksDetection tbd(doc, _config->textBlocksDetection);
+    TextBlocksDetection tbd(doc, &_config->textBlocksDetection);
     tbd.process();
     end = high_resolution_clock::now();
     duration = duration_cast<milliseconds>(end - start).count();
     if (timings) {
-      timings->push_back(Timing("Detect blocks", duration));
+      timings->push_back(Timing("Detect text blocks", duration));
     }
   }
 
   // (12) Detect the reading order of the text blocks.
-  if (!_config->readingOrderDetection.disable) {
+  if (_config->readingOrderDetection.disabled == false) {
     start = high_resolution_clock::now();
     ReadingOrderDetection rod(
       doc,
-      _config->readingOrderDetection,
-      _config->semanticRolesPrediction);
-    rod.detect();
+      &_config->readingOrderDetection,
+      &_config->semanticRolesPrediction);
+    rod.process();
     end = high_resolution_clock::now();
     duration = duration_cast<milliseconds>(end - start).count();
     if (timings) {
@@ -244,10 +242,10 @@ int PdfToTextPlusPlus::process(
   }
 
   // (13) Dehyphenate words, if not deactivated by the user.
-  if (!_config->wordsDehyphenation.disable) {
+  if (_config->wordsDehyphenation.disabled == false) {
     start = high_resolution_clock::now();
-    WordsDehyphenation wdh(doc, _config->wordsDehyphenation);
-    wdh.dehyphenate();
+    WordsDehyphenation wdh(doc, &_config->wordsDehyphenation);
+    wdh.process();
     end = high_resolution_clock::now();
     duration = duration_cast<milliseconds>(end - start).count();
     if (timings) {
@@ -255,7 +253,7 @@ int PdfToTextPlusPlus::process(
     }
   }
 
-  // FIXME(korzen): Find another solution. It is currently needed only for testing.
+  // FIXME(korzen): Remove the following code snippet. It is currently needed only for testing.
   for (auto* page : doc->pages) {
     page->textLines.clear();
     for (auto* block : page->blocks) {

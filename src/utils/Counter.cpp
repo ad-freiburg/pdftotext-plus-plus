@@ -16,6 +16,7 @@
 using std::make_pair;
 using std::numeric_limits;
 using std::pair;
+using std::runtime_error;
 using std::string;
 
 using ppp::utils::math::larger;
@@ -47,7 +48,7 @@ pair<double, unsigned int> DoubleCounter::mostFreqAndCount() const {
   }
 
   if (mostFreqCount == 0) {
-    throw std::runtime_error("The counter is empty or all counts are == 0.");
+    throw runtime_error("The counter is empty or all counts are == 0.");
   }
 
   return make_pair(mostFreq, mostFreqCount);
@@ -66,7 +67,7 @@ double DoubleCounter::max() const {
   }
 
   if (!entryFound) {
-    throw std::runtime_error("The counter is empty or all counts are == 0.");
+    throw runtime_error("The counter is empty or all counts are == 0.");
   }
 
   return max;
@@ -109,7 +110,7 @@ pair<string, unsigned int> StringCounter::mostFreqAndCount() const {
   }
 
   if (mostFreqCount == 0) {
-    throw std::runtime_error("The counter is empty or all counts are <= 0.");
+    throw runtime_error("The counter is empty or all counts are <= 0.");
   }
 
   return make_pair(mostFreq, mostFreqCount);

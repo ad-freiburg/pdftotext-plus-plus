@@ -8,26 +8,27 @@
 
 #include <vector>
 
-#include "../Config.h"
 #include "./MathUtils.h"
 #include "./PageSegmentationUtils.h"
 #include "./TextUtils.h"
+#include "../Config.h"
+#include "../PdfDocument.h"
 
 using std::vector;
 
 using ppp::config::PageSegmentationConfig;
-using ppp::utils::text::createRandomString;
-using ppp::utils::math::equalOrLarger;
+using ppp::types::PdfElement;
+using ppp::types::PdfPageSegment;
 using ppp::utils::math::maximum;
 using ppp::utils::math::minimum;
-using ppp::utils::math::round;
+using ppp::utils::text::createRandomString;
 
 // =================================================================================================
 
 namespace ppp::utils {
 
 // _________________________________________________________________________________________________
-PageSegmentationUtils::PageSegmentationUtils(const PageSegmentationConfig& config) {
+PageSegmentationUtils::PageSegmentationUtils(const PageSegmentationConfig* config) {
   _config = config;
 }
 
@@ -35,11 +36,12 @@ PageSegmentationUtils::PageSegmentationUtils(const PageSegmentationConfig& confi
 PageSegmentationUtils::~PageSegmentationUtils() = default;
 
 // _________________________________________________________________________________________________
-PdfPageSegment* PageSegmentationUtils::createPageSegment(const vector<PdfElement*>& elements) {
+PdfPageSegment* PageSegmentationUtils::createPageSegment(
+    const vector<PdfElement*>& elements) const {
   PdfPageSegment* segment = new PdfPageSegment();
 
   // Create a (unique) id.
-  segment->id = createRandomString(_config.idLength, "segment-");
+  segment->id = createRandomString(_config->idLength, "segment-");
 
   // Set the page number.
   segment->pos->pageNum = !elements.empty() ? elements[0]->pos->pageNum : -1;

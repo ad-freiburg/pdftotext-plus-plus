@@ -8,18 +8,25 @@
 
 #include <gtest/gtest.h>
 
+#include <string>
 #include <vector>
 
 #include "../../src/Config.h"
+#include "../../src/PdfDocument.h"
 #include "../../src/PdfToTextPlusPlus.h"
 #include "../../src/utils/MathUtils.h"
 #include "../../src/utils/WordsDetectionUtils.h"
 
+using std::string;
 using std::vector;
 
 using ppp::PdfToTextPlusPlus;
 using ppp::config::Config;
 using ppp::config::WordsDetectionConfig;
+using ppp::types::PdfCharacter;
+using ppp::types::PdfDocument;
+using ppp::types::PdfPage;
+using ppp::types::PdfWord;
 using ppp::utils::WordsDetectionUtils;
 using ppp::utils::math::round;
 
@@ -37,18 +44,18 @@ class WordsDetectionUtilsTest : public ::testing::Test {
   // This method is called before the first test case of this test suite is called.
   static void SetUpTestSuite() {
     Config config;
-    config.pageSegmentation.disable = true;
-    config.textLinesDetection.disable = true;
-    config.subSuperScriptsDetection.disable = true;
-    config.textBlocksDetection.disable = true;
-    config.readingOrderDetection.disable = true;
-    config.semanticRolesPrediction.disable = true;
-    config.wordsDehyphenation.disable = true;
+    config.pageSegmentation.disabled = true;
+    config.textLinesDetection.disabled = true;
+    config.subSuperScriptsDetection.disabled = true;
+    config.textBlocksDetection.disabled = true;
+    config.readingOrderDetection.disabled = true;
+    config.semanticRolesPrediction.disabled = true;
+    config.wordsDehyphenation.disabled = true;
 
     PdfToTextPlusPlus engine(&config);
     pdf = new PdfDocument();
-    string pdfFilePathStr = PDF_FILE_PATH;
-    engine.process(&pdfFilePathStr, pdf);
+    pdf->pdfFilePath = PDF_FILE_PATH;
+    engine.process(pdf);
   }
 
   // This method is called after the last test case of this test suite is called.
@@ -64,7 +71,7 @@ PdfDocument* WordsDetectionUtilsTest::pdf = nullptr;
 // _________________________________________________________________________________________________
 TEST_F(WordsDetectionUtilsTest, createWord) {
   WordsDetectionConfig config;
-  WordsDetectionUtils utils(config);
+  WordsDetectionUtils utils(&config);
 
   PdfPage* page = pdf->pages[0];
   PdfCharacter* char1 = page->characters[12];

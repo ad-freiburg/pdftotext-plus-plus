@@ -13,11 +13,15 @@
 #include "./Types.h"
 #include "./Validators.h"
 
-using ppp::types::SerializationFormat;
 using std::string;
 using std::vector;
 
+using ppp::serialization::SERIALIZERS;
+using ppp::types::SerializationFormat;
+
 namespace po = boost::program_options;
+
+// =================================================================================================
 
 namespace ppp::types {
 
@@ -30,7 +34,7 @@ void validate(boost::any& v, const vector<string>& vals, SerializationFormat* f,
   // NOTE: If there is more than one token, it's an error, and an exception will be thrown.
   const string& token = po::validators::get_single_string(vals);
 
-  for (const auto& entry : ppp::serialization::SERIALIZERS) {
+  for (const auto& entry : SERIALIZERS) {
     if (token == getName(entry.first)) {
       v = entry.first;
       return;

@@ -6,56 +6,62 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include <algorithm>  // std::max
 #include <string>
 #include <utility>  // std::pair
 #include <vector>
 
-#include "./utils/Log.h"
-#include "./utils/MathUtils.h"
-#include "./utils/PdfElementsUtils.h"
-#include "./utils/TextUtils.h"
-#include "./utils/TextBlocksDetectionUtils.h"
-#include "./utils/Trool.h"
 #include "./Config.h"
 #include "./PdfDocument.h"
 #include "./TextBlocksDetection.h"
+#include "./utils/Log.h"
+#include "./utils/MathUtils.h"
+#include "./utils/PdfElementsUtils.h"
+#include "./utils/TextBlocksDetectionUtils.h"
+#include "./utils/TextUtils.h"
+#include "./utils/Trool.h"
 
-using std::max;
 using std::endl;
 using std::string;
 using std::vector;
 
 using ppp::config::TextBlocksDetectionConfig;
+using ppp::types::PdfDocument;
+using ppp::types::PdfFigure;
+using ppp::types::PdfTextBlock;
+using ppp::types::PdfTextLine;
+using ppp::utils::Trool;
 using ppp::utils::TextBlocksDetectionUtils;
 using ppp::utils::elements::computeHasEqualFont;
 using ppp::utils::elements::computeHasEqualFontSize;
 using ppp::utils::elements::computeLeftXOffset;
 using ppp::utils::elements::computeVerticalGap;
-using ppp::utils::log::Logger;
 using ppp::utils::log::BLUE;
 using ppp::utils::log::BOLD;
 using ppp::utils::log::OFF;
+using ppp::utils::log::Logger;
 using ppp::utils::math::between;
 using ppp::utils::math::equal;
-using ppp::utils::math::equalOrLarger;
 using ppp::utils::math::equalOrSmaller;
 using ppp::utils::math::larger;
+using ppp::utils::math::maximum;
 using ppp::utils::math::round;
 using ppp::utils::math::smaller;
-using ppp::utils::text::shorten;
 using ppp::utils::text::endsWithSentenceDelimiter;
+using ppp::utils::text::shorten;
 using ppp::utils::text::startsWithUpper;
 
 // =================================================================================================
 
+namespace ppp::modules {
+
 // _________________________________________________________________________________________________
-TextBlocksDetection::TextBlocksDetection(PdfDocument* doc,
-    const TextBlocksDetectionConfig& config) {
+TextBlocksDetection::TextBlocksDetection(
+    PdfDocument* doc,
+    const TextBlocksDetectionConfig* config) {
   _doc = doc;
   _config = config;
   _utils = new TextBlocksDetectionUtils(config);
-  _log = new Logger(config.logLevel, config.logPageFilter);
+  _log = new Logger(config->logLevel, config->logPageFilter);
 }
 
 // _________________________________________________________________________________________________
@@ -391,7 +397,7 @@ Trool TextBlocksDetection::startsBlock_fontSize(const PdfTextLine* line) const {
 
   int p = line->pos->pageNum;
   const PdfTextLine* prevLine = line->prevLine;
-  double tolerance = _config.fsEqualTolerance;
+  double tolerance = _config->fsEqualTolerance;
 
   _log->debug(p) << _q << BLUE << "Does it have another font size than prev line?" << OFF << endl;
   _log->debug(p) << _q << " └─ prevLine.mostFreqFontSize: " << prevLine->fontSize << endl;
@@ -427,22 +433,22 @@ Trool TextBlocksDetection::startsBlock_lineDistance(const PdfTextLine* line) con
   const PdfTextLine* prevLine = line->prevLine;
 
   // Compute the expected line distance.
-  double fontSize = round(line->fontSize, _config.fontSizePrecision);
+  double fontSize = round(line->fontSize, _config->fontSizePrecision);
   double expectedLineDistance = 0;
   if (_doc->mostFreqLineDistancePerFontSize.count(fontSize) > 0) {
     double eld = _doc->mostFreqLineDistancePerFontSize.at(fontSize);
-    expectedLineDistance = max(expectedLineDistance, eld);
+    expectedLineDistance = maximum(expectedLineDistance, eld);
   }
-  expectedLineDistance = max(expectedLineDistance, _doc->mostFreqLineDistance);
+  expectedLineDistance = maximum(expectedLineDistance, _doc->mostFreqLineDistance);
 
   // Compute the actual line distance.
   double actualLineDistance = computeVerticalGap(prevLine, line);
-  actualLineDistance = round(actualLineDistance, _config.lineDistancePrecision);
+  actualLineDistance = round(actualLineDistance, _config->lineDistancePrecision);
 
   double lineDistanceDiff = actualLineDistance - expectedLineDistance;
 
   // Compute the threshold.
-  double threshold = _config.getExpectedLineDistanceThreshold(_doc, expectedLineDistance);
+  double threshold = _config->getExpectedLineDistanceThreshold(_doc, expectedLineDistance);
 
   _log->debug(p) << _q << BLUE << "Is the dist to prev line larger than expected?" << OFF << endl;
   _log->debug(p) << _q << " └─ actual line distance: " << actualLineDistance << endl;
@@ -481,14 +487,14 @@ Trool TextBlocksDetection::startsBlock_increasedLineDistance(const PdfTextLine* 
 
   // Compute the distance between the previous but one line and the previous line.
   double prevDistance = computeVerticalGap(prevPrevLine, prevLine);
-  prevDistance = round(prevDistance, _config.lineDistancePrecision);
+  prevDistance = round(prevDistance, _config->lineDistancePrecision);
 
   // Compute the distance between the previous line and the current line.
   double distance = computeVerticalGap(prevLine, line);
-  distance = round(distance, _config.lineDistancePrecision);
+  distance = round(distance, _config->lineDistancePrecision);
 
   // Compute the tolerance.
-  double threshold = _config.getPrevCurrNextLineDistanceTolerance(_doc);
+  double threshold = _config->getPrevCurrNextLineDistanceTolerance(_doc);
 
   _log->debug(p) << _q << BLUE << "Is curr+prev distance > prev+prevPrev distance?" << OFF << endl;
   _log->debug(p) << _q << " └─ curr+prev line distance: " << distance << endl;
@@ -550,7 +556,7 @@ Trool TextBlocksDetection::startsBlock_item(const PdfTextBlock* pBlock, const Pd
   bool isCurrPartOfItem = isCurrFirstLine || isCurrContLine;
   double leftXOffset = computeLeftXOffset(prevLine, line);
   bool hasPrevLineCapacity = _utils->computeHasPrevLineCapacity(line->prevLine, line);
-  pair<double, double> leftXOffsetTolInterval = _config.getLeftXOffsetToleranceInterval(_doc);
+  pair<double, double> leftXOffsetTolInterval = _config->getLeftXOffsetToleranceInterval(_doc);
   double leftXOffsetToleranceLow = leftXOffsetTolInterval.first;
   double leftXOffsetToleranceHigh = leftXOffsetTolInterval.second;
 
@@ -653,7 +659,7 @@ Trool TextBlocksDetection::startsBlock_emphasized(const PdfTextLine* line) const
   bool isCurrLineEmphasized = _utils->computeIsEmphasized(line);
   bool hasEqualFontName = computeHasEqualFont(prevLine, line);
   bool hasEqualFontSize = computeHasEqualFontSize(prevLine, line,
-      _config.fsEqualTolerance);
+      _config->fsEqualTolerance);
 
   _log->debug(p) << _q << BLUE << "Is line and prevLine emphasized by same font?" << OFF << endl;
   _log->debug(p) << _q << " └─ prevLine.isEmphasized: " << isPrevLineEmphasized << endl;
@@ -694,7 +700,7 @@ Trool TextBlocksDetection::startsBlock_hangingIndent(const PdfTextBlock* pBlock,
   bool isCurrMoreIndented = larger(currLeftMargin, hangingIndent, _doc->avgCharWidth);
   double leftXOffset = computeLeftXOffset(prevLine, line);
   bool hasPrevLineCapacity = _utils->computeHasPrevLineCapacity(line->prevLine, line);
-  pair<double, double> leftXOffsetTolInterval = _config.getLeftXOffsetToleranceInterval(_doc);
+  pair<double, double> leftXOffsetTolInterval = _config->getLeftXOffsetToleranceInterval(_doc);
   double leftXOffsetToleranceLow = leftXOffsetTolInterval.first;
   double leftXOffsetToleranceHigh = leftXOffsetTolInterval.second;
 
@@ -794,7 +800,7 @@ Trool TextBlocksDetection::startsBlock_indent(const PdfTextLine* line) const {
 
   double prevLeftMargin = prevLine->leftMargin;
   double currLeftMargin = line->leftMargin;
-  pair<double, double> indentToleranceInterval = _config.getIndentToleranceInterval(_doc);
+  pair<double, double> indentToleranceInterval = _config->getIndentToleranceInterval(_doc);
   double indentTolLow = indentToleranceInterval.first;
   double indentTolHigh = indentToleranceInterval.second;
   bool isPrevIndented = between(prevLeftMargin, indentTolLow, indentTolHigh);
@@ -865,3 +871,5 @@ Trool TextBlocksDetection::startsBlock_indent(const PdfTextLine* line) const {
 
   return Trool::None;
 }
+
+}  // namespace ppp::modules

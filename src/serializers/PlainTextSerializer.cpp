@@ -9,14 +9,20 @@
 #include <ostream>
 #include <unordered_set>
 
+#include "./PlainTextSerializer.h"
 #include "../PdfDocument.h"
 #include "../Types.h"
-#include "./PlainTextSerializer.h"
+
+using std::endl;
+using std::find;
+using std::ostream;
+using std::unordered_set;
 
 using ppp::types::DocumentUnit;
+using ppp::types::PdfDocument;
+using ppp::types::PdfTextBlock;
+using ppp::types::PdfWord;
 using ppp::types::SemanticRole;
-using std::endl;
-using std::unordered_set;
 
 // =================================================================================================
 
@@ -38,7 +44,7 @@ void PlainTextSerializer::serializeToStream(const PdfDocument* doc,
   for (auto* page : doc->pages) {
     for (auto* block : page->blocks) {
       // Skip the block if its role is not included in 'roles'.
-      if (std::find(roles.begin(), roles.end(), block->role) == roles.end()) {
+      if (find(roles.begin(), roles.end(), block->role) == roles.end()) {
         continue;
       }
 

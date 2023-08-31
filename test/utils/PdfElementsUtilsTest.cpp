@@ -8,17 +8,15 @@
 
 #include <gtest/gtest.h>
 
-#include <string>
 #include <utility>  // std::pair
-#include <vector>
 
 #include "../../src/Config.h"
 #include "../../src/PdfDocument.h"
-#include "../../src/PdfToTextPlusPlus.h"
 #include "../../src/utils/PdfElementsUtils.h"
 
 using std::pair;
 
+using ppp::types::PdfWord;
 using ppp::utils::elements::computeHasEqualFont;
 using ppp::utils::elements::computeHasEqualFontSize;
 using ppp::utils::elements::computeHasEqualLeftX;

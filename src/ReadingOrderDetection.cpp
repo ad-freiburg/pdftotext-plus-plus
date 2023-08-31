@@ -1,45 +1,54 @@
 /**
- * Copyright 2022, University of Freiburg,
+ * Copyright 2023, University of Freiburg,
  * Chair of Algorithms and Data Structures.
  * Author: Claudius Korzen <korzen@cs.uni-freiburg.de>.
  *
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include <algorithm>  // std::sort, std::min, std::max
-#include <functional>  // std::bind, std::function
+#include <algorithm>  // std::sort
+#include <functional>  // std::bind
 #include <limits>  // std::numeric_limits
-#include <unordered_set>
 #include <vector>
-#include <iostream>
 
 #include "./Config.h"
 #include "./PdfDocument.h"
 #include "./ReadingOrderDetection.h"
 #include "./SemanticRolesPrediction.h"
-#include "./XYCut.h"
+#include "./utils/MathUtils.h"
+#include "./utils/XYCut.h"
 
-using std::max;
-using std::min;
+using std::bind;
 using std::numeric_limits;
+using std::sort;
 using std::vector;
 
-using ppp::SemanticRolesPrediction;
 using ppp::config::ReadingOrderDetectionConfig;
 using ppp::config::SemanticRolesPredictionConfig;
+using ppp::modules::SemanticRolesPrediction;
+using ppp::types::Cut;
+using ppp::types::PdfDocument;
+using ppp::types::PdfElement;
+using ppp::types::PdfNonTextElement;
+using ppp::types::PdfTextBlock;
+using ppp::utils::xCut;
+using ppp::utils::xyCut;
+using ppp::utils::yCut;
+using ppp::utils::math::maximum;
+using ppp::utils::math::minimum;
 
 // =================================================================================================
 
 // TODO(korzen): Implement a logger.
 // TODO(korzen): Split semantic roles detection and reading order detection.
 
-namespace ppp {
+namespace ppp::modules {
 
 // _________________________________________________________________________________________________
 ReadingOrderDetection::ReadingOrderDetection(
     PdfDocument* doc,
-    const ReadingOrderDetectionConfig& config,
-    const SemanticRolesPredictionConfig& config2) {
+    const ReadingOrderDetectionConfig* config,
+    const SemanticRolesPredictionConfig* config2) {
   _doc = doc;
   _config = config;
   _semanticRolesPrediction = new SemanticRolesPrediction(config2);
@@ -51,7 +60,7 @@ ReadingOrderDetection::~ReadingOrderDetection() {
 }
 
 // _________________________________________________________________________________________________
-void ReadingOrderDetection::detect() {
+void ReadingOrderDetection::process() {
   detectSemanticRoles();
   detectReadingOrder();
 }
@@ -71,7 +80,7 @@ void ReadingOrderDetection::detectReadingOrder() {
   }
 
   // Define the binds required to pass the chooseXCuts()/chooseYCuts() methods to the XY-cut class.
-  auto choosePrimaryXCutsBind = std::bind(&ReadingOrderDetection::choosePrimaryXCuts, this,
+  auto choosePrimaryXCutsBind = bind(&ReadingOrderDetection::choosePrimaryXCuts, this,
       std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
   auto choosePrimaryYCutsBind = std::bind(&ReadingOrderDetection::choosePrimaryYCuts, this,
       std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
@@ -100,10 +109,10 @@ void ReadingOrderDetection::detectReadingOrder() {
     _pageElementsMaxX = numeric_limits<double>::min();
     _pageElementsMaxY = numeric_limits<double>::min();
     for (const auto* element : pageElements) {
-      _pageElementsMinX = min(_pageElementsMinX, element->pos->leftX);
-      _pageElementsMinY = min(_pageElementsMinY, element->pos->upperY);
-      _pageElementsMaxX = max(_pageElementsMaxX, element->pos->rightX);
-      _pageElementsMaxY = max(_pageElementsMaxY, element->pos->lowerY);
+      _pageElementsMinX = minimum(_pageElementsMinX, element->pos->leftX);
+      _pageElementsMinY = minimum(_pageElementsMinY, element->pos->upperY);
+      _pageElementsMaxX = maximum(_pageElementsMaxX, element->pos->rightX);
+      _pageElementsMaxY = maximum(_pageElementsMaxY, element->pos->lowerY);
     }
 
     vector<vector<PdfElement*>> groups;
@@ -129,7 +138,7 @@ void ReadingOrderDetection::detectReadingOrder() {
     // Sort the elements of each group from top to bottom and filter the text blocks.
     vector<PdfTextBlock*> blocksSorted;
     for (auto& group : groups) {
-      std::sort(group.begin(), group.end(), [](const PdfElement* e1, const PdfElement* e2) {
+      sort(group.begin(), group.end(), [](const PdfElement* e1, const PdfElement* e2) {
         return e1->pos->upperY < e2->pos->upperY;
       });
 
@@ -336,7 +345,7 @@ void ReadingOrderDetection::chooseYCuts(const vector<Cut*>& cuts,
   }
 
   // Define the bind required to pass the chooseXCuts() method to the XY-cut class.
-  auto chooseXCutsBind = std::bind(&ReadingOrderDetection::chooseXCuts, this,
+  auto chooseXCutsBind = bind(&ReadingOrderDetection::chooseXCuts, this,
     std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
 
   size_t firstCutIndex = 0;
@@ -391,4 +400,4 @@ void ReadingOrderDetection::chooseYCuts(const vector<Cut*>& cuts,
   }
 }
 
-}  // namespace ppp
+}  // namespace ppp::modules

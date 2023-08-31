@@ -11,21 +11,24 @@
 
 #include <vector>
 
-#include "./utils/Log.h"
-#include "./utils/MathUtils.h"
-#include "./utils/TextLinesDetectionUtils.h"
 #include "./Config.h"
 #include "./PdfDocument.h"
+#include "./utils/Log.h"
+#include "./utils/TextLinesDetectionUtils.h"
 
 using std::vector;
 
 using ppp::config::TextLinesDetectionConfig;
+using ppp::types::PdfDocument;
+using ppp::types::PdfPageSegment;
+using ppp::types::PdfTextLine;
+using ppp::types::PdfWord;
 using ppp::utils::TextLinesDetectionUtils;
 using ppp::utils::log::Logger;
 
 // =================================================================================================
 
-namespace ppp {
+namespace ppp::modules {
 
 /**
  * This class is responsible for detecting text lines from the words of a PDF document.
@@ -50,7 +53,7 @@ class TextLinesDetection {
    * @param config
    *   The configuration to use.
    */
-  TextLinesDetection(PdfDocument* doc, const TextLinesDetectionConfig& config);
+  TextLinesDetection(PdfDocument* doc, const TextLinesDetectionConfig* config);
 
   /** The deconstructor. */
   ~TextLinesDetection();
@@ -105,13 +108,13 @@ class TextLinesDetection {
   // The PDF document to process.
   PdfDocument* _doc;
   // The configuration to use.
-  TextLinesDetectionConfig _config;
+  const TextLinesDetectionConfig* _config;
   // The text line detection utils.
-  TextLinesDetectionUtils* _utils;
+  const TextLinesDetectionUtils* _utils;
   // The logger.
-  Logger* _log;
+  const Logger* _log;
 };
 
-}  // namespace ppp
+}  // namespace ppp::modules
 
 #endif  // TEXTLINESDETECTION_H_

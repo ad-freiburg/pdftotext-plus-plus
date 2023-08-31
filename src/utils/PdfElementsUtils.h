@@ -15,6 +15,9 @@
 
 using std::pair;
 
+using ppp::types::PdfElement;
+using ppp::types::PdfTextElement;
+
 // =================================================================================================
 
 /**

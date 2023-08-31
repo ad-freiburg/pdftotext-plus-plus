@@ -8,6 +8,7 @@
 
 #include <gtest/gtest.h>
 
+#include <iostream>  // std::cout
 #include <regex>
 #include <string>
 

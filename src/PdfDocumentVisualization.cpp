@@ -1,5 +1,5 @@
 /**
- * Copyright 2022, University of Freiburg,
+ * Copyright 2023, University of Freiburg,
  * Chair of Algorithms and Data Structures.
  * Author: Claudius Korzen <korzen@cs.uni-freiburg.de>.
  *
@@ -18,13 +18,12 @@
 #include <utility>  // std::move
 #include <vector>
 
-#include "./utils/MathUtils.h"
-
 #include "./Config.h"
 #include "./PdfDocument.h"
 #include "./PdfDocumentVisualization.h"
 #include "./PdfParsing.h"
 #include "./Types.h"
+#include "./utils/MathUtils.h"
 
 using std::make_unique;
 using std::move;
@@ -35,13 +34,25 @@ using std::vector;
 
 using ppp::config::PdfDocumentVisualizationConfig;
 using ppp::config::PdfParsingConfig;
+using ppp::modules::PdfParsing;
+using ppp::types::Cut;
+using ppp::types::CutDir;
+using ppp::types::PdfCharacter;
+using ppp::types::PdfDocument;
+using ppp::types::PdfElement;
+using ppp::types::PdfFigure;
+using ppp::types::PdfGraphic;
+using ppp::types::PdfPageSegment;
+using ppp::types::PdfShape;
+using ppp::types::PdfTextBlock;
+using ppp::types::PdfTextLine;
+using ppp::types::PdfWord;
 using ppp::types::SemanticRole;
-using ppp::PdfParsing;
 using ppp::utils::math::smaller;
 
-namespace color_schemes = visualizer::color_schemes;
+// =================================================================================================
 
-namespace ppp {
+namespace ppp::visualization {
 
 // _________________________________________________________________________________________________
 PdfDocumentVisualization::PdfDocumentVisualization(const string& pdfFilePath,
@@ -53,7 +64,7 @@ PdfDocumentVisualization::PdfDocumentVisualization(const string& pdfFilePath,
   _doc = new PdfDocument();
 
   PdfParsingConfig ppConfig;
-  ppConfig.disableParsingEmbeddedFontFiles = true;
+  ppConfig.skipEmbeddedFontFilesParsing = true;
   _out = new PdfParsing(_doc, ppConfig);
 
   // Create a Gfx for each PDF page.
@@ -335,7 +346,7 @@ void PdfDocumentVisualization::drawPageSegmentBoundingBoxes(
 
     // Draw the (preliminary) text blocks stored in the segment
     for (const auto* block : segment->blocks) {
-      const ColorScheme& cs2 = color_schemes::red;
+      const ColorScheme& cs2 = ppp::visualization::color_schemes::red;
       Page* pdfPage = _pdfDoc->getPage(segment->pos->pageNum);
       Gfx* gfx = _gfxs[segment->pos->pageNum];
       double leftX = block->pos->leftX;
@@ -352,7 +363,7 @@ void PdfDocumentVisualization::drawPageSegmentBoundingBoxes(
       AnnotGeometry* a = new AnnotGeometry(_pdfDoc.get(), &rect, Annot::AnnotSubtype::typeSquare);
 
       // Define the color of the bounding box.
-      std::unique_ptr<AnnotColor> color = make_unique<AnnotColor>(cs2.primaryColor);
+      unique_ptr<AnnotColor> color = make_unique<AnnotColor>(cs2.primaryColor);
       a->setColor(move(color));
 
       // Draw the bounding box.
@@ -385,7 +396,7 @@ void PdfDocumentVisualization::drawBoundingBox(const PdfElement* element, const 
   AnnotGeometry* annot = new AnnotGeometry(_pdfDoc.get(), &rect, Annot::AnnotSubtype::typeSquare);
 
   // Define the color of the bounding box.
-  std::unique_ptr<AnnotColor> color = make_unique<AnnotColor>(cs.primaryColor);
+  unique_ptr<AnnotColor> color = make_unique<AnnotColor>(cs.primaryColor);
   annot->setColor(move(color));
 
   // Draw the bounding box.
@@ -419,7 +430,7 @@ void PdfDocumentVisualization::drawTextBlockSemanticRoles(const vector<PdfTextBl
     annot->setContents(make_unique<GooString>(convertToUtf16(ppp::types::getName(block->role))));
 
     // Remove the default border around the annotation.
-    std::unique_ptr<AnnotBorder> border(new AnnotBorderArray());
+    unique_ptr<AnnotBorder> border(new AnnotBorderArray());
     border->setWidth(0);
     annot->setBorder(move(border));
 
@@ -460,7 +471,7 @@ void PdfDocumentVisualization::drawReadingOrder(const vector<PdfTextBlock*>& blo
     lineAnnot->setVertices(prevMidX, prevMidY, currMidX, currMidY);
 
     // Define the width of the reading order line.
-    std::unique_ptr<AnnotBorder> lineBorder(new AnnotBorderArray());
+    unique_ptr<AnnotBorder> lineBorder(new AnnotBorderArray());
     lineBorder->setWidth(_config.readingOrderLineWidth);
     lineAnnot->setBorder(move(lineBorder));
 
@@ -522,7 +533,7 @@ void PdfDocumentVisualization::drawReadingOrderIndexCircle(Page* page, Gfx* gfx,
   indexAnnot->setQuadding(VariableTextQuadding::centered);
 
   // Remove the default border around the reading order index.
-  std::unique_ptr<AnnotBorder> indexBorder(new AnnotBorderArray());
+  unique_ptr<AnnotBorder> indexBorder(new AnnotBorderArray());
   indexBorder->setWidth(0);
   indexAnnot->setBorder(move(indexBorder));
 
@@ -557,7 +568,7 @@ void PdfDocumentVisualization::drawCuts(const vector<Cut*>& cuts, const ColorSch
     lineAnnot->setVertices(x1, y1, x2, y2);
 
     // Define the line width.
-    std::unique_ptr<AnnotBorder> lineBorder(new AnnotBorderArray());
+    unique_ptr<AnnotBorder> lineBorder(new AnnotBorderArray());
     lineBorder->setWidth(_config.cutWidth);
     lineAnnot->setBorder(move(lineBorder));
 
@@ -609,7 +620,7 @@ void PdfDocumentVisualization::drawCuts(const vector<Cut*>& cuts, const ColorSch
       indexAnnot->setQuadding(VariableTextQuadding::centered);
 
       // Remove the default border around the cut index.
-      std::unique_ptr<AnnotBorder> indexBorder(new AnnotBorderArray());
+      unique_ptr<AnnotBorder> indexBorder(new AnnotBorderArray());
       indexBorder->setWidth(0);
       indexAnnot->setBorder(move(indexBorder));
 
@@ -642,7 +653,7 @@ void PdfDocumentVisualization::drawCuts(const vector<Cut*>& cuts, const ColorSch
     idAnnot->setQuadding(VariableTextQuadding::centered);
 
     // Remove the default border around the cut id.
-    std::unique_ptr<AnnotBorder> idBorder(new AnnotBorderArray());
+    unique_ptr<AnnotBorder> idBorder(new AnnotBorderArray());
     idBorder->setWidth(0);
     idAnnot->setBorder(move(idBorder));
 
@@ -672,4 +683,4 @@ string PdfDocumentVisualization::convertToUtf16(const string& str) const {
   return s;
 }
 
-}  // namespace ppp
+}  // namespace ppp::visualization

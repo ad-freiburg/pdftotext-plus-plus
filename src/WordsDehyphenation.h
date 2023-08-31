@@ -13,24 +13,25 @@
 #include "./PdfDocument.h"
 
 using ppp::config::WordsDehyphenationConfig;
+using ppp::types::PdfDocument;
 
 // =================================================================================================
 
-namespace ppp {
+namespace ppp::modules {
 
 class WordsDehyphenation {
  public:
-  WordsDehyphenation(PdfDocument* doc, const WordsDehyphenationConfig& config);
+  WordsDehyphenation(PdfDocument* doc, const WordsDehyphenationConfig* config);
 
   ~WordsDehyphenation();
 
-  void dehyphenate() const;
+  void process() const;
 
  private:
   PdfDocument* _doc;
-  WordsDehyphenationConfig _config;
+  const WordsDehyphenationConfig* _config;
 };
 
-}  // namespace ppp
+}  // namespace ppp::modules
 
 #endif  // WORDSDEHYPHENATION_H_

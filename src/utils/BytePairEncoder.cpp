@@ -1,5 +1,5 @@
 /**
- * Copyright 2022, University of Freiburg,
+ * Copyright 2023, University of Freiburg,
  * Chair of Algorithms and Data Structures.
  * Author: Claudius Korzen <korzen@cs.uni-freiburg.de>.
  *
@@ -9,12 +9,13 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
-#include <utility>  // std::make_pair
+#include <utility>  // std::pair
 #include <vector>
 
 #include "./BytePairEncoder.h"
-#include "./utils/TextUtils.h"
+#include "./TextUtils.h"
 
+using std::make_pair;
 using std::pair;
 using std::unordered_map;
 using std::unordered_set;
@@ -22,6 +23,10 @@ using std::vector;
 using std::wstring;
 
 using ppp::utils::text::splitIntoWords;
+
+// =================================================================================================
+
+namespace ppp::utils {
 
 // _________________________________________________________________________________________________
 BytePairEncoder::BytePairEncoder(unordered_map<wstring, int>* vocabulary) {
@@ -201,9 +206,11 @@ void BytePairEncoder::computeTokenPairPositions(const vector<wstring>& tokens,
     auto positions = new unordered_set<size_t>();
     positions->insert(i - 1);
 
-    auto pair = new std::pair<wstring, unordered_set<size_t>* >(merged, positions);
+    auto p = new pair<wstring, unordered_set<size_t>* >(merged, positions);
 
-    result->push_back(pair);
-    cache[merged] = pair;
+    result->push_back(p);
+    cache[merged] = p;
   }
 }
+
+}  // namespace ppp::utils

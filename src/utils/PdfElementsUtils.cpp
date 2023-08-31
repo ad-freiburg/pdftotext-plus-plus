@@ -8,13 +8,15 @@
 
 #include <utility>  // std::pair
 
-#include "../PdfDocument.h"
 #include "./MathUtils.h"
 #include "./PdfElementsUtils.h"
+#include "../PdfDocument.h"
 
 using std::make_pair;
 using std::pair;
 
+using ppp::types::PdfElement;
+using ppp::types::PdfTextElement;
 using ppp::utils::math::equal;
 using ppp::utils::math::maximum;
 using ppp::utils::math::minimum;

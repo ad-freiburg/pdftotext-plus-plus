@@ -25,6 +25,12 @@ using std::vector;
 using ppp::PdfToTextPlusPlus;
 using ppp::config::Config;
 using ppp::config::TextBlocksDetectionConfig;
+using ppp::types::PdfCharacter;
+using ppp::types::PdfDocument;
+using ppp::types::PdfFigure;
+using ppp::types::PdfPage;
+using ppp::types::PdfTextBlock;
+using ppp::types::PdfTextLine;
 using ppp::utils::TextBlocksDetectionUtils;
 using ppp::utils::math::round;
 
@@ -42,14 +48,14 @@ class TextBlocksDetectionUtilsTest : public ::testing::Test {
   // This method is called before the first test case of this test suite is called.
   static void SetUpTestSuite() {
     Config config;
-    config.readingOrderDetection.disable = true;
-    config.semanticRolesPrediction.disable = true;
-    config.wordsDehyphenation.disable = true;
+    config.readingOrderDetection.disabled = true;
+    config.semanticRolesPrediction.disabled = true;
+    config.wordsDehyphenation.disabled = true;
 
     PdfToTextPlusPlus engine(&config);
     pdf = new PdfDocument();
-    string pdfFilePathStr = PDF_FILE_PATH;
-    engine.process(&pdfFilePathStr, pdf);
+    pdf->pdfFilePath = PDF_FILE_PATH;
+    engine.process(pdf);
   }
 
   // This method is called after the last test case of this test suite is called.
@@ -79,7 +85,7 @@ TEST_F(TextBlocksDetectionUtilsTest, computeIsCentered) {
   ASSERT_EQ(line5->text, "Lottery: a tax on people who are bad at math.");
 
   TextBlocksDetectionConfig config;
-  TextBlocksDetectionUtils utils(config);
+  TextBlocksDetectionUtils utils(&config);
 
   // Input: one (or more) nullptrs.
   ASSERT_DEATH(utils.computeIsCentered(nullptr, nullptr), "");
@@ -130,7 +136,7 @@ TEST_F(TextBlocksDetectionUtilsTest, computeIsTextLinesCentered) {
   // ASSERT_TRUE(block6->text.ends_with("ensuring no spot is left untouched."));
 
   TextBlocksDetectionConfig config;
-  TextBlocksDetectionUtils utils(config);
+  TextBlocksDetectionUtils utils(&config);
 
   // Input: nullptr.
   ASSERT_DEATH(utils.computeIsTextLinesCentered(nullptr), "");
@@ -186,7 +192,7 @@ TEST_F(TextBlocksDetectionUtilsTest, computeIsEmphasized) {
   ASSERT_TRUE(line12->text.starts_with("LOCAL HERO"));
 
   TextBlocksDetectionConfig config;
-  TextBlocksDetectionUtils utils(config);
+  TextBlocksDetectionUtils utils(&config);
 
   // Input: nullptr.
   ASSERT_DEATH(utils.computeIsEmphasized(nullptr), "");
@@ -241,7 +247,7 @@ TEST_F(TextBlocksDetectionUtilsTest, computeHasPrevLineCapacity) {
   ASSERT_TRUE(line11->text.starts_with("Embrace the Unbelievable"));
 
   TextBlocksDetectionConfig config;
-  TextBlocksDetectionUtils utils(config);
+  TextBlocksDetectionUtils utils(&config);
 
   // Input: nullptr.
   ASSERT_DEATH(utils.computeHasPrevLineCapacity(nullptr, nullptr), "");
@@ -305,7 +311,7 @@ TEST_F(TextBlocksDetectionUtilsTest, computeHangingIndent) {
   ASSERT_TRUE(block11->text.ends_with("typesetting of"));
 
   TextBlocksDetectionConfig config;
-  TextBlocksDetectionUtils utils(config);
+  TextBlocksDetectionUtils utils(&config);
 
   // Input: nullptr.
   ASSERT_DEATH(utils.computeHangingIndent(nullptr), "");
@@ -348,7 +354,7 @@ TEST_F(TextBlocksDetectionUtilsTest, computeTextLineMargins) {
   ASSERT_TRUE(block3->text.ends_with("who dared to dream big."));
 
   TextBlocksDetectionConfig config;
-  TextBlocksDetectionUtils utils(config);
+  TextBlocksDetectionUtils utils(&config);
 
   // Input: nullptr.
   ASSERT_DEATH(utils.computeTextLineMargins(nullptr), "");
@@ -439,7 +445,7 @@ TEST_F(TextBlocksDetectionUtilsTest, computeIsFirstLineOfItem) {
   ASSERT_TRUE(line21->text.starts_with("- Kandel: 1,241 meters"));
 
   TextBlocksDetectionConfig config;
-  TextBlocksDetectionUtils utils(config);
+  TextBlocksDetectionUtils utils(&config);
 
   // Input: nullptr.
   ASSERT_DEATH(utils.computeIsFirstLineOfItem(nullptr), "");
@@ -517,7 +523,7 @@ TEST_F(TextBlocksDetectionUtilsTest, computeIsContinuationOfItem) {
   ASSERT_TRUE(line21->text.starts_with("- Kandel: 1,241 meters"));
 
   TextBlocksDetectionConfig config;
-  TextBlocksDetectionUtils utils(config);
+  TextBlocksDetectionUtils utils(&config);
 
   // Input: nullptr.
   ASSERT_DEATH(utils.computeIsContinuationOfItem(nullptr), "");
@@ -564,7 +570,7 @@ TEST_F(TextBlocksDetectionUtilsTest, computePotentialFootnoteLabels) {
   ASSERT_TRUE(line4->text.starts_with("industry. From"));
 
   TextBlocksDetectionConfig config;
-  TextBlocksDetectionUtils utils(config);
+  TextBlocksDetectionUtils utils(&config);
 
   // Input: one (or more) nullptrs.
   unordered_set<string> result0;
@@ -663,7 +669,7 @@ TEST_F(TextBlocksDetectionUtilsTest, computeIsPrefixedByItemLabel) {
   ASSERT_TRUE(line28->text.starts_with("a1) Misses X"));
 
   TextBlocksDetectionConfig config;
-  TextBlocksDetectionUtils utils(config);
+  TextBlocksDetectionUtils utils(&config);
 
   // Input: nullptr.
   ASSERT_DEATH(utils.computeIsPrefixedByItemLabel(nullptr), "");
@@ -714,7 +720,7 @@ TEST_F(TextBlocksDetectionUtilsTest, computeIsPrefixedByFootnoteLabel) {
   PdfTextLine* line10 = page->textLines[10];
 
   TextBlocksDetectionConfig config;
-  TextBlocksDetectionUtils utils(config);
+  TextBlocksDetectionUtils utils(&config);
 
   // Input: nullptr.
   ASSERT_DEATH(utils.computeIsPrefixedByFootnoteLabel(nullptr), "");
@@ -767,7 +773,7 @@ TEST_F(TextBlocksDetectionUtilsTest, computeOverlapsFigure) {
   ASSERT_TRUE(line2->text.starts_with("Figure 2: A flower"));
 
   TextBlocksDetectionConfig config;
-  TextBlocksDetectionUtils utils(config);
+  TextBlocksDetectionUtils utils(&config);
 
   // Input: nullptr.
   ASSERT_DEATH(utils.computeOverlapsFigure(nullptr, page->figures), "");
@@ -817,7 +823,7 @@ TEST_F(TextBlocksDetectionUtilsTest, createTextBlock) {
   ASSERT_TRUE(line13->text.starts_with("young duck who dared to dream big."));
 
   TextBlocksDetectionConfig config;
-  TextBlocksDetectionUtils utils(config);
+  TextBlocksDetectionUtils utils(&config);
 
   // Input: empty vector of text lines.
   vector<PdfTextLine*> lines;

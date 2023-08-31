@@ -11,11 +11,14 @@
 #include <algorithm>  // std::sort
 #include <vector>
 
-#include "../../src/utils/Comparators.h"
 #include "../../src/PdfDocument.h"
+#include "../../src/utils/Comparators.h"
 
+using std::sort;
 using std::vector;
 
+using ppp::types::PdfCharacter;
+using ppp::types::PdfWord;
 using ppp::utils::comparators::LeftXAscComparator;
 using ppp::utils::comparators::RightXDescComparator;
 using ppp::utils::comparators::RotLeftXAscComparator;
@@ -44,7 +47,7 @@ static vector<PdfWord*> words = { &word0, &word1, &word2, &word3 };
 // _________________________________________________________________________________________________
 TEST(ComparatorsTest, LeftXAscComparator) {
   // Sort the characters by their leftX values in ascending order.
-  std::sort(chars.begin(), chars.end(), LeftXAscComparator());
+  sort(chars.begin(), chars.end(), LeftXAscComparator());
   ASSERT_EQ(chars[0], &char1);
   ASSERT_EQ(chars[1], &char0);
   ASSERT_EQ(chars[2], &char4);
@@ -52,7 +55,7 @@ TEST(ComparatorsTest, LeftXAscComparator) {
   ASSERT_EQ(chars[4], &char2);
 
   // Sort the words by their leftX values in ascending order.
-  std::sort(words.begin(), words.end(), LeftXAscComparator());
+  sort(words.begin(), words.end(), LeftXAscComparator());
   ASSERT_EQ(words[0], &word2);
   ASSERT_EQ(words[1], &word3);
   ASSERT_EQ(words[2], &word0);
@@ -62,7 +65,7 @@ TEST(ComparatorsTest, LeftXAscComparator) {
 // _________________________________________________________________________________________________
 TEST(ComparatorsTest, RightXDescComparator) {
   // Sort the characters by their rightX values in descending order.
-  std::sort(chars.begin(), chars.end(), RightXDescComparator());
+  sort(chars.begin(), chars.end(), RightXDescComparator());
   ASSERT_EQ(chars[0], &char1);
   ASSERT_EQ(chars[1], &char2);
   ASSERT_EQ(chars[2], &char3);
@@ -70,7 +73,7 @@ TEST(ComparatorsTest, RightXDescComparator) {
   ASSERT_EQ(chars[4], &char0);
 
   // Sort the words by their rightX values in descending order.
-  std::sort(words.begin(), words.end(), RightXDescComparator());
+  sort(words.begin(), words.end(), RightXDescComparator());
   ASSERT_EQ(words[0], &word0);
   ASSERT_EQ(words[1], &word2);
   ASSERT_EQ(words[2], &word3);
@@ -80,7 +83,7 @@ TEST(ComparatorsTest, RightXDescComparator) {
 // _________________________________________________________________________________________________
 TEST(ComparatorsTest, UpperYAscComparator) {
   // Sort the characters by their upperY values in ascending order.
-  std::sort(chars.begin(), chars.end(), UpperYAscComparator());
+  sort(chars.begin(), chars.end(), UpperYAscComparator());
   ASSERT_EQ(chars[0], &char2);
   ASSERT_EQ(chars[1], &char4);
   ASSERT_EQ(chars[2], &char0);
@@ -88,7 +91,7 @@ TEST(ComparatorsTest, UpperYAscComparator) {
   ASSERT_EQ(chars[4], &char1);
 
   // Sort the words by their upperY values in ascending order.
-  std::sort(words.begin(), words.end(), UpperYAscComparator());
+  sort(words.begin(), words.end(), UpperYAscComparator());
   ASSERT_EQ(words[0], &word0);
   ASSERT_EQ(words[1], &word1);
   ASSERT_EQ(words[2], &word2);
@@ -98,7 +101,7 @@ TEST(ComparatorsTest, UpperYAscComparator) {
 // _________________________________________________________________________________________________
 TEST(ComparatorsTest, RotLeftXAscComparator) {
   // Sort the characters by their rotLeftX values in ascending order.
-  std::sort(chars.begin(), chars.end(), RotLeftXAscComparator());
+  sort(chars.begin(), chars.end(), RotLeftXAscComparator());
   ASSERT_EQ(chars[0], &char1);
   ASSERT_EQ(chars[1], &char0);
   ASSERT_EQ(chars[2], &char4);
@@ -106,7 +109,7 @@ TEST(ComparatorsTest, RotLeftXAscComparator) {
   ASSERT_EQ(chars[4], &char2);
 
   // Sort the words by their rotLeftX values in ascending order.
-  std::sort(words.begin(), words.end(), RotLeftXAscComparator());
+  sort(words.begin(), words.end(), RotLeftXAscComparator());
   ASSERT_EQ(words[0], &word0);
   ASSERT_EQ(words[1], &word1);
   ASSERT_EQ(words[2], &word2);
@@ -116,7 +119,7 @@ TEST(ComparatorsTest, RotLeftXAscComparator) {
 // _________________________________________________________________________________________________
 TEST(ComparatorsTest, RotLeftXDescComparator) {
   // Sort the characters by their rotLeftX values in descending order.
-  std::sort(chars.begin(), chars.end(), RotLeftXDescComparator());
+  sort(chars.begin(), chars.end(), RotLeftXDescComparator());
   ASSERT_EQ(chars[0], &char2);
   ASSERT_EQ(chars[1], &char3);
   ASSERT_EQ(chars[2], &char4);
@@ -124,7 +127,7 @@ TEST(ComparatorsTest, RotLeftXDescComparator) {
   ASSERT_EQ(chars[4], &char1);
 
   // Sort the words by their rotLeftX values in descending order.
-  std::sort(words.begin(), words.end(), RotLeftXDescComparator());
+  sort(words.begin(), words.end(), RotLeftXDescComparator());
   ASSERT_EQ(words[0], &word3);
   ASSERT_EQ(words[1], &word2);
   ASSERT_EQ(words[2], &word1);
@@ -134,7 +137,7 @@ TEST(ComparatorsTest, RotLeftXDescComparator) {
 // _________________________________________________________________________________________________
 TEST(ComparatorsTest, RotLowerYAscComparator) {
   // Sort the characters by their rotLowerY values in ascending order.
-  std::sort(chars.begin(), chars.end(), RotLowerYAscComparator());
+  sort(chars.begin(), chars.end(), RotLowerYAscComparator());
   ASSERT_EQ(chars[0], &char4);
   ASSERT_EQ(chars[1], &char3);
   ASSERT_EQ(chars[2], &char1);
@@ -142,7 +145,7 @@ TEST(ComparatorsTest, RotLowerYAscComparator) {
   ASSERT_EQ(chars[4], &char2);
 
   // Sort the words by their rotLowerY values in ascending order.
-  std::sort(words.begin(), words.end(), RotLowerYAscComparator());
+  sort(words.begin(), words.end(), RotLowerYAscComparator());
   ASSERT_EQ(words[0], &word2);
   ASSERT_EQ(words[1], &word3);
   ASSERT_EQ(words[2], &word0);
@@ -152,7 +155,7 @@ TEST(ComparatorsTest, RotLowerYAscComparator) {
 // _________________________________________________________________________________________________
 TEST(ComparatorsTest, RotLowerYDescComparator) {
   // Sort the characters by their rotLowerY values in descending order.
-  std::sort(chars.begin(), chars.end(), RotLowerYDescComparator());
+  sort(chars.begin(), chars.end(), RotLowerYDescComparator());
   ASSERT_EQ(chars[0], &char2);
   ASSERT_EQ(chars[1], &char0);
   ASSERT_EQ(chars[2], &char1);
@@ -160,7 +163,7 @@ TEST(ComparatorsTest, RotLowerYDescComparator) {
   ASSERT_EQ(chars[4], &char4);
 
   // Sort the words by their rotLowerY values in descending order.
-  std::sort(words.begin(), words.end(), RotLowerYDescComparator());
+  sort(words.begin(), words.end(), RotLowerYDescComparator());
   ASSERT_EQ(words[0], &word1);
   ASSERT_EQ(words[1], &word0);
   ASSERT_EQ(words[2], &word3);

@@ -15,13 +15,16 @@
 using std::string;
 
 using ppp::config::WordsDehyphenationConfig;
+using ppp::types::PdfDocument;
+using ppp::types::PdfTextLine;
+using ppp::types::PdfWord;
 
 // =================================================================================================
 
-namespace ppp {
+namespace ppp::modules {
 
 // _________________________________________________________________________________________________
-WordsDehyphenation::WordsDehyphenation(PdfDocument* doc, const WordsDehyphenationConfig& config) {
+WordsDehyphenation::WordsDehyphenation(PdfDocument* doc, const WordsDehyphenationConfig* config) {
   _doc = doc;
   _config = config;
 }
@@ -30,7 +33,7 @@ WordsDehyphenation::WordsDehyphenation(PdfDocument* doc, const WordsDehyphenatio
 WordsDehyphenation::~WordsDehyphenation() = default;
 
 // _________________________________________________________________________________________________
-void WordsDehyphenation::dehyphenate() const {
+void WordsDehyphenation::process() const {
   assert(_doc);
 
   PdfTextLine* prevLine = nullptr;
@@ -73,4 +76,4 @@ void WordsDehyphenation::dehyphenate() const {
   }
 }
 
-}  // namespace ppp
+}  // namespace ppp::modules

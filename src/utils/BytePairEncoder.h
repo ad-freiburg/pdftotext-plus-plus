@@ -1,18 +1,18 @@
 /**
- * Copyright 2022, University of Freiburg,
+ * Copyright 2023, University of Freiburg,
  * Chair of Algorithms and Data Structures.
  * Author: Claudius Korzen <korzen@cs.uni-freiburg.de>.
  *
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#ifndef BYTEPAIRENCODER_H_
-#define BYTEPAIRENCODER_H_
+#ifndef UTILS_BYTEPAIRENCODER_H_
+#define UTILS_BYTEPAIRENCODER_H_
 
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
-#include <utility>  // pair
+#include <utility>  // std::pair
 #include <vector>
 
 using std::pair;
@@ -23,6 +23,8 @@ using std::vector;
 using std::wstring;
 
 // =================================================================================================
+
+namespace ppp::utils {
 
 /**
  * This class encodes given texts by using byte pair encoding.
@@ -107,4 +109,6 @@ class BytePairEncoder {
   friend class BytePairEncoderTest_computeTokenPairPositions_Test;
 };
 
-#endif  // BYTEPAIRENCODER_H_
+}  // namespace ppp::utils
+
+#endif  // UTILS_BYTEPAIRENCODER_H_

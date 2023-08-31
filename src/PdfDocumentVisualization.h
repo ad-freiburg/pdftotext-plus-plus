@@ -1,5 +1,5 @@
 /**
- * Copyright 2022, University of Freiburg,
+ * Copyright 2023, University of Freiburg,
  * Chair of Algorithms and Data Structures.
  * Author: Claudius Korzen <korzen@cs.uni-freiburg.de>.
  *
@@ -25,13 +25,26 @@ using std::unique_ptr;
 using std::vector;
 
 using ppp::config::PdfDocumentVisualizationConfig;
-using ppp::PdfParsing;
+using ppp::modules::PdfParsing;
+using ppp::types::Cut;
+using ppp::types::PdfCharacter;
+using ppp::types::PdfDocument;
+using ppp::types::PdfElement;
+using ppp::types::PdfFigure;
+using ppp::types::PdfGraphic;
+using ppp::types::PdfPageSegment;
+using ppp::types::PdfShape;
+using ppp::types::PdfTextBlock;
+using ppp::types::PdfTextLine;
+using ppp::types::PdfWord;
 
 // =================================================================================================
 
 // TODO(korzen): XXX
 struct ColorScheme {
-  ColorScheme(const AnnotColor& primaryColorA, const AnnotColor& secondaryColorA,
+  ColorScheme(
+      const AnnotColor& primaryColorA,
+      const AnnotColor& secondaryColorA,
       const AnnotColor& tertiaryColorA) {
     primaryColor = primaryColorA;
     secondaryColor = secondaryColorA;
@@ -45,7 +58,7 @@ struct ColorScheme {
 
 // =================================================================================================
 
-namespace visualizer::colors {
+namespace ppp::visualization::colors {
 
 // TODO(korzen): XXX
 const AnnotColor r1(1, 0, 0);
@@ -61,22 +74,22 @@ const AnnotColor gr1(0.7, 0.7, 0.7);
 const AnnotColor gr2(0.8, 0.8, 0.8);
 const AnnotColor gr3(0.9, 0.9, 0.9);
 
-}  // namespace visualizer::colors
+}  // namespace ppp::visualization::colors
 
 // =================================================================================================
 
-namespace visualizer::color_schemes {
+namespace ppp::visualization::color_schemes {
 
 const ColorScheme red(colors::r1, colors::r2, colors::r3);
 const ColorScheme green(colors::g1, colors::g2, colors::g3);
 const ColorScheme blue(colors::b1, colors::b2, colors::b3);
 const ColorScheme gray(colors::gr1, colors::gr2, colors::gr3);
 
-}  // namespace visualizer::color_schemes
+}  // namespace ppp::visualization::color_schemes
 
 // =================================================================================================
 
-namespace ppp {
+namespace ppp::visualization {
 
 /**
  * This class creates a visualization of a `PdfDocument`, that is: a copy of the belonging PDF
@@ -363,6 +376,6 @@ class PdfDocumentVisualization {
   PdfParsing* _out;
 };
 
-}  // namespace ppp
+}  // namespace ppp::visualization
 
 #endif  // PDFDOCUMENTVISUALIZATION_H_

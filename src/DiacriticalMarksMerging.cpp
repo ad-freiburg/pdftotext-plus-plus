@@ -9,38 +9,40 @@
 #include <poppler/GlobalParams.h>
 #include <utf8proc.h>
 
-#include <algorithm>  // min
 #include <vector>
 
+#include "./DiacriticalMarksMerging.h"
+#include "./PdfDocument.h"
 #include "./utils/Log.h"
 #include "./utils/MathUtils.h"
 #include "./utils/PdfElementsUtils.h"
-#include "./DiacriticalMarksMerging.h"
 
 using std::endl;
-using std::max;
-using std::min;
 using std::vector;
 
 using ppp::config::DiacriticalMarksMergingConfig;
-using ppp::utils::log::Logger;
+using ppp::types::PdfCharacter;
+using ppp::types::PdfDocument;
+using ppp::utils::elements::computeMaxXOverlapRatio;
 using ppp::utils::log::BOLD;
 using ppp::utils::log::OFF;
-using ppp::utils::elements::computeMaxXOverlapRatio;
+using ppp::utils::log::Logger;
 using ppp::utils::math::equal;
 using ppp::utils::math::larger;
+using ppp::utils::math::maximum;
+using ppp::utils::math::minimum;
 
 // =================================================================================================
 
-namespace ppp {
+namespace ppp::modules {
 
 // _________________________________________________________________________________________________
 DiacriticalMarksMerging::DiacriticalMarksMerging(
     PdfDocument* doc,
-    const DiacriticalMarksMergingConfig& config) {
+    const DiacriticalMarksMergingConfig* config) {
   _doc = doc;
   _config = config;
-  _log = new Logger(_config.logLevel, _config.logPageFilter);
+  _log = new Logger(_config->logLevel, _config->logPageFilter);
 }
 
 // _________________________________________________________________________________________________
@@ -98,8 +100,8 @@ void DiacriticalMarksMerging::process() const {
       // Get the unicode of the character. If it is contained in combininMap, replace the unicode
       // by its combining equivalent.
       unsigned int unicode = currChar->unicodes[0];
-      if (_config.combiningMap.count(unicode) > 0) {
-        unicode = _config.combiningMap.at(unicode);
+      if (_config->combiningMap.count(unicode) > 0) {
+        unicode = _config->combiningMap.at(unicode);
       }
 
       // The character is a diacritic mark when its unicode falls into one of the categories:
@@ -196,10 +198,10 @@ void DiacriticalMarksMerging::process() const {
       base->textWithDiacriticMark = reinterpret_cast<char*>(output);
 
       // Update the bounding box.
-      base->pos->leftX = min(base->pos->leftX, mark->pos->leftX);
-      base->pos->upperY = min(base->pos->upperY, mark->pos->upperY);
-      base->pos->rightX = max(base->pos->rightX, mark->pos->rightX);
-      base->pos->lowerY = max(base->pos->lowerY, mark->pos->lowerY);
+      base->pos->leftX = minimum(base->pos->leftX, mark->pos->leftX);
+      base->pos->upperY = minimum(base->pos->upperY, mark->pos->upperY);
+      base->pos->rightX = maximum(base->pos->rightX, mark->pos->rightX);
+      base->pos->lowerY = maximum(base->pos->lowerY, mark->pos->lowerY);
 
       _log->debug(p) << " • base.textWithDiacMark: " << base->textWithDiacriticMark << endl;
       _log->debug(p) << " • base.leftX: " << base->pos->leftX << endl;
@@ -211,4 +213,4 @@ void DiacriticalMarksMerging::process() const {
   }
 }
 
-}  // namespace ppp
+}  // namespace ppp::modules

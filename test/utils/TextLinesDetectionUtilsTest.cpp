@@ -8,18 +8,25 @@
 
 #include <gtest/gtest.h>
 
+#include <string>
 #include <tuple>
 
 #include "../../src/Config.h"
+#include "../../src/PdfDocument.h"
 #include "../../src/PdfToTextPlusPlus.h"
 #include "../../src/utils/MathUtils.h"
 #include "../../src/utils/TextLinesDetectionUtils.h"
 
+using std::string;
 using std::tuple;
 
 using ppp::PdfToTextPlusPlus;
 using ppp::config::Config;
 using ppp::config::TextLinesDetectionConfig;
+using ppp::types::PdfDocument;
+using ppp::types::PdfPage;
+using ppp::types::PdfPageSegment;
+using ppp::types::PdfTextLine;
 using ppp::utils::TextLinesDetectionUtils;
 using ppp::utils::math::round;
 
@@ -37,16 +44,16 @@ class TextLinesDetectionUtilsTest : public ::testing::Test {
   // This method is called before the first test case of this test suite is called.
   static void SetUpTestSuite() {
     Config config;
-    config.subSuperScriptsDetection.disable = true;
-    config.textBlocksDetection.disable = true;
-    config.readingOrderDetection.disable = true;
-    config.semanticRolesPrediction.disable = true;
-    config.wordsDehyphenation.disable = true;
+    config.subSuperScriptsDetection.disabled = true;
+    config.textBlocksDetection.disabled = true;
+    config.readingOrderDetection.disabled = true;
+    config.semanticRolesPrediction.disabled = true;
+    config.wordsDehyphenation.disabled = true;
 
     PdfToTextPlusPlus engine(&config);
     pdf = new PdfDocument();
-    string pdfFilePathStr = PDF_FILE_PATH;
-    engine.process(&pdfFilePathStr, pdf);
+    pdf->pdfFilePath = PDF_FILE_PATH;
+    engine.process(pdf);
   }
 
   // This method is called after the last test case of this test suite is called.
@@ -94,7 +101,7 @@ TEST_F(TextLinesDetectionUtilsTest, computeTextLineHierarchy) {
   ASSERT_TRUE(line14->text.starts_with("b) Bubble wrap popping marathon"));
 
   TextLinesDetectionConfig config;
-  TextLinesDetectionUtils utils(config);
+  TextLinesDetectionUtils utils(&config);
 
   // Input: nullptr.
   ASSERT_DEATH(utils.computeTextLineHierarchy(nullptr), "");
@@ -154,7 +161,7 @@ TEST_F(TextLinesDetectionUtilsTest, computeTrimBox) {
   ASSERT_TRUE(segment->lines[segment->lines.size() - 1]->text.ends_with("with audiences today."));
 
   TextLinesDetectionConfig config;
-  TextLinesDetectionUtils utils(config);
+  TextLinesDetectionUtils utils(&config);
 
   // Input: nullptr.
   ASSERT_DEATH(utils.computeTrimBox(nullptr), "");

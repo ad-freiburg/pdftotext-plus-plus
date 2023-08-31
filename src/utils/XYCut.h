@@ -1,22 +1,27 @@
 /**
- * Copyright 2022, University of Freiburg,
+ * Copyright 2023, University of Freiburg,
  * Chair of Algorithms and Data Structures.
  * Author: Claudius Korzen <korzen@cs.uni-freiburg.de>.
  *
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#ifndef XYCUT_H_
-#define XYCUT_H_
+#ifndef UTILS_XYCUT_H_
+#define UTILS_XYCUT_H_
 
 #include <functional>  // std::function
 #include <vector>
 
-#include "./PdfDocument.h"
+#include "../PdfDocument.h"
 
 using std::vector;
 
+using ppp::types::Cut;
+using ppp::types::PdfElement;
+
 // =================================================================================================
+
+namespace ppp::utils {
 
 /**
  * A wrapper for a function that needs to be passed to the xCut() and yCut() methods of the `XYCut`
@@ -250,4 +255,6 @@ bool yCut(const vector<PdfElement*>& elements, double minGapHeight,
   const ChooseCutsFunc& chooseCutsFunc, bool silent,
   vector<vector<PdfElement*>>* resultGroups = nullptr, vector<Cut*>* resultCuts = nullptr);
 
-#endif  // XYCUT_H_
+}  // namespace ppp::utils
+
+#endif  // UTILS_XYCUT_H_

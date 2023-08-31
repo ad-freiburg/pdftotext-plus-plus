@@ -15,20 +15,23 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>  // std::pair
-#include <vector>  // std::pair
+#include <vector>
 
-#include "./utils/Log.h"
 #include "./PdfDocument.h"
+#include "./utils/Log.h"
 
 using std::make_pair;
-using std::max;
 using std::pair;
 using std::regex;
+using std::regex_constants::icase;
 using std::string;
 using std::unordered_map;
 using std::unordered_set;
 using std::vector;
 
+using ppp::types::PdfDocument;
+using ppp::types::PdfTextLine;
+using ppp::types::PdfWord;
 using ppp::utils::log::LogLevel;
 
 // =================================================================================================
@@ -117,17 +120,25 @@ struct PdfParsingConfig : BaseConfig {
   // often stored in the embedded font file (if the font is actually embedded). The consequence
   // of disabling the parsing of embedded font files is a faster extraction process, but a lower
   // accuracy of the extracted text.
-  bool disableParsingEmbeddedFontFiles = false;
+  bool skipEmbeddedFontFilesParsing = false;
 };
 
 // =================================================================================================
 
 /**
- * The config to use for calculating statistics.
+ * The config to use for calculating glyph statistics.
  */
-struct StatisticsCalculationConfig : BaseConfig {
-  // A parameter specifying whether or not to disable the calculation of statistics.
-  bool disable = false;
+struct GlyphsStatisticsCalculationConfig : BaseConfig {
+  // A parameter specifying whether or not to disable the calculation of glyph statistics.
+  bool disabled = false;
+};
+
+/**
+ * The config to use for calculating word statistics.
+ */
+struct WordsStatisticsCalculationConfig : BaseConfig {
+  // A parameter specifying whether or not to disable the calculation of word statistics.
+  bool disabled = false;
 
   // A parameter in [0, 1] that is used for computing the most frequent distance between two words
   // of the same text line. At time of computing, there is no information about which words
@@ -144,6 +155,14 @@ struct StatisticsCalculationConfig : BaseConfig {
   double maxYOverlapRatioDifferentLine = 0;
 };
 
+/**
+ * The config to use for calculating text line statistics.
+ */
+struct TextLinesStatisticsCalculationConfig : BaseConfig {
+  // A parameter specifying whether or not to disable the calculation of text line statistics.
+  bool disabled = false;
+};
+
 // =================================================================================================
 
 /**
@@ -151,7 +170,7 @@ struct StatisticsCalculationConfig : BaseConfig {
  */
 struct WordsDetectionConfig : BaseConfig {
   // A parameter specifying whether or not to disable the detection of words.
-  bool disable = false;
+  bool disabled = false;
 
   // A parameter specifying a threshold for the vertical overlap between the current character
   // and the active word. If the maximum y-overlap ratio between the active word and the current
@@ -214,7 +233,7 @@ struct WordsDetectionConfig : BaseConfig {
  */
 struct DiacriticalMarksMergingConfig : BaseConfig {
   // A parameter specifying whether or not to disable the merging of diacritic marks.
-  bool disable = false;
+  bool disabled = false;
 
   // Diacritical marks exist in two variants: a "non-combining" variant and a "combining"
   // variant. For example, for the grave accent ("`"), the non-combining variant is 0x0060
@@ -271,7 +290,7 @@ struct DiacriticalMarksMergingConfig : BaseConfig {
  */
 struct PageSegmentationConfig : BaseConfig {
   // A parameter specifying whether or not to disable the segmentation of pages.
-  bool disable = false;
+  bool disabled = false;
 
   // ----------
   // processPage()
@@ -389,7 +408,7 @@ struct PageSegmentationConfig : BaseConfig {
 
 struct TextLinesDetectionConfig : BaseConfig {
   // A parameter specifying whether or not to disable the detection of text lines.
-  bool disable = false;
+  bool disabled = false;
 
   // -------
   // Config for computeTextLineHierarchy().
@@ -442,7 +461,7 @@ struct TextLinesDetectionConfig : BaseConfig {
 
 struct SubSuperScriptsDetectionConfig : BaseConfig {
   // A parameter specifying whether or not to disable the detection of sub/superscripts.
-  bool disable = false;
+  bool disabled = false;
 
   // A parameter that denotes the maximum allowed difference between the baseline of a character
   // and the baseline of a text line, so that the character "sit" on the same baseline. If the
@@ -463,7 +482,7 @@ struct SubSuperScriptsDetectionConfig : BaseConfig {
 
 struct TextBlocksDetectionConfig : BaseConfig {
   // A parameter specifying whether or not to disable the detection of text blocks.
-  bool disable = false;
+  bool disabled = false;
 
   // ----------
   // startsBlock_lineDistance()
@@ -484,7 +503,7 @@ struct TextBlocksDetectionConfig : BaseConfig {
    */
   constexpr static double getExpectedLineDistanceThreshold(const PdfDocument* doc,
       double expectedLineDist) {
-    return max(1.0, 0.1 * expectedLineDist);
+    return std::max(1.0, 0.1 * expectedLineDist);
   }
 
   // ----------
@@ -681,21 +700,21 @@ struct TextBlocksDetectionConfig : BaseConfig {
     // A regex to find item labels of form "• ", or "- ", or "+ ", etc.
     regex("^(•|-|–|\\+)\\s+"),
     // A regex to find item labels of form "I. ", "II. ", "III. ", "IV. ", etc.
-    regex("^(X{0,1}(IX|IV|V?I{0,3}))\\.\\s+", std::regex_constants::icase),
+    regex("^(X{0,1}(IX|IV|V?I{0,3}))\\.\\s+", icase),
     // A regex to find item labels of form "(I)", "(II)", "(III)", "(IV) ", etc.
-    regex("^\\((X{0,1}(IX|IV|V?I{0,3}))\\)\\s+", std::regex_constants::icase),
+    regex("^\\((X{0,1}(IX|IV|V?I{0,3}))\\)\\s+", icase),
     // A regex to find item labels of form "a. ", "b. ", "c. ", etc.
     regex("^([a-z])\\.\\s+"),
     // A regex to find item labels of form "1. ", "2. ", "3. ", etc.
     regex("^([0-9]+)\\.\\s+"),
     // A regex to find item labels of form "(A) ", "(1) ", "(C1) ", "[1] ", "[2] ", etc.
-    regex("^(\\(|\\[)([a-z0-9][0-9]{0,2})(\\)|\\])\\s+", std::regex_constants::icase),
+    regex("^(\\(|\\[)([a-z0-9][0-9]{0,2})(\\)|\\])\\s+", icase),
     // A regex to find item labels of form "[Bu2] ", "[Ch] ", "[Enn2020] ", etc.
     regex("^(\\[)([A-Z][a-zA-Z0-9]{0,5})(\\])\\s+"),
     // A regex to find item labels of form "A) " or "1) " or "a1) ".
-    regex("^([a-z0-9][0-9]{0,1})\\)\\s+", std::regex_constants::icase),
+    regex("^([a-z0-9][0-9]{0,1})\\)\\s+", icase),
     // A regex to find item labels of form "PACS" (1011.5073).
-    regex("^PACS\\s+", std::regex_constants::icase)
+    regex("^PACS\\s+", icase)
   };
 };
 
@@ -703,14 +722,14 @@ struct TextBlocksDetectionConfig : BaseConfig {
 
 struct ReadingOrderDetectionConfig : BaseConfig {
   // A parameter specifying whether or not to disable the detection of the reading order.
-  bool disable = false;
+  bool disabled = false;
 };
 
 // =================================================================================================
 
 struct SemanticRolesPredictionConfig : BaseConfig {
   // A parameter specifying whether or not to disable the prediction of semantic roles.
-  bool disable = false;
+  bool disabled = false;
 
   // The path to the directory containing the (serialized) learning model.
   string modelsDir = "/path/not/specified";
@@ -720,7 +739,7 @@ struct SemanticRolesPredictionConfig : BaseConfig {
 
 struct WordsDehyphenationConfig : BaseConfig {
   // A parameter specifying whether or not to disable the dehyphenation of words.
-  bool disable = false;
+  bool disabled = false;
 };
 
 // =================================================================================================
@@ -756,11 +775,13 @@ struct PdfDocumentVisualizationConfig : BaseConfig {
 
 struct Config {
   PdfParsingConfig pdfParsing;
-  StatisticsCalculationConfig statisticsCalculation;
+  GlyphsStatisticsCalculationConfig glyphsStatisticsCalculation;
   DiacriticalMarksMergingConfig diacriticalMarksMerging;
   WordsDetectionConfig wordsDetection;
+  WordsStatisticsCalculationConfig wordsStatisticsCalculation;
   PageSegmentationConfig pageSegmentation;
   TextLinesDetectionConfig textLinesDetection;
+  TextLinesStatisticsCalculationConfig textLinesStatisticsCalculation;
   SubSuperScriptsDetectionConfig subSuperScriptsDetection;
   TextBlocksDetectionConfig textBlocksDetection;
   ReadingOrderDetectionConfig readingOrderDetection;

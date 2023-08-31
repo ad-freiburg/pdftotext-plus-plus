@@ -1,5 +1,5 @@
 /**
- * Copyright 2022, University of Freiburg,
+ * Copyright 2023, University of Freiburg,
  * Chair of Algorithms and Data Structures.
  * Author: Claudius Korzen <korzen@cs.uni-freiburg.de>.
  *
@@ -9,8 +9,8 @@
 #include <sstream>  // std::stringstream
 #include <string>
 
-#include "./utils/MathUtils.h"
 #include "./PdfDocument.h"
+#include "./utils/MathUtils.h"
 
 using std::string;
 using std::stringstream;
@@ -18,7 +18,8 @@ using std::stringstream;
 using ppp::utils::math::round;
 
 // =================================================================================================
-// Cut
+
+namespace ppp::types {
 
 // _________________________________________________________________________________________________
 Cut::Cut(const CutDir dirA) {
@@ -595,6 +596,11 @@ double PdfPage::getHeight() const {
 PdfDocument::PdfDocument() = default;
 
 // _________________________________________________________________________________________________
+PdfDocument::PdfDocument(const string& pdfFilePathA) {
+  pdfFilePath = pdfFilePathA;
+}
+
+// _________________________________________________________________________________________________
 PdfDocument::~PdfDocument() {
   // Delete the pages.
   for (const auto& page : pages) {
@@ -605,3 +611,5 @@ PdfDocument::~PdfDocument() {
     delete fi.second;
   }
 }
+
+}  // namespace ppp::types

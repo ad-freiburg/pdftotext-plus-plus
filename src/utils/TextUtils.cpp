@@ -13,7 +13,6 @@
 #include <utility>  // std::move
 #include <vector>
 
-#include "../Config.h"
 #include "./TextUtils.h"
 
 using std::hex;
@@ -25,8 +24,6 @@ using std::string;
 using std::stringstream;
 using std::vector;
 using std::wstring;
-
-using ppp::config::ALPHA_NUM;
 
 // =================================================================================================
 
@@ -77,7 +74,7 @@ bool endsWithSentenceDelimiter(const string& text, const char* const sentenceDel
   // Do we need to convert it at all, or is there another solution?
   const string delimiters = string(sentenceDelimiters);
 
-  return delimiters.find(text.back()) != std::string::npos;
+  return delimiters.find(text.back()) != string::npos;
 }
 
 // _________________________________________________________________________________________________

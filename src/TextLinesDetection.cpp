@@ -6,62 +6,68 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#include <algorithm>  // std::min, std::max
+#include <algorithm>  // std::sort
 #include <sstream>  // std::stringstream
 #include <string>
 #include <tuple>
 #include <unordered_map>
 #include <vector>
 
+#include "./Config.h"
+#include "./PdfDocument.h"
+#include "./TextLinesDetection.h"
 #include "./utils/Comparators.h"
 #include "./utils/Counter.h"
 #include "./utils/Log.h"
 #include "./utils/MathUtils.h"
 #include "./utils/PdfElementsUtils.h"
-#include "./utils/TextUtils.h"
 #include "./utils/TextLinesDetectionUtils.h"
-#include "./Config.h"
-#include "./PdfDocument.h"
-#include "./TextLinesDetection.h"
+#include "./utils/TextUtils.h"
 
 using std::endl;
 using std::get;
-using std::max;
-using std::min;
+using std::sort;
 using std::string;
+using std::stringstream;
 using std::tuple;
 using std::unordered_map;
 using std::vector;
 
 using ppp::config::TextLinesDetectionConfig;
-using ppp::utils::counter::DoubleCounter;
-using ppp::utils::counter::StringCounter;
-using ppp::utils::text::createRandomString;
+using ppp::types::PdfDocument;
+using ppp::types::PdfPageSegment;
+using ppp::types::PdfTextLine;
+using ppp::types::PdfWord;
 using ppp::utils::TextLinesDetectionUtils;
 using ppp::utils::comparators::LeftXAscComparator;
 using ppp::utils::comparators::RotLeftXAscComparator;
 using ppp::utils::comparators::RotLeftXDescComparator;
 using ppp::utils::comparators::RotLowerYAscComparator;
 using ppp::utils::comparators::RotLowerYDescComparator;
+using ppp::utils::counter::DoubleCounter;
+using ppp::utils::counter::StringCounter;
 using ppp::utils::elements::computeHorizontalGap;
 using ppp::utils::elements::computeMaxYOverlapRatio;
-using ppp::utils::log::Logger;
 using ppp::utils::log::BOLD;
 using ppp::utils::log::GRAY;
 using ppp::utils::log::OFF;
+using ppp::utils::log::Logger;
 using ppp::utils::math::equalOrLarger;
+using ppp::utils::math::maximum;
+using ppp::utils::math::minimum;
 using ppp::utils::math::round;
+using ppp::utils::text::createRandomString;
 
 // =================================================================================================
 
-namespace ppp {
+namespace ppp::modules {
 
 // _________________________________________________________________________________________________
-TextLinesDetection::TextLinesDetection(PdfDocument* doc, const TextLinesDetectionConfig& config) {
+TextLinesDetection::TextLinesDetection(PdfDocument* doc, const TextLinesDetectionConfig* config) {
   _doc = doc;
   _config = config;
   _utils = new TextLinesDetectionUtils(config);
-  _log = new Logger(config.logLevel, config.logPageFilter);
+  _log = new Logger(config->logLevel, config->logPageFilter);
 }
 
 // _________________________________________________________________________________________________
@@ -88,7 +94,7 @@ void TextLinesDetection::process() {
       _log->debug(p) << "=========================================================" << endl;
 
       // Prefix each subsequent log message with the segment id, for convenience purposes.
-      std::stringstream s;
+      stringstream s;
       s << GRAY << "(" << segment->id << ") " << OFF;
       string q = s.str();
 
@@ -139,7 +145,7 @@ void TextLinesDetection::process() {
         }
 
         double rotation = word->pos->rotation;
-        double lowerY = round(word->pos->getRotLowerY(), _config.coordinatePrecision);
+        double lowerY = round(word->pos->getRotLowerY(), _config->coordinatePrecision);
         clusters[rotation][lowerY].push_back(word);
         _log->debug(p) << q << "cluster: (" << rotation << ", " << lowerY << ")" << endl;
 
@@ -160,7 +166,7 @@ void TextLinesDetection::process() {
         _log->debug(p) << "=========================================================" << endl;
 
         // Prefix each subsequent log message with the segment id and the rotation.
-        std::stringstream ss;
+        stringstream ss;
         ss << q << GRAY << "(rot-" << rot << ") " << OFF;
         string qq = ss.str();
 
@@ -217,7 +223,7 @@ void TextLinesDetection::process() {
           _log->debug(p) << "=========================================================" << endl;
 
           // Prefix each subsequent log message with the segment id, the rotation, and the round.
-          std::stringstream sss;
+          stringstream sss;
           sss << qq << GRAY << "(round-" << r << ") " << OFF;
           string qqq = sss.str();
 
@@ -265,7 +271,7 @@ void TextLinesDetection::process() {
             // rationale behind is as follows: If the horizontal gap between two lines is small,
             // the threshold should be less restrictive. If the horizontal gap is large, the
             // threshold should be more restrictive.
-            double threshold = _config.getYOverlapRatioThreshold(_doc, xGap);
+            double threshold = _config->getYOverlapRatioThreshold(_doc, xGap);
 
             _log->debug(p) << qqq << "max y-overlap ratio: " << yOverlapRatio << endl;
             _log->debug(p) << qqq << "threshold: " << threshold << endl;
@@ -351,7 +357,7 @@ PdfTextLine* TextLinesDetection::createTextLine(const vector<PdfWord*>& words,
   line->doc = _doc;
 
   // Create a (unique) id.
-  line->id = createRandomString(_config.idLength, "line-");
+  line->id = createRandomString(_config->idLength, "line-");
 
   // Set the words.
   line->words = words;
@@ -411,15 +417,15 @@ void TextLinesDetection::computeTextLineProperties(PdfTextLine* line) const {
   for (size_t i = 0; i < line->words.size(); i++) {
     PdfWord* word = line->words[i];
 
-    double wordMinX = min(word->pos->leftX, word->pos->rightX);
-    double wordMinY = min(word->pos->lowerY, word->pos->upperY);
-    double wordMaxX = max(word->pos->leftX, word->pos->rightX);
-    double wordMaxY = max(word->pos->lowerY, word->pos->upperY);
+    double wordMinX = minimum(word->pos->leftX, word->pos->rightX);
+    double wordMinY = minimum(word->pos->lowerY, word->pos->upperY);
+    double wordMaxX = maximum(word->pos->leftX, word->pos->rightX);
+    double wordMaxY = maximum(word->pos->lowerY, word->pos->upperY);
 
-    line->pos->leftX = min(line->pos->leftX, wordMinX);
-    line->pos->upperY = min(line->pos->upperY, wordMinY);
-    line->pos->rightX = max(line->pos->rightX, wordMaxX);
-    line->pos->lowerY = max(line->pos->lowerY, wordMaxY);
+    line->pos->leftX = minimum(line->pos->leftX, wordMinX);
+    line->pos->upperY = minimum(line->pos->upperY, wordMinY);
+    line->pos->rightX = maximum(line->pos->rightX, wordMaxX);
+    line->pos->lowerY = maximum(line->pos->lowerY, wordMaxY);
 
     // Compute the most frequent font name, font size and baseline among the characters.
     for (const auto* ch : word->characters) {
@@ -456,4 +462,4 @@ void TextLinesDetection::computeTextLineProperties(PdfTextLine* line) const {
   }
 }
 
-}  // namespace ppp
+}  // namespace ppp::modules

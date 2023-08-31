@@ -19,6 +19,10 @@ using std::numeric_limits;
 using std::vector;
 
 using ppp::config::PageSegmentationConfig;
+using ppp::types::PdfDocument;
+using ppp::types::PdfElement;
+using ppp::types::PdfPageSegment;
+using ppp::types::PdfWord;
 using ppp::utils::PageSegmentationUtils;
 
 // =================================================================================================
@@ -29,7 +33,7 @@ static const double TOL = ppp::config::DEFAULT_DOUBLE_EQUAL_TOLERANCE;
 // _________________________________________________________________________________________________
 TEST(PageSegmentationUtilsTest, createPageSegment) {
   PageSegmentationConfig config;
-  PageSegmentationUtils utils(config);
+  PageSegmentationUtils utils(&config);
 
   // Input: empty vector.
   vector<PdfElement*> elements;

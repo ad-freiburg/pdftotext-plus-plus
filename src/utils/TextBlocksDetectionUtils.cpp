@@ -15,8 +15,9 @@
 #include "./Counter.h"
 #include "./MathUtils.h"
 #include "./PdfElementsUtils.h"
-#include "./TextUtils.h"
 #include "./TextBlocksDetectionUtils.h"
+#include "./TextUtils.h"
+#include "../PdfFontInfo.h"
 
 using std::pair;
 using std::regex_search;
@@ -25,6 +26,14 @@ using std::string;
 using std::unordered_set;
 using std::vector;
 
+using ppp::types::PdfCharacter;
+using ppp::types::PdfElement;
+using ppp::types::PdfFigure;
+using ppp::types::PdfFontInfo;
+using ppp::types::PdfTextBlock;
+using ppp::types::PdfTextElement;
+using ppp::types::PdfTextLine;
+using ppp::types::PdfWord;
 using ppp::utils::counter::DoubleCounter;
 using ppp::utils::counter::StringCounter;
 using ppp::utils::elements::computeHasEqualFont;
@@ -52,7 +61,7 @@ using ppp::utils::text::endsWithSentenceDelimiter;
 namespace ppp::utils {
 
 // _________________________________________________________________________________________________
-TextBlocksDetectionUtils::TextBlocksDetectionUtils(const TextBlocksDetectionConfig& config) {
+TextBlocksDetectionUtils::TextBlocksDetectionUtils(const TextBlocksDetectionConfig* config) {
   _config = config;
 }
 
@@ -68,7 +77,7 @@ bool TextBlocksDetectionUtils::computeIsCentered(const PdfTextLine* line1,
   // The lines are not centered when the maximum x-overlap ratio between the lines is smaller than
   // the threshold.
   double maxXOverlapRatio = computeMaxXOverlapRatio(line1, line2);
-  if (smaller(maxXOverlapRatio, _config.centeringXOverlapRatioThreshold)) {
+  if (smaller(maxXOverlapRatio, _config->centeringXOverlapRatioThreshold)) {
     return false;
   }
 
@@ -77,7 +86,7 @@ bool TextBlocksDetectionUtils::computeIsCentered(const PdfTextLine* line1,
   double absLeftXOffset = abs(computeLeftXOffset(line1, line2));
   double absRightXOffset = abs(computeRightXOffset(line1, line2));
 
-  double xOffsetTolerance = _config.getCenteringXOffsetEqualTolerance(line1);
+  double xOffsetTolerance = _config->getCenteringXOffsetEqualTolerance(line1);
   if (!equal(absLeftXOffset, absRightXOffset, xOffsetTolerance)) {
     return false;
   }
@@ -114,15 +123,15 @@ bool TextBlocksDetectionUtils::computeIsTextLinesCentered(const PdfTextBlock* bl
 
     // Check if the line or the previous line contains a formula.
     bool prevLineContainsFormula = false;
-    for (size_t i = 0; i < _config.formulaIdAlphabet.size(); i++) {
-      if (prevLine->text.find(_config.formulaIdAlphabet[i]) != string::npos) {
+    for (size_t i = 0; i < _config->formulaIdAlphabet.size(); i++) {
+      if (prevLine->text.find(_config->formulaIdAlphabet[i]) != string::npos) {
         prevLineContainsFormula = true;
         break;
       }
     }
     bool currLineContainsFormula = false;
-    for (size_t i = 0; i < _config.formulaIdAlphabet.size(); i++) {
-      if (currLine->text.find(_config.formulaIdAlphabet[i]) != string::npos) {
+    for (size_t i = 0; i < _config->formulaIdAlphabet.size(); i++) {
+      if (currLine->text.find(_config->formulaIdAlphabet[i]) != string::npos) {
         currLineContainsFormula = true;
         break;
       }
@@ -132,7 +141,7 @@ bool TextBlocksDetectionUtils::computeIsTextLinesCentered(const PdfTextBlock* bl
     // Check if the line has a leftX offset (or rightX offset) larger than the threshold.
     double absLeftXOffset = abs(computeLeftXOffset(prevLine, currLine));
     double absRightXOffset = abs(computeRightXOffset(prevLine, currLine));
-    double xOffsetThreshold = _config.getCenteringXOffsetEqualTolerance(currLine);
+    double xOffsetThreshold = _config->getCenteringXOffsetEqualTolerance(currLine);
     bool isLargeLeftXOffset = larger(absLeftXOffset, xOffsetThreshold);
     bool isLargeRightXOffset = larger(absRightXOffset, xOffsetThreshold);
     bool isLargeXOffset = isLargeLeftXOffset || isLargeRightXOffset;
@@ -147,7 +156,7 @@ bool TextBlocksDetectionUtils::computeIsTextLinesCentered(const PdfTextBlock* bl
   }
 
   return hasNonFormulaWithLargeXOffset
-      && numJustifiedLines <= _config.centeringMaxNumJustifiedLines;
+      && numJustifiedLines <= _config->centeringMaxNumJustifiedLines;
 }
 
 // _________________________________________________________________________________________________
@@ -170,19 +179,19 @@ bool TextBlocksDetectionUtils::computeIsEmphasized(const PdfTextElement* element
   // The element is emphasized if...
 
   // ... its font size is larger than the most frequent font size in the document.
-  if (larger(element->fontSize, mostFreqFontSize, _config.fsEqualTolerance)) {
+  if (larger(element->fontSize, mostFreqFontSize, _config->fsEqualTolerance)) {
     return true;
   }
 
   // ... its font weight is larger than the most frequent font weight (and its font size is not
   // smaller than the most frequent font size).
-  if (equalOrLarger(element->fontSize, mostFreqFontSize, _config.fsEqualTolerance)
-      && larger(elemFontInfo->weight, docFontInfo->weight, _config.fontWeightEqualTolerance)) {
+  if (equalOrLarger(element->fontSize, mostFreqFontSize, _config->fsEqualTolerance)
+      && larger(elemFontInfo->weight, docFontInfo->weight, _config->fontWeightEqualTolerance)) {
     return true;
   }
 
   // ... it is printed in italics (and its font size is not smaller than the most freq font size).
-  if (equalOrLarger(element->fontSize, mostFreqFontSize, _config.fsEqualTolerance)
+  if (equalOrLarger(element->fontSize, mostFreqFontSize, _config->fsEqualTolerance)
       && elemFontInfo->isItalic) {
     return true;
   }
@@ -225,7 +234,7 @@ bool TextBlocksDetectionUtils::computeHasPrevLineCapacity(const PdfTextLine* pre
   // The previous line has capacity if its right margin is larger than the width of the first word
   // of the given line, under consideration of the threshold.
   // TODO(korzen): Move this computation into config?
-  double threshold = _config.prevTextLineCapacityThresholdFactor * line->doc->avgCharWidth;
+  double threshold = _config->prevTextLineCapacityThresholdFactor * line->doc->avgCharWidth;
   return larger(prevLine->rightMargin, firstWordWidth, threshold);
 }
 
@@ -260,11 +269,11 @@ double TextBlocksDetectionUtils::computeHangingIndent(const PdfTextBlock* block)
   int numIndentedLines = 0;
 
   // TODO(korzen): Move the computation into config?
-  double marginThreshold = _config.hangIndentMarginThresholdFactor * block->doc->avgCharWidth;
+  double marginThreshold = _config->hangIndentMarginThresholdFactor * block->doc->avgCharWidth;
 
   for (const auto* line : block->lines) {
     // Count the number of lines with a length >= the given threshold.
-    if (line->text.size() >= _config.hangIndentMinLengthLongLines) {
+    if (line->text.size() >= _config->hangIndentMinLengthLongLines) {
       numLongLines++;
     }
 
@@ -286,7 +295,7 @@ double TextBlocksDetectionUtils::computeHangingIndent(const PdfTextBlock* block)
   // The block is *not* in hanging indent format if the percentage of lines exhibiting the
   // most frequent left margin is smaller than a threshold.
   if (equalOrSmaller(mostFreqLargeLeftMarginCount,
-        _config.hangIndentMinPercLinesSameLeftMargin * numLargeLeftMarginLines)) {
+        _config->hangIndentMinPercLinesSameLeftMargin * numLargeLeftMarginLines)) {
     return 0.0;
   }
 
@@ -295,7 +304,7 @@ double TextBlocksDetectionUtils::computeHangingIndent(const PdfTextBlock* block)
     const PdfTextLine* line = block->lines[i];
 
     // Ignore short lines.
-    if (line->text.size() < _config.hangIndentMinLengthLongLines) {
+    if (line->text.size() < _config->hangIndentMinLengthLongLines) {
       continue;
     }
 
@@ -327,7 +336,7 @@ double TextBlocksDetectionUtils::computeHangingIndent(const PdfTextBlock* block)
 
     // Count the number of non-indented lines that start with a lowercase and do not start with
     // a lowercase last name prefix.
-    bool startsWithLastNamePrefix = _config.lastNamePrefixes.count(line->words[0]->text) > 0;
+    bool startsWithLastNamePrefix = _config->lastNamePrefixes.count(line->words[0]->text) > 0;
     if (isLower && !startsWithLastNamePrefix && isNonIndented) {
       numLowercasedNonIndentedLines++;
     }
@@ -353,7 +362,7 @@ double TextBlocksDetectionUtils::computeHangingIndent(const PdfTextBlock* block)
 
   // The block is *not* in hanging indent format if it contains at least one non-indented line
   // that starts with a lowercase character.
-  if (numLowercasedNonIndentedLines > _config.hangIndentNumLowerNonIndentedLinesThreshold) {
+  if (numLowercasedNonIndentedLines > _config->hangIndentNumLowerNonIndentedLinesThreshold) {
     return 0.0;
   }
 
@@ -368,15 +377,15 @@ double TextBlocksDetectionUtils::computeHangingIndent(const PdfTextBlock* block)
 
   // The block is in hanging indent format if all non-indented lines start with an uppercase
   // character and if the number of non-indented lines exceed a certain threshold.
-  if (numNonIndentedLines >= _config.hangIndentNumNonIndentedLinesThreshold &&
-      numLowercasedNonIndentedLines <= _config.hangIndentNumLowerNonIndentedLinesThreshold) {
+  if (numNonIndentedLines >= _config->hangIndentNumNonIndentedLinesThreshold &&
+      numLowercasedNonIndentedLines <= _config->hangIndentNumLowerNonIndentedLinesThreshold) {
     return mostFreqLargeLeftMargin;
   }
 
   // The block is in hanging indent format if there is at least one indented line that start
   // with a lowercase character.
-  if (numLongLines >= _config.hangIndentNumLongLinesThreshold
-        && numLowercasedIndentedLines >= _config.hangIndentNumLowerIndentedLinesThreshold) {
+  if (numLongLines >= _config->hangIndentNumLongLinesThreshold
+        && numLowercasedIndentedLines >= _config->hangIndentNumLowerIndentedLinesThreshold) {
     return mostFreqLargeLeftMargin;
   }
 
@@ -442,13 +451,13 @@ bool TextBlocksDetectionUtils::computeIsFirstLineOfItem(const PdfTextLine* line,
   if (line->prevLine) {
     bool isPrevPrefixedByLabel = computeIsPrefixedByItemLabel(line->prevLine);
     bool hasEqualFont = computeHasEqualFont(line->prevLine, line);
-    bool hasEqualFontSize = computeHasEqualFontSize(line->prevLine, line, _config.fsEqualTolerance);
+    bool hasEqualFSize = computeHasEqualFontSize(line->prevLine, line, _config->fsEqualTolerance);
     double distance = computeVerticalGap(line->prevLine, line);
     bool hasNegativeDistance = equalOrSmaller(distance, 0);
     bool hasSentenceDelim = endsWithSentenceDelimiter(line->prevLine->text);
     bool hasEqualLeftX = computeHasEqualLeftX(line->prevLine, line, avgCharWidth);
 
-    if (!isPrevPrefixedByLabel && hasEqualFont && hasEqualFontSize && hasNegativeDistance
+    if (!isPrevPrefixedByLabel && hasEqualFont && hasEqualFSize && hasNegativeDistance
           && !hasSentenceDelim && hasEqualLeftX) {
       return false;
     }
@@ -463,7 +472,7 @@ bool TextBlocksDetectionUtils::computeIsFirstLineOfItem(const PdfTextLine* line,
     PdfWord* prevFirstWord = prevSibling->words[0];
     bool prevIsPrefixedByItemLabel = computeIsPrefixedByItemLabel(prevSibling);
     bool hasEqualFont = computeHasEqualFont(prevFirstWord, firstWord);
-    bool hasEqualFs = computeHasEqualFontSize(prevFirstWord, firstWord, _config.fsEqualTolerance);
+    bool hasEqualFs = computeHasEqualFontSize(prevFirstWord, firstWord, _config->fsEqualTolerance);
     if (prevIsPrefixedByItemLabel && hasEqualFont && hasEqualFs) {
       return true;
     }
@@ -478,7 +487,7 @@ bool TextBlocksDetectionUtils::computeIsFirstLineOfItem(const PdfTextLine* line,
     PdfWord* nextFirstWord = nextSibling->words[0];
     bool nextIsPrefixedByItemLabel = computeIsPrefixedByItemLabel(nextSibling);
     bool hasEqualFont = computeHasEqualFont(nextFirstWord, firstWord);
-    bool hasEqualFs = computeHasEqualFontSize(nextFirstWord, firstWord, _config.fsEqualTolerance);
+    bool hasEqualFs = computeHasEqualFontSize(nextFirstWord, firstWord, _config->fsEqualTolerance);
     if (nextIsPrefixedByItemLabel && hasEqualFont && hasEqualFs) {
       return true;
     }
@@ -544,7 +553,7 @@ void TextBlocksDetectionUtils::computePotentialFootnoteLabels(const PdfTextLine*
 
       // The character is part of a potential footnote label when it occurs in our alphabet we
       // defined to identify special (= non-alphanumerical) footnote labels.
-      bool isLabel = _config.specialFootnoteLabelsAlphabet.find(ch->text[0]) != std::string::npos;
+      bool isLabel = _config->specialFootnoteLabelsAlphabet.find(ch->text[0]) != string::npos;
 
       // The character is also a potential footnote label when it is a superscripted alphanumerical.
       if (ch->isSuperscript && isalnum(ch->text[0])) {
@@ -595,14 +604,14 @@ bool TextBlocksDetectionUtils::computeIsPrefixedByItemLabel(const PdfTextLine* l
   // This would identify also lines that are prefixed by something like "a)".
   PdfCharacter* ch = firstWordChars[0];
   string charStr = ch->text;
-  if (ch->isSuperscript && strstr(_config.superItemLabelAlphabet, charStr.c_str()) != nullptr) {
+  if (ch->isSuperscript && strstr(_config->superItemLabelAlphabet, charStr.c_str()) != nullptr) {
     return true;
   }
 
   // The line is prefixed by an enumeration item label if it matches one of our regexes we defined
   // for identifying item labels. The matching parts must not be superscripted.
   smatch m;
-  for (const auto& regex : _config.itemLabelRegexes) {
+  for (const auto& regex : _config->itemLabelRegexes) {
     if (regex_search(line->text, m, regex)) {
       return true;
     }
@@ -652,8 +661,8 @@ PdfFigure* TextBlocksDetectionUtils::computeOverlapsFigure(const PdfElement* ele
     pair<double, double> yOverlapRatios = computeYOverlapRatios(element, figure);
 
     // Check if the figure overlaps the element by the required overlap ratios.
-    if (equalOrLarger(xOverlapRatios.first, _config.figureXOverlapThreshold)
-        && equalOrLarger(yOverlapRatios.first, _config.figureYOverlapThreshold)) {
+    if (equalOrLarger(xOverlapRatios.first, _config->figureXOverlapThreshold)
+        && equalOrLarger(yOverlapRatios.first, _config->figureYOverlapThreshold)) {
       return figure;
     }
   }
@@ -668,7 +677,7 @@ void TextBlocksDetectionUtils::createTextBlock(const vector<PdfTextLine*>& lines
   assert(blocks);
 
   PdfTextBlock* block = new PdfTextBlock();
-  block->id = createRandomString(_config.idLength, "block-");
+  block->id = createRandomString(_config->idLength, "block-");
 
   // Set the reference to the document.
   block->doc = lines[0]->doc;

@@ -11,22 +11,30 @@
 #include <unordered_set>
 
 #include "./JsonlSerializer.h"
-
 #include "../utils/MathUtils.h"
 #include "../utils/TextUtils.h"
-
 #include "../PdfDocument.h"
+#include "../PdfFontInfo.h"
 #include "../Types.h"
 
-using ppp::types::SemanticRole;
-using ppp::utils::math::round;
-using ppp::utils::text::escapeJson;
-using std::cout;
-using std::cerr;
 using std::endl;
+using std::find;
 using std::ostream;
 using std::string;
 using std::unordered_set;
+
+using ppp::types::PdfCharacter;
+using ppp::types::PdfDocument;
+using ppp::types::PdfFigure;
+using ppp::types::PdfFontInfo;
+using ppp::types::PdfPage;
+using ppp::types::PdfShape;
+using ppp::types::PdfTextBlock;
+using ppp::types::PdfTextLine;
+using ppp::types::PdfWord;
+using ppp::types::SemanticRole;
+using ppp::utils::math::round;
+using ppp::utils::text::escapeJson;
 
 // =================================================================================================
 
@@ -96,7 +104,7 @@ void JsonlSerializer::serializeCharacters(const PdfDocument* doc,
   for (const PdfPage* page : doc->pages) {
     for (const PdfTextBlock* block : page->blocks) {
       // Skip the block if its role is not included in 'roles'.
-      if (std::find(roles.begin(), roles.end(), block->role) == roles.end()) {
+      if (find(roles.begin(), roles.end(), block->role) == roles.end()) {
         continue;
       }
 
@@ -200,7 +208,7 @@ void JsonlSerializer::serializeWords(const PdfDocument* doc,
   for (const PdfPage* page : doc->pages) {
     for (const PdfTextBlock* block : page->blocks) {
       // Skip the block if its role is not included in 'roles'.
-      if (std::find(roles.begin(), roles.end(), block->role) == roles.end()) {
+      if (find(roles.begin(), roles.end(), block->role) == roles.end()) {
         continue;
       }
 
@@ -236,7 +244,7 @@ void JsonlSerializer::serializeTextBlocks(const PdfDocument* doc,
   for (const PdfPage* page : doc->pages) {
     for (const PdfTextBlock* block : page->blocks) {
       // Skip the block if its role is not included in 'roles'.
-      if (std::find(roles.begin(), roles.end(), block->role) == roles.end()) {
+      if (find(roles.begin(), roles.end(), block->role) == roles.end()) {
         continue;
       }
 

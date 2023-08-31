@@ -15,10 +15,9 @@
 using std::string;
 using std::vector;
 
-namespace ppp::types {
-
 // =================================================================================================
-// Document units.
+
+namespace ppp::types {
 
 // The available document units.
 enum struct DocumentUnit {
@@ -57,7 +56,7 @@ string getName(DocumentUnit unit);
  * @return
  *    A vector containing all document units.
  */
-std::vector<DocumentUnit> getDocumentUnits();
+vector<DocumentUnit> getDocumentUnits();
 
 /**
  * This function returns a string containing the names of all document units. The
@@ -105,7 +104,7 @@ string getName(SerializationFormat format);
  * @return
  *    A vector containing all serialization formats.
  */
-std::vector<SerializationFormat> getSerializationFormats();
+vector<SerializationFormat> getSerializationFormats();
 
 /**
  * This function returns a string containing the names of all serialization formats. The
@@ -175,7 +174,7 @@ string getName(SemanticRole role);
  * @return
  *    A vector containing all semantic roles.
  */
-std::vector<SemanticRole> getSemanticRoles();
+vector<SemanticRole> getSemanticRoles();
 
 /**
  * This function returns a string containing the names of all semantic roles. The semantic roles

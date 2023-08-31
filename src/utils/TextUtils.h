@@ -19,8 +19,8 @@ using std::vector;
 using std::wstring;
 
 using ppp::config::ALPHA_NUM;
-using ppp::config::WORD_DELIMITERS_ALPHABET;
 using ppp::config::SENTENCE_DELIMITERS_ALPHABET;
+using ppp::config::WORD_DELIMITERS_ALPHABET;
 
 // =================================================================================================
 

@@ -162,6 +162,38 @@ double round(double d, unsigned int numDecimals = 0);
 double minimum(double d1, double d2);
 
 /**
+ * This method returns the minimum of the three double values.
+ *
+ * @param d1
+ *    The first double value.
+ * @param d2
+ *    The second double value.
+ * @param d3
+ *    The third double value.
+ *
+ * @return
+ *    The minimum of the three double values.
+ */
+double minimum(double d1, double d2, double d3);
+
+/**
+ * This method returns the minimum of the four double values.
+ *
+ * @param d1
+ *    The first double value.
+ * @param d2
+ *    The second double value.
+ * @param d3
+ *    The third double value.
+ * @param d4
+ *    The fourth double value.
+ *
+ * @return
+ *    The minimum of the four double values.
+ */
+double minimum(double d1, double d2, double d3, double d4);
+
+/**
  * This method returns the maximum of the two double values.
  *
  * @param d1
@@ -173,6 +205,38 @@ double minimum(double d1, double d2);
  *    The maximum of the two double values.
  */
 double maximum(double d1, double d2);
+
+/**
+ * This method returns the maximum of the three double values.
+ *
+ * @param d1
+ *    The first double value.
+ * @param d2
+ *    The second double value.
+ * @param d3
+ *    The third double value.
+ *
+ * @return
+ *    The maximum of the two double values.
+ */
+double maximum(double d1, double d2, double d3);
+
+/**
+ * This method returns the maximum of the three double values.
+ *
+ * @param d1
+ *    The first double value.
+ * @param d2
+ *    The second double value.
+ * @param d3
+ *    The third double value.
+ * @param d4
+ *    The fourth double value.
+ *
+ * @return
+ *    The maximum of the four double values.
+ */
+double maximum(double d1, double d2, double d3, double d4);
 
 }  // namespace ppp::utils::math
 

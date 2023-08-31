@@ -15,16 +15,20 @@
 #include <codecvt>  // std::codecvt_utf8_utf16
 #include <locale>  // std::wstring_convert
 
-#include "./utils/Log.h"
 #include "./Config.h"
 #include "./PdfDocument.h"
+#include "./PdfFontInfo.h"
+#include "./utils/Log.h"
 
 using ppp::config::PdfParsingConfig;
+using ppp::types::PdfDocument;
+using ppp::types::PdfFontInfo;
+using ppp::types::PdfPage;
 using ppp::utils::log::Logger;
 
 // =================================================================================================
 
-namespace ppp {
+namespace ppp::modules {
 
 /**
  * This class is an implementation of Poppler's OutputDev. It is responsible for (1) handling the
@@ -265,6 +269,6 @@ class PdfParsing : public OutputDev {
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> _wStringConverter;
 };
 
-}  // namespace ppp
+}  // namespace ppp::modules
 
 #endif  // PDFPARSING_H_

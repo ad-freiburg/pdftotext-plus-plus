@@ -1,5 +1,5 @@
 /**
- * Copyright 2022, University of Freiburg,
+ * Copyright 2023, University of Freiburg,
  * Chair of Algorithms and Data Structures.
  * Author: Claudius Korzen <korzen@cs.uni-freiburg.de>.
  *
@@ -9,28 +9,29 @@
 #ifndef TEXTBLOCKSDETECTION_H_
 #define TEXTBLOCKSDETECTION_H_
 
-#include <algorithm>  // std::max
 #include <string>
 #include <unordered_set>
-#include <utility>   // std::make_pair
 
+#include "./Config.h"
+#include "./PdfDocument.h"
 #include "./utils/Log.h"
 #include "./utils/TextBlocksDetectionUtils.h"
 #include "./utils/Trool.h"
-#include "./Config.h"
-#include "./PdfDocument.h"
 
-using std::make_pair;
-using std::max;
-using std::pair;
 using std::string;
 using std::unordered_set;
 
 using ppp::config::TextBlocksDetectionConfig;
+using ppp::types::PdfDocument;
+using ppp::types::PdfTextBlock;
+using ppp::types::PdfTextLine;
 using ppp::utils::TextBlocksDetectionUtils;
+using ppp::utils::Trool;
 using ppp::utils::log::Logger;
 
 // =================================================================================================
+
+namespace ppp::modules {
 
 /**
  * This class is responsible for detecting text blocks in a PDF document.
@@ -79,7 +80,7 @@ class TextBlocksDetection {
    * @param config
    *    The config to use.
    */
-  TextBlocksDetection(PdfDocument* doc, const TextBlocksDetectionConfig& config);
+  TextBlocksDetection(PdfDocument* doc, const TextBlocksDetectionConfig* config);
 
   /** The deconstructor. */
   ~TextBlocksDetection();
@@ -347,11 +348,11 @@ class TextBlocksDetection {
   // The PDF document to process.
   PdfDocument* _doc;
   // The configuration to use.
-  TextBlocksDetectionConfig _config;
+  const TextBlocksDetectionConfig* _config;
   // The text blocks detection utils.
-  TextBlocksDetectionUtils* _utils;
+  const TextBlocksDetectionUtils* _utils;
   // The logger.
-  Logger* _log;
+  const Logger* _log;
 
   // The potential footnote labels, that is: superscripted strings consisting of alphanumerical
   // characters.
@@ -361,5 +362,7 @@ class TextBlocksDetection {
   // the detection of preliminary text blocks and the final text blocks.
   string _q;
 };
+
+}  // namespace ppp::modules
 
 #endif  // TEXTBLOCKSDETECTION_H_

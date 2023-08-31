@@ -15,13 +15,18 @@
 #include "./PdfDocument.h"
 #include "./SemanticRolesPrediction.h"
 
+using std::vector;
+
 using ppp::config::ReadingOrderDetectionConfig;
 using ppp::config::SemanticRolesPredictionConfig;
-using std::vector;
+using ppp::types::Cut;
+using ppp::types::PdfDocument;
+using ppp::types::PdfElement;
+using ppp::types::PdfPage;
 
 // =================================================================================================
 
-namespace ppp {
+namespace ppp::modules {
 
 /**
  * This class detects the natural reading order of the text blocks extracted from a PDF document,
@@ -61,8 +66,8 @@ class ReadingOrderDetection {
    */
   explicit ReadingOrderDetection(
     PdfDocument* doc,
-    const ReadingOrderDetectionConfig& config,
-    const SemanticRolesPredictionConfig& config2);
+    const ReadingOrderDetectionConfig* config,
+    const SemanticRolesPredictionConfig* config2);
 
   /** The deconstructor. */
   ~ReadingOrderDetection();
@@ -72,7 +77,7 @@ class ReadingOrderDetection {
    * which includes: (1) the detection of the semantic role of the text blocks, (2) the detection
    * of "semantic y-cuts" and (3) the detection of the reading order of the text blocks.
    */
-  void detect();
+  void process();
 
  private:
   /**
@@ -168,7 +173,7 @@ class ReadingOrderDetection {
   // The document to process.
   PdfDocument* _doc;
   // The configuration to use.
-  ReadingOrderDetectionConfig _config;
+  const ReadingOrderDetectionConfig* _config;
 
   double _minXCutGapWidth = 0;
   double _minYCutGapHeight = 0;
@@ -186,6 +191,6 @@ class ReadingOrderDetection {
   SemanticRolesPrediction* _semanticRolesPrediction;
 };
 
-}  // namespace ppp
+}  // namespace ppp::modules
 
 #endif  // READINGORDERDETECTION_H_
