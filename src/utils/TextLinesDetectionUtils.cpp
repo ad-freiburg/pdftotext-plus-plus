@@ -6,6 +6,7 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
+#include <cassert>  // assert
 #include <stack>
 #include <tuple>
 #include <utility>  // std::pair

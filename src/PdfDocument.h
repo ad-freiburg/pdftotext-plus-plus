@@ -14,7 +14,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include "./PdfFontInfo.h"
 #include "./Types.h"
 
 using std::numeric_limits;

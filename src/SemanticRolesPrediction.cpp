@@ -8,6 +8,7 @@
 
 #include <cppflow/cppflow.h>
 
+#include <cassert>  // assert
 #include <codecvt>  // std::codecvt_utf8
 #include <fstream>  // std::wifstream
 #include <limits>  // std::numeric_limits
@@ -17,8 +18,8 @@
 
 #include "./Config.h"
 #include "./PdfDocument.h"
-#include "./PdfFontInfo.h"
 #include "./SemanticRolesPrediction.h"
+#include "./Types.h"
 #include "./utils/BytePairEncoder.h"
 
 using std::ifstream;

@@ -6,7 +6,10 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
+#include <cassert>  // assert
+#include <string>
 #include <utility>  // std::pair
+#include <vector>
 
 #include "./MathUtils.h"
 #include "./PdfElementsUtils.h"
@@ -14,9 +17,14 @@
 
 using std::make_pair;
 using std::pair;
+using std::string;
+using std::vector;
 
 using ppp::types::PdfElement;
 using ppp::types::PdfTextElement;
+using ppp::types::PDF_ELEMENT_TYPE_NAMES;
+using ppp::types::SEMANTIC_ROLE_NAMES;
+using ppp::types::SERIALIZATION_FORMAT_NAMES;
 using ppp::utils::math::equal;
 using ppp::utils::math::maximum;
 using ppp::utils::math::minimum;
@@ -206,6 +214,86 @@ bool computeHasEqualFontSize(const PdfTextElement* e1, const PdfTextElement* e2,
   assert(e2);
 
   return equal(e1->fontSize, e2->fontSize, tolerance);
+}
+
+// =================================================================================================
+
+// _________________________________________________________________________________________________
+vector<PdfElementType> getPdfElementTypes() {
+  vector<PdfElementType> result;
+  for (size_t i = 0; i < PDF_ELEMENT_TYPE_NAMES.size(); i++) {
+    result.push_back(PdfElementType(i));
+  }
+  return result;
+}
+
+// _________________________________________________________________________________________________
+string getPdfElementTypesStr(const string& separator) {
+  string resultStr = "";
+  for (const auto& name : PDF_ELEMENT_TYPE_NAMES) {
+    if (resultStr.size() > 0) {
+      resultStr += separator;
+    }
+    resultStr += name;
+  }
+  return resultStr;
+}
+
+// _________________________________________________________________________________________________
+string getPdfElementTypeName(PdfElementType unit) {
+  return ppp::types::PDF_ELEMENT_TYPE_NAMES[static_cast<int>(unit)];
+}
+
+// _________________________________________________________________________________________________
+vector<SerializationFormat> getSerializationFormats() {
+  vector<SerializationFormat> result;
+  for (size_t i = 0; i < SERIALIZATION_FORMAT_NAMES.size(); i++) {
+    result.push_back(SerializationFormat(i));
+  }
+  return result;
+}
+
+// _________________________________________________________________________________________________
+string getSerializationFormatsStr(const string& separator) {
+  string resultStr = "";
+  for (const auto& name : SERIALIZATION_FORMAT_NAMES) {
+    if (resultStr.size() > 0) {
+      resultStr += separator;
+    }
+    resultStr += name;
+  }
+  return resultStr;
+}
+
+// _________________________________________________________________________________________________
+string getSerializationFormatName(SerializationFormat format) {
+  return SERIALIZATION_FORMAT_NAMES[static_cast<int>(format)];
+}
+
+// _________________________________________________________________________________________________
+vector<SemanticRole> getSemanticRoles() {
+  vector<SemanticRole> result;
+  for (size_t i = 0; i < SEMANTIC_ROLE_NAMES.size(); i++) {
+    result.push_back(SemanticRole(i));
+  }
+  return result;
+}
+
+// _________________________________________________________________________________________________
+string getSemanticRolesStr(const string& separator) {
+  string resultStr = "";
+  for (const auto& name : SEMANTIC_ROLE_NAMES) {
+    if (resultStr.size() > 0) {
+      resultStr += separator;
+    }
+    resultStr += name;
+  }
+  return resultStr;
+}
+
+// _________________________________________________________________________________________________
+string getSemanticRoleName(SemanticRole role) {
+  return SEMANTIC_ROLE_NAMES[static_cast<int>(role)];
 }
 
 }  // namespace ppp::utils::elements

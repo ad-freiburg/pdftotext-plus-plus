@@ -25,6 +25,7 @@
 #include "./Validators.h"
 #include "./utils/Log.h"
 #include "./utils/MathUtils.h"
+#include "./utils/PdfElementsUtils.h"
 #include "./utils/TextUtils.h"
 
 using std::cerr;
@@ -54,12 +55,17 @@ using boost::program_options::variables_map;
 
 using ppp::PdfToTextPlusPlus;
 using ppp::config::Config;
+using ppp::serialization::getSerializationFormatChoicesStr;
 using ppp::serialization::Serializer;  // TODO(korzen)
-using ppp::types::DocumentUnit;
+using ppp::types::PdfElementType;
 using ppp::types::PdfDocument;
 using ppp::types::SemanticRole;
 using ppp::types::SerializationFormat;
 using ppp::types::Timing;
+using ppp::utils::elements::getPdfElementTypes;
+using ppp::utils::elements::getPdfElementTypesStr;
+using ppp::utils::elements::getSemanticRoles;
+using ppp::utils::elements::getSemanticRolesStr;
 using ppp::utils::log::BBLUE;
 using ppp::utils::log::BOLD;
 using ppp::utils::log::DEBUG;
@@ -163,9 +169,9 @@ int main(int argc, char* argv[]) {
   // The format in which the extracted text should be output.
   SerializationFormat format = SerializationFormat::TXT;
   // The roles filter (blocks with a role that do not appear in this vector will not be output).
-  vector<SemanticRole> roles = ppp::types::getSemanticRoles();
-  // The units of the text to output.
-  vector<DocumentUnit> units = ppp::types::getDocumentUnits();
+  vector<SemanticRole> roles = getSemanticRoles();
+  // The text elements to output, specified by their types.
+  vector<PdfElementType> types = getPdfElementTypes();
 
   bool addControlCharacters = false;  // TODO(korzen): Introduce an extra format.
   bool addSemanticRoles = false;  // TODO(korzen): Introduce an extra format.
@@ -224,21 +230,21 @@ int main(int argc, char* argv[]) {
       value<SerializationFormat>(&format),
       // TODO(korzen): Add an description for each serializer.
       ("Output the extracted text in the specified format.\n"
-       "Valid formats: " + ppp::serialization::getSerializationFormatChoicesStr() + ".\n").c_str()
+       "Valid formats: " + getSerializationFormatChoicesStr() + ".\n").c_str()
     )
     (
       "role",
       value<vector<SemanticRole>>(&roles),
       ("Output only the text from text blocks with the specified roles. Use the syntax "
        "'--role <value1> --role <value2> ...' to specify multiple roles.\n"
-       "Valid roles: " + ppp::types::getSemanticRolesStr() + ".\n").c_str()
+       "Valid roles: " + getSemanticRolesStr() + ".\n").c_str()
     )
     (
-      "unit",
-      value<vector<DocumentUnit>>(&units),
-      ("Output semantic and layout information about the specified document unit(s). Use "
-       "the syntax '--unit <value1> --unit <value2> ...' to specify multiple units."
-       "Valid units: " + ppp::types::getDocumentUnitsStr() + ".\n"
+      "type",
+      value<vector<PdfElementType>>(&types),
+      ("Output semantic and layout information about the specified type(s) of elements. Use "
+       "the syntax '--type <value1> --type <value2> ...' to specify multiple types."
+       "Valid types: " + getPdfElementTypesStr() + ".\n"
        "NOTE: This option does not have an effect when used together with the "
        "'--format txt' or '--format txt-extended' option.").c_str()
     )
@@ -704,8 +710,8 @@ int main(int argc, char* argv[]) {
   Serializer* serializer = ppp::serialization::getSerializer(format);
   if (serializer) {
     unordered_set<SemanticRole> rolesSet(roles.begin(), roles.end());
-    unordered_set<DocumentUnit> unitsSet(units.begin(), units.end());
-    serializer->serialize(&doc, rolesSet, unitsSet, outputFilePath);
+    unordered_set<PdfElementType> typesSet(types.begin(), types.end());
+    serializer->serialize(&doc, rolesSet, typesSet, outputFilePath);
   }
   auto end = high_resolution_clock::now();
   Timing timingSerializeChars("Serialize", duration_cast<milliseconds>(end - start).count());

@@ -11,6 +11,7 @@
 #include <poppler/PDFDoc.h>
 #include <poppler/PDFDocFactory.h>
 
+#include <cassert>  // assert
 #include <chrono>  // std::chrono::high_resolution_clock, etc.
 #include <memory>  // std::unique_ptr
 #include <string>

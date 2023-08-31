@@ -6,6 +6,7 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
+#include <cassert>  // assert
 #include <regex>
 #include <string>
 #include <unordered_set>
@@ -17,7 +18,7 @@
 #include "./PdfElementsUtils.h"
 #include "./TextBlocksDetectionUtils.h"
 #include "./TextUtils.h"
-#include "../PdfFontInfo.h"
+#include "../Types.h"
 
 using std::pair;
 using std::regex_search;

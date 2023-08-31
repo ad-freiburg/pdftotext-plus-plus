@@ -6,8 +6,8 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
-#ifndef PDFFONTINFO_H_
-#define PDFFONTINFO_H_
+#ifndef UTILS_PDFFONTINFOPARSER_H_
+#define UTILS_PDFFONTINFOPARSER_H_
 
 #include <poppler/GfxState.h>
 #include <poppler/Object.h>  // Ref
@@ -18,30 +18,26 @@
 #include <unordered_map>
 #include <vector>
 
+#include "../Types.h"
+
 using std::string;
 using std::tuple;
 using std::unordered_map;
 using std::vector;
 
+using ppp::types::PdfFontInfo;
+
 // =================================================================================================
 
-namespace ppp::types {
-
-class Type1FontFileParser;
+namespace ppp::utils::fonts {
 
 /**
- * This class represents a font in a PDF document.
+ * TODO
  */
-class PdfFontInfo {
+class PdfFontInfoParser {
  public:
-  /** This constructor creates and initializes a new `PdfFontInfo` object. */
-  PdfFontInfo();
-
-  /** The deconstructor. */
-  ~PdfFontInfo();
-
   /**
-   * This method creates a new `PdfFontInfo` object from the given graphics state and xref table.
+   * TODO
    *
    * @param state
    *    The current graphics state.
@@ -56,88 +52,7 @@ class PdfFontInfo {
    * @return
    *    The created `PdfFontInfo` object
    */
-  static PdfFontInfo* create(const GfxState* state, XRef* xref, bool parseEmbeddedFontFiles);
-
-  /**
-   * The ascent of the font, that is: the maximum extent above the base line.
-   */
-  double ascent = 0.0;
-
-  /**
-   * The descent of the font, that is: the maximum extent below the base line.
-   */
-  double descent = 0.0;
-
-  /**
-   * The font name as it is provided by PDF, for example: "LTSL+Nimbus12-Bold".
-   */
-  string fontName;
-
-  /**
-   * The normalized font name, that is: the original font name translated to lower cases and
-   * without the prefix ending with "+", for example: "nimbus12-bold".
-   */
-  string normFontName;
-
-  /**
-   * The font base name, that is: the normalized font name without the suffix starting with "-"
-   * and without digits.
-   */
-  string fontBaseName;
-
-  /**
-   * The boolean flag indicating whether or not this font is a fixed width font.
-   */
-  bool isFixedWidth = false;
-
-  /**
-   * The boolean flag indicating whether or not the font is a serif font.
-   */
-  bool isSerif = false;
-
-  /**
-   * The boolean flag indicating whether or not the font is a symbolic font.
-   */
-  bool isSymbolic = false;
-
-  /**
-   * The boolean flag indicating whether or not the font is an italic font.
-   */
-  bool isItalic = false;
-
-
-  /**
-   * This method returns the font weight, that is: one of the values [100, 200, ..., 900] which
-   * describes the boldness of the font's characters. Here is the meaning of the different values:
-   *
-   * 100: Extra Light or Ultra Light
-   * 200: Light or Thin
-   * 300: Book or Demi
-   * 400: Normal or Regular
-   * 500: Medium
-   * 600: Semibold, Demibold
-   * 700: Bold
-   * 800: Black, Extra Bold or Heavy
-   * 900: Extra Black, Fat, Poster or Ultra Blacktrue.
-   *
-   * @return
-   *    The font weight.
-   */
-  int weight = 400;
-
-  /**
-   * The boolean flag indicating whether or not the font is a type-3 font.
-   */
-  bool isType3 = false;
-
-  /** The font matrix. */
-  double fontMatrix[6];
-
-  /**
-   * A mapping of character names to bounding boxes (each given by its leftX, upperY, rightX, lowerY
-   * coordinates in character space).
-   */
-  unordered_map<string, tuple<double, double, double, double>> glyphBoundingBoxes;
+  PdfFontInfo* parse(const GfxState* state, XRef* xref, bool parseEmbeddedFontFiles);
 };
 
 // =================================================================================================
@@ -215,6 +130,6 @@ class Type1FontFileParser {
       { 11, 'b' }, { 12, 'c' }, { 13, 'd' }, { 14, 'e' }, { 15, 'f' } };
 };
 
-}  // namespace ppp::types
+}  // namespace ppp::utils::fonts
 
-#endif  // PDFFONTINFO_H_
+#endif  // UTILS_PDFFONTINFOPARSER_H_

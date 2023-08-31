@@ -6,15 +6,16 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
+#include <cassert>  // assert
 #include <iostream>
 #include <string>
 #include <unordered_set>
 
 #include "./JsonlSerializer.h"
 #include "../utils/MathUtils.h"
+#include "../utils/PdfElementsUtils.h"
 #include "../utils/TextUtils.h"
 #include "../PdfDocument.h"
-#include "../PdfFontInfo.h"
 #include "../Types.h"
 
 using std::endl;
@@ -33,6 +34,7 @@ using ppp::types::PdfTextBlock;
 using ppp::types::PdfTextLine;
 using ppp::types::PdfWord;
 using ppp::types::SemanticRole;
+using ppp::utils::elements::getSemanticRoleName;
 using ppp::utils::math::round;
 using ppp::utils::text::escapeJson;
 
@@ -50,27 +52,27 @@ JsonlSerializer::~JsonlSerializer() = default;
 
 // _________________________________________________________________________________________________
 void JsonlSerializer::serializeToStream(const PdfDocument* doc,
-    const unordered_set<SemanticRole>& roles, const unordered_set<DocumentUnit>& units,
+    const unordered_set<SemanticRole>& roles, const unordered_set<PdfElementType>& units,
     ostream& out) const {
 
-  for (DocumentUnit unit : units) {
+  for (PdfElementType unit : units) {
     switch (unit) {
-      case DocumentUnit::PAGES:
+      case PdfElementType::PAGES:
         serializePages(doc, roles, out);
         break;
-      case DocumentUnit::CHARACTERS:
+      case PdfElementType::CHARACTERS:
         serializeCharacters(doc, roles, out);
         break;
-      case DocumentUnit::WORDS:
+      case PdfElementType::WORDS:
         serializeWords(doc, roles, out);
         break;
-      case DocumentUnit::TEXT_BLOCKS:
+      case PdfElementType::TEXT_BLOCKS:
         serializeTextBlocks(doc, roles, out);
         break;
-      case DocumentUnit::FIGURES:
+      case PdfElementType::FIGURES:
         serializeFigures(doc, roles, out);
         break;
-      case DocumentUnit::SHAPES:
+      case PdfElementType::SHAPES:
         serializeShapes(doc, roles, out);
         break;
       default:
@@ -260,7 +262,7 @@ void JsonlSerializer::serializeTextBlocks(const PdfDocument* doc,
         << "\"font\": \"" << block->fontName << "\", "
         << "\"fontSize\": " << block->fontSize << ", "
         << "\"text\": \"" << escapeJson(block->text) << "\", "
-        << "\"role\": \"" << ppp::types::getName(block->role) << "\", "
+        << "\"role\": \"" << getSemanticRoleName(block->role) << "\", "
         << "\"origin\": \"pdftotext++\""
         << "}"
         << endl;

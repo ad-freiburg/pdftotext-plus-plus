@@ -7,6 +7,7 @@
  */
 
 #include <algorithm>  // std::sort
+#include <cassert>  // assert
 #include <functional>  // std::bind
 #include <limits>  // std::numeric_limits
 #include <vector>

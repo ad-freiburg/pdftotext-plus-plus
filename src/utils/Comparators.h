@@ -9,6 +9,8 @@
 #ifndef UTILS_COMPARATORS_H_
 #define UTILS_COMPARATORS_H_
 
+#include <cassert>
+
 #include "./MathUtils.h"
 #include "../PdfDocument.h"
 

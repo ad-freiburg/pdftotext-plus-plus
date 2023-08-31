@@ -19,7 +19,7 @@
 using std::string;
 using std::vector;
 
-using ppp::types::DocumentUnit;
+using ppp::types::PdfElementType;
 using ppp::types::SemanticRole;
 using ppp::types::SerializationFormat;
 
@@ -64,7 +64,7 @@ void validate(boost::any& v, const vector<string>& values, SemanticRole* r, int)
  * po::value<DocumentUnit>(&unit)" when defining the command-line options, see
  * pdftotext++.cpp for an example.
  */
-void validate(boost::any& v, const vector<string>& values, DocumentUnit* u, int);  // NOLINT
+void validate(boost::any& v, const vector<string>& values, PdfElementType* u, int);  // NOLINT
 
 }  // namespace ppp::types
 

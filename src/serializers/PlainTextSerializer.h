@@ -55,7 +55,7 @@ class PlainTextSerializer : public Serializer {
    *   The stream to which the text should be written.
    */
   void serializeToStream(const PdfDocument* doc, const unordered_set<SemanticRole>& roles,
-      const unordered_set<DocumentUnit>& units, ostream& out) const;
+      const unordered_set<PdfElementType>& units, ostream& out) const;
 };
 
 }  // namespace ppp::serialization

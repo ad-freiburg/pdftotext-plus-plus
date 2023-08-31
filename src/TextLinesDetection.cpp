@@ -7,6 +7,7 @@
  */
 
 #include <algorithm>  // std::sort
+#include <cassert>  // assert
 #include <sstream>  // std::stringstream
 #include <string>
 #include <tuple>

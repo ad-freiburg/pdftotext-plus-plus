@@ -10,6 +10,7 @@
 #define UTILS_FIXEDCAPACITYPRIORITYQUEUE_H_
 
 #include <algorithm>  // std::partial_sort_copy
+#include <cassert>  // assert
 #include <queue>  // std::priority_queue
 #include <vector>
 

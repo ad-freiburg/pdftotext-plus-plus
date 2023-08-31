@@ -6,6 +6,7 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
+#include <cassert>  // assert
 #include <limits>  // std::numeric_limits
 
 #include "./PdfDocument.h"

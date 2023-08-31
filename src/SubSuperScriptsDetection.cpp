@@ -6,6 +6,8 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
+#include <cassert>  // assert
+
 #include "./Config.h"
 #include "./PdfDocument.h"
 #include "./SubSuperScriptsDetection.h"

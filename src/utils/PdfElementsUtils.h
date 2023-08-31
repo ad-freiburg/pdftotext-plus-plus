@@ -9,14 +9,20 @@
 #ifndef UTILS_PDFELEMENTSUTILS_H_
 #define UTILS_PDFELEMENTSUTILS_H_
 
+#include <string>
 #include <utility>  // std::pair
+#include <vector>
 
 #include "../PdfDocument.h"
 
 using std::pair;
+using std::string;
+using std::vector;
 
 using ppp::types::PdfElement;
+using ppp::types::PdfElementType;
 using ppp::types::PdfTextElement;
+using ppp::types::SerializationFormat;
 
 // =================================================================================================
 
@@ -26,7 +32,7 @@ using ppp::types::PdfTextElement;
 namespace ppp::utils::elements {
 
 /**
- * This method computes the horizontal gap between two page elements.
+ * This function computes the horizontal gap between two page elements.
  *
  * It first checks which of the two elements is the leftmost element, that is: which of the
  * elements has the minimum leftX. Let e1 be the leftmost element. The horizontal gap is then
@@ -54,7 +60,7 @@ namespace ppp::utils::elements {
 double computeHorizontalGap(const PdfElement* e1, const PdfElement* e2);
 
 /**
- * This method computes the vertical gap between two page elements.
+ * This function computes the vertical gap between two page elements.
  *
  * It first checks which of the two elements is the upper element, that is: which of the elements
  * has the minimum upperY. Let e1 be the upper element. The vertical gap is then computed as:
@@ -81,7 +87,7 @@ double computeHorizontalGap(const PdfElement* e1, const PdfElement* e2);
 double computeVerticalGap(const PdfElement* e1, const PdfElement* e2);
 
 /**
- * This method computes the overlap ratios between the intervals [s1, e1] and [s2, e2]. The
+ * This function computes the overlap ratios between the intervals [s1, e1] and [s2, e2]. The
  * returned value is a pair of doubles. The first double represents the percentage of the first
  * interval that is overlapped by the second interval. The second double represents the percentage
  * of the second interval that is overlapped by the first interval. Here are three examples of
@@ -117,10 +123,10 @@ double computeVerticalGap(const PdfElement* e1, const PdfElement* e2);
 pair<double, double> computeOverlapRatios(double s1, double e1, double s2, double e2);
 
 /**
- * This method computes the horizontal overlap ratios between the two given page elements, that is:
+ * This function computes the horizontal overlap ratios between the two given page elements, that is:
  * the overlap ratios between [elem1.leftX, elem1.rightX] and [elem2.leftX, elem2.rightX].
  * For more information about the concept behind overlap ratios, see the comment of the
- * computeOverlapRatios() method.
+ * computeOverlapRatios() function.
  *
  * @param elem1
  *    The first page element to process.
@@ -134,10 +140,10 @@ pair<double, double> computeOverlapRatios(double s1, double e1, double s2, doubl
 pair<double, double> computeXOverlapRatios(const PdfElement* elem1, const PdfElement* elem2);
 
 /**
- * This method computes the vertical overlap ratios between the two given page elements, that is:
+ * This function computes the vertical overlap ratios between the two given page elements, that is:
  * the overlap ratios between [elem1.upperY, elem1.lowerY] and [elem2.upperY, elem2.lowerY].
  * For more information about the concept behind overlap ratios, see the comment of the
- * computeOverlapRatios() method.
+ * computeOverlapRatios() function.
  *
  * @param elem1
  *    The first page element to process.
@@ -151,10 +157,10 @@ pair<double, double> computeXOverlapRatios(const PdfElement* elem1, const PdfEle
 pair<double, double> computeYOverlapRatios(const PdfElement* elem1, const PdfElement* elem2);
 
 /**
- * This method computes the maximum of the horizontal overlap ratios between the two given page
+ * This function computes the maximum of the horizontal overlap ratios between the two given page
  * elements, i.e: max(computeOverlapRatios(elem1.leftX, elem1.rightX, elem2.leftX, elem2.rightX)).
  * For more information about the concept behind overlap ratios, see the comment of the
- * computeOverlapRatios() method.
+ * computeOverlapRatios() function.
  *
  * @param elem1
  *    The first page element to process.
@@ -167,10 +173,10 @@ pair<double, double> computeYOverlapRatios(const PdfElement* elem1, const PdfEle
 double computeMaxXOverlapRatio(const PdfElement* elem1, const PdfElement* elem2);
 
 /**
- * This method computes the maximum of the vertical overlap ratios between the two given page
+ * This function computes the maximum of the vertical overlap ratios between the two given page
  * elements, i.e: max(computeOverlapRatios(elem1.upperY, elem1.lowerY, elem2.upperY, elem2.lowerY)).
  * For more information about the concept behind overlap ratios, see the comment of the
- * computeOverlapRatios() method.
+ * computeOverlapRatios() function.
  *
  * @param elem1
  *    The first page element to process.
@@ -183,12 +189,12 @@ double computeMaxXOverlapRatio(const PdfElement* elem1, const PdfElement* elem2)
 double computeMaxYOverlapRatio(const PdfElement* elem1, const PdfElement* elem2);
 
 /**
- * This method checks if the leftX values of the two given page elements are (approximately) equal.
+ * This function checks if the leftX values of the two given page elements are (approximately) equal.
  *
  * Whether or not the two values are considered equal depends on the given tolerance, which
  * represents the maximum allowed difference between the values.
  *
- * Formally, this method returns true if: abs(elem1.leftX - elem2.leftX) <= tolerance.
+ * Formally, this function returns true if: abs(elem1.leftX - elem2.leftX) <= tolerance.
  *
  * @param elem1
  *    The first page element to process.
@@ -203,12 +209,12 @@ double computeMaxYOverlapRatio(const PdfElement* elem1, const PdfElement* elem2)
 bool computeHasEqualLeftX(const PdfElement* elem1, const PdfElement* elem2, double tolerance);
 
 /**
- * This method checks if the upperY values of the two given page elements are (approximately) equal.
+ * This function checks if the upperY values of the two given page elements are (approximately) equal.
  *
  * Whether or not the two values are considered equal depends on the given tolerance, which
  * represents the maximum allowed difference between the values.
  *
- * Formally, this method returns true if: abs(elem1.upperY - elem2.upperY) <= tolerance.
+ * Formally, this function returns true if: abs(elem1.upperY - elem2.upperY) <= tolerance.
  *
  * @param elem1
  *    The first page element to process.
@@ -223,12 +229,12 @@ bool computeHasEqualLeftX(const PdfElement* elem1, const PdfElement* elem2, doub
 bool computeHasEqualUpperY(const PdfElement* elem1, const PdfElement* elem2, double tolerance);
 
 /**
- * This method checks if the rightX values of the two given page elements are (approximately) equal.
+ * This function checks if the rightX values of the two given page elements are (approximately) equal.
  *
  * Whether or not the two values are considered equal depends on the given tolerance, which
  * represents the maximum allowed difference between the values.
  *
- * Formally, this method returns true if: abs(elem1.rightX - elem2.rightX) <= tolerance.
+ * Formally, this function returns true if: abs(elem1.rightX - elem2.rightX) <= tolerance.
  *
  * @param elem1
  *    The first page element to process.
@@ -243,12 +249,12 @@ bool computeHasEqualUpperY(const PdfElement* elem1, const PdfElement* elem2, dou
 bool computeHasEqualRightX(const PdfElement* elem1, const PdfElement* elem2, double tolerance);
 
 /**
- * This method checks if the lowerY values of the two given page elements are (approximately) equal.
+ * This function checks if the lowerY values of the two given page elements are (approximately) equal.
  *
  * Whether or not the two values are considered equal depends on the given tolerance, which
  * represents the maximum allowed difference between the values.
  *
- * Formally, this method returns true if: abs(elem1.lowerY - elem2.lowerY) <= tolerance.
+ * Formally, this function returns true if: abs(elem1.lowerY - elem2.lowerY) <= tolerance.
  *
  * @param elem1
  *    The first page element to process.
@@ -265,10 +271,10 @@ bool computeHasEqualLowerY(const PdfElement* elem1, const PdfElement* elem2, dou
 // =================================================================================================
 
 /**
- * This method computes the offset of the leftX value of the first page element compared to the
+ * This function computes the offset of the leftX value of the first page element compared to the
  * leftX value of the second page element.
  *
- * Formally, this method computes elem1.leftX - elem2.leftX.
+ * Formally, this function computes elem1.leftX - elem2.leftX.
  *
  * @param elem1
  *   The first page element to process.
@@ -281,10 +287,10 @@ bool computeHasEqualLowerY(const PdfElement* elem1, const PdfElement* elem2, dou
 double computeLeftXOffset(const PdfElement* elem1, const PdfElement* elem2);
 
 /**
- * This method computes the offset of the rightX value of the first page element compared to the
+ * This function computes the offset of the rightX value of the first page element compared to the
  * rightX value of the second page element.
  *
- * Formally, this method computes elem1.rightX - elem2.rightX.
+ * Formally, this function computes elem1.rightX - elem2.rightX.
  *
  * @param elem1
  *   The first page element to process.
@@ -297,7 +303,7 @@ double computeLeftXOffset(const PdfElement* elem1, const PdfElement* elem2);
 double computeRightXOffset(const PdfElement* elem1, const PdfElement* elem2);
 
 /**
- * This method returns true if the given text elements have the same font.
+ * This function returns true if the given text elements have the same font.
  *
  * @param elem1
  *    The first text element to process.
@@ -310,12 +316,12 @@ double computeRightXOffset(const PdfElement* elem1, const PdfElement* elem2);
 bool computeHasEqualFont(const PdfTextElement* elem1, const PdfTextElement* elem2);
 
 /**
- * This method returns true if the given text elements have (approximately) the same font size.
+ * This function returns true if the given text elements have (approximately) the same font size.
  *
  * Whether or not the font sizes of the two elements are considered equal depends on
  * the given tolerance, which represents the maximum allowed difference between the font sizes.
  *
- * Formally, this method returns true if abs(elem1.fontSize - elem2.fontSize) <= tolerance.
+ * Formally, this function returns true if abs(elem1.fontSize - elem2.fontSize) <= tolerance.
  *
  * @param elem1
  *    The first element to process.
@@ -329,6 +335,107 @@ bool computeHasEqualFont(const PdfTextElement* elem1, const PdfTextElement* elem
  */
 bool computeHasEqualFontSize(const PdfTextElement* elem1, const PdfTextElement* elem2,
     double tolerance);
+
+// =================================================================================================
+// TODO(korzen): The following functions do not quite fit into this util. Consider whether it would
+// be better to move them to another util.
+
+/**
+ * This function returns a vector containing all PDF element types.
+ *
+ * @return
+ *    A vector containing all PDF element types.
+ */
+vector<PdfElementType> getPdfElementTypes();
+
+/**
+ * This function returns a string containing the names of all PDF element types, separated from
+ * each other by the given separator.
+ *
+ * @param separator
+ *    The string to use to separate the names of the PDF element types.
+ *
+ * @return
+ *    A string containing the names of all PDF element types.
+ */
+string getPdfElementTypesStr(const string& separator = ", ");
+
+/**
+ * This function returns the name of the given PDF element type.
+ *
+ * @param type
+ *    The element type.
+ *
+ * @return
+ *    The name of the PDF element type.
+ */
+string getPdfElementTypeName(PdfElementType type);
+
+// -------------------------------------------------------------------------------------------------
+
+/**
+ * This function returns a vector containing all serialization formats.
+ *
+ * @return
+ *    A vector containing all serialization formats.
+ */
+vector<SerializationFormat> getSerializationFormats();
+
+/**
+ * This function returns a string containing the names of all serialization formats, separated from
+ * each other by the given separator.
+ *
+ * @param separator
+ *    The string to use to separate the names of the serialization formats.
+ *
+ * @return
+ *    A string containing the names of all serialization formats.
+ */
+string getSerializationFormatsStr(const string& separator = ", ");
+
+/**
+ * This function returns the name of the given serialization format.
+ *
+ * @param format
+ *    The serialization format.
+ *
+ * @return
+ *    The name of the serialization format.
+ */
+string getSerializationFormatName(SerializationFormat format);
+
+// -------------------------------------------------------------------------------------------------
+
+/**
+ * This function returns a vector containing all semantic roles.
+ *
+ * @return
+ *    A vector containing all semantic roles.
+ */
+vector<SemanticRole> getSemanticRoles();
+
+/**
+ * This function returns a string containing the names of all semantic roles, separated from each
+ * other by the given separator.
+ *
+ * @param separator
+ *    The string to use to separate the names of the semantic roles.
+ *
+ * @return
+ *    A string containing the names of all semantic roles.
+ */
+string getSemanticRolesStr(const string& separator = ", ");
+
+/**
+ * This function returns the name of the given semantic role.
+ *
+ * @param role
+ *    The semantic role.
+ *
+ * @return
+ *    The name of the semantic role.
+ */
+string getSemanticRoleName(SemanticRole role);
 
 }  // namespace ppp::utils::elements
 

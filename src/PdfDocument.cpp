@@ -11,10 +11,12 @@
 
 #include "./PdfDocument.h"
 #include "./utils/MathUtils.h"
+#include "./utils/PdfElementsUtils.h"
 
 using std::string;
 using std::stringstream;
 
+using ppp::utils::elements::getSemanticRoleName;
 using ppp::utils::math::round;
 
 // =================================================================================================
@@ -393,7 +395,7 @@ string PdfTextBlock::toString() const {
   stringstream ss;
   ss << "PdfTextBlock("
      << "pos=" << pos->toString() << "; "
-     << "role=" << ppp::types::getName(role) << "; "
+     << "role=" << getSemanticRoleName(role) << "; "
      << "isCentered=" << isLinesCentered << "; "
      << "isEmphasized=" << isEmphasized << "; "
      << "text=\"" << text << "\")";

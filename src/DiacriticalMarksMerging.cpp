@@ -9,6 +9,7 @@
 #include <poppler/GlobalParams.h>
 #include <utf8proc.h>
 
+#include <cassert>  // assert
 #include <vector>
 
 #include "./DiacriticalMarksMerging.h"
