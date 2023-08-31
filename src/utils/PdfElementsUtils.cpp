@@ -13,7 +13,7 @@
 
 #include "./MathUtils.h"
 #include "./PdfElementsUtils.h"
-#include "../PdfDocument.h"
+#include "../Types.h"
 
 using std::make_pair;
 using std::pair;

@@ -12,7 +12,7 @@
 #include <vector>
 
 #include "../../src/Config.h"
-#include "../../src/PdfDocument.h"
+#include "../../src/Types.h"
 #include "../../src/PdfToTextPlusPlus.h"
 #include "../../src/utils/MathUtils.h"
 #include "../../src/utils/WordsDetectionUtils.h"

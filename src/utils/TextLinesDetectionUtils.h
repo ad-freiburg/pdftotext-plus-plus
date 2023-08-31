@@ -12,7 +12,7 @@
 #include <tuple>
 
 #include "../Config.h"
-#include "../PdfDocument.h"
+#include "../Types.h"
 
 using std::tuple;
 

@@ -16,7 +16,7 @@
 #include "./PdfElementsUtils.h"
 #include "./TextUtils.h"
 #include "./XYCut.h"
-#include "../PdfDocument.h"
+#include "../Types.h"
 
 using std::numeric_limits;
 using std::sort;

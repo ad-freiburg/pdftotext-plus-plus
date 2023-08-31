@@ -20,7 +20,6 @@
 #include "./DiacriticalMarksMerging.h"
 #include "./GlyphsStatisticsCalculation.h"
 #include "./PageSegmentation.h"
-#include "./PdfDocument.h"
 #include "./PdfParsing.h"
 #include "./PdfToTextPlusPlus.h"
 #include "./ReadingOrderDetection.h"

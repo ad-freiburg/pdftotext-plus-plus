@@ -15,8 +15,8 @@
 #include <vector>
 
 #include "./Config.h"
-#include "./PdfDocument.h"
 #include "./TextLinesDetection.h"
+#include "./Types.h"
 #include "./utils/Comparators.h"
 #include "./utils/Counter.h"
 #include "./utils/Log.h"

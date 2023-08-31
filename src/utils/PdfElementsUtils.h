@@ -13,7 +13,7 @@
 #include <utility>  // std::pair
 #include <vector>
 
-#include "../PdfDocument.h"
+#include "../Types.h"
 
 using std::pair;
 using std::string;
@@ -22,6 +22,7 @@ using std::vector;
 using ppp::types::PdfElement;
 using ppp::types::PdfElementType;
 using ppp::types::PdfTextElement;
+using ppp::types::SemanticRole;
 using ppp::types::SerializationFormat;
 
 // =================================================================================================

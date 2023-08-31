@@ -16,7 +16,6 @@
 #include <locale>  // std::wstring_convert
 
 #include "./Config.h"
-#include "./PdfDocument.h"
 #include "./Types.h"
 #include "./utils/Log.h"
 #include "./utils/PdfFontInfoParser.h"

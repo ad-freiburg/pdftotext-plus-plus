@@ -11,7 +11,7 @@
 #include <algorithm>  // std::sort
 #include <vector>
 
-#include "../../src/PdfDocument.h"
+#include "../../src/Types.h"
 #include "../../src/utils/Comparators.h"
 
 using std::sort;

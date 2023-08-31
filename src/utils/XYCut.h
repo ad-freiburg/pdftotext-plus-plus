@@ -12,7 +12,7 @@
 #include <functional>  // std::function
 #include <vector>
 
-#include "../PdfDocument.h"
+#include "../Types.h"
 
 using std::vector;
 

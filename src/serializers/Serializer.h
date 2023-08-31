@@ -13,7 +13,6 @@
 #include <string>
 #include <unordered_set>
 
-#include "../PdfDocument.h"
 #include "../Types.h"
 
 using std::ostream;

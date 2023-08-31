@@ -13,7 +13,6 @@
 #include <unordered_set>
 
 #include "./Serializer.h"
-#include "../PdfDocument.h"
 #include "../Types.h"
 
 using std::ostream;

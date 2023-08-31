@@ -9,7 +9,7 @@
 #include <cassert>  // assert
 #include <limits>  // std::numeric_limits
 
-#include "./PdfDocument.h"
+#include "./Types.h"
 #include "./WordsDetection.h"
 #include "./utils/Log.h"
 #include "./utils/MathUtils.h"

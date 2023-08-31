@@ -10,7 +10,7 @@
 #include <string>
 
 #include "./Config.h"
-#include "./PdfDocument.h"
+#include "./Types.h"
 #include "./WordsDehyphenation.h"
 
 using std::string;

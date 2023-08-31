@@ -14,7 +14,7 @@
 #include "./MathUtils.h"
 #include "./TextUtils.h"
 #include "./WordsDetectionUtils.h"
-#include "../PdfDocument.h"
+#include "../Types.h"
 
 using std::string;
 using std::vector;

@@ -13,7 +13,6 @@
 #include <unordered_set>
 
 #include "./PlainTextExtendedSerializer.h"
-#include "../PdfDocument.h"
 #include "../Types.h"
 #include "../utils/PdfElementsUtils.h"
 

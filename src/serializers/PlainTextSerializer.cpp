@@ -11,7 +11,6 @@
 #include <unordered_set>
 
 #include "./PlainTextSerializer.h"
-#include "../PdfDocument.h"
 #include "../Types.h"
 
 using std::endl;

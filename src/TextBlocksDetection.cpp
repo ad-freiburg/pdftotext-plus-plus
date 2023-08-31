@@ -12,8 +12,8 @@
 #include <vector>
 
 #include "./Config.h"
-#include "./PdfDocument.h"
 #include "./TextBlocksDetection.h"
+#include "./Types.h"
 #include "./utils/Log.h"
 #include "./utils/MathUtils.h"
 #include "./utils/PdfElementsUtils.h"

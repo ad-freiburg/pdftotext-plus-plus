@@ -19,7 +19,6 @@
 #include <vector>
 
 #include "./Config.h"
-#include "./PdfDocument.h"
 #include "./PdfDocumentVisualization.h"
 #include "./PdfParsing.h"
 #include "./Types.h"

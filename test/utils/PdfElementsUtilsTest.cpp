@@ -11,7 +11,7 @@
 #include <utility>  // std::pair
 
 #include "../../src/Config.h"
-#include "../../src/PdfDocument.h"
+#include "../../src/Types.h"
 #include "../../src/utils/PdfElementsUtils.h"
 
 using std::pair;

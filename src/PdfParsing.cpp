@@ -18,7 +18,6 @@
 #include <string>
 #include <utility>  // std::move
 
-#include "./PdfDocument.h"
 #include "./PdfParsing.h"
 #include "./Types.h"
 #include "./utils/CharMap.h"

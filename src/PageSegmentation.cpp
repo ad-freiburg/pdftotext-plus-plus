@@ -12,7 +12,7 @@
 
 #include "./Config.h"
 #include "./PageSegmentation.h"
-#include "./PdfDocument.h"
+#include "./Types.h"
 #include "./utils/Log.h"
 #include "./utils/MathUtils.h"
 #include "./utils/PageSegmentationUtils.h"

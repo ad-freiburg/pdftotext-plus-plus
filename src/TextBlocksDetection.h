@@ -13,7 +13,7 @@
 #include <unordered_set>
 
 #include "./Config.h"
-#include "./PdfDocument.h"
+#include "./Types.h"
 #include "./utils/Log.h"
 #include "./utils/TextBlocksDetectionUtils.h"
 #include "./utils/Trool.h"

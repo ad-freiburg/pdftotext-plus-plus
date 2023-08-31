@@ -12,7 +12,7 @@
 #include <vector>
 
 #include "../../src/Config.h"
-#include "../../src/PdfDocument.h"
+#include "../../src/Types.h"
 #include "../../src/utils/PageSegmentationUtils.h"
 
 using std::numeric_limits;

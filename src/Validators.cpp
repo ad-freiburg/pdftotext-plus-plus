@@ -19,6 +19,7 @@ using std::vector;
 
 using ppp::serialization::SERIALIZERS;
 using ppp::types::SerializationFormat;
+using ppp::types::SemanticRole;
 using ppp::types::PDF_ELEMENT_TYPE_NAMES;
 using ppp::types::SEMANTIC_ROLE_NAMES;
 using ppp::utils::elements::getSerializationFormatName;

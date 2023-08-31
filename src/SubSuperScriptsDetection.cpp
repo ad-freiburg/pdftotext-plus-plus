@@ -9,8 +9,8 @@
 #include <cassert>  // assert
 
 #include "./Config.h"
-#include "./PdfDocument.h"
 #include "./SubSuperScriptsDetection.h"
+#include "./Types.h"
 #include "./utils/Log.h"
 #include "./utils/MathUtils.h"
 

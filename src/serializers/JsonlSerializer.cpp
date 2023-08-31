@@ -15,7 +15,6 @@
 #include "../utils/MathUtils.h"
 #include "../utils/PdfElementsUtils.h"
 #include "../utils/TextUtils.h"
-#include "../PdfDocument.h"
 #include "../Types.h"
 
 using std::endl;

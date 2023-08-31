@@ -15,7 +15,7 @@
 #include "./MathUtils.h"
 #include "./PdfElementsUtils.h"
 #include "./TextLinesDetectionUtils.h"
-#include "../PdfDocument.h"
+#include "../Types.h"
 
 using std::make_tuple;
 using std::pair;

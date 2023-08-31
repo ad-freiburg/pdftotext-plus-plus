@@ -12,7 +12,7 @@
 #include "./PageSegmentationUtils.h"
 #include "./TextUtils.h"
 #include "../Config.h"
-#include "../PdfDocument.h"
+#include "../Types.h"
 
 using std::vector;
 
