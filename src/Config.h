@@ -17,7 +17,7 @@
 #include <utility>  // std::pair
 #include <vector>
 
-#include "./PdfDocument.h"
+#include "./Types.h"
 #include "./utils/Log.h"
 
 using std::make_pair;

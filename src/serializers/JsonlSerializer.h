@@ -13,7 +13,6 @@
 #include <unordered_set>
 
 #include "./Serializer.h"
-#include "../PdfDocument.h"
 #include "../Types.h"
 
 using std::ostream;
@@ -60,7 +59,7 @@ class JsonlSerializer : public Serializer {
    *   The stream to which the entries should be written.
    */
   void serializeToStream(const PdfDocument* doc, const unordered_set<SemanticRole>& roles,
-      const unordered_set<DocumentUnit>& units, ostream& out) const;
+      const unordered_set<PdfElementType>& units, ostream& out) const;
 
   /**
    * This method writes the information about the pages of the given PDF document to the given

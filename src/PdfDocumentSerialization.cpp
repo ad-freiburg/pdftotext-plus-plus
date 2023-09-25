@@ -10,10 +10,12 @@
 
 #include "./PdfDocumentSerialization.h"
 #include "./Types.h"
+#include "./utils/PdfElementsUtils.h"
 
 using std::string;
 
 using ppp::types::SerializationFormat;
+using ppp::utils::elements::getSerializationFormatName;
 
 // =================================================================================================
 
@@ -26,7 +28,7 @@ string getSerializationFormatChoicesStr() {
     if (resultStr.size() > 0) {
       resultStr += ", ";
     }
-    resultStr += ppp::types::getName(entry.first);
+    resultStr += getSerializationFormatName(entry.first);
   }
   return resultStr;
 }

@@ -13,14 +13,13 @@
 #include <string>
 #include <unordered_set>
 
-#include "../PdfDocument.h"
 #include "../Types.h"
 
 using std::ostream;
 using std::string;
 using std::unordered_set;
 
-using ppp::types::DocumentUnit;
+using ppp::types::PdfElementType;
 using ppp::types::PdfDocument;
 using ppp::types::SemanticRole;
 
@@ -51,7 +50,7 @@ class Serializer {
    *   NOTE: If specified as "-", the text is written to stdout.
    */
   void serialize(const PdfDocument* doc, const unordered_set<SemanticRole>& roles,
-      const unordered_set<DocumentUnit>& units, const string& targetPath) const;
+      const unordered_set<PdfElementType>& units, const string& targetPath) const;
 
  protected:
   /**
@@ -70,7 +69,7 @@ class Serializer {
    *   The stream to which the text should be written.
    */
   virtual void serializeToStream(const PdfDocument* doc, const unordered_set<SemanticRole>& roles,
-      const unordered_set<DocumentUnit>& units, ostream& out) const = 0;
+      const unordered_set<PdfElementType>& units, ostream& out) const = 0;
 };
 
 }  // namespace ppp::serialization

@@ -9,10 +9,11 @@
 #include <poppler/GlobalParams.h>
 #include <utf8proc.h>
 
+#include <cassert>  // assert
 #include <vector>
 
 #include "./DiacriticalMarksMerging.h"
-#include "./PdfDocument.h"
+#include "./Types.h"
 #include "./utils/Log.h"
 #include "./utils/MathUtils.h"
 #include "./utils/PdfElementsUtils.h"

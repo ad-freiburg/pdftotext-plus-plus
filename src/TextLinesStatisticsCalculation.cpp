@@ -6,11 +6,12 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
+#include <cassert>  // assert
 #include <iostream>  // std::endl
 #include <unordered_map>
 
-#include "./PdfDocument.h"
 #include "./TextLinesStatisticsCalculation.h"
+#include "./Types.h"
 #include "./utils/Counter.h"
 #include "./utils/Log.h"
 #include "./utils/MathUtils.h"

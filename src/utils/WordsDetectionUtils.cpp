@@ -6,6 +6,7 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
+#include <cassert>  // assert
 #include <string>
 #include <vector>
 
@@ -13,7 +14,7 @@
 #include "./MathUtils.h"
 #include "./TextUtils.h"
 #include "./WordsDetectionUtils.h"
-#include "../PdfDocument.h"
+#include "../Types.h"
 
 using std::string;
 using std::vector;

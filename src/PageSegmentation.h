@@ -12,7 +12,7 @@
 #include <vector>
 
 #include "./Config.h"
-#include "./PdfDocument.h"
+#include "./Types.h"
 #include "./utils/Log.h"
 #include "./utils/PageSegmentationUtils.h"
 #include "./utils/Trool.h"

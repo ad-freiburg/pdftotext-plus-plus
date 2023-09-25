@@ -6,9 +6,10 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
+#include <cassert>  // assert
 #include <iostream>  // std::endl
 
-#include "./PdfDocument.h"
+#include "./Types.h"
 #include "./WordsStatisticsCalculation.h"
 #include "./utils/Counter.h"
 #include "./utils/Log.h"

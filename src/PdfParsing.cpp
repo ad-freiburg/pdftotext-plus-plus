@@ -10,6 +10,7 @@
 #include <poppler/GfxState.h>
 #include <poppler/GlobalParams.h>
 
+#include <cassert>  // assert
 #include <cmath>  // fabs
 #include <limits>  // std::numeric_limits
 #include <memory>  // std::shared_ptr
@@ -17,12 +18,12 @@
 #include <string>
 #include <utility>  // std::move
 
-#include "./PdfDocument.h"
-#include "./PdfFontInfo.h"
 #include "./PdfParsing.h"
+#include "./Types.h"
 #include "./utils/CharMap.h"
 #include "./utils/Log.h"
 #include "./utils/MathUtils.h"
+#include "./utils/PdfFontInfoParser.h"
 #include "./utils/TextUtils.h"
 
 using std::dynamic_pointer_cast;
@@ -136,7 +137,7 @@ void PdfParsing::updateFont(GfxState* state) {
 
   // Check if the info about the current font was already computed. If not, compute it.
   if (_doc->fontInfos.count(fontName) == 0) {
-    _doc->fontInfos[fontName] = PdfFontInfo::create(state, _xref,
+    _doc->fontInfos[fontName] = _pdfFontInfoParser.parse(state, _xref,
         !_config.skipEmbeddedFontFilesParsing);
   }
   _fontInfo = _doc->fontInfos[fontName];

@@ -6,11 +6,11 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
+#include <cassert>  // assert
 #include <ostream>
 #include <unordered_set>
 
 #include "./PlainTextSerializer.h"
-#include "../PdfDocument.h"
 #include "../Types.h"
 
 using std::endl;
@@ -18,8 +18,8 @@ using std::find;
 using std::ostream;
 using std::unordered_set;
 
-using ppp::types::DocumentUnit;
 using ppp::types::PdfDocument;
+using ppp::types::PdfElementType;
 using ppp::types::PdfTextBlock;
 using ppp::types::PdfWord;
 using ppp::types::SemanticRole;
@@ -36,7 +36,7 @@ PlainTextSerializer::~PlainTextSerializer() = default;
 
 // _________________________________________________________________________________________________
 void PlainTextSerializer::serializeToStream(const PdfDocument* doc,
-    const unordered_set<SemanticRole>& roles, const unordered_set<DocumentUnit>& units,
+    const unordered_set<SemanticRole>& roles, const unordered_set<PdfElementType>& types,
     ostream& out) const {
   assert(doc);
 

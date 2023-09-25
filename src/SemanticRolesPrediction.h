@@ -17,7 +17,7 @@
 #include <unordered_map>
 
 #include "./Config.h"
-#include "./PdfDocument.h"
+#include "./Types.h"
 
 using std::codecvt_utf8_utf16;
 using std::string;

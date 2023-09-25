@@ -16,14 +16,15 @@
 #include <locale>  // std::wstring_convert
 
 #include "./Config.h"
-#include "./PdfDocument.h"
-#include "./PdfFontInfo.h"
+#include "./Types.h"
 #include "./utils/Log.h"
+#include "./utils/PdfFontInfoParser.h"
 
 using ppp::config::PdfParsingConfig;
 using ppp::types::PdfDocument;
 using ppp::types::PdfFontInfo;
 using ppp::types::PdfPage;
+using ppp::utils::fonts::PdfFontInfoParser;
 using ppp::utils::log::Logger;
 
 // =================================================================================================
@@ -250,6 +251,8 @@ class PdfParsing : public OutputDev {
   PdfDocument* _doc;
   // The configuration to use.
   PdfParsingConfig _config;
+  // The parser for parsing font files.
+  PdfFontInfoParser _pdfFontInfoParser;
   // The logger.
   Logger* _log;
 

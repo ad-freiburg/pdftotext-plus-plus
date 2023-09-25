@@ -7,14 +7,15 @@
  */
 
 #include <algorithm>  // std::sort
+#include <cassert>  // assert
 #include <functional>  // std::bind
 #include <limits>  // std::numeric_limits
 #include <vector>
 
 #include "./Config.h"
-#include "./PdfDocument.h"
 #include "./ReadingOrderDetection.h"
 #include "./SemanticRolesPrediction.h"
+#include "./Types.h"
 #include "./utils/MathUtils.h"
 #include "./utils/XYCut.h"
 
@@ -31,6 +32,7 @@ using ppp::types::PdfDocument;
 using ppp::types::PdfElement;
 using ppp::types::PdfNonTextElement;
 using ppp::types::PdfTextBlock;
+using ppp::types::SemanticRole;
 using ppp::utils::xCut;
 using ppp::utils::xyCut;
 using ppp::utils::yCut;

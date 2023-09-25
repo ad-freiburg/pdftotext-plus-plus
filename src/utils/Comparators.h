@@ -9,8 +9,10 @@
 #ifndef UTILS_COMPARATORS_H_
 #define UTILS_COMPARATORS_H_
 
+#include <cassert>  // assert
+
 #include "./MathUtils.h"
-#include "../PdfDocument.h"
+#include "../Types.h"
 
 using ppp::types::PdfElement;
 using ppp::utils::math::larger;

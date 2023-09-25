@@ -7,13 +7,14 @@
  */
 
 #include <algorithm>  // std::transform
+#include <cassert>  // assert
 #include <ostream>
 #include <string>
 #include <unordered_set>
 
 #include "./PlainTextExtendedSerializer.h"
-#include "../PdfDocument.h"
 #include "../Types.h"
+#include "../utils/PdfElementsUtils.h"
 
 using std::endl;
 using std::find;
@@ -22,11 +23,12 @@ using std::string;
 using std::transform;
 using std::unordered_set;
 
-using ppp::types::DocumentUnit;
+using ppp::types::PdfElementType;
 using ppp::types::PdfDocument;
 using ppp::types::PdfTextBlock;
 using ppp::types::PdfWord;
 using ppp::types::SemanticRole;
+using ppp::utils::elements::getSemanticRoleName;
 
 // =================================================================================================
 
@@ -40,7 +42,7 @@ PlainTextExtendedSerializer::~PlainTextExtendedSerializer() = default;
 
 // _________________________________________________________________________________________________
 void PlainTextExtendedSerializer::serializeToStream(const PdfDocument* doc,
-    const unordered_set<SemanticRole>& roles, const unordered_set<DocumentUnit>& units,
+    const unordered_set<SemanticRole>& roles, const unordered_set<PdfElementType>& units,
     ostream& out) const {
   assert(doc);
 
@@ -58,7 +60,7 @@ void PlainTextExtendedSerializer::serializeToStream(const PdfDocument* doc,
       }
 
       // Prefix each block with its semantic role.
-      string roleStr = ppp::types::getName(block->role);
+      string roleStr = getSemanticRoleName(block->role);
       transform(roleStr.begin(), roleStr.end(), roleStr.begin(), ::toupper);
       out << "[" << roleStr << "] ";
 

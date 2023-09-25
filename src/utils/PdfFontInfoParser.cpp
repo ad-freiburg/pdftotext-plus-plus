@@ -11,6 +11,7 @@
 #include <poppler/Object.h>
 #include <poppler/XRef.h>
 
+#include <cassert>  // assert
 #include <limits>
 #include <memory>  // std::shared_ptr
 #include <regex>
@@ -20,8 +21,9 @@
 #include <utility>  // std::make_tuple
 #include <vector>
 
-#include "./PdfFontInfo.h"
-#include "./utils/MathUtils.h"
+#include "./MathUtils.h"
+#include "./PdfFontInfoParser.h"
+#include "../Types.h"
 
 using std::istringstream;
 using std::make_tuple;
@@ -36,21 +38,19 @@ using std::stringstream;
 using std::unordered_map;
 using std::vector;
 
+using ppp::types::PdfFontInfo;
 using ppp::utils::math::maximum;
 using ppp::utils::math::minimum;
 
 // =================================================================================================
 
-namespace ppp::types {
+namespace ppp::utils::fonts {
 
 // _________________________________________________________________________________________________
-PdfFontInfo::PdfFontInfo() = default;
-
-// _________________________________________________________________________________________________
-PdfFontInfo::~PdfFontInfo() = default;
-
-// _________________________________________________________________________________________________
-PdfFontInfo* PdfFontInfo::create(const GfxState* state, XRef* xref, bool parseEmbeddedFontFiles) {
+PdfFontInfo* PdfFontInfoParser::parse(
+    const GfxState* state,
+    XRef* xref,
+    bool parseEmbeddedFontFiles) {
   assert(state);
   assert(xref);
 
@@ -865,4 +865,4 @@ void Type1FontFileParser::decrypt(const char* bytes, int numBytes, int r, int n,
   }
 }
 
-}  // namespace ppp::types
+}  // namespace ppp::utils::fonts

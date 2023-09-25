@@ -10,7 +10,7 @@
 #define GLYPHSSTATISTICSCALCULATION_H_
 
 #include "./Config.h"
-#include "./PdfDocument.h"
+#include "./Types.h"
 #include "./utils/Log.h"
 
 using ppp::config::GlyphsStatisticsCalculationConfig;

@@ -6,6 +6,7 @@
  * Modified under the Poppler project - http://poppler.freedesktop.org
  */
 
+#include <cassert>  // assert
 #include <stack>
 #include <tuple>
 #include <utility>  // std::pair
@@ -14,7 +15,7 @@
 #include "./MathUtils.h"
 #include "./PdfElementsUtils.h"
 #include "./TextLinesDetectionUtils.h"
-#include "../PdfDocument.h"
+#include "../Types.h"
 
 using std::make_tuple;
 using std::pair;

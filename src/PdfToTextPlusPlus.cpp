@@ -11,6 +11,7 @@
 #include <poppler/PDFDoc.h>
 #include <poppler/PDFDocFactory.h>
 
+#include <cassert>  // assert
 #include <chrono>  // std::chrono::high_resolution_clock, etc.
 #include <memory>  // std::unique_ptr
 #include <string>
@@ -19,7 +20,6 @@
 #include "./DiacriticalMarksMerging.h"
 #include "./GlyphsStatisticsCalculation.h"
 #include "./PageSegmentation.h"
-#include "./PdfDocument.h"
 #include "./PdfParsing.h"
 #include "./PdfToTextPlusPlus.h"
 #include "./ReadingOrderDetection.h"

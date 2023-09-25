@@ -19,11 +19,11 @@
 #include <vector>
 
 #include "./Config.h"
-#include "./PdfDocument.h"
 #include "./PdfDocumentVisualization.h"
 #include "./PdfParsing.h"
 #include "./Types.h"
 #include "./utils/MathUtils.h"
+#include "./utils/PdfElementsUtils.h"
 
 using std::make_unique;
 using std::move;
@@ -48,6 +48,7 @@ using ppp::types::PdfTextBlock;
 using ppp::types::PdfTextLine;
 using ppp::types::PdfWord;
 using ppp::types::SemanticRole;
+using ppp::utils::elements::getSemanticRoleName;
 using ppp::utils::math::smaller;
 
 // =================================================================================================
@@ -427,7 +428,7 @@ void PdfDocumentVisualization::drawTextBlockSemanticRoles(const vector<PdfTextBl
     annot->setDefaultAppearance(appearance);
 
     // Define the text of the annotation (= the semantic role).
-    annot->setContents(make_unique<GooString>(convertToUtf16(ppp::types::getName(block->role))));
+    annot->setContents(make_unique<GooString>(convertToUtf16(getSemanticRoleName(block->role))));
 
     // Remove the default border around the annotation.
     unique_ptr<AnnotBorder> border(new AnnotBorderArray());

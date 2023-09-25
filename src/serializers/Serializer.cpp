@@ -12,7 +12,6 @@
 #include <unordered_set>
 
 #include "./Serializer.h"
-#include "../PdfDocument.h"
 #include "../Types.h"
 
 using std::cerr;
@@ -22,8 +21,8 @@ using std::ofstream;
 using std::string;
 using std::unordered_set;
 
-using ppp::types::DocumentUnit;
 using ppp::types::PdfDocument;
+using ppp::types::PdfElementType;
 using ppp::types::SemanticRole;
 
 // =================================================================================================
@@ -31,12 +30,14 @@ using ppp::types::SemanticRole;
 namespace ppp::serialization {
 
 // _________________________________________________________________________________________________
-void Serializer::serialize(const PdfDocument* doc,
-    const unordered_set<SemanticRole>& roles, const unordered_set<DocumentUnit>& units,
+void Serializer::serialize(
+    const PdfDocument* doc,
+    const unordered_set<SemanticRole>& roles,
+    const unordered_set<PdfElementType>& types,
     const string& targetFilePath) const {
   // If the target file path is specified as "-", output the text to stdout.
   if (targetFilePath.size() == 1 && targetFilePath[0] == '-') {
-    serializeToStream(doc, roles, units, cout);
+    serializeToStream(doc, roles, types, cout);
     return;
   }
 
@@ -59,7 +60,7 @@ void Serializer::serialize(const PdfDocument* doc,
     return;
   }
 
-  serializeToStream(doc, roles, units, outFile);
+  serializeToStream(doc, roles, types, outFile);
   outFile.close();
 }
 
