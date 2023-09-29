@@ -14,6 +14,7 @@ VERSION = $(shell cat project.version)
 
 SRC_DIR = src
 UNIT_TEST_DIR = test
+E2E_TEST_DIR = e2e
 RESOURCES_DIR = resources
 USR_DIR = usr
 BUILD_DIR = build
@@ -71,10 +72,10 @@ CXX							= $(CXX_PROD)
 
 # ==================================================================================================
 
-.PHONY: help checkstyle compile-debug compile-prod compile test unit-test e2e-test install \
-  install-without-requirements clean release check-version set-version version packages apt-repo \
-	apt-repo/build-docker-image apt-repo/update apt-repo/server/start apt-repo/server/start/force \
-	apt-repo/server/stop requirements/checkstyle requirements/compile \
+.PHONY: help checkstyle compile-debug compile-prod compile test unit-test e2e-test e2e-analyze \
+  install install-without-requirements clean release check-version set-version version packages \
+	apt-repo apt-repo/build-docker-image apt-repo/update apt-repo/server/start \
+	apt-repo/server/start/force apt-repo/server/stop requirements/checkstyle requirements/compile \
 	requirements/test requirements/install requirements/packages
 
 # --------------------------------------------------------------------------------------------------
@@ -143,8 +144,14 @@ $(BUILD_DIR)/%Test.o: %Test.cpp $(SRC_HEADER_FILES)
 	@mkdir -p "$(dir $@)"
 	$(CXX_TEST) -c $< -o "$@" $(CXX_LIBS_TEST)
 
-e2e-test:
-	@python3 e2e/e2e.py --ppp $(abspath $(BUILD_DIR)/$(PROGRAM_NAME))
+e2e-test: $(MAIN_BINARY)
+	@python3 e2e/e2e.py run --ppp $(abspath $(BUILD_DIR)/$(MAIN_BINARY))
+
+e2e-analyze-latest:
+	@python3 e2e/e2e.py analyze --dir "[latest-test-result-dir]"
+
+e2e-analyze-latest-vscode:
+	@python3 e2e/e2e.py analyze --dir "[latest-test-result-dir]" --vscode
 
 # --------------------------------------------------------------------------------------------------
 # Installing.
@@ -175,6 +182,13 @@ clean:
 	rm -f $(UNIT_TEST_DIR)/*.synctex.gz $(UNIT_TEST_DIR)/**/*.synctex.gz
 	rm -f $(UNIT_TEST_DIR)/*.bbl $(UNIT_TEST_DIR)/**/*.bbl
 	rm -f $(UNIT_TEST_DIR)/*.blg $(UNIT_TEST_DIR)/**/*.blg
+	rm -f $(E2E_TEST_DIR)/*.aux $(E2E_TEST_DIR)/**/*.aux
+	rm -f $(E2E_TEST_DIR)/*.fdb_latexmk $(E2E_TEST_DIR)/**/*.fdb_latexmk
+	rm -f $(E2E_TEST_DIR)/*.fls $(E2E_TEST_DIR)/**/*.fls
+	rm -f $(E2E_TEST_DIR)/*.log $(E2E_TEST_DIR)/**/*.log
+	rm -f $(E2E_TEST_DIR)/*.synctex.gz $(E2E_TEST_DIR)/**/*.synctex.gz
+	rm -f $(E2E_TEST_DIR)/*.bbl $(E2E_TEST_DIR)/**/*.bbl
+	rm -f $(E2E_TEST_DIR)/*.blg $(E2E_TEST_DIR)/**/*.blg
 
 # --------------------------------------------------------------------------------------------------
 # Releasing.
@@ -259,9 +273,15 @@ requirements/compile:
 	@echo "$(INFO_STYLE)[$@] Installing requirements for 'make compile' ...$(N)"
 	./scripts/install_requirements.sh make_compile $(USR_DIR)
 
+requirements/test: requirements/unit-test requirements/e2e-test
+
 requirements/unit-test:
 	@echo "$(INFO_STYLE)[$@] Installing requirements for 'make unit-test' ...$(N)"
 	./scripts/install_requirements.sh make_unit_test $(USR_DIR)
+
+requirements/e2e-test:
+	@echo "$(INFO_STYLE)[$@] Installing requirements for 'make e2e-test' ...$(N)"
+	./scripts/install_requirements.sh make_e2e_test $(USR_DIR)
 
 requirements/install:
 	@echo "$(INFO_STYLE)[$@] Installing requirements for 'make install' ...$(N)"

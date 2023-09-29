@@ -33,7 +33,7 @@ DEFAULT_PPP_PATH: Path = Path("/usr/bin/pdftotext++")
 DEFAULT_CONFIG_FILE_PATH: Path = Path(__file__).parent / "config.yml"
 
 # The default path to the directory to scan for report files for analyzing.
-DEFAULT_REPORT_DIR_PATH: Path = Path(__file__).parent / "results"
+DEFAULT_REPORT_DIR_PATH: str = E2eAnalyzer.LATEST_TEST_RESULT_DIR
 
 # The default file name mask to be used to match the report files to analyze.
 DEFAULT_REPORT_FILE_MASK: Path = "*.report"
@@ -130,11 +130,13 @@ class E2ECommandLineInterface:
         # Add an argument for specifying the directory to scan for report files.
         parser.add_argument(
             "--dir",
-            metavar="<path>",
+            metavar="<str>",
             required=False,
             default=DEFAULT_REPORT_DIR_PATH,
-            type=lambda p: Path(p),
-            help="set the path to the directory to scan for report files"
+            help="set the path to the directory to scan for report files; the keyword "
+                 f"'{E2eAnalyzer.LATEST_TEST_RESULT_DIR}' is replaced by the path to the "
+                 "directory containing all report files produced during the latest execution of "
+                 "the 'run' subcommand."
         )
 
         # Add an argument for specifying the mask to be used to match report files.

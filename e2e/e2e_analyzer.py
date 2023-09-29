@@ -1,3 +1,4 @@
+import os
 import yaml
 
 from pathlib import Path
@@ -6,26 +7,36 @@ from e2e_utils import exec_command, sprintln, Style
 
 # ==================================================================================================
 
-
 class E2eAnalyzer:
     """
     Analyzes E2E test reports.
     """
 
-    def __init__(self, dir_path: Path, report_file_name_mask: str, vscode: bool = False) -> None:
+    # The keyword that can be passed to the first argument of the constructor instead of an
+    # actually existing directory path. It will be replaced by the path to the directory containing
+    # all report files produced during the *last* execution of the 'run' subcommand.
+    LATEST_TEST_RESULT_DIR: str = "[latest-test-result-dir]"
+
+    def __init__(self, dir_path: str, report_file_name_mask: str, vscode: bool = False) -> None:
         """
         Initializes E2eAnalyzer.
 
         Args:
             dir_path:
-                The path to the directory to recursively scan for report files.
+                The path to the directory to recursively scan for report files. If set to
+                {LATEST_TEST_RESULT_DIR}, it will be replaced by the path to the directory
+                containing all report files produced during the *last* execution of the 'run'
+                subcommand.
             file_mask:
                 The file mask to be used to match the report files, e.g.: "*.report".
             vscode:
                 Whether to open the expected and actual output of each failed test case in VS code
                 side-by-side, with the differences highlighted in color.
         """
-        self.dir_path = dir_path
+        if dir_path == E2eAnalyzer.LATEST_TEST_RESULT_DIR:
+            self.dir_path = self.detect_latest_test_result_dir()
+        else:
+            self.dir_path = Path(dir_path)
         self.report_file_name_mask = report_file_name_mask
         self.vscode = vscode
 
@@ -208,3 +219,27 @@ class E2eAnalyzer:
 
         if status > 0 or stderr:
             raise ValueError(f"{stderr} ({status})")
+
+    def detect_latest_test_result_dir(self) -> Path:
+        """
+        Returns the path to the directory containing all report files produced during
+        the *last* execution of the 'run' subcommand.
+        """
+
+        # TODO: Do not hardcode the path to the results directory.
+        # It can change at any time, by modifying the paths in the config file.
+        base_dir: Path = Path(__file__).parent / "results"
+
+        if not base_dir.exists():
+            sprintln("Error on detecting latest test result dir: "
+                     f"'{base_dir}' does not exist", Style.ERROR)
+            exit(1)
+
+        sub_dirs: list[Path] = list(base_dir.glob("*/"))
+
+        if not sub_dirs:
+            sprintln("Error on detecting latest test result dir: "
+                     f"'{base_dir}' does not contain subdirectories", Style.ERROR)
+            exit(1)
+
+        return max(sub_dirs, key=os.path.getmtime)

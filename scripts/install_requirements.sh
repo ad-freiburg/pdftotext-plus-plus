@@ -40,6 +40,15 @@ function make_unit_test() {
   install_gtest ${TARGET_DIR}
 }
 
+# This function installs all requirements needed to execute 'make e2e-test'.
+function make_e2e_test() {
+  local TARGET_DIR="${1:-.}"
+
+  apt-get update && apt-get install -y \
+    git \
+    python3
+}
+
 # This function installs all requirements needed to execute 'make install'.
 function make_install() {
   local TARGET_DIR="${1:-.}"
