@@ -1,0 +1,30 @@
+---
+paths:
+  # The relative path to the directory containing the PDF files to be processed by the E2E tests.
+  pdfs_dir: pdfs
+
+  # The relative path to the file containing the expected output of the test with slug
+  # {test-slug} when run on '{pdfs_dir}/{pdf_stem}.pdf'.
+  expected_output_file: ground_truth/{test_slug}/{pdf_stem}.eo
+
+  # The relative path to the file containing the actual output of the test with slug
+  # {test_slug} run on '{pdfs_dir}/{pdf_stem}.pdf'. The placeholder {e2e_run_date} stands for the
+  # start date (and time) of 'e2e.py run' and is included to separate the files of different runs.
+  actual_output_file: results/{e2e_run_date}/{test_slug}/{pdf_stem}.ao
+
+  # The relative path to the file containing the diff between the expected and actual output of the
+  # test with slug {test_slug} run on '{pdfs_dir}/{pdf_stem}.pdf'. The placeholder {e2e_run_date}
+  # stands for the start date (and time) of 'e2e.py run' and is included to separate the files of
+  # different runs.
+  diff_file: results/{e2e_run_date}/{test_slug}/{pdf_stem}.diff
+
+  # The relative path to the file containing some useful metadata about the (completed) test with
+  # slug {test_slug} run on '{pdfs_dir}/{pdf_stem}.pdf', for example: whether or not the test
+  # succeeded. The placeholder {e2e_run_date} stands for the start date (and time) of 'e2e.py run'
+  # and is included to separate the files of different runs.
+  report_file: results/{e2e_run_date}/{test_slug}/{pdf_stem}.report
+
+tests:
+  - name: "No options"
+    slug: no-options
+    ppp_args: "{pdf}"

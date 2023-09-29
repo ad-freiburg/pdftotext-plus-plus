@@ -33,8 +33,8 @@ function make_compile() {
   install_utf8proc ${TARGET_DIR}
 }
 
-# This function installs all requirements needed to execute 'make test'.
-function make_test() {
+# This function installs all requirements needed to execute 'make unit-test'.
+function make_unit_test() {
   local TARGET_DIR="${1:-.}"
   make_compile ${TARGET_DIR}
   install_gtest ${TARGET_DIR}

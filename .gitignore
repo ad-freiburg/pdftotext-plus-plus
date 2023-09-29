@@ -12,3 +12,5 @@ core
 *.fls
 *.fdb_latexmk
 github-token.local
+__pycache__
+e2e/results
