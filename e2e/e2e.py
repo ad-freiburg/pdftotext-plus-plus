@@ -12,14 +12,14 @@ from e2e_utils import sprintln, Style
 
 # ==================================================================================================
 
-DESCRIPTION: str = "A tool for running & analyzing the end-to-end tests of pdftotext++."
+DESCRIPTION: str = "A tool for running & analyzing the E2E tests of pdftotext++."
 
 USAGE: str = """e2e.py <command> [<options>]
 
 where <command> is one of:
 
-  run        runs the end-to-end tests of pdftotext++
-  analyze    analyzes E2E test reports
+  run        runs the E2E tests of pdftotext++
+  analyze    analyzes E2E test reports produced during previous test runs
 
 Type \"e2e.py <command> --help\" to read about the options of a specific subcommand.
 """
@@ -29,14 +29,14 @@ Type \"e2e.py <command> --help\" to read about the options of a specific subcomm
 # The default path to the pdftotext++ executable.
 DEFAULT_PPP_PATH: Path = Path("/usr/bin/pdftotext++")
 
-# The path to the default config file (e.g., specifying the tests to run).
+# The default path to the config file (e.g., specifying the tests to run).
 DEFAULT_CONFIG_FILE_PATH: Path = Path(__file__).parent / "config.yml"
 
-# The default path to the directory to scan for report files for analyzing.
+# The default path to the directory to scan for report files.
 DEFAULT_REPORT_DIR_PATH: str = E2eAnalyzer.LATEST_TEST_RESULT_DIR
 
-# The default file name mask to be used to match the report files to analyze.
-DEFAULT_REPORT_FILE_MASK: Path = "*.report"
+# The default file name mask to be used to match report files.
+DEFAULT_REPORT_FILE_NAME_MASK: Path = "*.report"
 
 # ==================================================================================================
 
@@ -44,16 +44,15 @@ DEFAULT_REPORT_FILE_MASK: Path = "*.report"
 class E2ECommandLineInterface:
     """
     A class for reading and processing the command line arguments of the different subcommands
-    available for running and analyzing the end-to-end tests of pdftotext++.
+    available for running and analyzing the E2E tests of pdftotext++.
     """
 
     def __init__(self) -> None:
         """
-        Reads and processes the command line arguments of the specified subcommand and invokes the
-        method of this class which is responsible for reading the subcommad-specific arguments.
+        Reads and processes the specified subcommand from the command line and invokes the method
+        which is responsible for reading and processing the arguments of that subcommand.
         """
 
-        # Create a command line arguments parser.
         parser = argparse.ArgumentParser(
             formatter_class=argparse.ArgumentDefaultsHelpFormatter,
             description=f"{Style.BOLD}{DESCRIPTION}{Style.NONE}",
@@ -63,29 +62,25 @@ class E2ECommandLineInterface:
         # Add an argument for specifying the subcommand to run.
         parser.add_argument("command", help="the command to run")
 
-        # Parse the subcommand.
         args = parser.parse_args(sys.argv[1:2])
 
-        # Abort if the specified subcommand does not exist.
         if not hasattr(self, args.command):
             sprintln(f"unrecognized command \"{args.command}\"", Style.ERROR)
             sprintln("type \"e2e.py --help\" to get usage info.")
             exit(1)
 
-        # Invoke the method with the same name as the subcommand.
         getattr(self, args.command)()
 
     # ==============================================================================================
 
     def run(self) -> None:
         """
-        Reads and processes the command line arguments specific to the subcommand "run".
+        Reads and processes the arguments of the subcommand "run".
         """
 
-        # Create a command line arguments parser.
         parser = argparse.ArgumentParser(
             formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-            description=f"{Style.BOLD}Runs the end-to-end tests of pdftotext++.{Style.NONE}",
+            description=f"{Style.BOLD}Runs the E2E tests of pdftotext++.{Style.NONE}",
             usage="e2e.py run [<options>]"
         )
 
@@ -99,7 +94,7 @@ class E2ECommandLineInterface:
             help="set the absolute path to the pdftotext++ executable"
         )
 
-        # Add an argument for specifying the path to the config file specifying the E2E tests.
+        # Add an argument for specifying the path to the config file (specifying the E2E tests).
         parser.add_argument(
             "--config",
             metavar="<path>",
@@ -109,21 +104,20 @@ class E2ECommandLineInterface:
             help="set the absolute path to the config file in which the tests to run are specified"
         )
 
-        # Parse the command line arguments.
         args = parser.parse_args(sys.argv[2:])
 
-        # Run the end-to-end tests.
         E2eRunner(ppp_path=args.ppp, config_file_path=args.config).run()
 
     def analyze(self) -> None:
         """
-        Analyzes the E2E test reports.
+        Reads and processes the arguments of the subcommand "analyze".
         """
 
-        # Create a command line arguments parser.
         parser = argparse.ArgumentParser(
             formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-            description=f"{Style.BOLD}Analyzes E2E test reports.{Style.NONE}",
+            description=f"{Style.BOLD}"
+                        "Analyzes E2E test reports produced during previous test runs."
+                        f"{Style.NONE}",
             usage="e2e.py analyze [<options>]"
         )
 
@@ -133,18 +127,17 @@ class E2ECommandLineInterface:
             metavar="<str>",
             required=False,
             default=DEFAULT_REPORT_DIR_PATH,
-            help="set the path to the directory to scan for report files; the keyword "
-                 f"'{E2eAnalyzer.LATEST_TEST_RESULT_DIR}' is replaced by the path to the "
-                 "directory containing all report files produced during the latest execution of "
-                 "the 'run' subcommand."
+            help="set the path to the directory to scan for report files; use the keyword "
+                 f"'{E2eAnalyzer.LATEST_TEST_RESULT_DIR}' to select the directory containing the "
+                 "report files produced during the *latest* test run."
         )
 
-        # Add an argument for specifying the mask to be used to match report files.
+        # Add an argument for specifying the file name mask to be used to match the report files.
         parser.add_argument(
             "--mask",
             metavar="<str>",
             required=False,
-            default=DEFAULT_REPORT_FILE_MASK,
+            default=DEFAULT_REPORT_FILE_NAME_MASK,
             help="set the file name mask to be used to match the report files to analyze"
         )
 
@@ -152,14 +145,12 @@ class E2ECommandLineInterface:
         parser.add_argument(
             "--vscode",
             action="store_true",
-            help="selects a mode that opens the expected and actual output of each failed test "
-                 "case in VS code side-by-side, with the differences highlighted in color"
+            help="select a mode that opens the expected and actual output of each failed test case "
+                 "in Visual Studio Code side-by-side, with the differences highlighted in color"
         )
 
-        # Parse the command line arguments.
         args = parser.parse_args(sys.argv[2:])
 
-        # Run the analyzer.
         E2eAnalyzer(
             dir_path=args.dir,
             report_file_name_mask=args.mask,

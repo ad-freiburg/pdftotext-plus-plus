@@ -1,21 +1,17 @@
 import yaml
 
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
-from e2e_utils import exec_command
-from e2e_utils import format
-from e2e_utils import read_config_file
-from e2e_utils import sprint, sprintln, Style
-from e2e_utils import wdiff
-from e2e_utils import E2eConfig, E2eTest, E2eTestCase
+from e2e_utils import exec_command, format, read_config_file, sprint, sprintln, wdiff
+from e2e_utils import E2eConfig, E2eTest, E2eTestCase, Style
 
 # ==================================================================================================
 
-# The format string for a datetime occurring in a logging message.
+# The format string to be used for formatting a datetime occurring in a logging message.
 DATETIME_LOG_FORMAT: str = "%Y-%m-%d %H:%M:%S.%f"
 
-# The format string for a datetime occurring in a filename.
+# The format string to be used for formatting a datetime occurring in a file path.
 DATETIME_FILENAME_FORMAT: str = "%Y-%m-%d_%H-%M-%S"
 
 # ==================================================================================================
@@ -23,7 +19,7 @@ DATETIME_FILENAME_FORMAT: str = "%Y-%m-%d_%H-%M-%S"
 
 class E2eRunner:
     """
-    Runs the end-to-end tests of pdftotext++.
+    Runs the E2E tests of pdftotext++.
     """
 
     def __init__(self, ppp_path: Path, config_file_path: Path) -> None:
@@ -34,22 +30,22 @@ class E2eRunner:
             ppp_path:
                 The (absolute) path to the pdftotext++ executable.
             config_file_path:
-                The (absolute) path to the config file in which the tests to run are specified.
+                The (absolute) path to the config file in which the E2E tests are specified.
         """
         self.ppp_path = ppp_path
         self.config_file_path = config_file_path
 
-        # The modification date of the pdftotext++ executable (for debugging purposes).
+        # The last modified date of the pdftotext++ executable (for debugging purposes).
         self.ppp_mod_date = None
         # The version of the pdftotext++ executable (for debugging purposes).
         self.ppp_version = None
-        # The current date and time (for debugging purposes).
+        # The datetime of starting the run() method (for debugging purposes).
         self.e2e_run_date = None
 
     def run(self) -> None:
         """
-        Validates the input parameters, reads the specified config file, and runs the end-to-end
-        tests specified in the config file.
+        Validates the input parameters, reads the config file, and runs the E2E tests specified in
+        the config file.
         """
 
         # Validate the path to the pdtotext++ executable.
@@ -82,7 +78,7 @@ class E2eRunner:
         ppp_version_cmd: str = f"{self.ppp_path} --version"
         status, self.ppp_version, stderr = exec_command(ppp_version_cmd, strip_output=True)
         if status > 0 or not self.ppp_version:
-            sprintln("Could not get the version of the pdftotext++ executable.", Style.ERROR)
+            sprintln("Could not get the version from the pdftotext++ executable.", Style.ERROR)
             sprintln(f"status: {status}")
             sprintln(f"stdout: {self.ppp_version}")
             sprintln(f"stderr: {stderr}")
@@ -90,11 +86,11 @@ class E2eRunner:
 
         # Get the current date.
         self.e2e_run_date = datetime.now()
+        e2e_run_date_str = self.e2e_run_date.strftime(DATETIME_LOG_FORMAT)
 
         # Print the preamble.
         sprintln("Running E2E tests", Style.TITLE)
         sprintln("=" * 100, Style.SEPARATOR_LINE)
-        e2e_run_date_str = self.e2e_run_date.strftime(DATETIME_LOG_FORMAT)
         sprintln(f"• start date:          {e2e_run_date_str}", Style.PREAMBLE)
         sprintln(f"• config file path:    {self.config_file_path.resolve()}", Style.PREAMBLE)
         sprintln(f"• pdftotext++ path:    {self.ppp_path.resolve()}", Style.PREAMBLE)
@@ -103,29 +99,32 @@ class E2eRunner:
         sprintln("=" * 100, Style.SEPARATOR_LINE)
 
         # Read the config file.
-        config = read_config_file(self.config_file_path)
+        try:
+            config = read_config_file(self.config_file_path)
+        except Exception as e:
+            sprintln("Could not read the config file.", Style.ERROR)
+            sprintln(f"error: {str(e)}")
+            exit(1)
 
-        # Run the tests specified in config.tests
+        # Run the E2E tests specified in config.tests.
         self.run_tests(config)
 
     def run_tests(self, config: E2eConfig) -> None:
         """
-        Runs the end-to-end tests specified in the given config.
+        Runs the E2E tests specified in the given config.
 
         Args:
             config:
-                The config. The tests to be run are expected to be stored in config.tests.
+                The config. The E2E tests to be run are expected to be stored in config.tests.
         """
 
         # Abort if there is no config.
         if not config:
-            sprintln("-" * 100, Style.SEPARATOR_LINE)
             sprintln("No config given.", Style.ERROR)
             exit(1)
 
         # Abort if there are no tests.
         if not config.tests:
-            sprintln("-" * 100, Style.SEPARATOR_LINE)
             sprintln("No tests given.", Style.ERROR)
             exit(1)
 
@@ -137,50 +136,48 @@ class E2eRunner:
 
         for i, test in enumerate(config.tests):
             name: str = test.name
-            num = f"[{i+1}/{len(config.tests)}] "
+            pre = f"[{i+1}/{len(config.tests)}] "
 
             # Detect the test cases of the test.
             try:
                 cases: list[E2eTestCase] = self.detect_test_cases(config, test)
             except Exception as e:
-                sprintln(f"{num}Skipped test '{name}' (error on detecting test cases)", Style.WARN)
+                sprintln(f"{pre}Skipped test '{name}' (error on detecting test cases)", Style.WARN)
                 sprintln(f"error: {str(e)}")
                 continue
 
             if not cases:
-                sprintln(f"{num}Skipped test '{name}' (no test cases detected)", Style.WARN)
+                sprintln(f"{pre}Skipped test '{name}' (no test cases detected)", Style.WARN)
                 continue
 
-            sprintln(f"{num}Running test '{name}'...", Style.TASK_HEADING)
+            sprintln(f"{pre}Running test '{name}'...", Style.TASK_HEADING)
             num_cases += len(cases)
 
-            # Run the test cases.
+            # Run the test cases of the test.
             for j, case in enumerate(cases):
-                case_heading = f" • case {j + 1}: {case.cmd_short} "
-                sprint(case_heading, flush=True)
+                head = f" • case {j + 1}: {case.cmd_short} "
+                sprint(head, flush=True)
 
                 # Evaluate the test case.
                 try:
-                    num_inserts, num_deletes = self.evaluate_test_case(case)
+                    num_ins, num_dels = self.evaluate_test_case(case)
                 except Exception as e:
-                    sprintln(f"\r{case_heading}[EXCEPTION] {str(e)}", Style.EXCEPTION)
+                    sprintln(f"\r{head}[EXCEPTION] {str(e)}", Style.EXCEPTION)
                     num_cases_exceptions += 1
                     continue
 
-                ok = (num_inserts == 0 and num_deletes == 0)
-                if not ok:
-                    sprintln(f"\r{case_heading}[FAILURE] "
-                             f" {num_inserts} inserts, {num_deletes} deletions", Style.ERROR)
+                if num_ins > 0 or num_dels > 0:
+                    sprintln(f"\r{head}[FAILED] {num_ins} inserts, {num_dels} deletes", Style.ERROR)
                     num_cases_failures += 1
                     continue
 
-                sprintln(f"\r{case_heading}[OK]", Style.SUCCESS)
+                sprintln(f"\r{head}[OK]", Style.SUCCESS)
                 num_cases_passed += 1
 
             if i < len(config.tests) - 1:
                 sprintln("-" * 100, Style.SEPARATOR_LINE)
 
-        # Print a summary of the executed tests.
+        # Print a summary of the executed test cases.
         sprintln("=" * 100, Style.SEPARATOR_LINE)
         sprintln(f"number of test cases: {num_cases} "
                  f"(skipped: {num_cases_skipped};"
@@ -189,16 +186,18 @@ class E2eRunner:
                  f" failures: {num_cases_failures})", Style.SUMMARY)
         sprint("")
 
+    # ==============================================================================================
+
     def detect_test_cases(self, config: E2eConfig, test: E2eTest) -> list[E2eTestCase]:
         """
-        Iterates through the PDF files stored in the directory defined by config.pdfs_dir_path.
-        For each PDF file, checks if the file defined by test.expected_output_file_path_pattern
+        Scans the directory {config.paths.pdfs_dir} for PDF files. For each detected PDF file,
+        checks if an expected output file, defined by {test.expected_output_file_path_pattern},
         exists. For each detected (PDF file, expected output file) pair, creates an E2eTestCase
         object and appends it to the result list.
 
         Args:
             config:
-                The E2E config.
+                The E2E test config.
             test:
                 The test for which to detect the test cases.
 
@@ -211,7 +210,7 @@ class E2eRunner:
             raise ValueError("No config given.")
 
         if not config.pdfs_dir_path:
-            raise ValueError("No path to a PDF directory given.")
+            raise ValueError("The config does not contain a path to a PDF directory.")
 
         if not test:
             raise ValueError("No test given.")
@@ -234,19 +233,19 @@ class E2eRunner:
         if not test.report_file_path_pattern:
             raise ValueError("No report file path pattern given.")
 
-        cases: list[E2eTestCase] = []
         e2e_run_date_str: str = self.e2e_run_date.strftime(DATETIME_FILENAME_FORMAT)
 
         # Detect (PDF file, expected output file) pairs.
-        pdf: Path
+        cases: list[E2eTestCase] = []
         for pdf in config.pdfs_dir_path.glob("*.[pP][dD][fF]"):
+            # Define the path to the expected output file.
             expected_output_file_path = Path(format(
                 test.expected_output_file_path_pattern,
                 test_slug=test.slug,
                 pdf_stem=pdf.stem
             ))
 
-            # Skip the PDF if no expected output file exists for the current test and PDF file.
+            # Skip the PDF if no expected output file exists.
             if not expected_output_file_path.exists():
                 continue
 
@@ -256,7 +255,7 @@ class E2eRunner:
             case.cmd = f"{self.ppp_path} {format(test.ppp_args_pattern, pdf=pdf)}"
             case.cmd_short = f"{self.ppp_path.name} {format(test.ppp_args_pattern, pdf=pdf.name)}"
 
-            # Define the path to the file into which to write the output produced by case.cmd.
+            # Define the path to the file into which to write the actual output of {case.cmd}.
             case.actual_output_file_path = Path(format(
                 test.actual_output_file_path_pattern,
                 e2e_run_date=e2e_run_date_str,
@@ -264,8 +263,7 @@ class E2eRunner:
                 pdf_stem=pdf.stem
             ))
 
-            # Define the path to the file into which to write the diff between the expected and the
-            # actual output.
+            # Define the path to the file into which to write the output produced by diff.
             case.diff_file_path = Path(format(
                 test.diff_file_path_pattern,
                 e2e_run_date=e2e_run_date_str,
@@ -273,8 +271,7 @@ class E2eRunner:
                 pdf_stem=pdf.stem
             ))
 
-            # Define the path to the file into which to write the report (containing metadata about
-            # the test case).
+            # Define the path to the file into which to write the report.
             case.report_file_path = Path(format(
                 test.report_file_path_pattern,
                 e2e_run_date=e2e_run_date_str,
@@ -300,13 +297,12 @@ class E2eRunner:
         Returns:
             A pair (num_inserts, num_deletes), where {num_inserts} is the number of insertions and
             {num_deletes} is the number of deletions necessary to transform the actual output
-            (produced by case.cmd) into the expected output.
+            (produced by {case.cmd}) to the expected output.
         """
-        # Run case.cmd to get the actual output.
+        # Run {case.cmd} to get the actual output.
         status, actual_output, stderr = exec_command(case.cmd)
-
         if status > 0 or stderr:
-            raise ValueError(f"Error on running case.cmd: {stderr} ({status})")
+            raise ValueError(f"Error on running \"{case.cmd_short}\": {stderr} ({status})")
 
         # Write the actual output to file.
         case.actual_output_file_path.parent.mkdir(parents=True, exist_ok=True)
@@ -323,15 +319,14 @@ class E2eRunner:
         # Create the report and write it to file.
         report = self.create_test_case_report(case)
         case.report_file_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(case.report_file_path, "w") as stream:
-            yaml.dump(report, stream)
+        case.report_file_path.write_text(yaml.dump(report))
 
         return case.num_inserts, case.num_deletes
 
     def create_test_case_report(self, case: E2eTestCase) -> dict:
         """
-        Creates a dictionary with metadata about the given test case (for example: whether or
-        not the test case succeeded or the pdftotext++ command executed by the test case).
+        Creates a dictionary containing metadata about the given test case (for example: whether or
+        not the test case succeeded, or the pdftotext++ command executed by the test case).
 
         Args:
             case:

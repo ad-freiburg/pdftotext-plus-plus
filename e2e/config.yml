@@ -1,30 +1,36 @@
+# In the following we use the following notation to refer to a particular test case:
+#
+# TEST_CASE(<test-slug>, <pdf-path>)
+#
+# - "<test-slug>" stands for the slug of a test (defined in the 'tests' section of this config) and
+#   refers to the test to which the test case belongs
+# - "<pdf-path>" is the path to the PDF file to be processed by the test case
+
 ---
 paths:
-  # The relative path to the directory containing the PDF files to be processed by the E2E tests.
+  # The (relative) path to the directory containing the PDF files to be processed.
   pdfs_dir: pdfs
 
-  # The relative path to the file containing the expected output of the test with slug
-  # {test-slug} when run on '{pdfs_dir}/{pdf_stem}.pdf'.
+  # The (relative) path to the file containing the expected output of the pdftotext++ command
+  # behind TEST_CASE({test_slug}, {pdfs_dir}/{pdf_stem}.pdf).
   expected_output_file: ground_truth/{test_slug}/{pdf_stem}.eo
 
-  # The relative path to the file containing the actual output of the test with slug
-  # {test_slug} run on '{pdfs_dir}/{pdf_stem}.pdf'. The placeholder {e2e_run_date} stands for the
-  # start date (and time) of 'e2e.py run' and is included to separate the files of different runs.
+  # The (relative) path to the file containing the actual output produced by the pdftotext++
+  # command behind TEST_CASE({test_slug}, {pdfs_dir}/{pdf_stem}.pdf).
+  # The placeholder '{e2e_run_date}' stands for the start date and time of 'e2e.py run' and is used
+  # to store the result files of different test runs in separate folders.
   actual_output_file: results/{e2e_run_date}/{test_slug}/{pdf_stem}.ao
 
-  # The relative path to the file containing the diff between the expected and actual output of the
-  # test with slug {test_slug} run on '{pdfs_dir}/{pdf_stem}.pdf'. The placeholder {e2e_run_date}
-  # stands for the start date (and time) of 'e2e.py run' and is included to separate the files of
-  # different runs.
+  # The (relative) path to the file containing the output produced by the 'diff' command used to
+  # compare the expected and actual output of TEST_CASE({test_slug}, {pdfs_dir}/{pdf_stem}.pdf).
   diff_file: results/{e2e_run_date}/{test_slug}/{pdf_stem}.diff
 
-  # The relative path to the file containing some useful metadata about the (completed) test with
-  # slug {test_slug} run on '{pdfs_dir}/{pdf_stem}.pdf', for example: whether or not the test
-  # succeeded. The placeholder {e2e_run_date} stands for the start date (and time) of 'e2e.py run'
-  # and is included to separate the files of different runs.
+  # The (relative) path to the file containing some useful metadata about the (completed)
+  # TEST_CASE({test_slug}, {pdfs_dir}/{pdf_stem}.pdf), for example: whether or not the test case
+  # succeeded, or the path to the processed PDF file.
   report_file: results/{e2e_run_date}/{test_slug}/{pdf_stem}.report
 
 tests:
-  - name: "No options"
+  - name: "Test pdftotext++ without options"
     slug: no-options
     ppp_args: "{pdf}"

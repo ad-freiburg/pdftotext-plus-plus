@@ -72,11 +72,12 @@ CXX							= $(CXX_PROD)
 
 # ==================================================================================================
 
-.PHONY: help checkstyle compile-debug compile-prod compile test unit-test e2e-test e2e-analyze \
-  install install-without-requirements clean release check-version set-version version packages \
-	apt-repo apt-repo/build-docker-image apt-repo/update apt-repo/server/start \
-	apt-repo/server/start/force apt-repo/server/stop requirements/checkstyle requirements/compile \
-	requirements/test requirements/install requirements/packages
+.PHONY: help checkstyle compile-debug compile-prod compile test unit-test e2e-test \
+  e2e-analyze-latest e2e-analyze-vscode install install-without-requirements clean release \
+	check-version set-version version packages apt-repo apt-repo/build-docker-image \
+	apt-repo/update apt-repo/server/start apt-repo/server/start/force apt-repo/server/stop \
+	requirements/checkstyle requirements/compile requirements/test requirements/install \
+	requirements/packages
 
 # --------------------------------------------------------------------------------------------------
 # Help.
@@ -145,13 +146,16 @@ $(BUILD_DIR)/%Test.o: %Test.cpp $(SRC_HEADER_FILES)
 	$(CXX_TEST) -c $< -o "$@" $(CXX_LIBS_TEST)
 
 e2e-test: $(MAIN_BINARY)
-	@python3 e2e/e2e.py run --ppp $(abspath $(BUILD_DIR)/$(MAIN_BINARY))
+	@python3 $(E2E_TEST_DIR)/e2e.py run --ppp $(abspath $(BUILD_DIR)/$(MAIN_BINARY))
 
-e2e-analyze-latest:
-	@python3 e2e/e2e.py analyze --dir "[latest-test-result-dir]"
+e2e-analyze:
+	@python3 $(E2E_TEST_DIR)/e2e.py analyze --dir "[latest-test-result-dir]"
 
-e2e-analyze-latest-vscode:
-	@python3 e2e/e2e.py analyze --dir "[latest-test-result-dir]" --vscode
+e2e-analyze-in-vscode:
+	@python3 $(E2E_TEST_DIR)/e2e.py analyze --dir "[latest-test-result-dir]" --vscode
+
+e2e-test-pdfs:
+	cd $(E2E_TEST_DIR)/pdfs && latexmk *.tex && latexmk -c
 
 # --------------------------------------------------------------------------------------------------
 # Installing.

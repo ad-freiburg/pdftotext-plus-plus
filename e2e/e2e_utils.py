@@ -18,32 +18,32 @@ class E2eTestCase:
     cmd: str = None
 
     # The pdftotext++ command to be executed by this test case, with the pdftotext++ executable and
-    # the PDF file specified by their file names (and not their fully qualified file paths like in
-    # {cmd}). This is useful for debugging purposes.
+    # the PDF file specified only by their file names (and not their fully qualified file paths
+    # like in {cmd}). This is useful for debugging purposes.
     cmd_short: str = None
 
-    # The absolute path to the PDF file to be processed by this test case.
+    # The (absolute) path to the PDF file to be processed by this test case.
     pdf_file_path: Path = None
 
-    # The absolute path to the file containing the expected output for this test case.
+    # The (absolute) path to the file containing the expected output for this test case.
     expected_output_file_path: Path = None
 
-    # The absolute path to the file into which to write the output produced by {cmd}.
+    # The (absolute) path to the file into which to write the output produced by {cmd}.
     actual_output_file_path: Path = None
 
-    # The absolute path to the file into which to write the diff between expected and actual output.
+    # The (absolute) path to the file into which to write {diff_result}.
     diff_file_path: Path = None
 
-    # The absolute path to the file into which to write the report after the test case completed.
+    # The (absolute) path to the file into which to write the report after the test case completed.
     report_file_path: Path = None
 
-    # The diff result between the expected and actual output
+    # The diff result between the expected and the actual output.
     diff_result: str = None
 
-    # The number of insertions necessary to translate the actual output into the expected output.
+    # The number of insertions necessary to transform the actual output into the expected output.
     num_inserts: int = None
 
-    # The number of deletions necessary to translate the actual output into the expected output.
+    # The number of deletions necessary to transform the actual output into the expected output.
     num_deletes: int = None
 
 
@@ -98,9 +98,9 @@ class E2eConfig:
     """
 
     # The path to the directory containing the PDF files to be processed by the E2E tests.
-    pdfs_dir_path: str = None
+    pdfs_dir_path: Path = None
 
-    # The specification of the tests to be executed.
+    # The specification of the E2E tests to be executed.
     tests: list[E2eTest] = None
 
 # ==================================================================================================
@@ -140,27 +140,26 @@ def read_config_file(config_file_path: Path) -> E2eConfig:
         return path
 
     # Load the config file.
-    with open(config_file_path, "r") as stream:
-        yml = yaml.safe_load(stream)
+    yml = yaml.safe_load(config_file_path.read_text())
 
-        config = E2eConfig()
-        config.pdfs_dir_path = Path(to_abs(yml["paths"]["pdfs_dir"]))
-        config.tests = []
+    config = E2eConfig()
+    config.pdfs_dir_path = Path(to_abs(yml["paths"]["pdfs_dir"]))
+    config.tests = []
 
-        # Read the tests.
-        for t in yml["tests"]:
-            test = E2eTest()
-            test.name = t["name"]
-            test.slug = t["slug"]
-            test.ppp_args_pattern = t["ppp_args"]
-            test.expected_output_file_path_pattern = to_abs(yml["paths"]["expected_output_file"])
-            test.actual_output_file_path_pattern = to_abs(yml["paths"]["actual_output_file"])
-            test.diff_file_path_pattern = to_abs(yml["paths"]["diff_file"])
-            test.report_file_path_pattern = to_abs(yml["paths"]["report_file"])
+    # Read the tests.
+    for t in yml["tests"]:
+        test = E2eTest()
+        test.name = t["name"]
+        test.slug = t["slug"]
+        test.ppp_args_pattern = t["ppp_args"]
+        test.expected_output_file_path_pattern = to_abs(yml["paths"]["expected_output_file"])
+        test.actual_output_file_path_pattern = to_abs(yml["paths"]["actual_output_file"])
+        test.diff_file_path_pattern = to_abs(yml["paths"]["diff_file"])
+        test.report_file_path_pattern = to_abs(yml["paths"]["report_file"])
 
-            config.tests.append(test)
+        config.tests.append(test)
 
-        return config
+    return config
 
 # ==================================================================================================
 # Logging.
