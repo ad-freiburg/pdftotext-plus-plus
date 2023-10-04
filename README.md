@@ -12,6 +12,9 @@
   <a href="https://github.com/ad-freiburg/pdftotext-plus-plus/actions/workflows/unit_test.yml">
     <img src="https://github.com/ad-freiburg/pdftotext-plus-plus/actions/workflows/unit_test.yml/badge.svg">
   </a>
+  <a href="https://github.com/ad-freiburg/pdftotext-plus-plus/actions/workflows/e2e_test.yml">
+    <img src="https://github.com/ad-freiburg/pdftotext-plus-plus/actions/workflows/e2e_test.yml/badge.svg">
+  </a>
 </p>
 
 <p align="center">
