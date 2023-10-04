@@ -33,11 +33,20 @@ function make_compile() {
   install_utf8proc ${TARGET_DIR}
 }
 
-# This function installs all requirements needed to execute 'make test'.
-function make_test() {
+# This function installs all requirements needed to execute 'make unit-test'.
+function make_unit_test() {
   local TARGET_DIR="${1:-.}"
   make_compile ${TARGET_DIR}
   install_gtest ${TARGET_DIR}
+}
+
+# This function installs all requirements needed to execute 'make e2e-test'.
+function make_e2e_test() {
+  local TARGET_DIR="${1:-.}"
+
+  apt-get update && apt-get install -y \
+    git \
+    python3
 }
 
 # This function installs all requirements needed to execute 'make install'.

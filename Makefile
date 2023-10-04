@@ -13,7 +13,8 @@ VERSION = $(shell cat project.version)
 # Paths to important files and directories.
 
 SRC_DIR = src
-TEST_DIR = test
+UNIT_TEST_DIR = test
+E2E_TEST_DIR = e2e
 RESOURCES_DIR = resources
 USR_DIR = usr
 BUILD_DIR = build
@@ -26,8 +27,8 @@ SRC_HEADER_FILES = $(wildcard $(SRC_DIR)/*.h $(SRC_DIR)/**/*.h)
 SRC_CPP_FILES = $(filter-out %$(MAIN_CPP_FILE), $(wildcard $(SRC_DIR)/*.cpp $(SRC_DIR)/**/*.cpp))
 SRC_OBJECT_FILES = $(SRC_CPP_FILES:%.cpp=$(BUILD_DIR)/%.o)
 
-TEST_CPP_FILES = $(wildcard $(TEST_DIR)/*Test.cpp $(TEST_DIR)/**/*Test.cpp)
-TEST_BINARIES = $(basename $(TEST_CPP_FILES:%.cpp=$(BUILD_DIR)/%.o))
+UNIT_TEST_CPP_FILES = $(wildcard $(UNIT_TEST_DIR)/*Test.cpp $(UNIT_TEST_DIR)/**/*Test.cpp)
+UNIT_TEST_BINARIES = $(basename $(UNIT_TEST_CPP_FILES:%.cpp=$(BUILD_DIR)/%.o))
 
 SEMANTIC_ROLES_DETECTION_MODELS_DIR=$(RESOURCES_DIR)/models/2021-08-30_model-3K-documents
 
@@ -71,11 +72,12 @@ CXX							= $(CXX_PROD)
 
 # ==================================================================================================
 
-.PHONY: help checkstyle compile-debug compile-prod compile test install \
-  install-without-requirements clean release check-version set-version version packages apt-repo \
-	apt-repo/build-docker-image apt-repo/update apt-repo/server/start apt-repo/server/start/force \
-	apt-repo/server/stop requirements/checkstyle requirements/compile \
-	requirements/test requirements/install requirements/packages
+.PHONY: help checkstyle compile-debug compile-prod compile test unit-test e2e-test \
+  e2e-analyze-latest e2e-analyze-vscode install install-without-requirements clean release \
+	check-version set-version version packages apt-repo apt-repo/build-docker-image \
+	apt-repo/update apt-repo/server/start apt-repo/server/start/force apt-repo/server/stop \
+	requirements/checkstyle requirements/compile requirements/test requirements/install \
+	requirements/packages
 
 # --------------------------------------------------------------------------------------------------
 # Help.
@@ -94,7 +96,7 @@ checkstyle:
 	python3 cpplint.py --repository="$(SRC_DIR)" "$(SRC_DIR)"/*.cpp "$(SRC_DIR)"/**/*.cpp
 
 	@echo "$(INFO_STYLE)[$@] Checking style of test files ...$(N)"
-	python3 cpplint.py --repository="$(TEST_DIR)" "$(TEST_DIR)"/*.cpp "$(TEST_DIR)"/**/*.cpp
+	python3 cpplint.py --repository="$(UNIT_TEST_DIR)" "$(UNIT_TEST_DIR)"/*.cpp "$(UNIT_TEST_DIR)"/**/*.cpp
 
 # --------------------------------------------------------------------------------------------------
 # Compiling.
@@ -124,15 +126,17 @@ $(BUILD_DIR)/%.o: %.cpp $(SRC_HEADER_FILES)
 # --------------------------------------------------------------------------------------------------
 # Testing.
 
-test: $(TEST_BINARIES)
-	@for T in $(TEST_BINARIES); do \
-		echo "$(INFO_STYLE)[$@] Running test '$$T' ...$(N)" ; \
+test: unit-test e2e-test
+
+unit-test: $(UNIT_TEST_BINARIES)
+	@for T in $(UNIT_TEST_BINARIES); do \
+		echo "$(INFO_STYLE)[$@] Running unit test '$$T' ...$(N)" ; \
     export TF_CPP_MIN_LOG_LEVEL=3 ; \
 		./$$T || exit; \
 	done
 
 %Test: %Test.o $(SRC_OBJECT_FILES)
-	@echo "$(INFO_STYLE)[test] Creating test '$@' ...$(N)"
+	@echo "$(INFO_STYLE)[test] Creating unit test '$@' ...$(N)"
 	@mkdir -p "$(dir $@)"
 	$(CXX_TEST) -o "$@" $^ $(CXX_LIBS_TEST)
 
@@ -140,6 +144,18 @@ $(BUILD_DIR)/%Test.o: %Test.cpp $(SRC_HEADER_FILES)
 	@echo "$(INFO_STYLE)[test] Compiling '$<' ...$(N)"
 	@mkdir -p "$(dir $@)"
 	$(CXX_TEST) -c $< -o "$@" $(CXX_LIBS_TEST)
+
+e2e-test: $(MAIN_BINARY)
+	@python3 $(E2E_TEST_DIR)/e2e.py run --ppp $(abspath $(BUILD_DIR)/$(MAIN_BINARY))
+
+e2e-analyze:
+	@python3 $(E2E_TEST_DIR)/e2e.py analyze --dir "[latest-test-result-dir]"
+
+e2e-analyze-in-vscode:
+	@python3 $(E2E_TEST_DIR)/e2e.py analyze --dir "[latest-test-result-dir]" --vscode
+
+e2e-test-pdfs:
+	cd $(E2E_TEST_DIR)/pdfs && latexmk *.tex && latexmk -c
 
 # --------------------------------------------------------------------------------------------------
 # Installing.
@@ -163,13 +179,20 @@ clean:
 	@echo "$(INFO_STYLE)[$@] Cleaning the project ...$(N)"
 	rm -f core
 	rm -rf $(BUILD_DIR)
-	rm -f $(TEST_DIR)/*.aux $(TEST_DIR)/**/*.aux
-	rm -f $(TEST_DIR)/*.fdb_latexmk $(TEST_DIR)/**/*.fdb_latexmk
-	rm -f $(TEST_DIR)/*.fls $(TEST_DIR)/**/*.fls
-	rm -f $(TEST_DIR)/*.log $(TEST_DIR)/**/*.log
-	rm -f $(TEST_DIR)/*.synctex.gz $(TEST_DIR)/**/*.synctex.gz
-	rm -f $(TEST_DIR)/*.bbl $(TEST_DIR)/**/*.bbl
-	rm -f $(TEST_DIR)/*.blg $(TEST_DIR)/**/*.blg
+	rm -f $(UNIT_TEST_DIR)/*.aux $(UNIT_TEST_DIR)/**/*.aux
+	rm -f $(UNIT_TEST_DIR)/*.fdb_latexmk $(UNIT_TEST_DIR)/**/*.fdb_latexmk
+	rm -f $(UNIT_TEST_DIR)/*.fls $(UNIT_TEST_DIR)/**/*.fls
+	rm -f $(UNIT_TEST_DIR)/*.log $(UNIT_TEST_DIR)/**/*.log
+	rm -f $(UNIT_TEST_DIR)/*.synctex.gz $(UNIT_TEST_DIR)/**/*.synctex.gz
+	rm -f $(UNIT_TEST_DIR)/*.bbl $(UNIT_TEST_DIR)/**/*.bbl
+	rm -f $(UNIT_TEST_DIR)/*.blg $(UNIT_TEST_DIR)/**/*.blg
+	rm -f $(E2E_TEST_DIR)/*.aux $(E2E_TEST_DIR)/**/*.aux
+	rm -f $(E2E_TEST_DIR)/*.fdb_latexmk $(E2E_TEST_DIR)/**/*.fdb_latexmk
+	rm -f $(E2E_TEST_DIR)/*.fls $(E2E_TEST_DIR)/**/*.fls
+	rm -f $(E2E_TEST_DIR)/*.log $(E2E_TEST_DIR)/**/*.log
+	rm -f $(E2E_TEST_DIR)/*.synctex.gz $(E2E_TEST_DIR)/**/*.synctex.gz
+	rm -f $(E2E_TEST_DIR)/*.bbl $(E2E_TEST_DIR)/**/*.bbl
+	rm -f $(E2E_TEST_DIR)/*.blg $(E2E_TEST_DIR)/**/*.blg
 
 # --------------------------------------------------------------------------------------------------
 # Releasing.
@@ -254,9 +277,15 @@ requirements/compile:
 	@echo "$(INFO_STYLE)[$@] Installing requirements for 'make compile' ...$(N)"
 	./scripts/install_requirements.sh make_compile $(USR_DIR)
 
-requirements/test:
-	@echo "$(INFO_STYLE)[$@] Installing requirements for 'make test' ...$(N)"
-	./scripts/install_requirements.sh make_test $(USR_DIR)
+requirements/test: requirements/unit-test requirements/e2e-test
+
+requirements/unit-test:
+	@echo "$(INFO_STYLE)[$@] Installing requirements for 'make unit-test' ...$(N)"
+	./scripts/install_requirements.sh make_unit_test $(USR_DIR)
+
+requirements/e2e-test:
+	@echo "$(INFO_STYLE)[$@] Installing requirements for 'make e2e-test' ...$(N)"
+	./scripts/install_requirements.sh make_e2e_test $(USR_DIR)
 
 requirements/install:
 	@echo "$(INFO_STYLE)[$@] Installing requirements for 'make install' ...$(N)"
