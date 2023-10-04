@@ -44,9 +44,11 @@ function make_unit_test() {
 function make_e2e_test() {
   local TARGET_DIR="${1:-.}"
 
+  make_compile ${TARGET_DIR}
   apt-get update && apt-get install -y \
     git \
     python3
+  pip3 install pip PyYAML
 }
 
 # This function installs all requirements needed to execute 'make install'.

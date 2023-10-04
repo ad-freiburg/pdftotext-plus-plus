@@ -1,0 +1,17 @@
+name: e2e_test
+
+on: push
+
+jobs:
+  e2e_test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: installing requirements
+        run: |
+          sudo make requirements/e2e-test USR_DIR="/usr/local"
+
+      - name: running E2E tests
+        run: |
+          make e2e-test USR_DIR="/usr/local"

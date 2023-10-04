@@ -193,6 +193,7 @@ clean:
 	rm -f $(E2E_TEST_DIR)/*.synctex.gz $(E2E_TEST_DIR)/**/*.synctex.gz
 	rm -f $(E2E_TEST_DIR)/*.bbl $(E2E_TEST_DIR)/**/*.bbl
 	rm -f $(E2E_TEST_DIR)/*.blg $(E2E_TEST_DIR)/**/*.blg
+	rm -rf $(E2E_TEST_DIR)/__pycache__ $(E2E_TEST_DIR)/**/__pycache__
 
 # --------------------------------------------------------------------------------------------------
 # Releasing.
