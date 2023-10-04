@@ -434,10 +434,9 @@ Trool TextBlocksDetection::startsBlock_lineDistance(const PdfTextLine* line) con
   const PdfTextLine* prevLine = line->prevLine;
 
   // Compute the expected line distance.
-  double fontSize = round(line->fontSize, _config->fontSizePrecision);
   double expectedLineDistance = 0;
-  if (_doc->mostFreqLineDistancePerFontSize.count(fontSize) > 0) {
-    double eld = _doc->mostFreqLineDistancePerFontSize.at(fontSize);
+  if (_doc->mostFreqLineDistancePerFontSize.count(line->fontSize) > 0) {
+    double eld = _doc->mostFreqLineDistancePerFontSize.at(line->fontSize);
     expectedLineDistance = maximum(expectedLineDistance, eld);
   }
   expectedLineDistance = maximum(expectedLineDistance, _doc->mostFreqLineDistance);

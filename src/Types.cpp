@@ -132,10 +132,10 @@ string PdfPosition::toString() const {
   stringstream ss;
   ss << "PdfPosition("
      << "page=" << pageNum << "; "
-     << "leftX=" << round(leftX, 1) << "; "
-     << "upperY=" << round(upperY, 1) << "; "
-     << "rightX=" << round(rightX, 1) << "; "
-     << "lowerY=" << round(lowerY, 1) << "; "
+     << "leftX=" << leftX << "; "
+     << "upperY=" << upperY << "; "
+     << "rightX=" << rightX << "; "
+     << "lowerY=" << lowerY << "; "
      << "rotation=" << rotation << "; "
      << "wMode=" << wMode << ")";
   return ss.str();
@@ -145,10 +145,10 @@ string PdfPosition::toString() const {
 string PdfPosition::toShortString() const {
   stringstream ss;
   ss << "p=" << pageNum
-     << "; leftX=" << round(leftX, 1)
-     << "; upperY=" << round(upperY, 1)
-     << "; rightX=" << round(rightX, 1)
-     << "; lowerY=" << round(lowerY, 1);
+     << "; leftX=" << leftX
+     << "; upperY=" << upperY
+     << "; rightX=" << rightX
+     << "; lowerY=" << lowerY;
   return ss.str();
 }
 
