@@ -8,11 +8,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - name: Install requirements
+      - name: installing requirements
         run: |
-          sudo make requirements/test USR_DIR="/usr/local"
+          sudo make requirements/unit-test USR_DIR="/usr/local"
 
-      - name: make test
+      - name: running unit tests
         run: |
-          make test USR_DIR="/usr/local"
+          make unit-test USR_DIR="/usr/local"
 
