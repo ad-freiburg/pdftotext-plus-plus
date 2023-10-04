@@ -56,7 +56,6 @@ using ppp::utils::log::Logger;
 using ppp::utils::math::equalOrLarger;
 using ppp::utils::math::maximum;
 using ppp::utils::math::minimum;
-using ppp::utils::math::round;
 using ppp::utils::text::createRandomString;
 
 // =================================================================================================
@@ -146,7 +145,7 @@ void TextLinesDetection::process() {
         }
 
         double rotation = word->pos->rotation;
-        double lowerY = round(word->pos->getRotLowerY(), _config->coordinatePrecision);
+        double lowerY = word->pos->getRotLowerY();
         clusters[rotation][lowerY].push_back(word);
         _log->debug(p) << q << "cluster: (" << rotation << ", " << lowerY << ")" << endl;
 

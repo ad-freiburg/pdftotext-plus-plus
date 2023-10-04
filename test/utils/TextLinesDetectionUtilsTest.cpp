@@ -167,9 +167,8 @@ TEST_F(TextLinesDetectionUtilsTest, computeTrimBox) {
   ASSERT_DEATH(utils.computeTrimBox(nullptr), "");
 
   tuple<double, double, double, double> trimBox = utils.computeTrimBox(segment);
-  // TODO(korzen): The coordinates should not be rounded here.
-  ASSERT_NEAR(round(std::get<0>(trimBox), 1), 56.7, TOL);
-  ASSERT_NEAR(round(std::get<1>(trimBox), 1), 59.1, TOL);
-  ASSERT_NEAR(round(std::get<2>(trimBox), 1), 539.0, TOL);
-  ASSERT_NEAR(round(std::get<3>(trimBox), 1), 500.4, TOL);
+  ASSERT_NEAR(std::get<0>(trimBox), 56.7, TOL);
+  ASSERT_NEAR(std::get<1>(trimBox), 59.1, TOL);
+  ASSERT_NEAR(std::get<2>(trimBox), 539.0, TOL);
+  ASSERT_NEAR(std::get<3>(trimBox), 500.4, TOL);
 }

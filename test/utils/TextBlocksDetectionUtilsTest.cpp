@@ -323,7 +323,7 @@ TEST_F(TextBlocksDetectionUtilsTest, computeHangingIndent) {
   ASSERT_NEAR(utils.computeHangingIndent(block2), 0.0, TOL);
 
   // Input: A text block in hanging indent format.
-  ASSERT_NEAR(utils.computeHangingIndent(block3), 11.0, TOL);
+  ASSERT_NEAR(utils.computeHangingIndent(block3), 10.9, TOL);
 
   // Input: Text blocks with indented first lines (but not in hanging indent format).
   ASSERT_NEAR(utils.computeHangingIndent(block4), 0.0, TOL);
@@ -332,9 +332,9 @@ TEST_F(TextBlocksDetectionUtilsTest, computeHangingIndent) {
   ASSERT_NEAR(utils.computeHangingIndent(block7), 0.0, TOL);
 
   // Input: Three references, each in hanging indent format.
-  ASSERT_NEAR(utils.computeHangingIndent(block9), 12.0, TOL);
-  ASSERT_NEAR(utils.computeHangingIndent(block10), 12.0, TOL);
-  ASSERT_NEAR(utils.computeHangingIndent(block11), 12.0, TOL);
+  ASSERT_NEAR(utils.computeHangingIndent(block9), 11.5, TOL);
+  ASSERT_NEAR(utils.computeHangingIndent(block10), 11.5, TOL);
+  ASSERT_NEAR(utils.computeHangingIndent(block11), 11.5, TOL);
 }
 
 // _________________________________________________________________________________________________
@@ -360,38 +360,38 @@ TEST_F(TextBlocksDetectionUtilsTest, computeTextLineMargins) {
   ASSERT_DEATH(utils.computeTextLineMargins(nullptr), "");
 
   utils.computeTextLineMargins(block1);
-  ASSERT_NEAR(block1->lines[0]->leftMargin, 11.0, TOL);
+  ASSERT_NEAR(block1->lines[0]->leftMargin, 10.9, TOL);
   ASSERT_NEAR(block1->lines[0]->rightMargin, 0.0, TOL);
   ASSERT_NEAR(block1->lines[1]->leftMargin, 0.0, TOL);
   ASSERT_NEAR(block1->lines[1]->rightMargin, 0.0, TOL);
   ASSERT_NEAR(block1->lines[2]->leftMargin, 0.0, TOL);
-  ASSERT_NEAR(block1->lines[2]->rightMargin, 84.0, TOL);
+  ASSERT_NEAR(block1->lines[2]->rightMargin, 84.3, TOL);
 
   utils.computeTextLineMargins(block2);
-  ASSERT_NEAR(block2->lines[0]->leftMargin, 4.0, TOL);
-  ASSERT_NEAR(block2->lines[0]->rightMargin, 4.0, TOL);
-  ASSERT_NEAR(block2->lines[1]->leftMargin, 3.0, TOL);
-  ASSERT_NEAR(block2->lines[1]->rightMargin, 3.0, TOL);
-  ASSERT_NEAR(block2->lines[2]->leftMargin, 42.0, TOL);
-  ASSERT_NEAR(block2->lines[2]->rightMargin, 42.0, TOL);
+  ASSERT_NEAR(block2->lines[0]->leftMargin, 3.7, TOL);
+  ASSERT_NEAR(block2->lines[0]->rightMargin, 3.7, TOL);
+  ASSERT_NEAR(block2->lines[1]->leftMargin, 2.8, TOL);
+  ASSERT_NEAR(block2->lines[1]->rightMargin, 2.8, TOL);
+  ASSERT_NEAR(block2->lines[2]->leftMargin, 41.6, TOL);
+  ASSERT_NEAR(block2->lines[2]->rightMargin, 41.6, TOL);
   ASSERT_NEAR(block2->lines[3]->leftMargin, 0.0, TOL);
   ASSERT_NEAR(block2->lines[3]->rightMargin, 0.0, TOL);
-  ASSERT_NEAR(block2->lines[4]->leftMargin, 228.0, TOL);
-  ASSERT_NEAR(block2->lines[4]->rightMargin, 228.0, TOL);
+  ASSERT_NEAR(block2->lines[4]->leftMargin, 228.4, TOL);
+  ASSERT_NEAR(block2->lines[4]->rightMargin, 228.5, TOL);
 
   utils.computeTextLineMargins(block3);
-  ASSERT_NEAR(block3->lines[0]->leftMargin, 11.0, TOL);
-  ASSERT_NEAR(block3->lines[0]->rightMargin, 0.0, TOL);
+  ASSERT_NEAR(block3->lines[0]->leftMargin, 10.9, TOL);
+  ASSERT_NEAR(block3->lines[0]->rightMargin, 0.4, TOL);
   ASSERT_NEAR(block3->lines[1]->leftMargin, 0.0, TOL);
-  ASSERT_NEAR(block3->lines[1]->rightMargin, -22.0, TOL);
+  ASSERT_NEAR(block3->lines[1]->rightMargin, -22.2, TOL);
   ASSERT_NEAR(block3->lines[2]->leftMargin, 0.0, TOL);
-  ASSERT_NEAR(block3->lines[2]->rightMargin, 0.0, TOL);
+  ASSERT_NEAR(block3->lines[2]->rightMargin, 0.4, TOL);
   ASSERT_NEAR(block3->lines[3]->leftMargin, 0.0, TOL);
-  ASSERT_NEAR(block3->lines[3]->rightMargin, 0.0, TOL);
+  ASSERT_NEAR(block3->lines[3]->rightMargin, 0.4, TOL);
   ASSERT_NEAR(block3->lines[4]->leftMargin, 0.0, TOL);
-  ASSERT_NEAR(block3->lines[4]->rightMargin, 0.0, TOL);
+  ASSERT_NEAR(block3->lines[4]->rightMargin, 0.4, TOL);
   ASSERT_NEAR(block3->lines[5]->leftMargin, 0.0, TOL);
-  ASSERT_NEAR(block3->lines[5]->rightMargin, 365.0, TOL);
+  ASSERT_NEAR(block3->lines[5]->rightMargin, 364.7, TOL);
 }
 
 // _________________________________________________________________________________________________
@@ -843,15 +843,14 @@ TEST_F(TextBlocksDetectionUtilsTest, createTextBlock) {
   ASSERT_EQ(blocks[0]->pos->pageNum, 12);
   ASSERT_EQ(blocks[0]->pos->wMode, 0);
   ASSERT_EQ(blocks[0]->pos->rotation, 0);
-  // TODO(korzen): The coordinates should not be rounded here.
-  ASSERT_NEAR(round(blocks[0]->pos->leftX, 1), 56.7, TOL);
-  ASSERT_NEAR(round(blocks[0]->pos->rightX, 1), 538.6, TOL);
-  ASSERT_NEAR(round(blocks[0]->pos->upperY, 1), 90.8, TOL);
-  ASSERT_NEAR(round(blocks[0]->pos->lowerY, 1), 132.0, TOL);
-  ASSERT_NEAR(round(blocks[0]->trimLeftX, 1), 56.7, TOL);
-  ASSERT_NEAR(round(blocks[0]->trimRightX, 1), 538.6, TOL);
-  ASSERT_NEAR(round(blocks[0]->trimUpperY, 1), 90.8, TOL);
-  ASSERT_NEAR(round(blocks[0]->trimLowerY, 1), 132.0, TOL);
+  ASSERT_NEAR(blocks[0]->pos->leftX, 56.7, TOL);
+  ASSERT_NEAR(blocks[0]->pos->rightX, 538.6, TOL);
+  ASSERT_NEAR(blocks[0]->pos->upperY, 90.8, TOL);
+  ASSERT_NEAR(blocks[0]->pos->lowerY, 132.0, TOL);
+  ASSERT_NEAR(blocks[0]->trimLeftX, 56.7, TOL);
+  ASSERT_NEAR(blocks[0]->trimRightX, 538.6, TOL);
+  ASSERT_NEAR(blocks[0]->trimUpperY, 90.8, TOL);
+  ASSERT_NEAR(blocks[0]->trimLowerY, 132.0, TOL);
   ASSERT_EQ(blocks[0]->rank, 0);
   ASSERT_EQ(blocks[0]->fontName, "KAGVWM+CMR10");
   ASSERT_NEAR(blocks[0]->fontSize, 10.9, TOL);
@@ -872,15 +871,14 @@ TEST_F(TextBlocksDetectionUtilsTest, createTextBlock) {
   ASSERT_EQ(blocks[1]->pos->pageNum, 12);
   ASSERT_EQ(blocks[1]->pos->wMode, 0);
   ASSERT_EQ(blocks[1]->pos->rotation, 0);
-  // TODO(korzen): The coordinates should not be rounded here.
-  ASSERT_NEAR(round(blocks[1]->pos->leftX, 1), 67.5, TOL);
-  ASSERT_NEAR(round(blocks[1]->pos->rightX, 1), 527.8, TOL);
-  ASSERT_NEAR(round(blocks[1]->pos->upperY, 1), 142.7, TOL);
-  ASSERT_NEAR(round(blocks[1]->pos->lowerY, 1), 191.5, TOL);
-  ASSERT_NEAR(round(blocks[1]->trimLeftX, 1), 67.5, TOL);
-  ASSERT_NEAR(round(blocks[1]->trimRightX, 1), 527.8, TOL);
-  ASSERT_NEAR(round(blocks[1]->trimUpperY, 1), 142.7, TOL);
-  ASSERT_NEAR(round(blocks[1]->trimLowerY, 1), 191.5, TOL);
+  ASSERT_NEAR(blocks[1]->pos->leftX, 67.5, TOL);
+  ASSERT_NEAR(blocks[1]->pos->rightX, 527.8, TOL);
+  ASSERT_NEAR(blocks[1]->pos->upperY, 142.7, TOL);
+  ASSERT_NEAR(blocks[1]->pos->lowerY, 191.5, TOL);
+  ASSERT_NEAR(blocks[1]->trimLeftX, 67.5, TOL);
+  ASSERT_NEAR(blocks[1]->trimRightX, 527.8, TOL);
+  ASSERT_NEAR(blocks[1]->trimUpperY, 142.7, TOL);
+  ASSERT_NEAR(blocks[1]->trimLowerY, 191.5, TOL);
   ASSERT_EQ(blocks[1]->rank, 1);
   ASSERT_EQ(blocks[1]->fontName, "KAGVWM+CMR10");
   ASSERT_NEAR(blocks[1]->fontSize, 10.0, TOL);
@@ -901,15 +899,14 @@ TEST_F(TextBlocksDetectionUtilsTest, createTextBlock) {
   ASSERT_EQ(blocks[2]->pos->pageNum, 12);
   ASSERT_EQ(blocks[2]->pos->wMode, 0);
   ASSERT_EQ(blocks[2]->pos->rotation, 0);
-  // TODO(korzen): The coordinates should not be rounded here.
-  ASSERT_NEAR(round(blocks[2]->pos->leftX, 1), 56.7, TOL);
-  ASSERT_NEAR(round(blocks[2]->pos->rightX, 1), 580.2, TOL);
-  ASSERT_NEAR(round(blocks[2]->pos->upperY, 1), 203.1, TOL);
-  ASSERT_NEAR(round(blocks[2]->pos->lowerY, 1), 285.1, TOL);
-  ASSERT_NEAR(round(blocks[2]->trimLeftX, 1), 56.7, TOL);
-  ASSERT_NEAR(round(blocks[2]->trimRightX, 1), 539.0, TOL);
-  ASSERT_NEAR(round(blocks[2]->trimUpperY, 1), 203.1, TOL);
-  ASSERT_NEAR(round(blocks[2]->trimLowerY, 1), 285.1, TOL);
+  ASSERT_NEAR(blocks[2]->pos->leftX, 56.7, TOL);
+  ASSERT_NEAR(blocks[2]->pos->rightX, 580.2, TOL);
+  ASSERT_NEAR(blocks[2]->pos->upperY, 203.1, TOL);
+  ASSERT_NEAR(blocks[2]->pos->lowerY, 285.1, TOL);
+  ASSERT_NEAR(blocks[2]->trimLeftX, 56.7, TOL);
+  ASSERT_NEAR(blocks[2]->trimRightX, 539.0, TOL);
+  ASSERT_NEAR(blocks[2]->trimUpperY, 203.1, TOL);
+  ASSERT_NEAR(blocks[2]->trimLowerY, 285.1, TOL);
   ASSERT_EQ(blocks[2]->rank, 2);
   ASSERT_EQ(blocks[2]->fontName, "ADABFR+CMSSBX10");
   ASSERT_NEAR(blocks[2]->fontSize, 10.9, TOL);

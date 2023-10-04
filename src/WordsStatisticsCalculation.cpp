@@ -31,7 +31,6 @@ using ppp::utils::log::Logger;
 using ppp::utils::math::equal;
 using ppp::utils::math::equalOrLarger;
 using ppp::utils::math::equalOrSmaller;
-using ppp::utils::math::round;
 using ppp::utils::math::smaller;
 
 // =================================================================================================
@@ -84,10 +83,7 @@ void WordsStatisticsCalculation::process() const {
       }
 
       // Count the word height.
-      // TODO(korzen): The height should not be rounded here, but on creating the word. Remove
-      // _coordinatePrecision if not necessary anymore.
-      double height = round(word->pos->getHeight(), _config->coordinatePrecision);
-      wordHeightCounter[height]++;
+      wordHeightCounter[word->pos->getHeight()]++;
 
       // Skip to the next word if there is no previous word.
       if (!prevWord) {
@@ -116,7 +112,6 @@ void WordsStatisticsCalculation::process() const {
       // when one word vertically overlaps at least the half of the height of the other word.
       if (equalOrLarger(maxYOverlapRatio, minYOverlapRatioSameLine)) {
         double gap = computeHorizontalGap(prevWord, word);
-        gap = round(gap, _config->coordinatePrecision);
         horizontalGapCounter[gap]++;
       }
 
@@ -124,7 +119,6 @@ void WordsStatisticsCalculation::process() const {
       // they do *not* vertically overlap.
       if (equalOrSmaller(maxYOverlapRatio, maxYOverlapRatioDiffLine)) {
         double gap = computeVerticalGap(prevWord, word);
-        gap = round(gap, _config->coordinatePrecision);
         verticalGapCounter[gap]++;
       }
     }

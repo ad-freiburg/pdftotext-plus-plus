@@ -279,9 +279,8 @@ double TextBlocksDetectionUtils::computeHangingIndent(const PdfTextBlock* block)
     }
 
     // Count the number of lines with a left margin >= the given threshold.
-    double leftMargin = round(line->leftMargin);
-    if (equalOrLarger(leftMargin, marginThreshold)) {
-      largeLeftMarginCounter[leftMargin]++;
+    if (equalOrLarger(line->leftMargin, marginThreshold)) {
+      largeLeftMarginCounter[line->leftMargin]++;
       numLargeLeftMarginLines++;
     }
   }
@@ -414,9 +413,8 @@ void TextBlocksDetectionUtils::computeTextLineMargins(const PdfTextBlock* block)
   }
 
   for (auto* line : block->lines) {
-    // TODO(korzen): Should this really be rounded?
-    line->leftMargin = round(line->pos->leftX - block->trimLeftX);
-    line->rightMargin = round(blockTrimRightX - line->pos->rightX);
+    line->leftMargin = line->pos->leftX - block->trimLeftX;
+    line->rightMargin = blockTrimRightX - line->pos->rightX;
   }
 }
 

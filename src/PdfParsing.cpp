@@ -88,7 +88,15 @@ void PdfParsing::startPage(int pageNum, GfxState* state, XRef* xref) {
 
   _page = new PdfPage();
   _page->pageNum = _p = pageNum;
+
   state->getClipBBox(&_page->clipLeftX, &_page->clipUpperY, &_page->clipRightX, &_page->clipLowerY);
+
+  // Round the coordinates of the page's clip box.
+  _page->clipLeftX = round(_page->clipLeftX, _config.coordinatePrecision);
+  _page->clipUpperY = round(_page->clipUpperY, _config.coordinatePrecision);
+  _page->clipRightX = round(_page->clipRightX, _config.coordinatePrecision);
+  _page->clipLowerY = round(_page->clipLowerY, _config.coordinatePrecision);
+
   _doc->pages.push_back(_page);
   _xref = xref;
 
@@ -349,10 +357,11 @@ void PdfParsing::drawChar(GfxState* state, double x, double y, double dx, double
   double descent = _fontInfo ? _fontInfo->descent * transformedFontSize : 0;
 
   // Compute leftX, upperY, rightX, lowerY dependent on the writing mode and rotation.
-  ch->pos->leftX = x0 - transformedFontSize;
-  ch->pos->upperY = y0 - transformedFontSize;
-  ch->pos->rightX = x0;
-  ch->pos->lowerY = y0;
+  double posLeftX = x0 - transformedFontSize;
+  double posUpperY = y0 - transformedFontSize;
+  double posRightX = x0;
+  double posLowerY = y0;
+  double base = 0;
 
   int wMode = gfxFont->getWMode();
   if (wMode) {  // vertical writing mode
@@ -360,53 +369,53 @@ void PdfParsing::drawChar(GfxState* state, double x, double y, double dx, double
       case 0:
         break;
       case 1:
-        ch->pos->leftX = x0;
-        ch->pos->upperY = y0 - transformedFontSize;
-        ch->pos->rightX = x0 + transformedFontSize;
-        ch->pos->lowerY = y0;
+        posLeftX = x0;
+        posUpperY = y0 - transformedFontSize;
+        posRightX = x0 + transformedFontSize;
+        posLowerY = y0;
         break;
       case 2:
-        ch->pos->leftX = x0;
-        ch->pos->upperY = y0;
-        ch->pos->rightX = x0 + transformedFontSize;
-        ch->pos->lowerY = y0 + transformedFontSize;
+        posLeftX = x0;
+        posUpperY = y0;
+        posRightX = x0 + transformedFontSize;
+        posLowerY = y0 + transformedFontSize;
         break;
       case 3:
-        ch->pos->leftX = x0 - transformedFontSize;
-        ch->pos->upperY = y0;
-        ch->pos->rightX = x0;
-        ch->pos->lowerY = y0 + transformedFontSize;
+        posLeftX = x0 - transformedFontSize;
+        posUpperY = y0;
+        posRightX = x0;
+        posLowerY = y0 + transformedFontSize;
         break;
     }
   } else {  // horizontal writing mode
     switch (ch->pos->rotation) {
       case 0:
-        ch->pos->leftX = x0;
-        ch->pos->upperY = y0 - ascent;
-        ch->pos->rightX = x0 + (x1 - x0);
-        ch->pos->lowerY = y0 - descent;
-        ch->base = y0;
+        posLeftX = x0;
+        posUpperY = y0 - ascent;
+        posRightX = x0 + (x1 - x0);
+        posLowerY = y0 - descent;
+        base = y0;
         break;
       case 1:
-        ch->pos->leftX = x0 + descent;
-        ch->pos->upperY = y0;
-        ch->pos->rightX = x0 + ascent;
-        ch->pos->lowerY = y0 + (y1 - y0);
-        ch->base = x0;
+        posLeftX = x0 + descent;
+        posUpperY = y0;
+        posRightX = x0 + ascent;
+        posLowerY = y0 + (y1 - y0);
+        base = x0;
         break;
       case 2:
-        ch->pos->leftX = x0;
-        ch->pos->upperY = y0 + descent;
-        ch->pos->rightX = x0 + (x1 - x0);
-        ch->pos->lowerY = y0 + ascent;
-        ch->base = y0;
+        posLeftX = x0;
+        posUpperY = y0 + descent;
+        posRightX = x0 + (x1 - x0);
+        posLowerY = y0 + ascent;
+        base = y0;
         break;
       case 3:
-        ch->pos->leftX = x0 - ascent;
-        ch->pos->upperY = y0 + (y1 - y0);
-        ch->pos->rightX = x0 - descent;
-        ch->pos->lowerY = y0;
-        ch->base = x0;
+        posLeftX = x0 - ascent;
+        posUpperY = y0 + (y1 - y0);
+        posRightX = x0 - descent;
+        posLowerY = y0;
+        base = x0;
         break;
     }
   }
@@ -437,20 +446,28 @@ void PdfParsing::drawChar(GfxState* state, double x, double y, double dx, double
 
     // Update the bounding box when the alternative bounding box has a larger vertical extent.
     double tolerance = _config.coordsEqualTolerance;
-    if (smaller(upperY, ch->pos->upperY, tolerance) || larger(lowerY, ch->pos->lowerY, tolerance)) {
-      ch->pos->leftX = leftX;
-      ch->pos->upperY = upperY;
-      ch->pos->rightX = rightX;
-      ch->pos->lowerY = lowerY;
-      ch->base = lowerY;
+    if (smaller(upperY, posUpperY, tolerance) || larger(lowerY, posLowerY, tolerance)) {
+      posLeftX = leftX;
+      posUpperY = upperY;
+      posRightX = rightX;
+      posLowerY = lowerY;
+      base = lowerY;
     }
   }
+
+  // Round the coordinates of the character's bounding box.
+  ch->pos->leftX = round(posLeftX, _config.coordinatePrecision);
+  ch->pos->upperY = round(posUpperY, _config.coordinatePrecision);
+  ch->pos->rightX = round(posRightX, _config.coordinatePrecision);
+  ch->pos->lowerY = round(posLowerY, _config.coordinatePrecision);
+  ch->base = round(base, _config.coordinatePrecision);
 
   _log->debug(_p) << " • char.leftX:  " << ch->pos->leftX << endl;
   _log->debug(_p) << " • char.upperY: " << ch->pos->upperY << endl;
   _log->debug(_p) << " • char.rightX: " << ch->pos->rightX << endl;
   _log->debug(_p) << " • char.lowerY: " << ch->pos->lowerY << endl;
   _log->debug(_p) << " • char.base: " << ch->base << endl;
+
   if (ch->pos->rotation > 0) {
     _log->debug(_p) << " • char.rotLeftX:  " << ch->pos->getRotLeftX() << endl;
     _log->debug(_p) << " • char.rotUpperY: " << ch->pos->getRotUpperY() << endl;
@@ -505,6 +522,12 @@ void PdfParsing::drawChar(GfxState* state, double x, double y, double dx, double
 
   double clipLeftX, clipUpperY, clipRightX, clipLowerY;
   state->getClipBBox(&clipLeftX, &clipUpperY, &clipRightX, &clipLowerY);
+
+  // Round the coordinates of the clip box.
+  clipLeftX = round(clipLeftX, _config.coordinatePrecision);
+  clipUpperY = round(clipUpperY, _config.coordinatePrecision);
+  clipRightX = round(clipRightX, _config.coordinatePrecision);
+  clipLowerY = round(clipLowerY, _config.coordinatePrecision);
 
   _log->debug(_p) << " • clipbox: leftX: " << clipLeftX << "; upperY: " << clipUpperY
       << "; rightX: " << clipRightX << "; lowerY: " << clipLowerY << endl;
@@ -579,6 +602,12 @@ void PdfParsing::stroke(GfxState* state) {
   double clipLeftX, clipUpperY, clipRightX, clipLowerY;
   state->getClipBBox(&clipLeftX, &clipUpperY, &clipRightX, &clipLowerY);
 
+  // Round the coordinates of the clip box.
+  clipLeftX = round(clipLeftX, _config.coordinatePrecision);
+  clipUpperY = round(clipUpperY, _config.coordinatePrecision);
+  clipRightX = round(clipRightX, _config.coordinatePrecision);
+  clipLowerY = round(clipLowerY, _config.coordinatePrecision);
+
   // Iterate through each subpath and each point, for compute the bounding box of the path.
   double x, y;
   double leftX = numeric_limits<double>::max();
@@ -591,6 +620,8 @@ void PdfParsing::stroke(GfxState* state) {
 
     for (int j = 0; j < subpath->getNumPoints(); j++) {
       state->transform(subpath->getX(j), subpath->getY(j), &x, &y);
+      x = round(x, _config.coordinatePrecision);
+      y = round(y, _config.coordinatePrecision);
 
       // Ignore points that lies outside the clip box (points outside the clip box are not visible).
       // TODO(korzen): This is dangerous, since we may ignore a path that is actually visible, for
@@ -616,10 +647,10 @@ void PdfParsing::stroke(GfxState* state) {
   shape->id = createRandomString(_config.idLength, "shape-");
   shape->doc = _doc;
   shape->pos->pageNum = _page->pageNum;
-  shape->pos->leftX = leftX;
-  shape->pos->upperY = upperY;
-  shape->pos->rightX = rightX;
-  shape->pos->lowerY = lowerY;
+  shape->pos->leftX = round(leftX, _config.coordinatePrecision);
+  shape->pos->upperY = round(upperY, _config.coordinatePrecision);
+  shape->pos->rightX = round(rightX, _config.coordinatePrecision);
+  shape->pos->lowerY = round(lowerY, _config.coordinatePrecision);
   shape->rank = _numElements++;
 
   _log->debug(_p) << " • shape.id: " << shape->id << endl;
@@ -743,12 +774,18 @@ void PdfParsing::drawGraphic(GfxState* state) {
   double clipLeftX, clipUpperY, clipRightX, clipLowerY;
   state->getClipBBox(&clipLeftX, &clipUpperY, &clipRightX, &clipLowerY);
 
+  // Round the coordinates of the clip box.
+  clipLeftX = round(clipLeftX, _config.coordinatePrecision);
+  clipUpperY = round(clipUpperY, _config.coordinatePrecision);
+  clipRightX = round(clipRightX, _config.coordinatePrecision);
+  clipLowerY = round(clipLowerY, _config.coordinatePrecision);
+
   // Compute the bounding box of the graphic from the current transformation matrix.
   const double* ctm = state->getCTM();
-  double leftX = ctm[4];  // ctm[4] = translateX
-  double upperY = ctm[5];  // ctm[5] = translateY
-  double rightX = leftX + ctm[0];  // ctm[0] = scaleX
-  double lowerY = upperY + ctm[3];  // ctm[3] = scaleY
+  double leftX = round(ctm[4], _config.coordinatePrecision);  // ctm[4] = translateX
+  double upperY = round(ctm[5], _config.coordinatePrecision);  // ctm[5] = translateY
+  double rightX = round(leftX + ctm[0], _config.coordinatePrecision);  // ctm[0] = scaleX
+  double lowerY = round(upperY + ctm[3], _config.coordinatePrecision);  // ctm[3] = scaleY
 
   // Ignore the graphic if it lies outside the clip box (since graphics outside the clip box are
   // not visible). Example PDF where a graphic lies outside the clip box: 1001.5159.
